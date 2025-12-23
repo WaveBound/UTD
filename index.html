@@ -14,6 +14,8 @@
             --accent-start: #3b82f6;
             --accent-end: #a855f7;
             --gold: #ffd700;
+            --silver: #e2e8f0;
+            --bronze: #f59e0b;
             --custom: #06b6d4; 
             --success: #10b981;
             --banner-gradient: radial-gradient(circle at center, #2e1065, #000);
@@ -323,7 +325,7 @@
             border-radius: 16px;
             padding: 20px;
         }
-        .guide-controls { display: flex; justify-content: center; gap: 15px; margin-bottom: 25px; }
+        .guide-controls { display: flex; justify-content: center; gap: 15px; margin-bottom: 25px; align-items: center; }
         .guide-toggle-btn {
             background: rgba(0,0,0,0.5); border: 1px solid var(--card-border); color: #888;
             padding: 10px 20px; border-radius: 30px; font-weight: 700;
@@ -355,8 +357,30 @@
         .stat-dmg { background: rgba(255, 50, 50, 0.15); color: #ff8888; border: 1px solid rgba(255,50,50,0.3); }
         .stat-spa { background: rgba(50, 150, 255, 0.15); color: #88ccff; border: 1px solid rgba(50,150,255,0.3); }
         .stat-crit { background: rgba(255, 215, 0, 0.1); color: var(--gold); border: 1px solid rgba(255, 215, 0, 0.3); }
-        .stat-dot { background: rgba(168, 85, 247, 0.15); color: #d8b4fe; border: 1px solid rgba(168,85,247,0.3); }
+        .stat-dot { background: rgba(74, 222, 128, 0.15); color: #4ade80; border: 1px solid rgba(74, 222, 128, 0.3); }
+        
+        .stat-cdmg { 
+            background: linear-gradient(135deg, rgba(168, 85, 247, 0.2), rgba(239, 68, 68, 0.2)); 
+            border: 1px solid #a855f7; 
+            position: relative;
+        }
+        .stat-cdmg-text {
+            background: linear-gradient(to right, #d8b4fe, #ff8888);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 800;
+        }
+
         .stat-range { background: rgba(255, 140, 0, 0.15); color: #ffa500; border: 1px solid rgba(255, 140, 0, 0.3); }
+
+        /* --- NEW GUIDE TABLE STYLES --- */
+        .g-row { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
+        .g-row:last-child { margin-bottom: 0; }
+        .g-lbl { 
+            font-size: 0.6rem; color: #888; font-weight: 800; 
+            background: rgba(0,0,0,0.3); padding: 2px 6px; 
+            border-radius: 4px; border: 1px solid #333; min-width: 35px; text-align: center;
+        }
 
         .relic-section {
             background: rgba(255,255,255,0.02); border: 1px solid #222;
@@ -497,7 +521,19 @@
             <select id="db_t2" class="trait-select"></select>
             <button class="add-btn" onclick="addCustomTrait()">Add</button>
             
-            <!-- NEW: Sub Stats Toggle Moved Here -->
+            <!-- Hypothetical Toggle -->
+            <label id="hypoToggle" class="nav-toggle-label" title="Enable fixed Relic stats (Crit/DoT)">
+                <input type="checkbox" id="globalHypothetical" onchange="toggleHypothetical(this)">
+                <span>Hypothetical</span>
+            </label>
+
+            <!-- NEW: Head Piece Toggle -->
+            <label id="headPieceToggle" class="nav-toggle-label" title="Adds Perfect Head Piece (Best Sub Stat)">
+                <input type="checkbox" id="globalHeadPiece" onchange="toggleHeadPiece(this)">
+                <span>+ Head Piece</span>
+            </label>
+
+            <!-- Sub Stats Toggle -->
             <label id="subStatsToggle" class="nav-toggle-label" title="Adds Perfect Sub-Stats to Calculations">
                 <input type="checkbox" id="globalSubStats" onchange="toggleSubStats(this)">
                 <span>+ Sub Stats</span>
@@ -621,6 +657,39 @@
                 
                 <!-- RELIC BUILDER UI -->
                 <div id="relicBuilder">
+
+                    <!-- NEW: HEAD PIECE (No Main Stat) -->
+                    <div class="relic-section" id="head-section">
+                        <h4>Head Piece (Hat)</h4>
+                        <div style="font-size:0.7rem; color:#666; margin-bottom:10px;">No Main Stat &bull; Sub Stats Only</div>
+                        
+                        <!-- 5 Sub Stat Slots -->
+                        <div class="sub-row">
+                            <select class="head-sub-type"></select>
+                            <input type="number" class="head-sub-val" placeholder="0">
+                            <button class="max-btn" onclick="fillMax(this)">Max</button>
+                        </div>
+                        <div class="sub-row">
+                            <select class="head-sub-type"></select>
+                            <input type="number" class="head-sub-val" placeholder="0">
+                            <button class="max-btn" onclick="fillMax(this)">Max</button>
+                        </div>
+                        <div class="sub-row">
+                            <select class="head-sub-type"></select>
+                            <input type="number" class="head-sub-val" placeholder="0">
+                            <button class="max-btn" onclick="fillMax(this)">Max</button>
+                        </div>
+                        <div class="sub-row">
+                            <select class="head-sub-type"></select>
+                            <input type="number" class="head-sub-val" placeholder="0">
+                            <button class="max-btn" onclick="fillMax(this)">Max</button>
+                        </div>
+                        <div class="sub-row">
+                            <select class="head-sub-type"></select>
+                            <input type="number" class="head-sub-val" placeholder="0">
+                            <button class="max-btn" onclick="fillMax(this)">Max</button>
+                        </div>
+                    </div>
                     
                     <!-- BODY PIECE -->
                     <div class="relic-section" id="body-section">
@@ -736,21 +805,48 @@
             <div class="guide-controls">
                 <button class="guide-toggle-btn active" onclick="setGuideMode('current')">Current Meta (Bugged Relics)</button>
                 <button class="guide-toggle-btn" onclick="setGuideMode('fixed')">Hypothetical (Fixed Relics)</button>
+
+                <!-- NEW: Head Piece Toggle for Guides -->
+                <label class="nav-toggle-label" style="margin-left:10px; height:38px; display:flex; align-items:center;">
+                    <input type="checkbox" id="guideHeadPiece" onchange="toggleGuideHeadPiece(this)">
+                    <span>+ Head Piece</span>
+                </label>
+
+                <!-- NEW: Sub Stats Toggle for Guides (Checked by default) -->
+                <label class="nav-toggle-label is-checked" style="margin-left:0; height:38px; display:flex; align-items:center;">
+                    <input type="checkbox" id="guideSubStats" onchange="toggleGuideSubStats(this)" checked>
+                    <span>+ Sub Stats</span>
+                </label>
             </div>
 
             <div id="guideWarning" class="guide-warning">
                 ⚠️ CURRENT BUG: Relic Stats for <b>DoT%</b> and <b>Crit Dmg%</b> are currently ignored by the game. <br>
-                Only Damage% and SPA% relics are working effectively.
+                Only Damage% - SPA% - Crit Rate% relics are working effectively.
+            </div>
+
+            <!-- NEW: Search Dropdowns for Guides -->
+            <div style="margin-bottom: 20px; display:flex; justify-content:center; gap: 10px; flex-wrap: wrap;">
+                <select id="guideUnitSelect" style="width: 100%; max-width: 250px; padding: 10px; font-size: 0.9rem; border: 1px solid #444; background: #000; color: #fff; border-radius: 8px;"
+                        onchange="renderGuides()">
+                    <option value="all">All Units</option>
+                    <!-- Options populated by JS -->
+                </select>
+                <select id="guideTraitSelect" style="width: 100%; max-width: 250px; padding: 10px; font-size: 0.9rem; border: 1px solid #444; background: #000; color: #fff; border-radius: 8px;"
+                        onchange="renderGuides()">
+                    <option value="auto">Auto (Best Trait)</option>
+                    <!-- Options populated by JS -->
+                </select>
             </div>
 
             <div style="overflow-x: auto;">
                 <table class="guide-table">
                     <thead>
                         <tr>
-                            <th style="width:15%;">Unit</th>
-                            <th style="width:20%;">Build Trait</th>
+                            <th style="width:12%;">Unit</th>
+                            <th style="width:15%;">Build Trait</th>
                             <th style="width:20%;">Relic Set</th>
-                            <th style="width:25%;">Main Stat Priority</th>
+                            <th style="width:12%;">DPS</th> <!-- NEW COLUMN -->
+                            <th style="width:20%;">Main Stat Priority</th>
                             <th>Sub Stats</th>
                         </tr>
                     </thead>
@@ -807,8 +903,8 @@
     const statConfig = {
         applyRelicDmg: true,  
         applyRelicSpa: true,  
-        applyRelicCrit: true, 
-        applyRelicDot: true   
+        applyRelicCrit: false, 
+        applyRelicDot: false   
     };
 
     // --- SUB STATS CONFIG (Universal Tower Defense) ---
@@ -831,6 +927,21 @@
         dmg: "Dmg", spa: "SPA", cm: "Crit Dmg", cf: "Crit Rate", dot: "DoT"
     };
 
+    // Helper to colorize text into badges (Moved to global scope)
+    function formatStatBadge(text) {
+        if(!text) return '';
+        // If text already contains HTML (tags), return as is to prevent breaking
+        if (text.includes('<')) return text;
+
+        return text
+            .replace(/Damage|Dmg/g, '<span class="stat-badge stat-dmg">Dmg</span>')
+            .replace(/Spa|SPA/g, '<span class="stat-badge stat-spa">Spa</span>')
+            .replace(/Crit Rate/g, '<span class="stat-badge stat-crit">Crit Rate</span>')
+            .replace(/Crit Dmg|Crit Damage/g, '<span class="stat-badge stat-cdmg"><span class="stat-cdmg-text">Crit Dmg</span></span>')
+            .replace(/DoT|Buff Potency/g, '<span class="stat-badge stat-dot">$&</span>')
+            .replace(/Range|Rng/g, '<span class="stat-badge stat-range">Range</span>');
+    }
+
     // =========================================
     // 1. DATA DEFINITIONS
     // =========================================
@@ -838,64 +949,80 @@
     // --- GUIDE DATA ---
     const guideData = [
         {
-            unit: "Ace",
-            img: "images/Ace.png",
-            current: { trait: "(Must Be) Damage", set: "Laughing / Ninja", main: "Damage > Spa", sub: "Crit Rate / Spa" },
-            fixed: { trait: "DoT Potency", set: "Laughing / Ninja", main: "DoT > Damage", sub: "Spa" }
-        },
-        {
-            unit: "SJW",
-            img: "images/SJW.png",
-            current: { trait: "(Must Be) Damage", set: "Laughing / Ninja", main: "Damage > Spa", sub: "Crit Rate / Spa" },
-            fixed: { trait: "Crit Damage / Dmg", set: "Laughing / Ninja", main: "Crit Dmg > Dmg", sub: "Crit Rate" }
-        },
-        {
-            unit: "Sasuke",
-            img: "images/Sasuke.png",
-            current: { trait: "(Must Be) Damage", set: "Laughing / Ninja", main: "Damage > Spa", sub: "Crit Rate / Spa" },
-            fixed: { trait: "Damage / Hybrid", set: "Laughing / Ninja", main: "Dmg > Spa", sub: "Crit Rate" }
-        },
-        {
-            unit: "Kirito",
-            img: "images/Kirito.png",
-            current: { trait: "(Must Be) Damage", set: "Ex / Laughing", main: "Damage > Spa", sub: "Crit Rate / Spa" },
-            fixed: { trait: "Crit Damage", set: "Ex Captain", main: "Crit Dmg > Dmg", sub: "Crit Rate" }
-        },
-        {
-            unit: "Kenpachi",
-            img: "images/Kenpachi.png",
-            current: { trait: "Spa > Damage", set: "Laughing Captain", main: "Damage > Spa", sub: "Crit Rate / Spa" },
-            fixed: { trait: "Spa > Damage", set: "Laughing Captain", main: "Damage > Spa", sub: "Crit Rate" }
-        },
-        {
-            unit: "Ragna",
-            img: "images/Ragna.png",
-            current: { trait: "Spa > Damage", set: "Laughing Captain", main: "Damage > Spa", sub: "Crit Rate / Spa" },
-            fixed: { trait: "Spa > Damage", set: "Laughing Captain", main: "Damage > Spa", sub: "Crit Rate" }
-        },
-        {
-            unit: "Mob",
-            img: "images/Mob.png",
-            current: { trait: "(Must Be) Damage", set: "Laughing Captain", main: "Damage > Spa", sub: "Crit Rate / Spa" },
-            fixed: { trait: "DoT Potency", set: "Laughing Captain", main: "DoT > Dmg", sub: "Spa" }
-        },
-        {
-            unit: "Other DPS",
-            img: "",
-            current: { trait: "Damage > Spa", set: "Laughing Captain", main: "Damage > Spa", sub: "Crit Rate / Spa" },
-            fixed: { trait: "Dependent on Kit", set: "Laughing Captain", main: "Dependent", sub: "Crit Rate" }
-        },
-        {
-            unit: "Supports",
-            img: "",
-            current: { trait: "Spa / Range", set: "Laughing Captain", main: "Spa / Range", sub: "Spa / Rng / Dmg" },
-            fixed: { trait: "Spa / Range", set: "Laughing Captain", main: "Spa / Range", sub: "Spa / Rng" }
-        },
-        {
             unit: "Miku",
             img: "",
             current: { trait: "Buff Potency", set: "Any", main: "Buff Potency", sub: "Buff Potency" },
             fixed: { trait: "Buff Potency", set: "Any", main: "Buff Potency", sub: "Buff Potency" }
+        },
+        {
+            unit: "Supports",
+            img: "",
+            current: { trait: "Spa / Range", set: "Laughing / Swift", main: "Spa / Range", sub: "Spa / Rng / Dmg" },
+            fixed: { trait: "Spa / Range", set: "Laughing / Swift", main: "Spa / Range", sub: "Spa / Rng" }
+        },
+        {
+            unit: "Other DPS",
+            img: "",
+            current: { trait: "Damage > Spa", set: "Laughing / Ninja", main: "Damage > Spa", sub: "Crit Rate / Spa" },
+            fixed: { trait: "Dependent on Kit", set: "Laughing Captain", main: "Dependent", sub: "Crit Rate" }
+        },
+        // These units will be dynamically calculated
+        {
+            unit: "Ace",
+            img: "images/Ace.png",
+            // `current` and `fixed` will be overridden by dynamic calculation for actual units
+            current: { trait: "", set: "", main: "", sub: "" }, 
+            fixed: { trait: "", set: "", main: "", sub: "" },
+            isCalculated: true
+        },
+        {
+            unit: "SJW",
+            img: "images/SJW.png",
+            current: { trait: "", set: "", main: "", sub: "" },
+            fixed: { trait: "", set: "", main: "", sub: "" },
+            isCalculated: true
+        },
+        {
+            unit: "Sasuke",
+            img: "images/Sasuke.png",
+            current: { trait: "", set: "", main: "", sub: "" },
+            fixed: { trait: "", set: "", main: "", sub: "" },
+            isCalculated: true
+        },
+        {
+            unit: "Kirito",
+            img: "images/Kirito.png",
+            current: { trait: "", set: "", main: "", sub: "" },
+            fixed: { trait: "", set: "", main: "", sub: "" },
+            isCalculated: true
+        },
+        {
+            unit: "Kenpachi",
+            img: "images/Kenpachi.png",
+            current: { trait: "", set: "", main: "", sub: "" },
+            fixed: { trait: "", set: "", main: "", sub: "" },
+            isCalculated: true
+        },
+        {
+            unit: "Ragna",
+            img: "images/Ragna.png",
+            current: { trait: "", set: "", main: "", sub: "" },
+            fixed: { trait: "", set: "", main: "", sub: "" },
+            isCalculated: true
+        },
+        {
+            unit: "Mob",
+            img: "images/Mob.png",
+            current: { trait: "", set: "", main: "", sub: "" },
+            fixed: { trait: "", set: "", main: "", sub: "" },
+            isCalculated: true
+        },
+        {
+            unit: "Shanks",
+            img: "images/Shanks.png", 
+            current: { trait: "", set: "", main: "", sub: "" },
+            fixed: { trait: "", set: "", main: "", sub: "" },
+            isCalculated: true
         }
     ];
 
@@ -909,10 +1036,11 @@
     // --- 1. DEFINE PERFECT PIECE STATS ---
     const BODY_DMG  = { dmg: 60, dot: 0,  cm: 0,   desc: "Dmg",  type: "dmg" };
     const BODY_DOT  = { dmg: 0,  dot: 75, cm: 0,   desc: "DoT",  type: "dot" };
-    const BODY_CDMG = { dmg: 0,  dot: 0,  cm: 120, desc: "Crit", type: "cm" };
+    const BODY_CDMG = { dmg: 0,  dot: 0,  cm: 120, desc: "Crit Dmg", type: "cm" };
 
     const LEG_DMG   = { dmg: 60, spa: 0,    desc: "Dmg", type: "dmg" };
     const LEG_SPA   = { dmg: 0,  spa: 22.5, desc: "Spa", type: "spa" };
+    const LEG_CRIT  = { dmg: 0,  spa: 0,    desc: "Crit Rate", type: "cf", cf: 37.5 }; // NEW: 37.5% Crit Rate Leg
 
     // --- 2. DEFINE SETS ---
     const SETS = [
@@ -926,7 +1054,7 @@
 
     SETS.forEach(set => {
         const bodies = [BODY_DMG, BODY_DOT, BODY_CDMG];
-        const legs   = [LEG_DMG, LEG_SPA];
+        const legs   = [LEG_DMG, LEG_SPA, LEG_CRIT]; // Added LEG_CRIT
 
         bodies.forEach(body => {
             legs.forEach(leg => {
@@ -938,7 +1066,7 @@
                     spa:  leg.spa, 
                     dot:  body.dot,
                     cm:   body.cm, 
-                    cf:   0,
+                    cf:   (body.cf || 0) + (leg.cf || 0), // Include cf from parts
                     bodyType: body.type,
                     legType: leg.type
                 });
@@ -1009,9 +1137,9 @@
         },
         {
             id: "shanks", name: "Shanks (Conqueror)", role: "Raw Dmg",
-            img: "images/Mob.png", 
+            img: "images/Shanks.png", 
             placement: 1,
-            stats: { dmg: 2750, spa: 12, crit: 0, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 5.5, passiveDmg: 0, element: "Rose", dotDuration: 0}
+            stats: { dmg: 2750, spa: 12, crit: 0, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 2.5, passiveDmg: 0, element: "Rose", dotDuration: 0}
         }
     ];
 
@@ -1094,7 +1222,6 @@
         // --- RAW RELIC STATS ---
         let baseR_Dmg = statConfig.applyRelicDmg ? relicStats.dmg : 0;
         let baseR_Spa = statConfig.applyRelicSpa ? relicStats.spa : 0;
-        // CHANGED: Crit Rate (cf) now always applies, independent of statConfig.applyRelicCrit
         let baseR_Cm  = statConfig.applyRelicCrit ? relicStats.cm : 0; 
         let baseR_Cf  = relicStats.cf; 
         let baseR_Dot = statConfig.applyRelicDot ? relicStats.dot : 0;
@@ -1135,6 +1262,13 @@
         const finalCdmgStat = preRelicCdmg * (1 + baseR_Cm / 100);
 
         let rCf  = baseR_Cf + (sBonus.cf || 0); 
+        
+        // --- KIRITO EXCEPTION ---
+        // Kirito cannot gain crit rate from relics/sets
+        if (uStats.id === 'kirito') {
+            rCf = 0; 
+        }
+
         const finalCritRate = Math.min(uStats.crit + traitCritRate + rCf, 100);
         
         const avgCritMult = (1 + ((finalCdmgStat / 100) * (finalCritRate / 100)));
@@ -1271,13 +1405,15 @@
     ];
 
     let cachedResults = {}; 
+    let currentGuideMode = 'current';
 
     document.getElementById('c_priority').addEventListener('change', function() {
         document.getElementById('prioLabel').innerText = this.checked ? "Max SPA (Lv99)" : "Max Damage (Lv99)";
     });
 
     function initRelicBuilder() {
-        const selects = document.querySelectorAll('.body-sub-type, .leg-sub-type');
+        // Updated selector to include .head-sub-type
+        const selects = document.querySelectorAll('.body-sub-type, .leg-sub-type, .head-sub-type');
         selects.forEach(sel => {
             SUB_OPTIONS.forEach(opt => {
                 const o = new Option(opt.label, opt.val);
@@ -1286,6 +1422,7 @@
         });
         updateRelicExclusions('body');
         updateRelicExclusions('leg');
+        // No exclusion needed for head as there is no main stat
     }
 
     function updateRelicExclusions(piece) {
@@ -1320,15 +1457,21 @@
         let stats = { dmg: 0, spa: 0, cm: 0, cf: 0, dot: 0, range: 0 };
 
         const processPiece = (piece) => {
-            const mainType = document.getElementById(`${piece}_main_type`).value;
-            const mainVal = parseFloat(document.getElementById(`${piece}_main_val`).value) || 0;
+            // Check if main inputs exist (Head piece has none)
+            const mainTypeEl = document.getElementById(`${piece}_main_type`);
+            const mainValEl = document.getElementById(`${piece}_main_val`);
             
-            if(mainType === 'dmg') stats.dmg += mainVal;
-            if(mainType === 'cdmg') stats.cm += mainVal;
-            if(mainType === 'dot') stats.dot += mainVal;
-            if(mainType === 'spa') stats.spa += mainVal;
-            if(mainType === 'crit') stats.cf += mainVal;
-            if(mainType === 'range') stats.range += mainVal;
+            if (mainTypeEl && mainValEl) {
+                const mainType = mainTypeEl.value;
+                const mainVal = parseFloat(mainValEl.value) || 0;
+                
+                if(mainType === 'dmg') stats.dmg += mainVal;
+                if(mainType === 'cdmg') stats.cm += mainVal;
+                if(mainType === 'dot') stats.dot += mainVal;
+                if(mainType === 'spa') stats.spa += mainVal;
+                if(mainType === 'crit') stats.cf += mainVal;
+                if(mainType === 'range') stats.range += mainVal;
+            }
 
             const subTypes = document.querySelectorAll(`.${piece}-sub-type`);
             const subVals = document.querySelectorAll(`.${piece}-sub-val`);
@@ -1346,6 +1489,7 @@
             });
         };
 
+        processPiece('head'); // Process new Head piece
         processPiece('body');
         processPiece('leg');
         return stats;
@@ -1380,11 +1524,54 @@
         renderDatabase(); // Re-run calculations
     }
 
+    function toggleHeadPiece(checkbox) {
+        if(checkbox.checked) {
+            checkbox.parentNode.classList.add('is-checked');
+        } else {
+            checkbox.parentNode.classList.remove('is-checked');
+        }
+        renderDatabase(); // Re-run calculations
+    }
+
+    // --- NEW: Toggle Hypothetical Mode (Crit/DoT) ---
+    function toggleHypothetical(checkbox) {
+        if(checkbox.checked) {
+            checkbox.parentNode.classList.add('is-checked');
+            setGuideMode('fixed');
+        } else {
+            checkbox.parentNode.classList.remove('is-checked');
+            setGuideMode('current');
+        }
+    }
+
+    // --- NEW FUNCTION FOR GUIDE TOGGLES ---
+    function toggleGuideSubStats(checkbox) {
+        if(checkbox.checked) { 
+            checkbox.parentNode.classList.add('is-checked'); 
+        } else { 
+            checkbox.parentNode.classList.remove('is-checked'); 
+        }
+        renderGuides();
+    }
+
+    function toggleGuideHeadPiece(checkbox) {
+        if(checkbox.checked) { 
+            checkbox.parentNode.classList.add('is-checked'); 
+        } else { 
+            checkbox.parentNode.classList.remove('is-checked'); 
+        }
+        renderGuides();
+    }
+
     function getUnitResultsHTML(unit, effectiveStats) {
         cachedResults = cachedResults || {};
         const activeTraits = [...traitsList, ...customTraits];
         const isAbilActive = activeAbilityIds.has(unit.id); 
         const includeSubs = document.getElementById('globalSubStats').checked;
+        const includeHead = document.getElementById('globalHeadPiece').checked;
+        
+        // Pass unit ID for specific calculations (like Kirito)
+        effectiveStats.id = unit.id;
 
         const filteredBuilds = globalBuilds.filter(b => {
             // CHANGED: Only filter out Crit Damage (cm), allow Crit Rate (cf)
@@ -1399,33 +1586,52 @@
         
         // Revised Optimization Helper: Finds best sub variant by testing all candidates
         const getBestSubConfiguration = (build, priority, context) => {
-            if (!includeSubs) {
-                // If subs are off, just calculate once
+            if (!includeSubs && !includeHead) {
+                // If subs are off AND head is off, just calculate once
                 return { res: calculateDPS(effectiveStats, build, context), desc: "" };
             }
 
             let bestRes = { total: -1 };
             let bestDesc = "";
 
-            SUB_CANDIDATES.forEach(cand => {
-                // CHANGED: Skip candidates if config is false (for cm and dot only)
-                if (!statConfig.applyRelicCrit && cand === 'cm') return; 
-                if (!statConfig.applyRelicDot && cand === 'dot') return;
+            // Filter candidates
+            const candidatesToTest = SUB_CANDIDATES.filter(cand => {
+                if (!statConfig.applyRelicCrit && cand === 'cm') return false; 
+                if (!statConfig.applyRelicDot && cand === 'dot') return false;
+                return true;
+            });
+            // If no subs but Head is on, we default to testing the priority stat or Dmg
+            if (candidatesToTest.length === 0 && includeHead) candidatesToTest.push('dmg');
 
+            candidatesToTest.forEach(cand => {
                 let testBuild = { ...build };
                 
                 // Helper to add subs
-                const addSubs = (excludeMain) => {
-                    for (let k in PERFECT_SUBS) {
-                        if (k !== excludeMain) {
-                            let mult = (k === cand) ? 6 : 1; 
-                            testBuild[k] += PERFECT_SUBS[k] * mult;
-                        }
+                const applyPieceStats = () => {
+                     for (let k in PERFECT_SUBS) {
+                        let mult = (k === cand) ? 6 : 1; 
+                        testBuild[k] += PERFECT_SUBS[k] * mult;
                     }
                 };
 
-                addSubs(testBuild.bodyType);
-                addSubs(testBuild.legType);
+                // 1. Apply to Body/Legs (if Subs Enabled)
+                if (includeSubs) {
+                    if(testBuild.bodyType !== cand) applyPieceStats();
+                    else {
+                        // Main stat conflict: Add base stats only for non-main
+                        for (let k in PERFECT_SUBS) { if(k !== testBuild.bodyType) testBuild[k] += PERFECT_SUBS[k]; }
+                    }
+
+                    if(testBuild.legType !== cand) applyPieceStats();
+                    else {
+                        for (let k in PERFECT_SUBS) { if(k !== testBuild.legType) testBuild[k] += PERFECT_SUBS[k]; }
+                    }
+                }
+
+                // 2. Apply to HEAD PIECE (If Toggle Enabled)
+                if (includeHead) {
+                    applyPieceStats(); // Head has no main stat conflict
+                }
 
                 let res = calculateDPS(effectiveStats, testBuild, context);
                 if (res.total > bestRes.total) {
@@ -1434,7 +1640,32 @@
                 }
             });
 
-            return { res: bestRes, desc: `Maxed: ${bestDesc}` };
+            let descStr = "";
+            if(includeSubs) descStr += `Maxed: ${bestDesc}`;
+            if(includeHead) descStr += `${includeSubs ? ' + ' : ''}Head: ${bestDesc}`;
+
+            return { res: bestRes, desc: descStr };
+        };
+
+        // NEW: Colorizer for Unit Database List
+        const formatBuildName = (name) => {
+            // 1. Swap terms to placeholders to prevent overlap
+            let s = name
+                .replace(/Crit Rate/g, '##CR##')
+                .replace(/Crit Dmg/g, '##CD##')
+                .replace(/Dmg/g, '##D##')
+                .replace(/DoT/g, '##DT##')
+                .replace(/Spa/g, '##S##');
+
+            // 2. Swap placeholders to styled HTML
+            return s
+                .replace(/##CR##/g, "<span style='color:var(--gold)'>Crit Rate</span>")
+                .replace(/##CD##/g, "<span style='background: linear-gradient(to right, #a855f7, #ff5555); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 800;'>Crit Dmg</span>")
+                // Stronger Red for Dmg
+                .replace(/##D##/g, "<span style='color:#F5564F'>Dmg</span>")
+                // Green for DoT
+                .replace(/##DT##/g, "<span style='color:#4ade80'>DoT</span>")
+                .replace(/##S##/g, "<span style='color:#68E7F5'>Spa</span>");
         };
 
         activeTraits.forEach(trait => {
@@ -1463,15 +1694,16 @@
                 // --- STORE RESULTS ---
                 let suffix = isAbilActive ? '-ABILITY' : '-BASE';
                 let subsSuffix = includeSubs ? '-SUBS' : '-NOSUBS';
+                let headSuffix = includeHead ? '-HEAD' : '-NOHEAD';
                 let safeBuildName = build.name.replace(/[^a-zA-Z0-9]/g, '');
                 
                 // Save Dmg Result
                 if (!isNaN(resDmg.total)) {
-                    let id = `${unit.id}${suffix}-${trait.id}-${safeBuildName}-dmg${subsSuffix}`;
+                    let id = `${unit.id}${suffix}-${trait.id}-${safeBuildName}-dmg${subsSuffix}${headSuffix}`;
                     cachedResults[id] = resDmg;
                     unitResults.push({
                         id: id,
-                        buildName: build.name,
+                        buildName: formatBuildName(build.name), // Apply coloring
                         traitName: trait.name,
                         dps: resDmg.total,
                         spa: resDmg.spa,
@@ -1484,11 +1716,11 @@
                 // Save SPA Result (if meaningful difference)
                 if (!isNaN(resSpa.total) && resSpa.total > 0) { 
                     if (Math.abs(resSpa.total - resDmg.total) > 1) {
-                        let id = `${unit.id}${suffix}-${trait.id}-${safeBuildName}-spa${subsSuffix}`;
+                        let id = `${unit.id}${suffix}-${trait.id}-${safeBuildName}-spa${subsSuffix}${headSuffix}`;
                         cachedResults[id] = resSpa;
                         unitResults.push({
                             id: id,
-                            buildName: build.name,
+                            buildName: formatBuildName(build.name), // Apply coloring
                             traitName: trait.name,
                             dps: resSpa.total,
                             spa: resSpa.spa,
@@ -1510,7 +1742,8 @@
             let rankClass = i < 3 ? `rank-${i+1}` : 'rank-other';
             if(r.isCustom) rankClass += ' is-custom';
             
-            const searchText = (r.traitName + ' ' + r.buildName + ' ' + r.prio).toLowerCase();
+            // Note: searchText uses plain text, not HTML
+            const searchText = (r.traitName + ' ' + r.buildName.replace(/<[^>]*>?/gm, '') + ' ' + r.prio).toLowerCase();
             const prioType = r.prio === 'Dmg Stat' ? 'dmg' : 'spa';
 
             return `
@@ -1600,6 +1833,7 @@
         
         const selectedUnits = unitDatabase.filter(u => selectedUnitIds.has(u.id));
         const includeSubs = document.getElementById('globalSubStats').checked;
+        const includeHead = document.getElementById('globalHeadPiece').checked;
         
         let html = `
             <table class="compare-table">
@@ -1620,33 +1854,52 @@
             let bestSpa = 0;
             let bestPrio = "";
             let bestVariant = "";
+            
+            // Ensure ID is present for Kirito Logic
+            statsObj.id = unitObj.id;
 
             // Optimized Sub Helper inside Comparison
             const getBestSubConfiguration = (build, priority, context) => {
-                if (!includeSubs) return { res: calculateDPS(statsObj, build, context), desc: "" };
+                if (!includeSubs && !includeHead) return { res: calculateDPS(statsObj, build, context), desc: "" };
                 
                 let bRes = { total: -1 };
                 let bDesc = "";
-                SUB_CANDIDATES.forEach(cand => {
-                    // CHANGED: Skip logic here as well
-                    if (!statConfig.applyRelicCrit && cand === 'cm') return; 
-                    if (!statConfig.applyRelicDot && cand === 'dot') return;
 
+                const candidatesToTest = SUB_CANDIDATES.filter(cand => {
+                    if (!statConfig.applyRelicCrit && cand === 'cm') return false; 
+                    if (!statConfig.applyRelicDot && cand === 'dot') return false;
+                    return true;
+                });
+                if (candidatesToTest.length === 0 && includeHead) candidatesToTest.push('dmg');
+
+                candidatesToTest.forEach(cand => {
                     let testBuild = { ...build };
-                    const addSubs = (excludeMain) => {
-                        for (let k in PERFECT_SUBS) {
-                            if (k !== excludeMain) {
-                                let mult = (k === cand) ? 6 : 1; 
-                                testBuild[k] += PERFECT_SUBS[k] * mult;
-                            }
+                    
+                    const applyPieceStats = () => {
+                         for (let k in PERFECT_SUBS) {
+                            let mult = (k === cand) ? 6 : 1; 
+                            testBuild[k] += PERFECT_SUBS[k] * mult;
                         }
                     };
-                    addSubs(testBuild.bodyType);
-                    addSubs(testBuild.legType);
+
+                    if (includeSubs) {
+                        if(testBuild.bodyType !== cand) applyPieceStats();
+                        else for (let k in PERFECT_SUBS) { if(k !== testBuild.bodyType) testBuild[k] += PERFECT_SUBS[k]; }
+
+                        if(testBuild.legType !== cand) applyPieceStats();
+                        else for (let k in PERFECT_SUBS) { if(k !== testBuild.legType) testBuild[k] += PERFECT_SUBS[k]; }
+                    }
+                    
+                    if (includeHead) applyPieceStats();
+
                     let res = calculateDPS(statsObj, testBuild, context);
                     if (res.total > bRes.total) { bRes = res; bDesc = SUB_NAMES[cand]; }
                 });
-                return { res: bRes, desc: `Maxed: ${bDesc}` };
+                
+                let descStr = "";
+                if(includeSubs) descStr += `Maxed: ${bDesc}`;
+                if(includeHead) descStr += `${includeSubs ? ' + ' : ''}Head: ${bDesc}`;
+                return { res: bRes, desc: descStr };
             };
 
             availableTraits.forEach(trait => {
@@ -2210,37 +2463,77 @@
     }
 
     function setGuideMode(mode) {
+        currentGuideMode = mode;
+
+        // Update global config based on mode
+        if (mode === 'current') {
+            statConfig.applyRelicCrit = false;
+            statConfig.applyRelicDot = false;
+        } else {
+            statConfig.applyRelicCrit = true;
+            statConfig.applyRelicDot = true;
+        }
+
         const buttons = document.querySelectorAll('.guide-toggle-btn');
         buttons.forEach(btn => btn.classList.remove('active'));
         const activeBtn = Array.from(buttons).find(btn => btn.innerText.toLowerCase().includes(mode === 'current' ? 'current' : 'hypothetical'));
         if(activeBtn) activeBtn.classList.add('active');
 
+        // NEW: Sync the header toggle switch if it exists
+        const hypoCb = document.getElementById('globalHypothetical');
+        if(hypoCb) {
+            hypoCb.checked = (mode === 'fixed');
+            if(mode === 'fixed') hypoCb.parentNode.classList.add('is-checked');
+            else hypoCb.parentNode.classList.remove('is-checked');
+        }
+
         const warning = document.getElementById('guideWarning');
         warning.style.display = (mode === 'current') ? 'block' : 'none';
 
-        renderGuides(mode);
+        renderGuides(); // Re-render guides based on selected unit/trait and new mode
+        renderDatabase(); // Update DB and Calculator context to match selected meta
     }
 
-    function renderGuides(mode) {
+    function populateGuideDropdowns() {
+        const unitSelect = document.getElementById('guideUnitSelect');
+        const traitSelect = document.getElementById('guideTraitSelect');
+
+        // Populate Unit Select
+        unitDatabase.forEach(unit => {
+            const option = new Option(unit.name, unit.id);
+            unitSelect.add(option);
+        });
+
+        // Populate Trait Select
+        traitsList.filter(t => t.id !== 'none').forEach(trait => {
+            const option = new Option(trait.name, trait.id);
+            traitSelect.add(option);
+        });
+    }
+
+    // =========================================================================
+    // UPDATE 1: renderGuides
+    // Logic: Checks if 'all' is selected to limit rows to 1, otherwise shows 5.
+    // =========================================================================
+    function renderGuides() {
         const tableBody = document.getElementById('guideTableBody');
         tableBody.innerHTML = '';
 
-        const colorize = (text) => {
-            if(!text) return '';
-            let html = text
-                .replace(/Damage|Dmg/g, '<span class="stat-badge stat-dmg">Dmg</span>')
-                .replace(/Spa|SPA/g, '<span class="stat-badge stat-spa">Spa</span>')
-                .replace(/Crit Rate|Crit|Crit Damage/g, '<span class="stat-badge stat-crit">Crit</span>')
-                .replace(/DoT|Buff Potency/g, '<span class="stat-badge stat-dot">$&</span>')
-                .replace(/Range|Rng/g, '<span class="stat-badge stat-range">Range</span>');
-            return html;
-        };
+        const unitSelect = document.getElementById('guideUnitSelect');
+        const traitSelect = document.getElementById('guideTraitSelect');
+        
+        const selectedUnitId = unitSelect.value;
+        const selectedTraitId = traitSelect.value;
 
-        guideData.forEach(row => {
-            const data = row[mode]; 
+        // --- 1. RENDER GENERIC GUIDES ---
+        const genericGuides = guideData.filter(d => !d.isCalculated);
+        genericGuides.forEach(row => {
+            if (selectedUnitId !== 'all' && unitDatabase.some(u => u.id === selectedUnitId)) return;
+
+            const data = row[currentGuideMode]; 
             const tr = document.createElement('tr');
             tr.className = 'guide-row';
-
+            
             const imgHtml = row.img ? `<img src="${row.img}" style="width:35px; height:35px; border-radius:50%; margin-right:8px; border:2px solid #fff; vertical-align:middle;">` : '';
             
             tr.innerHTML = `
@@ -2252,10 +2545,266 @@
                 </td>
                 <td style="color:var(--accent-end); font-weight:bold; font-size:0.8rem;">${data.trait}</td>
                 <td>${data.set}</td>
-                <td>${colorize(data.main)}</td>
-                <td>${colorize(data.sub)}</td>
+                <td style="color:#666; font-size:0.8rem;">-</td>
+                <td>${formatStatBadge(data.main)}</td>
+                <td>${formatStatBadge(data.sub)}</td>
             `;
             tableBody.appendChild(tr);
+        });
+
+        // --- 2. RENDER DYNAMIC UNIT CALCULATIONS ---
+        let unitsToDisplay = [];
+        if (selectedUnitId !== 'all') {
+            const unit = unitDatabase.find(u => u.id === selectedUnitId);
+            if (unit) unitsToDisplay.push(unit);
+        } else {
+            unitsToDisplay = unitDatabase; 
+        }
+
+        // =======================================================
+        // NEW: PRE-CALCULATE AND SORT BY DPS
+        // =======================================================
+        let calculatedUnits = unitsToDisplay.map(unit => {
+            let traitToUse = null;
+            if (selectedTraitId === 'auto') {
+                traitToUse = findOverallBestTraitForUnit(unit);
+            } else {
+                traitToUse = traitsList.find(t => t.id === selectedTraitId);
+            }
+            
+            if (!traitToUse) return null;
+
+            const topBuilds = getTopBuildsForGuide(unit, traitToUse);
+            if (topBuilds.length === 0) return null;
+
+            return {
+                unit: unit,
+                trait: traitToUse,
+                topBuilds: topBuilds,
+                maxDps: topBuilds[0].dps // Use the first (Rank 1) build's DPS for sorting
+            };
+        }).filter(item => item !== null);
+
+        // Sort Highest DPS to Lowest
+        calculatedUnits.sort((a, b) => b.maxDps - a.maxDps);
+
+        // Render the Sorted List
+        calculatedUnits.forEach(item => {
+            const unit = item.unit;
+            const traitToUse = item.trait;
+            const topBuilds = item.topBuilds;
+            
+            // Logic: If 'All Units' is selected, show only Rank 1. Else show top 5.
+            const showCount = (selectedUnitId === 'all') ? 1 : 5;
+            const buildsToShow = topBuilds.slice(0, showCount);
+
+            buildsToShow.forEach((build, index) => {
+                const tr = document.createElement('tr');
+                tr.className = 'guide-row';
+
+                const imgHtml = unit.img ? `<img src="${unit.img}" style="width:35px; height:35px; border-radius:50%; margin-right:8px; border:2px solid #fff; vertical-align:middle;">` : '';
+                
+                // Show name/image on first row OR if a specific unit is selected (all rows)
+                const showUnitInfo = (selectedUnitId !== 'all') ? true : (index === 0); 
+                
+                let rankColor = '#94a3b8';
+                if (index === 0) rankColor = 'var(--gold)';
+                else if (index === 1) rankColor = 'var(--silver)';
+                else if (index === 2) rankColor = 'var(--bronze)';
+
+                const dpsStyle = "font-weight:900; color:var(--accent-start); font-size:1.15rem; font-family:'Consolas', monospace; text-shadow: 0 0 8px rgba(59, 130, 246, 0.2);";
+
+                tr.innerHTML = `
+                    <td>
+                        <div style="display:flex; align-items:center;">
+                            ${showUnitInfo ? imgHtml : '<div style="width:43px; display:inline-block;"></div>'}
+                            <span style="font-weight:bold; color:#fff; ${showUnitInfo ? '' : 'opacity:0;'}">${unit.name}</span>
+                        </div>
+                    </td>
+                    <td style="color:var(--accent-end); font-weight:bold; font-size:0.8rem;">
+                        ${showUnitInfo ? traitToUse.name : ''}
+                    </td>
+                    <td>
+                        <span style="font-weight:bold; color:${rankColor};">${index + 1}. ${build.name}</span>
+                    </td>
+                    <td style="${dpsStyle}">${format(build.dps)}</td>
+                    <td>${build.main}</td> <!-- Already HTML -->
+                    <td>${build.sub}</td>  <!-- Already HTML -->
+                `;
+                tableBody.appendChild(tr);
+            });
+        });
+    }
+
+
+    // Helper to find the single best trait for a unit
+    function findOverallBestTraitForUnit(unit) {
+        let bestTrait = null;
+        let maxDps = -1;
+
+        traitsList.filter(t => t.id !== 'none').forEach(trait => {
+            const topBuilds = getTopBuildsForGuide(unit, trait);
+            if (topBuilds.length > 0 && topBuilds[0].dps > maxDps) {
+                maxDps = topBuilds[0].dps;
+                bestTrait = trait;
+            }
+        });
+        return bestTrait;
+    }
+
+    // =========================================================================
+    // UPDATE 2: getTopBuildsForGuide (Formerly Top3)
+    // Logic: Returns Top 5 now.
+    // =========================================================================
+    function getTopBuildsForGuide(unit, trait) {
+        let results = [];
+        let effectiveStats = { ...unit.stats };
+        if (activeAbilityIds.has(unit.id) && unit.ability) {
+            Object.assign(effectiveStats, unit.ability);
+        }
+        
+        // Pass unit ID for logic checks (Kirito)
+        effectiveStats.id = unit.id;
+
+        let actualPlacement = Math.min(unit.placement, trait.limitPlace || unit.placement);
+        let context = { 
+            level: 99, wave: 25, isBoss: false, traitObj: trait, placement: actualPlacement, isSSS: true 
+        };
+        
+        // CHANGED: Use the specific guide checkbox, default true
+        const guideCb = document.getElementById('guideSubStats');
+        const includeSubs = guideCb ? guideCb.checked : true;
+        
+        // CHANGED: Use the specific guide head checkbox
+        const guideHeadCb = document.getElementById('guideHeadPiece');
+        const includeHead = guideHeadCb ? guideHeadCb.checked : false;
+
+        const validBuilds = globalBuilds.filter(b => {
+             if (!statConfig.applyRelicCrit && b.cm > 0) return false;
+             if (!statConfig.applyRelicDot && b.dot > 0) return false;
+             if (!statConfig.applyRelicDmg && b.dmg > 10) return false; 
+             if (!statConfig.applyRelicSpa && b.spa > 10) return false; 
+             return true;
+        });
+
+        // Optimization Helper: Returns Objects instead of strings now
+        const getBestSubConfigurationForGuide = (build, priority, context) => {
+            if (!includeSubs && !includeHead) {
+                return { res: calculateDPS(effectiveStats, build, context), subStat: null, headStat: null };
+            }
+
+            let bestRes = { total: -1 };
+            let bestName = "";
+
+            const currentSubCandidates = SUB_CANDIDATES.filter(cand => {
+                if (!statConfig.applyRelicCrit && cand === 'cm') return false; 
+                if (!statConfig.applyRelicDot && cand === 'dot') return false;
+                return true;
+            });
+            if (currentSubCandidates.length === 0 && includeHead) currentSubCandidates.push('dmg');
+
+            currentSubCandidates.forEach(cand => {
+                let testBuild = { ...build };
+                
+                const applyPieceStats = () => {
+                     for (let k in PERFECT_SUBS) {
+                        let mult = (k === cand) ? 6 : 1; 
+                        testBuild[k] += PERFECT_SUBS[k] * mult;
+                    }
+                };
+
+                if (includeSubs) {
+                    if(testBuild.bodyType !== cand) applyPieceStats();
+                    else for (let k in PERFECT_SUBS) { if(k !== testBuild.bodyType) testBuild[k] += PERFECT_SUBS[k]; }
+
+                    if(testBuild.legType !== cand) applyPieceStats();
+                    else for (let k in PERFECT_SUBS) { if(k !== testBuild.legType) testBuild[k] += PERFECT_SUBS[k]; }
+                }
+
+                if (includeHead) applyPieceStats();
+
+                let res = calculateDPS(effectiveStats, testBuild, context);
+                if (res.total > bestRes.total) {
+                    bestRes = res;
+                    bestName = SUB_NAMES[cand]; // Store Friendly Name (e.g., "Crit Rate")
+                }
+            });
+            
+            return { 
+                res: bestRes, 
+                subStat: includeSubs ? bestName : null,
+                headStat: includeHead ? bestName : null
+            };
+        };
+
+        validBuilds.forEach(build => {
+            // Test Dmg Priority
+            context.priority = 'dmg';
+            let bestDmgConfig = getBestSubConfigurationForGuide(build, 'dmg', context);
+            
+            // Test Spa Priority
+            context.priority = 'spa';
+            let bestSpaConfig = getBestSubConfigurationForGuide(build, 'spa', context);
+
+            let finalConfig;
+            if (bestDmgConfig.res.total > bestSpaConfig.res.total) {
+                finalConfig = bestDmgConfig;
+            } else {
+                finalConfig = bestSpaConfig;
+            }
+
+            results.push({
+                name: build.name,
+                dps: finalConfig.res.total,
+                set: SETS.find(s => s.id === build.set).name,
+                rawBuild: build,
+                // Store the breakdown for formatting later
+                subData: {
+                    sub: finalConfig.subStat,
+                    head: finalConfig.headStat
+                }
+            });
+        });
+
+        results.sort((a,b) => b.dps - a.dps);
+        
+        // Return Top 5
+        return results.slice(0, 5).map(b => {
+            const getStatName = (type) => {
+                if (type === 'dmg') return 'Dmg';
+                if (type === 'dot') return 'DoT';
+                if (type === 'cm') return 'Crit Dmg';
+                if (type === 'spa') return 'SPA';
+                if (type === 'cf') return 'Crit Rate'; 
+                return 'N/A';
+            };
+
+            const topStat = getStatName(b.rawBuild.bodyType);
+            const legStat = getStatName(b.rawBuild.legType);
+
+            // --- BUILD SUB STAT HTML ---
+            let subHtml = '';
+            
+            // Row 1: Maxed Subs
+            if (b.subData.sub) {
+                subHtml += `<div class="g-row"><span class="g-lbl">SUBS</span>${formatStatBadge(b.subData.sub)}</div>`;
+            }
+            
+            // Row 2: Head Piece
+            if (b.subData.head) {
+                subHtml += `<div class="g-row"><span class="g-lbl">HEAD</span>${formatStatBadge(b.subData.head)}</div>`;
+            }
+            
+            // Fallback
+            if (!subHtml) subHtml = '<span style="color:#666; font-size:0.75rem">None</span>';
+
+            return {
+                name: b.name,
+                dps: b.dps,
+                set: b.set,
+                main: `<div class="g-row"><span class="g-lbl">TOP</span>${formatStatBadge(topStat)}</div><div class="g-row"><span class="g-lbl">LEG</span>${formatStatBadge(legStat)}</div>`,
+                sub: subHtml // Now returns pre-formatted HTML
+            };
         });
     }
 
@@ -2291,6 +2840,11 @@
             injector.style.display = 'none';
             selectAllBtn.style.display = 'none'; 
         }
+
+        // When switching to guides, ensure it renders based on current selections
+        if (pid === 'guides') {
+            renderGuides();
+        }
     }
 
     function format(n) {
@@ -2303,8 +2857,8 @@
     window.onload = function() {
         initCalcDropdown();
         initRelicBuilder(); 
-        renderDatabase();
-        setGuideMode('current'); 
+        populateGuideDropdowns(); // Populate new guide dropdowns
+        setGuideMode('current'); // Default to Current Meta (Bugged) on load
     };
 
 </script>
