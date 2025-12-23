@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Meta Database & Calc</title>
+    <title>Universal TD Optimizer</title>
     <style>
         :root {
             --bg-color: #050505;
@@ -14,13 +14,8 @@
             --accent-start: #3b82f6;
             --accent-end: #a855f7;
             --gold: #ffd700;
-            --silver: #c0c0c0;
-            --bronze: #cd7f32;
             --custom: #06b6d4; 
-            --toolbar-bg: #080808;
             --success: #10b981;
-            
-            /* The Unit Banner Vibe */
             --banner-gradient: radial-gradient(circle at center, #2e1065, #000);
             --banner-border: #4c1d95;
         }
@@ -42,7 +37,6 @@
         header { 
             text-align: center; 
             padding-top: 20px; 
-            padding-bottom: 10px;
             width: 100%;
         }
         
@@ -75,6 +69,7 @@
             justify-content: center;
             width: 100%;
             margin-bottom: 5px; 
+            flex-wrap: wrap;
         }
 
         .nav-btn {
@@ -90,11 +85,29 @@
             color: white; box-shadow: 0 0 15px rgba(59, 130, 246, 0.3);
         }
 
-        /* Compare Button */
+        /* --- NEW SUB STAT TOGGLE --- */
+        .nav-toggle-label {
+            display: flex; align-items: center; gap: 8px;
+            background: rgba(255,255,255,0.05); border: 1px solid #333;
+            padding: 6px 15px; border-radius: 6px; cursor: pointer;
+            color: #888; font-weight: 700; text-transform: uppercase; font-size: 0.75rem;
+            user-select: none; transition: 0.3s; margin-left: 10px;
+        }
+        .nav-toggle-label:hover { border-color: #666; color: #fff; }
+        .nav-toggle-label input { display: none; }
+        
+        /* Checked State */
+        .nav-toggle-label.is-checked {
+            background: rgba(16, 185, 129, 0.1); 
+            border-color: var(--success);
+            color: var(--success);
+            box-shadow: 0 0 10px rgba(16, 185, 129, 0.2);
+        }
+
         #compareBtn {
             display: none; 
             border: 1px solid var(--banner-border);
-            color: #d8b4fe; /* Light purple */
+            color: #d8b4fe;
             background: rgba(46, 16, 101, 0.3);
             animation: fadeIn 0.3s ease;
         }
@@ -104,7 +117,6 @@
             box-shadow: 0 0 15px rgba(168, 85, 247, 0.4);
         }
 
-        /* --- INTEGRATED INJECTOR PANEL --- */
         .injector-panel {
             width: 100%;
             background: rgba(255,255,255,0.03);
@@ -123,7 +135,6 @@
         }
         .add-btn:hover { box-shadow: 0 0 15px rgba(6, 182, 212, 0.4); }
 
-        /* --- PAGE LAYOUT --- */
         .page { 
             display: none; 
             width: 100%; 
@@ -134,7 +145,6 @@
         .page.active { display: grid; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* --- Calculator Layout --- */
         .calc-layout { 
             grid-template-columns: 1fr 1.2fr; 
             gap: 20px; 
@@ -193,7 +203,6 @@
         
         .db-grid { grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 20px; width: 100%; }
 
-        /* --- UNIT CARD & SELECTION --- */
         .unit-card {
             background: var(--card-bg); border: 2px solid var(--card-border);
             border-radius: 16px; overflow: hidden; position: relative;
@@ -203,8 +212,8 @@
         .unit-card:hover { border-color: var(--accent-start); }
 
         .unit-card.is-selected {
-            border-color: #4c1d95; /* Darker Purple (Banner Border) */
-            box-shadow: 0 0 20px rgba(76, 29, 149, 0.5); /* Darker glow */
+            border-color: #4c1d95;
+            box-shadow: 0 0 20px rgba(76, 29, 149, 0.5);
         }
 
         .unit-banner {
@@ -227,7 +236,6 @@
         .unit-title h2 { margin: 0; font-size: 1.3rem; color: white; }
         .unit-title span { font-size: 0.7rem; color: var(--accent-start); text-transform: uppercase; font-weight: bold; }
 
-        /* --- ACTION TOOLBAR (Below Banner) --- */
         .unit-toolbar {
             background: var(--toolbar-bg);
             border-bottom: 1px solid var(--card-border);
@@ -245,9 +253,9 @@
         .select-btn:hover { background: #222; color: #fff; border-color: #666; }
         
         .unit-card.is-selected .select-btn {
-            background: #2e1065; /* Dark deep purple */
+            background: #2e1065; 
             border-color: #4c1d95; 
-            color: #e9d5ff; /* Very light purple text */
+            color: #e9d5ff; 
             box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
         }
 
@@ -287,6 +295,8 @@
             white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 180px;
         }
         .build-name { font-weight: 700; font-size: 0.85rem; color: #fff; margin-top: 1px;}
+        .build-variant { font-size: 0.65rem; color: #888; margin-top:1px; }
+        .build-variant span { color: var(--success); font-weight:bold; }
         
         .build-stats-row {
             display: flex; justify-content: space-between; width: 100%; margin-top: 2px;
@@ -306,7 +316,60 @@
         }
         .info-btn:hover { background: var(--accent-start); color: #fff; border-color: var(--accent-start); }
 
-        /* --- MODAL STYLES --- */
+        .guide-container {
+            width: 100%;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 20px;
+        }
+        .guide-controls { display: flex; justify-content: center; gap: 15px; margin-bottom: 25px; }
+        .guide-toggle-btn {
+            background: rgba(0,0,0,0.5); border: 1px solid var(--card-border); color: #888;
+            padding: 10px 20px; border-radius: 30px; font-weight: 700;
+            text-transform: uppercase; font-size: 0.8rem; cursor: pointer; transition: all 0.3s ease;
+        }
+        .guide-toggle-btn:hover { border-color: #fff; color: #fff; }
+        .guide-toggle-btn.active { 
+            background: var(--accent-start); color: white; border-color: var(--accent-start); 
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
+        }
+        .guide-warning {
+            text-align: center; background: rgba(255, 50, 50, 0.1); border: 1px solid rgba(255, 50, 50, 0.3);
+            color: #ff8888; padding: 10px; border-radius: 8px; font-size: 0.8rem; margin-bottom: 20px; font-weight: bold;
+        }
+        .guide-table { width: 100%; border-collapse: collapse; font-family: 'Segoe UI', sans-serif; font-size: 0.9rem; }
+        .guide-table th {
+            text-align: left; padding: 15px 10px; background: rgba(255,255,255,0.05);
+            color: var(--text-secondary); font-size: 0.75rem; text-transform: uppercase;
+            border-bottom: 2px solid var(--card-border);
+        }
+        .guide-table td {
+            padding: 15px 10px; border-bottom: 1px solid rgba(255,255,255,0.05); color: #ddd; vertical-align: middle;
+        }
+        .guide-row:hover { background: rgba(255,255,255,0.03); }
+        .stat-badge {
+            display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 0.75rem;
+            font-weight: 700; text-transform: uppercase; margin-right: 5px; margin-bottom: 3px;
+        }
+        .stat-dmg { background: rgba(255, 50, 50, 0.15); color: #ff8888; border: 1px solid rgba(255,50,50,0.3); }
+        .stat-spa { background: rgba(50, 150, 255, 0.15); color: #88ccff; border: 1px solid rgba(50,150,255,0.3); }
+        .stat-crit { background: rgba(255, 215, 0, 0.1); color: var(--gold); border: 1px solid rgba(255, 215, 0, 0.3); }
+        .stat-dot { background: rgba(168, 85, 247, 0.15); color: #d8b4fe; border: 1px solid rgba(168,85,247,0.3); }
+        .stat-range { background: rgba(255, 140, 0, 0.15); color: #ffa500; border: 1px solid rgba(255, 140, 0, 0.3); }
+
+        .relic-section {
+            background: rgba(255,255,255,0.02); border: 1px solid #222;
+            padding: 10px; border-radius: 8px; margin-bottom: 10px;
+        }
+        .relic-section h4 { margin: 0 0 10px 0; color: #888; font-size: 0.8rem; text-transform: uppercase; border-bottom: 1px solid #333; padding-bottom: 5px; }
+        .sub-row { display: grid; grid-template-columns: 1.5fr 1fr 0.5fr; gap: 5px; margin-bottom: 5px; align-items: center; }
+        .max-btn { 
+            background: var(--card-border); color: #fff; border: 1px solid #333;
+            font-size: 0.6rem; padding: 5px; cursor: pointer; text-align: center; border-radius: 4px;
+        }
+        .max-btn:hover { background: var(--accent-start); border-color: var(--accent-start); }
+
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.9); z-index: 2000;
@@ -314,101 +377,49 @@
             backdrop-filter: blur(8px);
         }
         .modal-content {
-            background: var(--card-bg);
-            border: 1px solid var(--card-border);
-            border-radius: 15px;
-            max-width: 600px;
-            width: 95%;
-            box-shadow: 0 0 40px rgba(0,0,0, 0.7);
-            max-height: 90vh; 
+            background: var(--card-bg); border: 1px solid var(--card-border);
+            border-radius: 15px; max-width: 600px; width: 95%;
+            box-shadow: 0 0 40px rgba(0,0,0, 0.7); max-height: 90vh; 
             display: flex; flex-direction: column; overflow: hidden; padding: 0;
         }
         
-        /* Math Modal Specifics to match "Stats" look */
-        #mathModal .modal-content {
-            border: 1px solid #333;
-            background: #0a0a0c;
-        }
-        #mathModal .modal-header-fixed {
-            background: #0a0a0c;
-            border-bottom: 1px solid #222;
-            padding: 15px 20px;
-        }
-        #mathModal .modal-footer-fixed {
-            background: #0a0a0c;
-            border-top: 1px solid #222;
-        }
+        #mathModal .modal-content { border: 1px solid #333; background: #0a0a0c; }
+        #mathModal .modal-header-fixed { background: #0a0a0c; border-bottom: 1px solid #222; padding: 15px 20px; }
+        #mathModal .modal-footer-fixed { background: #0a0a0c; border-top: 1px solid #222; }
         
         .modal-header-fixed {
             padding: 20px 20px 10px 20px; flex-shrink: 0;
             background: var(--card-bg); border-bottom: 1px solid #333; z-index: 5;
             display: flex; justify-content: space-between; align-items: center;
         }
-        .modal-scroll-area {
-            padding: 20px; overflow-y: auto; flex-grow: 1;
-            scrollbar-width: thin; scrollbar-color: #444 #111;
-        }
-        .modal-footer-fixed {
-            padding: 20px; flex-shrink: 0;
-            background: var(--card-bg); border-top: 1px solid #333; z-index: 5;
-        }
+        .modal-scroll-area { padding: 20px; overflow-y: auto; flex-grow: 1; scrollbar-width: thin; scrollbar-color: #444 #111; }
+        .modal-footer-fixed { padding: 20px; flex-shrink: 0; background: var(--card-bg); border-top: 1px solid #333; z-index: 5; }
         
-        /* Math Modal Styles from Test.html */
         .math-section { margin-bottom: 15px; border-bottom: 1px solid #333; padding-bottom: 10px; }
         .math-header { font-size: 0.8rem; color: var(--accent-start); font-weight: bold; text-transform: uppercase; margin-bottom: 5px; }
         .math-row { display: flex; justify-content: space-between; padding: 3px 0; font-size: 0.85rem; color: #bbb;}
         .math-row b { color: #fff; }
 
-        /* Compare Modal Specifics (Vibe Check) */
-        #compareModal .modal-content { 
-            max-width: 1100px; 
-            border: 1px solid var(--banner-border); 
-            box-shadow: 0 0 50px rgba(46, 16, 101, 0.5);
-        }
-        #compareModal .modal-header-fixed { 
-            background: var(--banner-gradient);
-            border-bottom: 1px solid var(--banner-border);
-        }
+        #compareModal .modal-content { max-width: 1100px; border: 1px solid var(--banner-border); box-shadow: 0 0 50px rgba(46, 16, 101, 0.5); }
+        #compareModal .modal-header-fixed { background: var(--banner-gradient); border-bottom: 1px solid var(--banner-border); }
         #compareModal .modal-header-fixed h2 { color: #fff; text-shadow: 0 0 10px rgba(255,255,255,0.5); }
         
         .compare-table { width: 100%; border-collapse: collapse; font-family: 'Consolas', monospace; font-size: 0.8rem; }
-        
         .compare-table th { 
-            text-align: left; 
-            color: #d8b4fe; /* Light purple */
-            background: rgba(46, 16, 101, 0.4); /* Subtle purple backing for header */
-            border-bottom: 2px solid var(--banner-border); 
-            padding: 15px 10px; font-weight:800; text-transform:uppercase; font-size:0.7rem; 
+            text-align: left; color: #d8b4fe; background: rgba(46, 16, 101, 0.4);
+            border-bottom: 2px solid var(--banner-border); padding: 15px 10px; font-weight:800; text-transform:uppercase; font-size:0.7rem; 
         }
-        
         .compare-table td { padding: 15px 10px; border-bottom: 1px solid rgba(255,255,255,0.05); vertical-align: middle; color: #ddd; }
+        .compare-table tr:hover { background: linear-gradient(90deg, rgba(46, 16, 101, 0.4), transparent); }
         
-        /* Row Hover Effect to match Vibe */
-        .compare-table tr:hover { 
-            background: linear-gradient(90deg, rgba(46, 16, 101, 0.4), transparent); 
-        }
-                /* --- COMPARE TABLE UPDATES --- */
-        /* Custom Custom Build Row Styling */
-        .comp-row-custom {
-            /* Clean solid line on the left instead of a box border */
-            border-left: 3px solid var(--custom); 
-            background: linear-gradient(90deg, rgba(6, 182, 212, 0.1), transparent) !important;
-        }
-        .comp-row-custom td {
-            color: var(--custom) !important;
-        }
-        .comp-row-custom .comp-highlight {
-            color: var(--custom);
-        }
+        .comp-row-custom { border-left: 3px solid var(--custom); background: linear-gradient(90deg, rgba(6, 182, 212, 0.1), transparent) !important; }
+        .comp-row-custom td { color: var(--custom) !important; }
+        .comp-row-custom .comp-highlight { color: var(--custom); }
         .comp-unit-wrap { display: flex; align-items: center; gap: 10px; }
         .comp-img { width: 40px; height: 40px; border-radius: 50%; border: 2px solid #fff; }
-        
         .comp-highlight { color: var(--gold); font-weight: bold; font-size: 0.95rem; }
         .comp-sub { color: #888; font-size: 0.7rem; display: block; margin-top: 3px; }
-        .comp-tag { 
-            background: rgba(255,255,255,0.05); border: 1px solid #444; 
-            padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; color: var(--accent-start);
-        }
+        .comp-tag { background: rgba(255,255,255,0.05); border: 1px solid #444; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; color: var(--accent-start); }
 
         .deep-dive-trigger {
             display: flex; justify-content: space-between; align-items: center;
@@ -434,12 +445,8 @@
         }
 
         .dd-section {
-            background: #0e0e11; 
-            border-radius: 8px;
-            padding: 15px;
-            margin-top: 10px;
-            border-left: 3px solid #333; 
-            font-family: 'JetBrains Mono', monospace; 
+            background: #0e0e11; border-radius: 8px; padding: 15px;
+            margin-top: 10px; border-left: 3px solid #333; font-family: 'JetBrains Mono', monospace; 
         }
         .calc-table .col-label { opacity: 0.7; font-size:0.7rem;}
         .dd-title { color: var(--text-secondary); font-size: 0.7rem; font-weight: 800; text-transform: uppercase; margin-bottom: 5px; letter-spacing:1px; }
@@ -458,6 +465,9 @@
         
         @media (max-width: 600px) {
             .injector-panel { flex-wrap: wrap; } 
+            .guide-controls { flex-direction: column; gap: 5px; }
+            .guide-toggle-btn { width: 100%; text-align: center;}
+            .guide-table { font-size: 0.75rem; }
         }
     </style>
 </head>
@@ -474,6 +484,7 @@
         <div class="nav-bar">
             <button class="nav-btn active" onclick="switchPage('db')">Unit Database</button>
             <button class="nav-btn" onclick="switchPage('calc')">Custom Calculator</button>
+            <button class="nav-btn" onclick="switchPage('guides')">Build Guides</button>
             <button id="selectAllBtn" class="nav-btn" onclick="selectAllUnits()">Select All</button>
             <button id="compareBtn" class="nav-btn" onclick="openComparison()">Compare (<span id="compareCount">0</span>)</button>
         </div>
@@ -485,6 +496,12 @@
             <span style="color:#666;">+</span>
             <select id="db_t2" class="trait-select"></select>
             <button class="add-btn" onclick="addCustomTrait()">Add</button>
+            
+            <!-- NEW: Sub Stats Toggle Moved Here -->
+            <label id="subStatsToggle" class="nav-toggle-label" title="Adds Perfect Sub-Stats to Calculations">
+                <input type="checkbox" id="globalSubStats" onchange="toggleSubStats(this)">
+                <span>+ Sub Stats</span>
+            </label>
         </div>
     </div>
 
@@ -597,23 +614,154 @@
             </div>
         </div>
 
-        <!-- RIGHT COLUMN: COMPARISON + RESULTS -->
+        <!-- RIGHT COLUMN: COMPARISON + RELIC BUILDER -->
         <div class="calc-right-col">
             <div class="panel">
                 <div class="panel-header">Build Comparison</div>
-                <div class="grid-row">
-                    <div><label>Custom Relic Dmg%</label><input type="number" id="cust_dmg" placeholder="0"></div>
-                    <div><label>Custom Relic SPA%</label><input type="number" id="cust_spa" placeholder="0"></div>
+                
+                <!-- RELIC BUILDER UI -->
+                <div id="relicBuilder">
+                    
+                    <!-- BODY PIECE -->
+                    <div class="relic-section" id="body-section">
+                        <h4>Body Piece (Top)</h4>
+                        <div style="display:flex; gap:10px; margin-bottom:10px;">
+                            <div style="flex-grow:1;">
+                                <label>Main Stat</label>
+                                <select id="body_main_type" onchange="updateRelicExclusions('body')">
+                                    <option value="dmg">Damage</option>
+                                    <option value="dot">DoT</option>
+                                    <option value="cdmg">Crit Dmg</option>
+                                    <option value="ha">Hyper Armor</option>
+                                </select>
+                            </div>
+                            <div style="width:80px;">
+                                <label>Value %</label>
+                                <input type="number" id="body_main_val" value="50" placeholder="50">
+                            </div>
+                        </div>
+                        
+                        <!-- 5 Sub Stat Slots -->
+                        <div class="sub-row">
+                            <select class="body-sub-type" onchange="updateRelicExclusions('body')"></select>
+                            <input type="number" class="body-sub-val" placeholder="0">
+                            <button class="max-btn" onclick="fillMax(this)">Max</button>
+                        </div>
+                        <div class="sub-row">
+                            <select class="body-sub-type" onchange="updateRelicExclusions('body')"></select>
+                            <input type="number" class="body-sub-val" placeholder="0">
+                            <button class="max-btn" onclick="fillMax(this)">Max</button>
+                        </div>
+                        <div class="sub-row">
+                            <select class="body-sub-type" onchange="updateRelicExclusions('body')"></select>
+                            <input type="number" class="body-sub-val" placeholder="0">
+                            <button class="max-btn" onclick="fillMax(this)">Max</button>
+                        </div>
+                        <div class="sub-row">
+                            <select class="body-sub-type" onchange="updateRelicExclusions('body')"></select>
+                            <input type="number" class="body-sub-val" placeholder="0">
+                            <button class="max-btn" onclick="fillMax(this)">Max</button>
+                        </div>
+                        <div class="sub-row">
+                            <select class="body-sub-type" onchange="updateRelicExclusions('body')"></select>
+                            <input type="number" class="body-sub-val" placeholder="0">
+                            <button class="max-btn" onclick="fillMax(this)">Max</button>
+                        </div>
+                    </div>
+
+                    <!-- LEG PIECE -->
+                    <div class="relic-section" id="leg-section">
+                        <h4>Leg Piece (Bottom)</h4>
+                        <div style="display:flex; gap:10px; margin-bottom:10px;">
+                            <div style="flex-grow:1;">
+                                <label>Main Stat</label>
+                                <select id="leg_main_type" onchange="updateRelicExclusions('leg')">
+                                    <option value="dmg">Damage</option>
+                                    <option value="spa">SPA</option>
+                                    <option value="range">Range</option>
+                                    <option value="crit">Crit Rate</option>
+                                </select>
+                            </div>
+                            <div style="width:80px;">
+                                <label>Value %</label>
+                                <input type="number" id="leg_main_val" value="15" placeholder="15">
+                            </div>
+                        </div>
+
+                        <!-- 5 Sub Stat Slots -->
+                        <div class="sub-row">
+                            <select class="leg-sub-type" onchange="updateRelicExclusions('leg')"></select>
+                            <input type="number" class="leg-sub-val" placeholder="0">
+                            <button class="max-btn" onclick="fillMax(this)">Max</button>
+                        </div>
+                        <div class="sub-row">
+                            <select class="leg-sub-type" onchange="updateRelicExclusions('leg')"></select>
+                            <input type="number" class="leg-sub-val" placeholder="0">
+                            <button class="max-btn" onclick="fillMax(this)">Max</button>
+                        </div>
+                        <div class="sub-row">
+                            <select class="leg-sub-type" onchange="updateRelicExclusions('leg')"></select>
+                            <input type="number" class="leg-sub-val" placeholder="0">
+                            <button class="max-btn" onclick="fillMax(this)">Max</button>
+                        </div>
+                        <div class="sub-row">
+                            <select class="leg-sub-type" onchange="updateRelicExclusions('leg')"></select>
+                            <input type="number" class="leg-sub-val" placeholder="0">
+                            <button class="max-btn" onclick="fillMax(this)">Max</button>
+                        </div>
+                        <div class="sub-row">
+                            <select class="leg-sub-type" onchange="updateRelicExclusions('leg')"></select>
+                            <input type="number" class="leg-sub-val" placeholder="0">
+                            <button class="max-btn" onclick="fillMax(this)">Max</button>
+                        </div>
+                    </div>
+
                 </div>
-                <div class="grid-row">
-                    <div><label>Custom Relic Crit Mult% (cm)</label><input type="number" id="cust_cm" placeholder="0"></div>
-                    <div><label>Custom Relic DoT%</label><input type="number" id="cust_dot" placeholder="0"></div>
-                </div>
+                <!-- END RELIC BUILDER -->
+
                 <button class="action-btn" onclick="runCalculator()">Calculate & Compare</button>
             </div>
 
             <!-- SCROLLABLE RESULTS CONTAINER -->
             <div id="calcResults" class="results-container"></div>
+        </div>
+    </div>
+
+    <!-- GUIDES PAGE (NEW) -->
+    <div id="guidesPage" class="page">
+        <div class="guide-container">
+            <div class="panel-header" style="justify-content:center; border:none;">Relic Efficiency Guide</div>
+            
+            <!-- Toggle Controls -->
+            <div class="guide-controls">
+                <button class="guide-toggle-btn active" onclick="setGuideMode('current')">Current Meta (Bugged Relics)</button>
+                <button class="guide-toggle-btn" onclick="setGuideMode('fixed')">Hypothetical (Fixed Relics)</button>
+            </div>
+
+            <div id="guideWarning" class="guide-warning">
+                ⚠️ CURRENT BUG: Relic Stats for <b>DoT%</b> and <b>Crit Dmg%</b> are currently ignored by the game. <br>
+                Only Damage% and SPA% relics are working effectively.
+            </div>
+
+            <div style="overflow-x: auto;">
+                <table class="guide-table">
+                    <thead>
+                        <tr>
+                            <th style="width:15%;">Unit</th>
+                            <th style="width:20%;">Build Trait</th>
+                            <th style="width:20%;">Relic Set</th>
+                            <th style="width:25%;">Main Stat Priority</th>
+                            <th>Sub Stats</th>
+                        </tr>
+                    </thead>
+                    <tbody id="guideTableBody">
+                        <!-- Injected via JS -->
+                    </tbody>
+                </table>
+            </div>
+            <div style="margin-top:20px; text-align:center; color:#666; font-size:0.7rem;">
+                *Head Piece should always be Sun God (Elemental) for maximum output unless specified.
+            </div>
         </div>
     </div>
 
@@ -654,18 +802,102 @@
 
 <script>
     // =========================================
-    // 0. CONFIGURATION (Manual Overrides)
+    // 0. CONFIGURATION
     // =========================================
     const statConfig = {
         applyRelicDmg: true,  
         applyRelicSpa: true,  
         applyRelicCrit: true, 
-        applyRelicDot: false   
+        applyRelicDot: true   
+    };
+
+    // --- SUB STATS CONFIG (Universal Tower Defense) ---
+    // These are BASE roll values (Level 1).
+    // Max Level (Mythic Level 15) = Base * 6 rolls.
+    const PERFECT_SUBS = {
+        dmg: 4,     // 4% Base -> 24% Max
+        spa: 1.5,   // 1.5% Base -> 9% Max
+        cm: 4.5,    // 4.5% Base -> 27% Max (Crit Dmg)
+        cf: 2.5,    // 2.5% Base -> 15% Max (Crit Rate)
+        dot: 5,     // 5% Base -> 30% Max
+        range: 2    // 2% Base -> 12% Max
+    };
+    
+    // Candidates to iterate through for finding Best DPS
+    const SUB_CANDIDATES = ['dmg', 'spa', 'cm', 'cf', 'dot'];
+    
+    // Friendly Names for UI
+    const SUB_NAMES = {
+        dmg: "Dmg", spa: "SPA", cm: "Crit Dmg", cf: "Crit Rate", dot: "DoT"
     };
 
     // =========================================
     // 1. DATA DEFINITIONS
     // =========================================
+
+    // --- GUIDE DATA ---
+    const guideData = [
+        {
+            unit: "Ace",
+            img: "images/Ace.png",
+            current: { trait: "(Must Be) Damage", set: "Laughing / Ninja", main: "Damage > Spa", sub: "Crit Rate / Spa" },
+            fixed: { trait: "DoT Potency", set: "Laughing / Ninja", main: "DoT > Damage", sub: "Spa" }
+        },
+        {
+            unit: "SJW",
+            img: "images/SJW.png",
+            current: { trait: "(Must Be) Damage", set: "Laughing / Ninja", main: "Damage > Spa", sub: "Crit Rate / Spa" },
+            fixed: { trait: "Crit Damage / Dmg", set: "Laughing / Ninja", main: "Crit Dmg > Dmg", sub: "Crit Rate" }
+        },
+        {
+            unit: "Sasuke",
+            img: "images/Sasuke.png",
+            current: { trait: "(Must Be) Damage", set: "Laughing / Ninja", main: "Damage > Spa", sub: "Crit Rate / Spa" },
+            fixed: { trait: "Damage / Hybrid", set: "Laughing / Ninja", main: "Dmg > Spa", sub: "Crit Rate" }
+        },
+        {
+            unit: "Kirito",
+            img: "images/Kirito.png",
+            current: { trait: "(Must Be) Damage", set: "Ex / Laughing", main: "Damage > Spa", sub: "Crit Rate / Spa" },
+            fixed: { trait: "Crit Damage", set: "Ex Captain", main: "Crit Dmg > Dmg", sub: "Crit Rate" }
+        },
+        {
+            unit: "Kenpachi",
+            img: "images/Kenpachi.png",
+            current: { trait: "Spa > Damage", set: "Laughing Captain", main: "Damage > Spa", sub: "Crit Rate / Spa" },
+            fixed: { trait: "Spa > Damage", set: "Laughing Captain", main: "Damage > Spa", sub: "Crit Rate" }
+        },
+        {
+            unit: "Ragna",
+            img: "images/Ragna.png",
+            current: { trait: "Spa > Damage", set: "Laughing Captain", main: "Damage > Spa", sub: "Crit Rate / Spa" },
+            fixed: { trait: "Spa > Damage", set: "Laughing Captain", main: "Damage > Spa", sub: "Crit Rate" }
+        },
+        {
+            unit: "Mob",
+            img: "images/Mob.png",
+            current: { trait: "(Must Be) Damage", set: "Laughing Captain", main: "Damage > Spa", sub: "Crit Rate / Spa" },
+            fixed: { trait: "DoT Potency", set: "Laughing Captain", main: "DoT > Dmg", sub: "Spa" }
+        },
+        {
+            unit: "Other DPS",
+            img: "",
+            current: { trait: "Damage > Spa", set: "Laughing Captain", main: "Damage > Spa", sub: "Crit Rate / Spa" },
+            fixed: { trait: "Dependent on Kit", set: "Laughing Captain", main: "Dependent", sub: "Crit Rate" }
+        },
+        {
+            unit: "Supports",
+            img: "",
+            current: { trait: "Spa / Range", set: "Laughing Captain", main: "Spa / Range", sub: "Spa / Rng / Dmg" },
+            fixed: { trait: "Spa / Range", set: "Laughing Captain", main: "Spa / Range", sub: "Spa / Rng" }
+        },
+        {
+            unit: "Miku",
+            img: "",
+            current: { trait: "Buff Potency", set: "Any", main: "Buff Potency", sub: "Buff Potency" },
+            fixed: { trait: "Buff Potency", set: "Any", main: "Buff Potency", sub: "Buff Potency" }
+        }
+    ];
 
     const setBonuses = {
         laughing: { dmg: 5, spa: 5, cf: 0, cm: 0 },
@@ -674,30 +906,46 @@
         none: { dmg: 0, spa: 0, cf: 0, cm: 0 }
     };
 
-    const globalBuilds = [
-        { name: "Master Ninja (Dot/Dmg)", set: "ninja", dmg: 60, spa: 0, cm: 0, cf: 0, dot: 60 },
-        { name: "Master Ninja (Dmg/Dmg)", set: "ninja", dmg: 120, spa: 0, cm: 0, cf: 0, dot: 0 },
-        { name: "Master Ninja (Dmg/Spa)", set: "ninja", dmg: 60, spa: 22.5, cm: 0, cf: 0, dot: 0 },
-        { name: "Master Ninja (Dot/Dot)", set: "ninja", dmg: 0, spa: 0, cm: 0, cf: 0, dot: 120 }, 
-        { name: "Master Ninja (Dot/Spa)", set: "ninja", dmg: 0, spa: 22.5, cm: 0, cf: 0, dot: 60 },           
-        { name: "Master Ninja (Crit/Dmg)", set:"ninja", dmg :60 , spa :0 , cm :120 , cf :0 , dot :60 },
-        { name: "Master Ninja (Crit/Spa)", set: "ninja", dmg: 0, spa: 22.5, cm: 120, cf: 0, dot: 0 },
-        { name: "Master Ninja (Spa/Spa)", set: "ninja", dmg: 0, spa: 45, cm: 0, cf: 0, dot: 0 },
-        
-        { name: "Laughing Captain (Dmg/Dmg)", set: "laughing", dmg: 120, spa: 0, cm: 0, cf: 0, dot: 0 },
-        { name: "Laughing Captain (Dmg/Spa)", set: "laughing", dmg: 60, spa: 22.5, cm: 0, cf: 0, dot: 0 },
-        { name: "Laughing Captain (Dot/Dmg)", set: "laughing", dmg: 60, spa: 0, cm: 0, cf: 0, dot: 75 },
-        { name: "Laughing Captain (Dot/Dot)", set: "laughing", dmg: 0, spa: 0, cm: 0, cf: 0, dot: 150 }, 
-        { name: "Laughing Captain (Dot/Spa)", set: "laughing", dmg: 0, spa: 22.5, cm: 0, cf: 0, dot: 75 },           
-        { name: "Laughing Captain (Crit/Dmg)", set: "laughing", dmg: 60, spa: 0, cm: 120, cf: 0, dot: 0 },
-        { name: "Laughing Captain (Crit/Spa)", set: "laughing", dmg: 0, spa: 22.5, cm: 120, cf: 0, dot: 0 },
-        { name: "Laughing Captain (Spa/Spa)", set: "laughing", dmg: 0, spa: 45, cm: 0, cf: 0, dot: 0 },
-        
-        { name: "Ex Captain (Dmg/Dmg)", set: "ex", dmg: 120, spa: 0, cm: 0, cf: 0, dot: 0 },
-        { name: "Ex Captain (Crit/Dmg)", set: "ex", dmg: 60, spa: 0, cm: 120, cf: 0, dot: 0 },
-        { name: "Ex Captain (Dmg/Spa)", set: "ex", dmg: 60, spa: 22.5, cm: 0, cf: 0, dot: 0 },
-        { name: "Ex Captain (Crit/Spa)", set: "ex", dmg: 0, spa: 22.5, cm: 120, cf: 0, dot: 0 }
+    // --- 1. DEFINE PERFECT PIECE STATS ---
+    const BODY_DMG  = { dmg: 60, dot: 0,  cm: 0,   desc: "Dmg",  type: "dmg" };
+    const BODY_DOT  = { dmg: 0,  dot: 75, cm: 0,   desc: "DoT",  type: "dot" };
+    const BODY_CDMG = { dmg: 0,  dot: 0,  cm: 120, desc: "Crit", type: "cm" };
+
+    const LEG_DMG   = { dmg: 60, spa: 0,    desc: "Dmg", type: "dmg" };
+    const LEG_SPA   = { dmg: 0,  spa: 22.5, desc: "Spa", type: "spa" };
+
+    // --- 2. DEFINE SETS ---
+    const SETS = [
+        { id: "ninja",    name: "Master Ninja",     bonus: { dmg: 10, spa: 0, cm: 0 } },
+        { id: "laughing", name: "Laughing Captain", bonus: { dmg: 5, spa: 5, cm: 0 } },
+        { id: "ex",       name: "Ex Captain",       bonus: { dmg: 0, spa: 0, cm: 25 } }
     ];
+
+    // --- 3. GENERATE BUILDS AUTOMATICALLY ---
+    const globalBuilds = [];
+
+    SETS.forEach(set => {
+        const bodies = [BODY_DMG, BODY_DOT, BODY_CDMG];
+        const legs   = [LEG_DMG, LEG_SPA];
+
+        bodies.forEach(body => {
+            legs.forEach(leg => {
+                
+                globalBuilds.push({
+                    name: `${set.name} (${body.desc}/${leg.desc})`,
+                    set:  set.id,
+                    dmg:  body.dmg + leg.dmg,
+                    spa:  leg.spa, 
+                    dot:  body.dot,
+                    cm:   body.cm, 
+                    cf:   0,
+                    bodyType: body.type,
+                    legType: leg.type
+                });
+
+            });
+        });
+    });
 
     const traitsList = [
         { id: "eternal", name: "Eternal", dmg: 0, spa: 20, desc: "-20% SPA, +Dmg/Wave", isEternal: true },
@@ -712,8 +960,8 @@
     ];
 
     let customTraits = [];
-    let selectedUnitIds = new Set(); // Store ID strings
-    let activeAbilityIds = new Set(); // Store IDs where ability toggle is ON
+    let selectedUnitIds = new Set();
+    let activeAbilityIds = new Set(); 
 
     const unitDatabase = [
         {
@@ -758,11 +1006,17 @@
             img: "images/Mob.png", 
             placement: 2,
             stats: { dmg: 2600, spa: 6.5, crit: 0, cdmg: 150, dot: 20, dotStacks: 1, spaCap: 5.5, passiveDmg: 0, element: "Rose", dotDuration: 4 }
+        },
+        {
+            id: "shanks", name: "Shanks (Conqueror)", role: "Raw Dmg",
+            img: "images/Mob.png", 
+            placement: 1,
+            stats: { dmg: 2750, spa: 12, crit: 0, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 5.5, passiveDmg: 0, element: "Rose", dotDuration: 0}
         }
     ];
 
     // =========================================
-    // 2. COMBINATION LOGIC
+    // 2. LOGIC
     // =========================================
 
     function combineTraits(t1, t2) {
@@ -806,18 +1060,18 @@
     function calculateDPS(uStats, relicStats, context) {
         const { level, priority, wave, isBoss, traitObj, placement, isSSS } = context;
 
-        // 1. Level & SSS Scaling (Matches: "Damage x level x sss rank")
         let lvStats = getLevelStats(uStats.dmg, uStats.spa, level, priority);
 
+        // --- SSS RANK SCALING ---
         if (isSSS) {
             lvStats.dmg *= 1.16;
             lvStats.spa *= 0.92;
         }
 
-        // 2. Prepare Variables
+        // --- TRAIT & PASSIVE DATA ---
         let passivePcent = uStats.passiveDmg || 0;
         let traitDmgPct = traitObj.dmg;
-        let traitSpaPct = traitObj.spa;
+        let traitSpaPct = traitObj.spa; // Trait Reduction %
         let traitCritRate = traitObj.critRate || 0;
 
         if (traitObj.isEternal) {
@@ -825,26 +1079,27 @@
         }
         if (traitObj.bossDmg && isBoss) traitDmgPct += traitObj.bossDmg;
 
+        // --- RELIC & SET DATA ---
         let sBonus = setBonuses[relicStats.set] || setBonuses.none;
         
-        // --- LOGIC UPDATE: CHECK NINJA ELEMENT ---
+        // Ninja Check
         if (relicStats.set === 'ninja') {
             const unitElement = uStats.element || "None";
             const allowedElements = ["Dark", "Rose", "Fire"];
             if (!allowedElements.includes(unitElement)) {
-                // Unit does not have right element, remove bonus
                 sBonus = setBonuses.none;
             }
         }
-        // -----------------------------------------
 
-        // 3. Relic Stats (Separate from Set Bonus)
+        // --- RAW RELIC STATS ---
         let baseR_Dmg = statConfig.applyRelicDmg ? relicStats.dmg : 0;
         let baseR_Spa = statConfig.applyRelicSpa ? relicStats.spa : 0;
+        // CHANGED: Crit Rate (cf) now always applies, independent of statConfig.applyRelicCrit
         let baseR_Cm  = statConfig.applyRelicCrit ? relicStats.cm : 0; 
-        let baseR_Cf  = statConfig.applyRelicCrit ? relicStats.cf : 0; 
+        let baseR_Cf  = relicStats.cf; 
         let baseR_Dot = statConfig.applyRelicDot ? relicStats.dot : 0;
 
+        // Apply Artificer/Trait Relic Buffs
         if (traitObj.relicBuff) {
             const mult = traitObj.relicBuff; 
             baseR_Dmg *= mult; 
@@ -854,26 +1109,27 @@
             baseR_Cf  *= mult;
         }
 
-        // 4. NEW DAMAGE FORMULA
-        // Formula: Base(inc Lv/SSS) * Trait * Relic * (Set + Passive)
+        // --- DAMAGE CALCULATION ---
         const traitMult = (1 + traitDmgPct / 100);
         const relicMult = (1 + baseR_Dmg / 100);
         const setAndPassiveMult = (1 + (sBonus.dmg + passivePcent) / 100);
 
         const finalDmg = lvStats.dmg * traitMult * relicMult * setAndPassiveMult;
 
-        // SPA Calculation
-        // Note: Usually SPA calc is: Base * (1 - Trait) * (1 - (Relic + Set))
-        // Keeping SPA logic standard unless requested otherwise.
-        let rSpaTotal = baseR_Spa + sBonus.spa;
+        // --- SPA CALCULATION (SEPARATE MULTIPLIERS) ---
+        // 1. Apply Trait Reduction
         const afterTraitSpa = lvStats.spa * (1 - traitSpaPct / 100);
+        
+        // 2. Apply Relic + Set Reduction as a separate multiplier
+        // Note: Set Bonus SPA is usually grouped with Relic Stats
+        let rSpaTotal = baseR_Spa + sBonus.spa;
         const rawFinalSpa = afterTraitSpa * (1 - rSpaTotal / 100);
         
-        // Prevent NaN if spaCap is missing
+        // 3. Cap
         const cap = uStats.spaCap || 0.1;
         const finalSpa = Math.max(rawFinalSpa, cap);
 
-        // Crit Calculations
+        // --- CRIT CALCULATION ---
         let setCm = sBonus.cm || 0; 
         const preRelicCdmg = uStats.cdmg + setCm;
         const finalCdmgStat = preRelicCdmg * (1 + baseR_Cm / 100);
@@ -881,9 +1137,10 @@
         let rCf  = baseR_Cf + (sBonus.cf || 0); 
         const finalCritRate = Math.min(uStats.crit + traitCritRate + rCf, 100);
         
-        const avgHit = finalDmg * (1 + ((finalCdmgStat / 100) * (finalCritRate / 100)));
+        const avgCritMult = (1 + ((finalCdmgStat / 100) * (finalCritRate / 100)));
+        const avgHit = finalDmg * avgCritMult;
         
-        // Attack Multipliers (Hit Count)
+        // --- MULTI-HIT / EXTRA ATTACK LOGIC ---
         let attackMultiplier = 1;
         let extraAttacksData = null;
 
@@ -906,41 +1163,44 @@
 
         const hitDpsTotal = (avgHit / finalSpa) * placement * attackMultiplier;
 
-        // DoT Logic
+        // --- DOT CALCULATION ---
         let dotDpsTotal = 0;
-        let rDotTotal = baseR_Dot; // Set bonus usually doesn't have DoT, but if it did, add here
-        let dotBreakdown = { base: uStats.dot, relic: rDotTotal, internal: 1, finalTick: 0, timeUsed: finalSpa };
+        let dotBreakdown = { 
+            base: uStats.dot + (traitObj.dotBuff || 0), 
+            relicMult: 1, 
+            finalPct: 0, 
+            critMult: avgCritMult,
+            internal: 1, 
+            finalTick: 0, 
+            timeUsed: finalSpa 
+        };
         
         if (uStats.dot > 0 || traitObj.hasRadiation) {
             let extraDotBuff = traitObj.dotBuff || 0;
             const internalStacks = (traitObj.allowDotStack) ? uStats.dotStacks : 1;
             
-            const singleTickPct = uStats.dot + rDotTotal + extraDotBuff;
+            const baseDotPct = uStats.dot + extraDotBuff;
+            // Relic DoT is a multiplier on the base %
+            const relicDotMult = 1 + (baseR_Dot / 100);
+            const singleTickPct = baseDotPct * relicDotMult;
+            
+            dotBreakdown.relicMult = relicDotMult;
+            dotBreakdown.finalPct = singleTickPct;
+
             const totalDoTPct = singleTickPct * internalStacks;
             
-            // Total Damage of the Status Effect over its lifetime
-            const totalDoTDmg = finalDmg * (totalDoTPct / 100);
+            // DoT Ticks also Crit
+            const totalDoTDmg = finalDmg * (totalDoTPct / 100) * avgCritMult;
             
-            // --- UPDATED DOT DURATION LOGIC ---
-            // "Damage is split across duration"
-            // DPS = Total_DoT_Damage / Duration
-            // Safety: If SPA > Duration (Unit attacks slower than DoT lasts), average DPS decreases.
-            // Divisor = Max(Duration, SPA). 
-            // Exception: Stacking units (Astral) typically stack based on attack speed, making duration cancel out or become irrelevant to the rate.
-            
+            // Calculate time basis for DPS (Duration vs SPA)
             let timeBasis = finalSpa; 
-
-            if (traitObj.allowDotStack) {
-                // Stacking logic usually implies Damage Rate is defined by Attack Rate
-                timeBasis = finalSpa; 
-            } else if (uStats.dotDuration && uStats.dotDuration > 0) {
-                 // Standard DoT logic: DPS is Total / Duration. 
-                 // We use Max(Duration, SPA) to account for downtime if unit attacks slow.
+            if (!traitObj.allowDotStack && uStats.dotDuration && uStats.dotDuration > 0) {
                  timeBasis = Math.max(uStats.dotDuration, finalSpa);
             }
 
             const oneUnitDoTDps = totalDoTDmg / timeBasis;
 
+            // Stacking Logic
             if (traitObj.allowDotStack) {
                 dotDpsTotal = oneUnitDoTDps * placement;
             } else {
@@ -960,8 +1220,8 @@
             dmgVal: finalDmg,
             lvStats: lvStats,
             traitBuffs: { dmg: traitDmgPct, spa: traitSpaPct },
-            relicBuffs: { dmg: baseR_Dmg, spa: baseR_Spa, dot: baseR_Dot }, // Just Relic stats
-            setBuffs: { dmg: sBonus.dmg, spa: sBonus.spa }, // Just Set stats
+            relicBuffs: { dmg: baseR_Dmg, spa: baseR_Spa, dot: baseR_Dot }, 
+            setBuffs: { dmg: sBonus.dmg, spa: sBonus.spa }, 
             passiveBuff: passivePcent,
             dotData: dotBreakdown,
             critData: { 
@@ -971,7 +1231,7 @@
                 relicCmPct: baseR_Cm,
                 setCdmg: setCm,
                 preRelicCdmg: preRelicCdmg,
-                avgMult: (1 + ((finalCdmgStat / 100) * (finalCritRate / 100))) 
+                avgMult: avgCritMult 
             },
             priority: priority,
             placement: placement,
@@ -989,11 +1249,107 @@
     // 3. UI LOGIC
     // =========================================
     
+    // --- RELIC BUILDER CONSTANTS ---
+    const MAX_VALS = {
+        dmg: 24,    
+        spa: 9,     
+        dot: 30,    
+        crit: 15,   
+        cdmg: 27,   
+        range: 12,  
+        ha: 0       
+    };
+
+    const SUB_OPTIONS = [
+        {val: "none", label: "None"},
+        {val: "dmg", label: "Damage (4%)"},
+        {val: "spa", label: "SPA (1.5%)"},
+        {val: "dot", label: "DoT (5%)"},
+        {val: "crit", label: "Crit Rate (2.5%)"},
+        {val: "cdmg", label: "Crit Dmg (4.5%)"},
+        {val: "range", label: "Range (2%)"}
+    ];
+
     let cachedResults = {}; 
 
     document.getElementById('c_priority').addEventListener('change', function() {
         document.getElementById('prioLabel').innerText = this.checked ? "Max SPA (Lv99)" : "Max Damage (Lv99)";
     });
+
+    function initRelicBuilder() {
+        const selects = document.querySelectorAll('.body-sub-type, .leg-sub-type');
+        selects.forEach(sel => {
+            SUB_OPTIONS.forEach(opt => {
+                const o = new Option(opt.label, opt.val);
+                sel.add(o);
+            });
+        });
+        updateRelicExclusions('body');
+        updateRelicExclusions('leg');
+    }
+
+    function updateRelicExclusions(piece) {
+        const mainStat = document.getElementById(`${piece}_main_type`).value;
+        const subSelects = document.querySelectorAll(`.${piece}-sub-type`);
+
+        subSelects.forEach(sel => {
+            const currentVal = sel.value;
+            for(let i=0; i<sel.options.length; i++) {
+                const opt = sel.options[i];
+                if (opt.value === mainStat) {
+                    opt.disabled = true;
+                    if(currentVal === mainStat) sel.value = "none";
+                } else {
+                    opt.disabled = false;
+                }
+            }
+        });
+    }
+
+    function fillMax(btn) {
+        const row = btn.closest('.sub-row');
+        const type = row.querySelector('select').value;
+        const input = row.querySelector('input');
+        
+        if(type !== 'none' && MAX_VALS[type]) {
+            input.value = MAX_VALS[type];
+        }
+    }
+
+    function getCustomRelicStats() {
+        let stats = { dmg: 0, spa: 0, cm: 0, cf: 0, dot: 0, range: 0 };
+
+        const processPiece = (piece) => {
+            const mainType = document.getElementById(`${piece}_main_type`).value;
+            const mainVal = parseFloat(document.getElementById(`${piece}_main_val`).value) || 0;
+            
+            if(mainType === 'dmg') stats.dmg += mainVal;
+            if(mainType === 'cdmg') stats.cm += mainVal;
+            if(mainType === 'dot') stats.dot += mainVal;
+            if(mainType === 'spa') stats.spa += mainVal;
+            if(mainType === 'crit') stats.cf += mainVal;
+            if(mainType === 'range') stats.range += mainVal;
+
+            const subTypes = document.querySelectorAll(`.${piece}-sub-type`);
+            const subVals = document.querySelectorAll(`.${piece}-sub-val`);
+            
+            subTypes.forEach((sel, idx) => {
+                const type = sel.value;
+                const val = parseFloat(subVals[idx].value) || 0;
+                
+                if(type === 'dmg') stats.dmg += val;
+                if(type === 'cdmg') stats.cm += val;
+                if(type === 'spa') stats.spa += val;
+                if(type === 'crit') stats.cf += val;
+                if(type === 'range') stats.range += val;
+                if(type === 'dot') stats.dot += val; 
+            });
+        };
+
+        processPiece('body');
+        processPiece('leg');
+        return stats;
+    }
 
     function addCustomTrait() {
         const id1 = document.getElementById('db_t1').value;
@@ -1015,13 +1371,24 @@
         }
     }
 
+    function toggleSubStats(checkbox) {
+        if(checkbox.checked) {
+            checkbox.parentNode.classList.add('is-checked');
+        } else {
+            checkbox.parentNode.classList.remove('is-checked');
+        }
+        renderDatabase(); // Re-run calculations
+    }
+
     function getUnitResultsHTML(unit, effectiveStats) {
         cachedResults = cachedResults || {};
         const activeTraits = [...traitsList, ...customTraits];
         const isAbilActive = activeAbilityIds.has(unit.id); 
-        
+        const includeSubs = document.getElementById('globalSubStats').checked;
+
         const filteredBuilds = globalBuilds.filter(b => {
-            if (!statConfig.applyRelicCrit && (b.cm > 0 || b.cf > 0)) return false;
+            // CHANGED: Only filter out Crit Damage (cm), allow Crit Rate (cf)
+            if (!statConfig.applyRelicCrit && b.cm > 0) return false;
             if (!statConfig.applyRelicDot && b.dot > 0) return false;
             if (!statConfig.applyRelicDmg && b.dmg > 10) return false; 
             if (!statConfig.applyRelicSpa && b.spa > 10) return false; 
@@ -1029,54 +1396,107 @@
         });
 
         let unitResults = [];
-        filteredBuilds.forEach(build => {
-            activeTraits.forEach(trait => {
-                if (trait.id === 'none') return; 
+        
+        // Revised Optimization Helper: Finds best sub variant by testing all candidates
+        const getBestSubConfiguration = (build, priority, context) => {
+            if (!includeSubs) {
+                // If subs are off, just calculate once
+                return { res: calculateDPS(effectiveStats, build, context), desc: "" };
+            }
 
-                let actualPlacement = unit.placement;
-                if (trait.limitPlace) actualPlacement = Math.min(unit.placement, trait.limitPlace);
+            let bestRes = { total: -1 };
+            let bestDesc = "";
 
-                const isSSS = true; 
+            SUB_CANDIDATES.forEach(cand => {
+                // CHANGED: Skip candidates if config is false (for cm and dot only)
+                if (!statConfig.applyRelicCrit && cand === 'cm') return; 
+                if (!statConfig.applyRelicDot && cand === 'dot') return;
 
-                const context = {
-                    level: 99, priority: 'dmg',
-                    wave: 25, isBoss: false, traitObj: trait, placement: actualPlacement, isSSS: isSSS
+                let testBuild = { ...build };
+                
+                // Helper to add subs
+                const addSubs = (excludeMain) => {
+                    for (let k in PERFECT_SUBS) {
+                        if (k !== excludeMain) {
+                            let mult = (k === cand) ? 6 : 1; 
+                            testBuild[k] += PERFECT_SUBS[k] * mult;
+                        }
+                    }
                 };
 
-                const resDmg = calculateDPS(effectiveStats, build, context);
-                context.priority = 'spa';
-                const resSpa = calculateDPS(effectiveStats, build, context);
+                addSubs(testBuild.bodyType);
+                addSubs(testBuild.legType);
 
+                let res = calculateDPS(effectiveStats, testBuild, context);
+                if (res.total > bestRes.total) {
+                    bestRes = res;
+                    bestDesc = SUB_NAMES[cand];
+                }
+            });
+
+            return { res: bestRes, desc: `Maxed: ${bestDesc}` };
+        };
+
+        activeTraits.forEach(trait => {
+            if (trait.id === 'none') return; 
+
+            let actualPlacement = unit.placement;
+            if (trait.limitPlace) actualPlacement = Math.min(unit.placement, trait.limitPlace);
+
+            filteredBuilds.forEach(build => {
+                // 1. CALCULATE FOR DAMAGE PRIORITY (Level Scaling)
+                let contextDmg = {
+                    level: 99, priority: 'dmg',
+                    wave: 25, isBoss: false, traitObj: trait, placement: actualPlacement, isSSS: true
+                };
+                let bestDmgConfig = getBestSubConfiguration(build, 'dmg', contextDmg);
+                let resDmg = bestDmgConfig.res;
+
+                // 2. CALCULATE FOR SPA PRIORITY (Level Scaling)
+                let contextSpa = {
+                    level: 99, priority: 'spa', 
+                    wave: 25, isBoss: false, traitObj: trait, placement: actualPlacement, isSSS: true
+                };
+                let bestSpaConfig = getBestSubConfiguration(build, 'spa', contextSpa);
+                let resSpa = bestSpaConfig.res;
+
+                // --- STORE RESULTS ---
                 let suffix = isAbilActive ? '-ABILITY' : '-BASE';
+                let subsSuffix = includeSubs ? '-SUBS' : '-NOSUBS';
                 let safeBuildName = build.name.replace(/[^a-zA-Z0-9]/g, '');
-                let uniqueIdDmg = `${unit.id}${suffix}-${trait.id}-${safeBuildName}-dmg`;
                 
-                cachedResults[uniqueIdDmg] = resDmg;
-                
+                // Save Dmg Result
                 if (!isNaN(resDmg.total)) {
+                    let id = `${unit.id}${suffix}-${trait.id}-${safeBuildName}-dmg${subsSuffix}`;
+                    cachedResults[id] = resDmg;
                     unitResults.push({
-                        id: uniqueIdDmg,
+                        id: id,
                         buildName: build.name,
                         traitName: trait.name,
                         dps: resDmg.total,
                         spa: resDmg.spa,
-                        prio: "Dmg Stat", 
+                        prio: "Dmg Stat",
+                        subVariant: bestDmgConfig.desc, 
                         isCustom: trait.isCustom
                     });
                 }
 
-                if (resSpa.total !== resDmg.total && !isNaN(resSpa.total)) { 
-                    let uniqueIdSpa = `${unit.id}${suffix}-${trait.id}-${safeBuildName}-spa`;
-                    cachedResults[uniqueIdSpa] = resSpa;
-                    unitResults.push({
-                        id: uniqueIdSpa,
-                        buildName: build.name,
-                        traitName: trait.name,
-                        dps: resSpa.total,
-                        spa: resSpa.spa,
-                        prio: "Spa Stat", 
-                        isCustom: trait.isCustom
-                    });
+                // Save SPA Result (if meaningful difference)
+                if (!isNaN(resSpa.total) && resSpa.total > 0) { 
+                    if (Math.abs(resSpa.total - resDmg.total) > 1) {
+                        let id = `${unit.id}${suffix}-${trait.id}-${safeBuildName}-spa${subsSuffix}`;
+                        cachedResults[id] = resSpa;
+                        unitResults.push({
+                            id: id,
+                            buildName: build.name,
+                            traitName: trait.name,
+                            dps: resSpa.total,
+                            spa: resSpa.spa,
+                            prio: "Spa Stat",
+                            subVariant: bestSpaConfig.desc,
+                            isCustom: trait.isCustom
+                        });
+                    }
                 }
             });
         });
@@ -1085,14 +1505,12 @@
 
         if(unitResults.length === 0) return '<div style="padding:10px; color:#666;">No valid builds found.</div>';
 
-        return unitResults.map((r, i) => {
+        // Limit display to top 50
+        return unitResults.slice(0, 50).map((r, i) => {
             let rankClass = i < 3 ? `rank-${i+1}` : 'rank-other';
             if(r.isCustom) rankClass += ' is-custom';
             
-            // UPDATE: Included r.prio in searchText so typing "spa" works
             const searchText = (r.traitName + ' ' + r.buildName + ' ' + r.prio).toLowerCase();
-            
-            // UPDATE: Added data-prio-type for the dropdown filter
             const prioType = r.prio === 'Dmg Stat' ? 'dmg' : 'spa';
 
             return `
@@ -1101,6 +1519,7 @@
                     <div class="build-info" style="flex-grow:1;">
                         <span class="trait-tag" title="${r.traitName}">${r.traitName}</span>
                         <span class="build-name">${r.buildName}</span>
+                        ${r.subVariant ? `<div class="build-variant"><span>${r.subVariant}</span></div>` : ''}
                         <div class="build-stats-row">
                             <span class="build-stat">SPA: ${r.spa.toFixed(2)}s</span>
                             <span class="build-stat" style="color:${r.prio === 'Dmg Stat' ? 'var(--gold)' : 'var(--custom)'};">[${r.prio}]</span>
@@ -1118,30 +1537,21 @@
     function toggleAbility(unitId, checkbox) {
         const unit = unitDatabase.find(u => u.id === unitId);
         if(!unit) return;
-
-        // 1. Update Global State
         if (checkbox.checked) {
             activeAbilityIds.add(unitId);
         } else {
             activeAbilityIds.delete(unitId);
         }
-
-        // 2. Merge Stats
         let currentStats = { ...unit.stats };
         if (checkbox.checked && unit.ability) {
             Object.assign(currentStats, unit.ability);
         }
-
-        // 3. Render
         const html = getUnitResultsHTML(unit, currentStats);
         document.getElementById('results-' + unitId).innerHTML = html;
-        
-        // 4. Force Filter Update
         const searchInput = checkbox.closest('.unit-card').querySelector('.search-container input');
         if(searchInput && searchInput.value) filterList(searchInput);
     }
 
-    // --- SELECTION LOGIC ---
     function toggleSelection(id) {
         if (selectedUnitIds.has(id)) {
             selectedUnitIds.delete(id);
@@ -1151,7 +1561,7 @@
             document.getElementById('card-' + id).classList.add('is-selected');
         }
         updateCompareBtn();
-        renderDatabase(); // Re-render to update button text state properly
+        renderDatabase(); 
     }
 
     function selectAllUnits() {
@@ -1173,7 +1583,6 @@
         } else {
             btn.style.display = 'none';
         }
-        // Update Select All Button text
         const selBtn = document.getElementById('selectAllBtn');
         if(count === unitDatabase.length && count > 0) {
             selBtn.innerText = "Deselect All";
@@ -1189,8 +1598,8 @@
         const content = document.getElementById('compareContent');
         modal.style.display = 'flex';
         
-        // 1. Get Selected Unit Objects
         const selectedUnits = unitDatabase.filter(u => selectedUnitIds.has(u.id));
+        const includeSubs = document.getElementById('globalSubStats').checked;
         
         let html = `
             <table class="compare-table">
@@ -1204,49 +1613,77 @@
                 <tbody>
         `;
 
-        // 2. Helper to find best build given a list of traits
         const findBest = (unitObj, statsObj, availableTraits, isCustomList) => {
             let bestResult = { total: -1 }; 
             let bestTraitName = "";
             let bestBuildName = "";
             let bestSpa = 0;
             let bestPrio = "";
+            let bestVariant = "";
+
+            // Optimized Sub Helper inside Comparison
+            const getBestSubConfiguration = (build, priority, context) => {
+                if (!includeSubs) return { res: calculateDPS(statsObj, build, context), desc: "" };
+                
+                let bRes = { total: -1 };
+                let bDesc = "";
+                SUB_CANDIDATES.forEach(cand => {
+                    // CHANGED: Skip logic here as well
+                    if (!statConfig.applyRelicCrit && cand === 'cm') return; 
+                    if (!statConfig.applyRelicDot && cand === 'dot') return;
+
+                    let testBuild = { ...build };
+                    const addSubs = (excludeMain) => {
+                        for (let k in PERFECT_SUBS) {
+                            if (k !== excludeMain) {
+                                let mult = (k === cand) ? 6 : 1; 
+                                testBuild[k] += PERFECT_SUBS[k] * mult;
+                            }
+                        }
+                    };
+                    addSubs(testBuild.bodyType);
+                    addSubs(testBuild.legType);
+                    let res = calculateDPS(statsObj, testBuild, context);
+                    if (res.total > bRes.total) { bRes = res; bDesc = SUB_NAMES[cand]; }
+                });
+                return { res: bRes, desc: `Maxed: ${bDesc}` };
+            };
 
             availableTraits.forEach(trait => {
                 if(trait.id === 'none') return;
                 
                 let place = Math.min(unitObj.placement, trait.limitPlace || unitObj.placement);
-                
-                // Base Context
                 let baseCtx = { 
-                    level: 99, 
-                    wave: 25, 
-                    isBoss: false, 
-                    traitObj: trait, 
-                    placement: place, 
-                    isSSS: true 
+                    level: 99, wave: 25, isBoss: false, 
+                    traitObj: trait, placement: place, isSSS: true 
                 };
 
                 globalBuilds.forEach(build => {
-                    // 1. Calculate with DAMAGE Priority
-                    let ctxDmg = { ...baseCtx, priority: 'dmg' };
-                    const resDmg = calculateDPS(statsObj, build, ctxDmg);
+                    // CHANGED: Filter logic inside Comparison
+                    if (!statConfig.applyRelicCrit && build.cm > 0) return;
+                    if (!statConfig.applyRelicDot && build.dot > 0) return;
+                    if (!statConfig.applyRelicDmg && build.dmg > 10) return; 
+                    if (!statConfig.applyRelicSpa && build.spa > 10) return; 
 
-                    // 2. Calculate with SPA Priority
+                    // Check SPA Prio
                     let ctxSpa = { ...baseCtx, priority: 'spa' };
-                    const resSpa = calculateDPS(statsObj, build, ctxSpa);
+                    let bestSpaConfig = getBestSubConfiguration(build, 'spa', ctxSpa);
+                    let resSpa = bestSpaConfig.res;
 
-                    // 3. Determine which priority yielded higher DPS
-                    let winner = (resSpa.total > resDmg.total) ? resSpa : resDmg;
-                    let winnerPrio = (resSpa.total > resDmg.total) ? "SPA" : "DMG";
+                    // Check Dmg Prio
+                    let ctxDmg = { ...baseCtx, priority: 'dmg' };
+                    let bestDmgConfig = getBestSubConfiguration(build, 'dmg', ctxDmg);
+                    let resDmg = bestDmgConfig.res;
 
-                    // 4. Compare with current Global Best for this unit
-                    if(winner.total > bestResult.total) { 
-                        bestResult = winner;
-                        bestTraitName = trait.name;
-                        bestBuildName = build.name;
-                        bestSpa = winner.spa;
-                        bestPrio = winnerPrio;
+                    if (resSpa.total > bestResult.total) {
+                        bestResult = resSpa; bestPrio = "SPA";
+                        bestTraitName = trait.name; bestBuildName = build.name; bestSpa = resSpa.spa;
+                        bestVariant = bestSpaConfig.desc;
+                    }
+                    if (resDmg.total > bestResult.total) {
+                        bestResult = resDmg; bestPrio = "DMG";
+                        bestTraitName = trait.name; bestBuildName = build.name; bestSpa = resDmg.spa;
+                        bestVariant = bestDmgConfig.desc;
                     }
                 });
             });
@@ -1259,36 +1696,28 @@
                     bestBuildName: bestBuildName,
                     bestSpa: bestSpa,
                     bestPrio: bestPrio,
+                    bestVariant: bestVariant,
                     isCustom: isCustomList
                 };
             }
             return null;
         };
 
-        // 3. Generate Data Rows (Split Standard vs Custom)
         let comparisonData = [];
-
         selectedUnits.forEach(u => {
-            // --- DYNAMIC STATE CHECK ---
             let effectiveStats = { ...u.stats };
             let displayRole = u.role;
-
-            // Check if Ability is Active via global Set
             if (activeAbilityIds.has(u.id) && u.ability) {
                 Object.assign(effectiveStats, u.ability);
                 displayRole = "Ability Active"; 
-            } else if (u.ability) {
-                displayRole = "Base Form"; 
             }
 
-            // A. Check Standard Traits
             const standardBest = findBest(u, effectiveStats, traitsList, false);
             if(standardBest) {
                 standardBest.displayRole = displayRole;
                 comparisonData.push(standardBest);
             }
 
-            // B. Check Custom Traits (if any exist)
             if(customTraits.length > 0) {
                 const customBest = findBest(u, effectiveStats, customTraits, true);
                 if(customBest) {
@@ -1298,14 +1727,10 @@
             }
         });
 
-        // 4. Sort by Total DPS (Highest to Lowest)
         comparisonData.sort((a, b) => b.bestResult.total - a.bestResult.total);
 
-        // 5. Generate HTML
         comparisonData.forEach(data => {
-            // Apply class for custom rows
             const rowClass = data.isCustom ? 'comp-row-custom' : '';
-
             html += `
                 <tr class="${rowClass}">
                     <td>
@@ -1324,7 +1749,8 @@
                     <td>
                         <span class="comp-tag" style="${data.isCustom ? 'color:var(--custom); border-color:var(--custom);' : ''}">${data.bestTraitName}</span>
                         <div style="font-size:0.75rem; margin-top:4px; opacity:0.8;">
-                            ${data.bestBuildName} 
+                            ${data.bestBuildName}
+                            ${data.bestVariant ? `<span style="color:var(--success); font-weight:bold; margin-left:5px;">(${data.bestVariant})</span>` : ''} 
                             <span style="color:${data.bestPrio === 'SPA' ? 'var(--custom)' : 'var(--gold)'}; font-weight:bold; font-size:0.7rem;">[${data.bestPrio}]</span>
                         </div>
                     </td>
@@ -1386,7 +1812,6 @@
                 </div>
             `;
 
-            // UPDATE: Search container now has a flexbox with Input AND Select
             card.innerHTML = `
                 <div class="unit-banner">
                     <div class="placement-badge">Max Place: ${unit.placement}</div>
@@ -1422,10 +1847,9 @@
     }
 
     function filterList(element) {
-        // Find the container to get access to both the Input and the Select
         const searchContainer = element.closest('.search-container');
         const inputVal = searchContainer.querySelector('input').value.toLowerCase();
-        const selectVal = searchContainer.querySelector('select').value; // 'all', 'dmg', or 'spa'
+        const selectVal = searchContainer.querySelector('select').value; 
 
         const card = element.closest('.unit-card');
         const list = card.querySelector('.top-builds-list');
@@ -1433,15 +1857,11 @@
 
         for (let i = 0; i < rows.length; i++) {
             const rowText = rows[i].dataset.filterText; 
-            const rowPrio = rows[i].dataset.prioType; // 'dmg' or 'spa'
+            const rowPrio = rows[i].dataset.prioType; 
 
-            // 1. Check Text Match (Name, Trait, or "spa"/"dmg" typed manually)
             const textMatch = rowText && rowText.includes(inputVal);
-
-            // 2. Check Dropdown Match
             const prioMatch = (selectVal === 'all') || (selectVal === rowPrio);
 
-            // Show only if BOTH match
             rows[i].style.display = (textMatch && prioMatch) ? "flex" : "none";
         }
     }
@@ -1472,7 +1892,6 @@
         const levelMult = data.lvStats.dmgMult; 
         const avgHitPerUnit = data.dmgVal * data.critData.avgMult;
         
-        // Calculate intermediate steps for display
         const dmgAfterTrait = data.lvStats.dmg * (1 + data.traitBuffs.dmg/100);
         const dmgAfterRelic = dmgAfterTrait * (1 + data.relicBuffs.dmg/100);
 
@@ -1489,7 +1908,6 @@
                 <div class="math-header" style="color:#fff; opacity:0.8;">Quick Breakdown</div>
                 <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; background:rgba(255,255,255,0.03); padding:12px; border-radius:8px; border:1px solid #333;">
                     
-                    <!-- Hit DPS -->
                     <div>
                         <div style="font-size:0.65rem; color:#888; text-transform:uppercase;">Hit DPS</div>
                         <div style="color:#fff; font-weight:bold; font-size:0.9rem;">${num(data.hit)}</div>
@@ -1498,7 +1916,6 @@
                         </div>
                     </div>
 
-                    <!-- DoT DPS -->
                     <div>
                         <div style="font-size:0.65rem; color:#888; text-transform:uppercase;">DoT DPS</div>
                         <div style="color:${data.dot > 0 ? 'var(--accent-end)' : '#555'}; font-weight:bold; font-size:0.9rem;">
@@ -1513,7 +1930,6 @@
                         </div>
                     </div>
 
-                    <!-- Crit Stats -->
                     <div>
                         <div style="font-size:0.65rem; color:#888; text-transform:uppercase;">Crit Rate / Dmg</div>
                         <div style="color:var(--custom); font-weight:bold; font-size:0.9rem;">
@@ -1524,7 +1940,6 @@
                         </div>
                     </div>
 
-                    <!-- SPA -->
                     <div>
                         <div style="font-size:0.65rem; color:#888; text-transform:uppercase;">Attack Rate</div>
                         <div style="color:var(--accent-start); font-weight:bold; font-size:0.9rem;">${fix(data.spa, 2)}s</div>
@@ -1543,7 +1958,6 @@
 
             <div id="deepDiveContent" style="display:none;">
                 
-                <!-- DAMAGE CALCULATION -->
                 <div class="dd-section">
                     <div class="dd-title">1. Base Damage Calculation</div>
                     <div style="font-size:0.65rem; color:#666; margin-bottom:5px;">Formula: Lvl & SSS × Trait × Relic × (Set+Passive)</div>
@@ -1584,7 +1998,6 @@
                     </table>
                 </div>
 
-                <!-- CRIT CALCULATION -->
                 <div class="dd-section">
                     <div class="dd-title">2. Crit Averaging</div>
                     <table class="calc-table">
@@ -1645,7 +2058,6 @@
                     </table>
                 </div>
 
-                <!-- SPA CALCULATION -->
                 <div class="dd-section">
                     <div class="dd-title">3. SPA (Speed) Calculation</div>
                     <table class="calc-table">
@@ -1664,9 +2076,14 @@
                             <td class="col-formula"><span class="op">×</span>0.92</td>
                             <td class="col-val">${fix(data.lvStats.spa, 3)}s</td>
                         </tr>` : ''}
+                         <tr>
+                            <td class="col-label">Trait Reduction</td>
+                            <td class="col-formula">-${fix(data.traitBuffs.spa, 1)}%</td>
+                            <td class="col-val">${fix(data.lvStats.spa * (1 - data.traitBuffs.spa/100), 3)}s</td>
+                        </tr>
                         <tr>
-                            <td class="col-label">Trait & Relic Reductions</td>
-                            <td class="col-formula">-${fix(data.traitBuffs.spa + data.relicBuffs.spa + data.setBuffs.spa, 1)}%</td>
+                            <td class="col-label">Relic & Set Reduction</td>
+                            <td class="col-formula">-${fix(data.relicBuffs.spa + data.setBuffs.spa, 1)}%</td>
                             <td class="col-val">${fix(data.rawFinalSpa, 3)}s</td>
                         </tr>
                         <tr>
@@ -1677,20 +2094,20 @@
                     </table>
                 </div>
 
-                <!-- DOT CALCULATION (Conditional) -->
                 ${data.dot > 0 ? `
                 <div class="dd-section">
                     <div class="dd-title" style="color:var(--accent-end);">4. Status Effect (DoT)</div>
                     <table class="calc-table">
-                        <tr><td class="col-label">Tick % (Base+Buffs)</td><td class="col-val">${data.dotData.base + data.relicBuffs.dot}%</td></tr>
+                        <tr><td class="col-label">Tick % (Base+Trait)</td><td class="col-val">${data.dotData.base}%</td></tr>
+                        <tr><td class="col-label">Relic Mult (x${fix(data.dotData.relicMult, 2)})</td><td class="col-val" style="color:var(--accent-end);">${fix(data.dotData.finalPct, 1)}%</td></tr>
                         <tr><td class="col-label">Active Stacks</td><td class="col-val">x${data.dotData.internal}</td></tr>
+                        <tr><td class="col-label">Crit Multiplier</td><td class="col-val">x${fix(data.dotData.critMult, 2)}</td></tr>
                         <tr><td class="col-label">Total Damage (Lifetime)</td><td class="col-val">${num(data.dotData.finalTick)}</td></tr>
                         <tr><td class="col-label calc-sub">Time Basis (Max[Dur, SPA])</td><td class="col-val calc-sub">${fix(data.dotData.timeUsed, 2)}s</td></tr>
                         <tr><td class="col-label" style="color:#fff;">DoT DPS (1 Unit)</td><td class="col-val" style="color:var(--accent-end);">${num(data.singleUnitDoT)}</td></tr>
                     </table>
                 </div>` : ''}
 
-                <!-- FINAL SYNTHESIS -->
                 <div class="dd-section" style="border-left-color:var(--gold);">
                     <div class="dd-title" style="color:var(--gold);">5. Final Synthesis</div>
                     <table class="calc-table">
@@ -1750,19 +2167,23 @@
             placement: place,
             isSSS: isSSS
         };
+        
+        const builderStats = getCustomRelicStats();
+
         const customBuild = {
             name: "Custom / Test", 
             set: "none", 
-            dmg: parseFloat(document.getElementById('cust_dmg').value)||0, 
-            spa: parseFloat(document.getElementById('cust_spa').value)||0, 
-            cm: parseFloat(document.getElementById('cust_cm').value)||0, 
-            cf: 0, 
-            dot: parseFloat(document.getElementById('cust_dot').value)||0
+            dmg: builderStats.dmg, 
+            spa: builderStats.spa, 
+            cm: builderStats.cm, 
+            cf: builderStats.cf, 
+            dot: builderStats.dot
         };
         
         let activeBuilds = [...globalBuilds];
         activeBuilds = activeBuilds.filter(b => {
-             if (!statConfig.applyRelicCrit && (b.cm > 0 || b.cf > 0)) return false;
+             // CHANGED: Allow cf, filter cm only
+             if (!statConfig.applyRelicCrit && b.cm > 0) return false;
              if (!statConfig.applyRelicDot && b.dot > 0) return false;
              if (!statConfig.applyRelicDmg && b.dmg > 10) return false; 
              if (!statConfig.applyRelicSpa && b.spa > 10) return false; 
@@ -1788,6 +2209,56 @@
         });
     }
 
+    function setGuideMode(mode) {
+        const buttons = document.querySelectorAll('.guide-toggle-btn');
+        buttons.forEach(btn => btn.classList.remove('active'));
+        const activeBtn = Array.from(buttons).find(btn => btn.innerText.toLowerCase().includes(mode === 'current' ? 'current' : 'hypothetical'));
+        if(activeBtn) activeBtn.classList.add('active');
+
+        const warning = document.getElementById('guideWarning');
+        warning.style.display = (mode === 'current') ? 'block' : 'none';
+
+        renderGuides(mode);
+    }
+
+    function renderGuides(mode) {
+        const tableBody = document.getElementById('guideTableBody');
+        tableBody.innerHTML = '';
+
+        const colorize = (text) => {
+            if(!text) return '';
+            let html = text
+                .replace(/Damage|Dmg/g, '<span class="stat-badge stat-dmg">Dmg</span>')
+                .replace(/Spa|SPA/g, '<span class="stat-badge stat-spa">Spa</span>')
+                .replace(/Crit Rate|Crit|Crit Damage/g, '<span class="stat-badge stat-crit">Crit</span>')
+                .replace(/DoT|Buff Potency/g, '<span class="stat-badge stat-dot">$&</span>')
+                .replace(/Range|Rng/g, '<span class="stat-badge stat-range">Range</span>');
+            return html;
+        };
+
+        guideData.forEach(row => {
+            const data = row[mode]; 
+            const tr = document.createElement('tr');
+            tr.className = 'guide-row';
+
+            const imgHtml = row.img ? `<img src="${row.img}" style="width:35px; height:35px; border-radius:50%; margin-right:8px; border:2px solid #fff; vertical-align:middle;">` : '';
+            
+            tr.innerHTML = `
+                <td>
+                    <div style="display:flex; align-items:center;">
+                        ${imgHtml}
+                        <span style="font-weight:bold; color:#fff;">${row.unit}</span>
+                    </div>
+                </td>
+                <td style="color:var(--accent-end); font-weight:bold; font-size:0.8rem;">${data.trait}</td>
+                <td>${data.set}</td>
+                <td>${colorize(data.main)}</td>
+                <td>${colorize(data.sub)}</td>
+            `;
+            tableBody.appendChild(tr);
+        });
+    }
+
     function initCalcDropdown() {
         const sel1 = document.getElementById('c_trait1');
         const sel2 = document.getElementById('c_trait2');
@@ -1805,20 +2276,20 @@
         document.getElementById(pid+'Page').classList.add('active');
         
         document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-        const btn = Array.from(document.querySelectorAll('.nav-btn')).find(b => b.getAttribute('onclick').includes(pid));
+        const btn = Array.from(document.querySelectorAll('.nav-btn')).find(b => b.getAttribute('onclick') && b.getAttribute('onclick').includes(pid));
         if(btn) btn.classList.add('active');
 
-        // Toggle Injector Visibility based on page
         const injector = document.getElementById('dbInjector');
-        // Toggle Select All Button Visibility based on page
         const selectAllBtn = document.getElementById('selectAllBtn');
+        const subStatsToggle = document.getElementById('subStatsToggle'); 
 
         if(pid === 'db') {
             injector.style.display = 'flex';
-            selectAllBtn.style.display = 'block'; // Show
+            selectAllBtn.style.display = 'block'; 
+            if(subStatsToggle) subStatsToggle.style.display = 'flex';
         } else {
             injector.style.display = 'none';
-            selectAllBtn.style.display = 'none'; // Hide
+            selectAllBtn.style.display = 'none'; 
         }
     }
 
@@ -1831,7 +2302,9 @@
 
     window.onload = function() {
         initCalcDropdown();
+        initRelicBuilder(); 
         renderDatabase();
+        setGuideMode('current'); 
     };
 
 </script>
