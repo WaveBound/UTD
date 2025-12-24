@@ -1,3 +1,5 @@
+--- START OF FILE ai_studio_code.html ---
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -121,11 +123,12 @@
             width: 100%;
             background: rgba(255,255,255,0.03);
             border-top: 1px solid rgba(255,255,255,0.05);
-            padding: 15px 15px;
+            padding: 10px 15px;
             display: flex; gap: 10px; align-items: center; justify-content: center;
             flex-wrap: wrap; white-space: nowrap;
             transition: 0.3s;
         }
+        /* Style specifically for Toolbar dropdowns */
         .injector-panel select { width: auto; min-width: 100px; max-width: 200px; padding: 6px; font-size: 0.85rem; }
         
         .add-btn {
@@ -134,6 +137,28 @@
             text-transform: uppercase; font-size: 0.75rem; white-space: nowrap;
         }
         .add-btn:hover { box-shadow: 0 0 15px rgba(6, 182, 212, 0.4); }
+
+        /* Guide Specific Toolbar Buttons */
+        .guide-toggle-btn {
+            background: rgba(0, 0, 0, 0.05);
+            border: 1px solid #333;             /* Match nav-toggle border */
+            color: #888;
+            padding: 6px 15px;                  /* Increased padding to match */
+            border-radius: 6px; 
+            font-weight: 700;
+            text-transform: uppercase; 
+            font-size: 0.75rem;                 /* Increased font size to match */
+            cursor: pointer; 
+            transition: all 0.3s ease;
+        }
+        .guide-toggle-btn:hover { border-color: #fff; color: #fff; }
+        .guide-toggle-btn.active { 
+            background: var(--accent-start); 
+            color: #000; /* Changed from white to black */
+            border-color: var(--accent-start); 
+            box-shadow: 0 0 10px rgba(59, 130, 246, 0.4);
+        }
+
 
         .page { 
             display: none; 
@@ -301,17 +326,7 @@
             border-radius: 16px;
             padding: 20px;
         }
-        .guide-controls { display: flex; justify-content: center; gap: 15px; margin-bottom: 25px; align-items: center; }
-        .guide-toggle-btn {
-            background: rgba(0,0,0,0.5); border: 1px solid var(--card-border); color: #888;
-            padding: 10px 20px; border-radius: 30px; font-weight: 700;
-            text-transform: uppercase; font-size: 0.8rem; cursor: pointer; transition: all 0.3s ease;
-        }
-        .guide-toggle-btn:hover { border-color: #fff; color: #fff; }
-        .guide-toggle-btn.active { 
-            background: var(--accent-start); color: white; border-color: var(--accent-start); 
-            box-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
-        }
+        
         .guide-warning {
             text-align: center; background: rgba(255, 50, 50, 0.1); border: 1px solid rgba(255, 50, 50, 0.3);
             color: #ff8888; padding: 10px; border-radius: 8px; font-size: 0.8rem; margin-bottom: 20px; font-weight: bold;
@@ -352,6 +367,9 @@
         /* --- NEW GUIDE TABLE STYLES --- */
         .g-row { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
         .g-row:last-child { margin-bottom: 0; }
+        /* Fix for alignment: Remove bottom margin from badges inside guide rows */
+        .g-row .stat-badge { margin-bottom: 0; }
+
         .g-lbl { 
             font-size: 0.6rem; color: #888; font-weight: 800; 
             background: rgba(0,0,0,0.3); padding: 2px 6px; 
@@ -451,12 +469,82 @@
 
         .op { color: var(--custom); display: inline-block; width: 10px; text-align: center; }
 
+        /* --- MOBILE STYLES START HERE --- */
         @media (max-width: 900px) {
             .injector-panel { flex-wrap: wrap; } 
-            .guide-controls { flex-direction: column; gap: 5px; }
-            .guide-toggle-btn { width: 100%; text-align: center;}
-            .guide-table { font-size: 0.75rem; }
-            .unit-card { height: auto !important; }
+            
+            /* FIX 2: Removed width: 100% to stop stretching, added flex: 1 for equal sharing */
+            .guide-toggle-btn { width: auto; flex: 1; text-align: center;}
+            
+            /* FIX 1: Unit Database Scroll Logic */
+            .unit-card { height: 500px !important; }
+            .top-builds-list { max-height: 100%; }
+
+            /* FIX 2: IMPROVED Mobile Card View for Guides Table */
+            .guide-table, .guide-table tbody, .guide-table tr, .guide-table td {
+                display: block;
+                width: 100%;
+            }
+            .guide-table thead { display: none; }
+            
+            /* The CARD Container */
+            .guide-table tr {
+                margin-bottom: 25px;
+                border: 1px solid var(--card-border);
+                background: var(--card-bg);
+                border-radius: 12px;
+                box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+                overflow: hidden;
+            }
+            
+            /* Generic Cell Styling */
+            .guide-table td {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 12px 16px;
+                border-bottom: 1px solid rgba(255,255,255,0.05);
+                min-height: 44px;
+            }
+            .guide-table td:last-child { border-bottom: none; }
+
+            /* Left Side Label (Unit, Trait, etc.) */
+            .guide-table td::before {
+                content: attr(data-label);
+                font-weight: 700;
+                color: var(--text-secondary);
+                text-transform: uppercase;
+                font-size: 0.75rem;
+                margin-right: 15px;
+                letter-spacing: 0.5px;
+                flex-shrink: 0;
+            }
+
+            /* SPECIAL: Header Row (Unit Name) */
+            .guide-table td[data-label="Unit"] {
+                background: linear-gradient(90deg, rgba(46, 16, 101, 0.6), rgba(0,0,0,0));
+                border-bottom: 1px solid var(--banner-border);
+                padding: 15px 16px;
+            }
+            .guide-table td[data-label="Unit"]::before { display: none; } /* Hide label for header */
+            .guide-table td[data-label="Unit"] > div { width: 100%; } /* Ensure content fills width */
+            .guide-table td[data-label="Unit"] span { font-size: 1.1rem; color: white; }
+
+            /* SPECIAL: DPS Row Highlight */
+            .guide-table td[data-label="DPS"] {
+                background: rgba(0,0,0,0.2);
+            }
+
+            /* Right Side Value Grouping */
+            .mobile-value {
+                display: flex;
+                align-items: center;
+                justify-content: flex-end;
+                gap: 6px;
+                flex-wrap: wrap;
+                text-align: right;
+                width: 100%;
+            }
         }
     </style>
 </head>
@@ -466,7 +554,7 @@
         <h1>Meta Optimizer</h1>
     </header>
 
-    <!-- STICKY TOOLBAR: Contains Nav Buttons + Custom Pair Injector -->
+    <!-- STICKY TOOLBAR -->
     <div class="sticky-toolbar-container">
         
         <!-- Navigation -->
@@ -477,7 +565,7 @@
             <button id="compareBtn" class="nav-btn" onclick="openComparison()">Compare (<span id="compareCount">0</span>)</button>
         </div>
 
-        <!-- Custom Trait Injector (Integrated here) -->
+        <!-- 1. DATABASE TOOLBAR (Custom Pair Injector) -->
         <div id="dbInjector" class="injector-panel">
             <span style="color:#fff; font-weight:bold;">Custom Pair:</span>
             
@@ -494,7 +582,7 @@
             
             <button class="add-btn" onclick="addCustomTrait()">Add</button>
             
-            <!-- Global Toggles -->
+            <!-- Global Toggles for DB -->
             <label id="hypoToggle" class="nav-toggle-label" title="Current: Relic Stats for DoT/Crit Dmg are ignored (Bugged). Check to apply fixes.">
                 <input type="checkbox" id="globalHypothetical" onchange="toggleHypothetical(this)">
                 <span id="hypoLabel">Bugged Relics</span>
@@ -502,12 +590,40 @@
 
             <label id="headPieceToggle" class="nav-toggle-label" title="Adds Perfect Head Piece (Best Sub Stat)">
                 <input type="checkbox" id="globalHeadPiece" onchange="toggleHeadPiece(this)">
-                <span>+ Head Piece</span>
+                <span>+ Head</span>
             </label>
 
             <label id="subStatsToggle" class="nav-toggle-label" title="Adds Perfect Sub-Stats to Calculations">
                 <input type="checkbox" id="globalSubStats" onchange="toggleSubStats(this)">
-                <span>+ Sub Stats</span>
+                <span>+ Subs</span>
+            </label>
+        </div>
+
+        <!-- 2. GUIDES TOOLBAR (Moved Inputs Here) -->
+        <div id="guidesToolbar" class="injector-panel" style="display:none;">
+            <select id="guideUnitSelect" style="border:1px solid #444; background: #000; color: #fff; border-radius: 8px; margin-right:5px;"
+                    onchange="renderGuides()">
+                <option value="all">All Units</option>
+            </select>
+            
+            <select id="guideTraitSelect" style="border:1px solid #444; background: #000; color: #fff; border-radius: 8px; margin-right:10px;"
+                    onchange="renderGuides()">
+                <option value="auto">Auto (Best Trait)</option>
+            </select>
+
+            <!-- Mode Buttons -->
+            <button class="guide-toggle-btn active" onclick="setGuideMode('current')">Current Meta (Bugged Relics)</button>
+            <button class="guide-toggle-btn" onclick="setGuideMode('fixed')">Hypothetical (Fixed Relics)</button>
+
+            <!-- Toggles -->
+            <label class="nav-toggle-label">
+                <input type="checkbox" id="guideHeadPiece" onchange="toggleGuideHeadPiece(this)">
+                <span>+ Head</span>
+            </label>
+
+            <label class="nav-toggle-label is-checked">
+                <input type="checkbox" id="guideSubStats" onchange="toggleGuideSubStats(this)" checked>
+                <span>+ Subs</span>
             </label>
         </div>
     </div>
@@ -522,35 +638,11 @@
         <div class="guide-container">
             <div class="panel-header" style="justify-content:center; border:none;">Relic Efficiency Guide</div>
             
-            <div class="guide-controls">
-                <button class="guide-toggle-btn active" onclick="setGuideMode('current')">Current Meta (Bugged Relics)</button>
-                <button class="guide-toggle-btn" onclick="setGuideMode('fixed')">Hypothetical (Fixed Relics)</button>
-
-                <label class="nav-toggle-label" style="margin-left:10px; height:38px; display:flex; align-items:center;">
-                    <input type="checkbox" id="guideHeadPiece" onchange="toggleGuideHeadPiece(this)">
-                    <span>+ Head Piece</span>
-                </label>
-
-                <label class="nav-toggle-label is-checked" style="margin-left:0; height:38px; display:flex; align-items:center;">
-                    <input type="checkbox" id="guideSubStats" onchange="toggleGuideSubStats(this)" checked>
-                    <span>+ Sub Stats</span>
-                </label>
-            </div>
+            <!-- Controls have been moved to header toolbar -->
 
             <div id="guideWarning" class="guide-warning">
                 ⚠️ CURRENT BUG: Relic Stats for <b>DoT%</b> and <b>Crit Dmg%</b> are currently ignored by the game. <br>
                 Only Damage% - SPA% - Crit Rate% relics are working effectively.
-            </div>
-
-            <div style="margin-bottom: 20px; display:flex; justify-content:center; gap: 10px; flex-wrap: wrap;">
-                <select id="guideUnitSelect" style="width: 100%; max-width: 250px; padding: 10px; font-size: 0.9rem; border: 1px solid #444; background: #000; color: #fff; border-radius: 8px;"
-                        onchange="renderGuides()">
-                    <option value="all">All Units</option>
-                </select>
-                <select id="guideTraitSelect" style="width: 100%; max-width: 250px; padding: 10px; font-size: 0.9rem; border: 1px solid #444; background: #000; color: #fff; border-radius: 8px;"
-                        onchange="renderGuides()">
-                    <option value="auto">Auto (Best Trait)</option>
-                </select>
             </div>
 
             <div style="overflow-x: auto;">
@@ -1223,11 +1315,13 @@
     }
 
     function updateCompareBtn() {
+        const isDbPage = document.getElementById('dbPage').classList.contains('active');
         const btn = document.getElementById('compareBtn');
         const count = selectedUnitIds.size;
         document.getElementById('compareCount').innerText = count;
-        if(count > 0) btn.style.display = 'block';
+        if(count > 0 && isDbPage) btn.style.display = 'block';
         else btn.style.display = 'none';
+
         const selBtn = document.getElementById('selectAllBtn');
         if(count === unitDatabase.length && count > 0) selBtn.innerText = "Deselect All";
         else selBtn.innerText = "Select All";
@@ -1674,7 +1768,8 @@
             const tr = document.createElement('tr');
             tr.className = 'guide-row';
             const imgHtml = row.img ? `<img src="${row.img}" style="width:35px; height:35px; border-radius:50%; margin-right:8px; border:2px solid #fff; vertical-align:middle;">` : '';
-            tr.innerHTML = `<td><div style="display:flex; align-items:center;">${imgHtml}<span style="font-weight:bold; color:#fff;">${row.unit}</span></div></td><td style="color:var(--accent-end); font-weight:bold; font-size:0.8rem;">${data.trait}</td><td>${data.set}</td><td style="color:#666; font-size:0.8rem;">-</td><td>${formatStatBadge(data.main)}</td><td>${formatStatBadge(data.sub)}</td>`;
+            // Added mobile-value wrapper div
+            tr.innerHTML = `<td data-label="Unit"><div style="display:flex; align-items:center;">${imgHtml}<span style="font-weight:bold; color:#fff;">${row.unit}</span></div></td><td data-label="Trait"><div class="mobile-value" style="color:var(--accent-end); font-weight:bold; font-size:0.8rem;">${data.trait}</div></td><td data-label="Set"><div class="mobile-value">${data.set}</div></td><td data-label="DPS"><div class="mobile-value" style="color:#666; font-size:0.8rem;">-</div></td><td data-label="Main"><div class="mobile-value">${formatStatBadge(data.main)}</div></td><td data-label="Sub"><div class="mobile-value">${formatStatBadge(data.sub)}</div></td>`;
             tableBody.appendChild(tr);
         });
 
@@ -1709,16 +1804,15 @@
                 const showUnitInfo = (selectedUnitId !== 'all') ? true : (index === 0); 
                 let rankColor = index === 0 ? 'var(--gold)' : (index === 1 ? 'var(--silver)' : 'var(--bronze)');
                 
-                // --- NEW BADGE LOGIC ---
                 const prioLabel = build.prio === 'dmg' ? 'DMG' : 'SPA';
                 const prioStyle = build.prio === 'dmg' 
                     ? 'color:var(--gold); border-color:var(--gold); background:rgba(255, 215, 0, 0.1);' 
                     : 'color:var(--custom); border-color:var(--custom); background:rgba(6, 182, 212, 0.1);';
                 
                 const prioHtml = `<div style="font-size:0.6rem; margin-top:4px; font-weight:bold; border:1px solid; border-radius:4px; display:inline-block; padding:1px 5px; ${prioStyle}">LVL: ${prioLabel}</div>`;
-                // -----------------------
 
-                tr.innerHTML = `<td><div style="display:flex; align-items:center;">${showUnitInfo ? imgHtml : '<div style="width:43px; display:inline-block;"></div>'}<span style="font-weight:bold; color:#fff; ${showUnitInfo ? '' : 'opacity:0;'}">${item.unit.name}</span></div></td><td style="color:var(--accent-end); font-weight:bold; font-size:0.8rem;">${showUnitInfo ? item.trait.name : ''}</td><td><span style="font-weight:bold; color:${rankColor};">${index + 1}. ${build.name}</span></td><td style="font-weight:900; color:var(--accent-start); font-size:1.15rem; font-family:'Consolas', monospace; text-shadow: 0 0 8px rgba(59, 130, 246, 0.2); line-height:1.1;">${format(build.dps)}<br>${prioHtml}</td><td>${build.main}</td><td>${build.sub}</td>`;
+                // Added mobile-value wrapper div
+                tr.innerHTML = `<td data-label="Unit"><div style="display:flex; align-items:center;">${showUnitInfo ? imgHtml : '<div style="width:43px; display:inline-block;"></div>'}<span style="font-weight:bold; color:#fff; ${showUnitInfo ? '' : 'opacity:0;'}">${item.unit.name}</span></div></td><td data-label="Trait"><div class="mobile-value" style="color:var(--accent-end); font-weight:bold; font-size:0.8rem;">${showUnitInfo ? item.trait.name : ''}</div></td><td data-label="Build"><div class="mobile-value"><span style="font-weight:bold; color:${rankColor};">${index + 1}. ${build.name}</span></div></td><td data-label="DPS"><div class="mobile-value" style="font-weight:900; color:var(--accent-start); font-size:1.15rem; font-family:'Consolas', monospace; text-shadow: 0 0 8px rgba(59, 130, 246, 0.2); line-height:1.1; text-align:right;">${format(build.dps)}<br>${prioHtml}</div></td><td data-label="Main"><div class="mobile-value">${build.main}</div></td><td data-label="Sub"><div class="mobile-value">${build.sub}</div></td>`;
                 tableBody.appendChild(tr);
             });
         });
@@ -1760,17 +1854,20 @@
             }
         });
 
-        const injector = document.getElementById('dbInjector');
+        const dbToolbar = document.getElementById('dbInjector');
+        const guidesToolbar = document.getElementById('guidesToolbar');
         const selectAllBtn = document.getElementById('selectAllBtn');
         const compareBtn = document.getElementById('compareBtn');
         
         // Hide/Show toolbars based on page
         if(pid === 'db') {
-            injector.style.display = 'flex'; 
+            dbToolbar.style.display = 'flex'; 
+            guidesToolbar.style.display = 'none';
             selectAllBtn.style.display = 'block'; 
             updateCompareBtn(); // Show compare if units selected
         } else {
-            injector.style.display = 'none'; 
+            dbToolbar.style.display = 'none'; 
+            guidesToolbar.style.display = 'flex';
             selectAllBtn.style.display = 'none'; 
             compareBtn.style.display = 'none';
         }
