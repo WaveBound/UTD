@@ -1572,72 +1572,6 @@
         traitsList.filter(t => t.id !== 'none').forEach(trait => { traitSelect.add(new Option(trait.name, trait.id)); });
     }
     
-    function renderGuides() {
-        const tableBody = document.getElementById('guideTableBody');
-        tableBody.innerHTML = '';
-        const selectedUnitId = document.getElementById('guideUnitSelect').value;
-        const selectedTraitId = document.getElementById('guideTraitSelect').value;
-
-        const genericGuides = guideData.filter(d => !d.isCalculated);
-        genericGuides.forEach(row => {
-            if (selectedUnitId !== 'all' && unitDatabase.some(u => u.id === selectedUnitId)) return;
-            const data = row[currentGuideMode]; 
-            const tr = document.createElement('tr');
-            tr.className = 'guide-row';
-            const imgHtml = row.img ? `<img src="${row.img}" style="width:35px; height:35px; border-radius:50%; margin-right:8px; border:2px solid #fff; vertical-align:middle;">` : '';
-            tr.innerHTML = `<td><div style="display:flex; align-items:center;">${imgHtml}<span style="font-weight:bold; color:#fff;">${row.unit}</span></div></td><td style="color:var(--accent-end); font-weight:bold; font-size:0.8rem;">${data.trait}</td><td>${data.set}</td><td style="color:#666; font-size:0.8rem;">-</td><td>${formatStatBadge(data.main)}</td><td>${formatStatBadge(data.sub)}</td>`;
-            tableBody.appendChild(tr);
-        });
-
-        let unitsToDisplay = [];
-        if (selectedUnitId !== 'all') {
-            const unit = unitDatabase.find(u => u.id === selectedUnitId);
-            if (unit) unitsToDisplay.push(unit);
-        } else { unitsToDisplay = unitDatabase; }
-
-        let calculatedUnits = unitsToDisplay.map(unit => {
-            let traitToUse = null;
-            if (selectedTraitId === 'auto') traitToUse = findOverallBestTraitForUnit(unit);
-            else {
-                traitToUse = traitsList.find(t => t.id === selectedTraitId);
-                if (!traitToUse) traitToUse = customTraits.find(t => t.id === selectedTraitId);
-                if (!traitToUse && unitSpecificTraits[unit.id]) traitToUse = unitSpecificTraits[unit.id].find(t => t.id === selectedTraitId);
-            }
-            if (!traitToUse) return null;
-            const topBuilds = getTopBuildsForGuide(unit, traitToUse);
-            if (topBuilds.length === 0) return null;
-            return { unit: unit, trait: traitToUse, topBuilds: topBuilds, maxDps: topBuilds[0].dps };
-        }).filter(item => item !== null);
-
-        calculatedUnits.sort((a, b) => b.maxDps - a.maxDps);
-
-        calculatedUnits.forEach(item => {
-            const showCount = (selectedUnitId === 'all') ? 1 : 5;
-            item.topBuilds.slice(0, showCount).forEach((build, index) => {
-                const tr = document.createElement('tr');
-                tr.className = 'guide-row';
-                const imgHtml = item.unit.img ? `<img src="${item.unit.img}" style="width:35px; height:35px; border-radius:50%; margin-right:8px; border:2px solid #fff; vertical-align:middle;">` : '';
-                const showUnitInfo = (selectedUnitId !== 'all') ? true : (index === 0); 
-                let rankColor = index === 0 ? 'var(--gold)' : (index === 1 ? 'var(--silver)' : 'var(--bronze)');
-                tr.innerHTML = `<td><div style="display:flex; align-items:center;">${showUnitInfo ? imgHtml : '<div style="width:43px; display:inline-block;"></div>'}<span style="font-weight:bold; color:#fff; ${showUnitInfo ? '' : 'opacity:0;'}">${item.unit.name}</span></div></td><td style="color:var(--accent-end); font-weight:bold; font-size:0.8rem;">${showUnitInfo ? item.trait.name : ''}</td><td><span style="font-weight:bold; color:${rankColor};">${index + 1}. ${build.name}</span></td><td style="font-weight:900; color:var(--accent-start); font-size:1.15rem; font-family:'Consolas', monospace; text-shadow: 0 0 8px rgba(59, 130, 246, 0.2);">${format(build.dps)}</td><td>${build.main}</td><td>${build.sub}</td>`;
-                tableBody.appendChild(tr);
-            });
-        });
-    }
-
-    function findOverallBestTraitForUnit(unit) {
-        let bestTrait = null; let maxDps = -1;
-        const specificTraits = unitSpecificTraits[unit.id] || [];
-        const allToCheck = [...traitsList, ...customTraits, ...specificTraits];
-        allToCheck.filter(t => t.id !== 'none').forEach(trait => {
-            const topBuilds = getTopBuildsForGuide(unit, trait);
-            if (topBuilds.length > 0 && topBuilds[0].dps > maxDps) {
-                maxDps = topBuilds[0].dps; bestTrait = trait;
-            }
-        });
-        return bestTrait;
-    }
-
     function getTopBuildsForGuide(unit, trait) {
         let results = [];
         let effectiveStats = { ...unit.stats };
@@ -1694,9 +1628,19 @@
             let bestDmgConfig = getBestSubConfigurationForGuide(build, 'dmg', context);
             context.priority = 'spa';
             let bestSpaConfig = getBestSubConfigurationForGuide(build, 'spa', context);
-            let finalConfig = (bestDmgConfig.res.total > bestSpaConfig.res.total) ? bestDmgConfig : bestSpaConfig;
+            
+            // Determine which stat priority yielded higher DPS
+            let finalConfig, finalPrio;
+            if (bestDmgConfig.res.total >= bestSpaConfig.res.total) {
+                finalConfig = bestDmgConfig;
+                finalPrio = 'dmg';
+            } else {
+                finalConfig = bestSpaConfig;
+                finalPrio = 'spa';
+            }
+
             results.push({
-                name: build.name, dps: finalConfig.res.total, set: SETS.find(s => s.id === build.set).name, rawBuild: build,
+                name: build.name, dps: finalConfig.res.total, prio: finalPrio, set: SETS.find(s => s.id === build.set).name, rawBuild: build,
                 subData: { sub: finalConfig.subStat, head: finalConfig.headStat }
             });
         });
@@ -1713,8 +1657,84 @@
             if (b.subData.sub) subHtml += `<div class="g-row"><span class="g-lbl">SUBS</span>${formatStatBadge(b.subData.sub)}</div>`;
             if (b.subData.head) subHtml += `<div class="g-row"><span class="g-lbl">HEAD</span>${formatStatBadge(b.subData.head)}</div>`;
             if (!subHtml) subHtml = '<span style="color:#666; font-size:0.75rem">None</span>';
-            return { name: b.name, dps: b.dps, set: b.set, main: `<div class="g-row"><span class="g-lbl">TOP</span>${formatStatBadge(topStat)}</div><div class="g-row"><span class="g-lbl">LEG</span>${formatStatBadge(legStat)}</div>`, sub: subHtml };
+            return { name: b.name, dps: b.dps, prio: b.prio, set: b.set, main: `<div class="g-row"><span class="g-lbl">TOP</span>${formatStatBadge(topStat)}</div><div class="g-row"><span class="g-lbl">LEG</span>${formatStatBadge(legStat)}</div>`, sub: subHtml };
         });
+    }
+
+    function renderGuides() {
+        const tableBody = document.getElementById('guideTableBody');
+        tableBody.innerHTML = '';
+        const selectedUnitId = document.getElementById('guideUnitSelect').value;
+        const selectedTraitId = document.getElementById('guideTraitSelect').value;
+
+        const genericGuides = guideData.filter(d => !d.isCalculated);
+        genericGuides.forEach(row => {
+            if (selectedUnitId !== 'all' && unitDatabase.some(u => u.id === selectedUnitId)) return;
+            const data = row[currentGuideMode]; 
+            const tr = document.createElement('tr');
+            tr.className = 'guide-row';
+            const imgHtml = row.img ? `<img src="${row.img}" style="width:35px; height:35px; border-radius:50%; margin-right:8px; border:2px solid #fff; vertical-align:middle;">` : '';
+            tr.innerHTML = `<td><div style="display:flex; align-items:center;">${imgHtml}<span style="font-weight:bold; color:#fff;">${row.unit}</span></div></td><td style="color:var(--accent-end); font-weight:bold; font-size:0.8rem;">${data.trait}</td><td>${data.set}</td><td style="color:#666; font-size:0.8rem;">-</td><td>${formatStatBadge(data.main)}</td><td>${formatStatBadge(data.sub)}</td>`;
+            tableBody.appendChild(tr);
+        });
+
+        let unitsToDisplay = [];
+        if (selectedUnitId !== 'all') {
+            const unit = unitDatabase.find(u => u.id === selectedUnitId);
+            if (unit) unitsToDisplay.push(unit);
+        } else { unitsToDisplay = unitDatabase; }
+
+        let calculatedUnits = unitsToDisplay.map(unit => {
+            let traitToUse = null;
+            if (selectedTraitId === 'auto') traitToUse = findOverallBestTraitForUnit(unit);
+            else {
+                traitToUse = traitsList.find(t => t.id === selectedTraitId);
+                if (!traitToUse) traitToUse = customTraits.find(t => t.id === selectedTraitId);
+                if (!traitToUse && unitSpecificTraits[unit.id]) traitToUse = unitSpecificTraits[unit.id].find(t => t.id === selectedTraitId);
+            }
+            if (!traitToUse) return null;
+            const topBuilds = getTopBuildsForGuide(unit, traitToUse);
+            if (topBuilds.length === 0) return null;
+            return { unit: unit, trait: traitToUse, topBuilds: topBuilds, maxDps: topBuilds[0].dps };
+        }).filter(item => item !== null);
+
+        calculatedUnits.sort((a, b) => b.maxDps - a.maxDps);
+
+        calculatedUnits.forEach(item => {
+            const showCount = (selectedUnitId === 'all') ? 1 : 5;
+            item.topBuilds.slice(0, showCount).forEach((build, index) => {
+                const tr = document.createElement('tr');
+                tr.className = 'guide-row';
+                const imgHtml = item.unit.img ? `<img src="${item.unit.img}" style="width:35px; height:35px; border-radius:50%; margin-right:8px; border:2px solid #fff; vertical-align:middle;">` : '';
+                const showUnitInfo = (selectedUnitId !== 'all') ? true : (index === 0); 
+                let rankColor = index === 0 ? 'var(--gold)' : (index === 1 ? 'var(--silver)' : 'var(--bronze)');
+                
+                // --- NEW BADGE LOGIC ---
+                const prioLabel = build.prio === 'dmg' ? 'DMG' : 'SPA';
+                const prioStyle = build.prio === 'dmg' 
+                    ? 'color:var(--gold); border-color:var(--gold); background:rgba(255, 215, 0, 0.1);' 
+                    : 'color:var(--custom); border-color:var(--custom); background:rgba(6, 182, 212, 0.1);';
+                
+                const prioHtml = `<div style="font-size:0.6rem; margin-top:4px; font-weight:bold; border:1px solid; border-radius:4px; display:inline-block; padding:1px 5px; ${prioStyle}">LVL: ${prioLabel}</div>`;
+                // -----------------------
+
+                tr.innerHTML = `<td><div style="display:flex; align-items:center;">${showUnitInfo ? imgHtml : '<div style="width:43px; display:inline-block;"></div>'}<span style="font-weight:bold; color:#fff; ${showUnitInfo ? '' : 'opacity:0;'}">${item.unit.name}</span></div></td><td style="color:var(--accent-end); font-weight:bold; font-size:0.8rem;">${showUnitInfo ? item.trait.name : ''}</td><td><span style="font-weight:bold; color:${rankColor};">${index + 1}. ${build.name}</span></td><td style="font-weight:900; color:var(--accent-start); font-size:1.15rem; font-family:'Consolas', monospace; text-shadow: 0 0 8px rgba(59, 130, 246, 0.2); line-height:1.1;">${format(build.dps)}<br>${prioHtml}</td><td>${build.main}</td><td>${build.sub}</td>`;
+                tableBody.appendChild(tr);
+            });
+        });
+    }
+
+    function findOverallBestTraitForUnit(unit) {
+        let bestTrait = null; let maxDps = -1;
+        const specificTraits = unitSpecificTraits[unit.id] || [];
+        const allToCheck = [...traitsList, ...customTraits, ...specificTraits];
+        allToCheck.filter(t => t.id !== 'none').forEach(trait => {
+            const topBuilds = getTopBuildsForGuide(unit, trait);
+            if (topBuilds.length > 0 && topBuilds[0].dps > maxDps) {
+                maxDps = topBuilds[0].dps; bestTrait = trait;
+            }
+        });
+        return bestTrait;
     }
 
     function initCalcDropdown() {
