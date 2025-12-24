@@ -624,13 +624,18 @@
     function formatStatBadge(text) {
         if(!text) return '';
         if (text.includes('<')) return text;
-        return text
-            .replace(/Damage|Dmg/g, '<span class="stat-badge stat-dmg">Dmg</span>')
-            .replace(/Spa|SPA/g, '<span class="stat-badge stat-spa">Spa</span>')
-            .replace(/Crit Rate/g, '<span class="stat-badge stat-crit">Crit Rate</span>')
-            .replace(/Crit Dmg|Crit Damage/g, '<span class="stat-badge stat-cdmg"><span class="stat-cdmg-text">Crit Dmg</span></span>')
-            .replace(/DoT|Buff Potency/g, '<span class="stat-badge stat-dot">$&</span>')
-            .replace(/Range|Rng/g, '<span class="stat-badge stat-range">Range</span>');
+        
+        return text.replace(/(Crit Dmg|Crit Damage)|(Crit Rate)|(Damage|Dmg)|(Spa|SPA)|(DoT|Buff Potency)|(Range|Rng)/gi, 
+            (match, cdmg, crate, dmg, spa, dot, rng) => {
+                if (cdmg) return '<span class="stat-badge stat-cdmg"><span class="stat-cdmg-text">Crit Dmg</span></span>';
+                if (crate) return '<span class="stat-badge stat-crit">Crit Rate</span>';
+                if (dmg) return '<span class="stat-badge stat-dmg">Dmg</span>';
+                if (spa) return '<span class="stat-badge stat-spa">Spa</span>';
+                if (dot) return '<span class="stat-badge stat-dot">' + match + '</span>';
+                if (rng) return '<span class="stat-badge stat-range">Range</span>';
+                return match;
+            }
+        );
     }
 
     // =========================================
@@ -1495,6 +1500,7 @@
                         <tr><td class="col-label calc-sub">Base Hit Ref</td><td class="col-val calc-sub">${num(data.dmgVal)}</td></tr>
                         <tr><td class="col-label">Tick % (Base+Trait)</td><td class="col-val">${data.dotData.base}%</td></tr>
                         <tr><td class="col-label">Relic Mult (x${fix(data.dotData.relicMult, 2)})</td><td class="col-val" style="color:var(--accent-end);">${fix(data.dotData.finalPct, 1)}%</td></tr>
+                        <tr><td class="col-label">Active Stacks</td><td class="col-val">x${data.dotData.internal}</td></tr>
                         <tr><td class="col-label" style="color:var(--custom);">Crit Avg Mult</td><td class="col-val" style="color:var(--custom);">x${fix(data.critData.avgMult, 3)}</td></tr>
                         <tr><td class="col-label">Total Damage (Lifetime)</td><td class="col-val">${num(data.dotData.finalTick)}</td></tr>
                         <tr><td class="col-label calc-sub">Time Basis</td><td class="col-val calc-sub">${fix(data.dotData.timeUsed, 2)}s</td></tr>
