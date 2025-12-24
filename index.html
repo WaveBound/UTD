@@ -599,9 +599,10 @@
 
         <!-- 2. GUIDES TOOLBAR (Moved Inputs Here) -->
         <div id="guidesToolbar" class="injector-panel" style="display:none;">
+            <!-- UPDATED: Changed default text to "Search Unit..." -->
             <select id="guideUnitSelect" style="border:1px solid #444; background: #000; color: #fff; border-radius: 8px; margin-right:5px;"
                     onchange="renderGuides()">
-                <option value="all">All Units</option>
+                <option value="all">Search Unit...</option>
             </select>
             
             <select id="guideTraitSelect" style="border:1px solid #444; background: #000; color: #fff; border-radius: 8px; margin-right:10px;"
@@ -1110,6 +1111,10 @@
                     alert(`Added custom trait to ${uName}: ${combo.name}`);
                 } else alert("Trait combination already exists for this unit!");
             }
+            
+            // UPDATED: Refresh the Guide Dropdowns so the new trait appears there
+            populateGuideDropdowns();
+
             renderDatabase();
             if(document.getElementById('guidesPage').classList.contains('active')) renderGuides();
         }
@@ -1660,8 +1665,42 @@
     function populateGuideDropdowns() {
         const unitSelect = document.getElementById('guideUnitSelect');
         const traitSelect = document.getElementById('guideTraitSelect');
+        
+        // Save current selection to restore after repopulating (if possible)
+        const currentUnit = unitSelect.value;
+        const currentTrait = traitSelect.value;
+
+        // Reset Unit Select
+        unitSelect.length = 0;
+        unitSelect.add(new Option("Search Unit... (All)", "all"));
         unitDatabase.forEach(unit => { unitSelect.add(new Option(unit.name, unit.id)); });
-        traitsList.filter(t => t.id !== 'none').forEach(trait => { traitSelect.add(new Option(trait.name, trait.id)); });
+
+        // Reset Trait Select
+        traitSelect.length = 0;
+        traitSelect.add(new Option("Auto (Best Trait)", "auto"));
+        
+        // Add Standard Traits
+        traitsList.filter(t => t.id !== 'none').forEach(trait => { 
+            traitSelect.add(new Option(trait.name, trait.id)); 
+        });
+
+        // UPDATED: Add Custom Traits to the list
+        if(customTraits.length > 0) {
+            customTraits.forEach(trait => {
+                traitSelect.add(new Option(`★ ${trait.name}`, trait.id));
+            });
+        }
+
+        // Restore selections if they still exist
+        if(currentUnit) unitSelect.value = currentUnit;
+        if(currentTrait) {
+            // Check if the previously selected trait still exists in the new list
+            let exists = false;
+            for(let i=0; i<traitSelect.options.length; i++){
+                if(traitSelect.options[i].value === currentTrait) exists = true;
+            }
+            if(exists) traitSelect.value = currentTrait;
+        }
     }
     
     function getTopBuildsForGuide(unit, trait) {
