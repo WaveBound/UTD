@@ -9,10 +9,12 @@ const PERFECT_SUBS = {
     dmg: 4, spa: 1.5, cm: 4.5, cf: 2.5, dot: 5, range: 2
 };
 
-const SUB_CANDIDATES = ['dmg', 'spa', 'cm', 'cf', 'dot'];
+// Valid sub-stats to test
+const SUB_CANDIDATES = ['dmg', 'spa', 'cm', 'cf', 'dot', 'range'];
 
+// Display names for sub-stats
 const SUB_NAMES = {
-    dmg: "Dmg", spa: "SPA", cm: "Crit Dmg", cf: "Crit Rate", dot: "DoT"
+    dmg: "Dmg", spa: "SPA", cm: "Crit Dmg", cf: "Crit Rate", dot: "DoT", range: "Range"
 };
 
 function formatStatBadge(text) {
@@ -127,7 +129,6 @@ let activeAbilityIds = new Set();
 // SORTED UNIT DATABASE
 // =========================================
 const unitDatabase = [
-    // --- 1. Top Meta Carries ---
     {
         id: "Maid", name: "Scarlet Maid (World)", role: "Dmg / Support",
         img: "images/Maid.png", 
@@ -138,7 +139,7 @@ const unitDatabase = [
         id: "sjw", name: "SJW (Monarch)", role: "Raw Dmg",
         img: "images/Sjw.png", 
         placement: 1,
-        stats: { dmg: 3250, spa: 5, crit: 0, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 5, passiveDmg: 15, element: "Dark" }
+        stats: { dmg: 3350, spa: 5, crit: 0, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 5, passiveDmg: 15, element: "Dark" }
     },
     {
         id: "ragna", name: "Ragna (Silverite)", role: "Burst / Hybrid",
@@ -151,7 +152,7 @@ const unitDatabase = [
         id: "ace", name: "Ace", role: "Burn / DoT",
         img: "images/Ace.png",
         placement: 3,
-        stats: { dmg: 1500, spa: 9, crit: 0, cdmg: 150, dot: 100, dotStacks: 5, spaCap: 6, passiveDmg: 60, element: "Fire", dotDuration: 4 }
+        stats: { dmg: 1500, spa: 6, crit: 0, cdmg: 150, dot: 100, dotStacks: 11, spaCap: 3, passiveDmg: 60, element: "Fire", dotDuration: 4 }
     },
     {
         id: "kirito", name: "Kirito", role: "Burst / Crit",
@@ -379,20 +380,6 @@ function calculateDPS(uStats, relicStats, context) {
 // 3. UI LOGIC
 // =========================================
 
-const MAX_VALS = {
-    dmg: 24, spa: 9, dot: 30, crit: 15, cdmg: 27, range: 12, ha: 0       
-};
-
-const SUB_OPTIONS = [
-    {val: "none", label: "None"},
-    {val: "dmg", label: "Damage (4%)"},
-    {val: "spa", label: "SPA (1.5%)"},
-    {val: "dot", label: "DoT (5%)"},
-    {val: "crit", label: "Crit Rate (2.5%)"},
-    {val: "cdmg", label: "Crit Dmg (4.5%)"},
-    {val: "range", label: "Range (2%)"}
-];
-
 let cachedResults = {}; 
 let currentGuideMode = 'current';
 
@@ -480,18 +467,14 @@ function getUnitResultsHTML(unit, effectiveStats) {
     effectiveStats.id = unit.id;
 
     const filteredBuilds = globalBuilds.filter(b => {
-        // --- MODIFIED HERE ---
-        // In 'bugged' mode, Crit Rate (cf) should also be ignored.
         if (currentGuideMode === 'current') {
             if (!statConfig.applyRelicDot && b.dot > 0) return false;
-            if (!statConfig.applyRelicCrit && b.cf > 0) return false; // Crit Rate ignored
-            if (!statConfig.applyRelicCrit && b.cm > 0) return false;  // Crit Damage ignored
+            if (!statConfig.applyRelicCrit && b.cf > 0) return false; 
+            if (!statConfig.applyRelicCrit && b.cm > 0) return false;  
         } else {
             if (!statConfig.applyRelicCrit && b.cm > 0) return false;
             if (!statConfig.applyRelicDot && b.dot > 0) return false;
         }
-        // --- END MODIFICATION ---
-
         if (!statConfig.applyRelicDmg && b.dmg > 10) return false; 
         if (!statConfig.applyRelicSpa && b.spa > 10) return false; 
         return true;
@@ -503,29 +486,46 @@ function getUnitResultsHTML(unit, effectiveStats) {
         if (!includeSubs && !includeHead) return { res: calculateDPS(effectiveStats, build, context), desc: "" };
         let bestRes = { total: -1 };
         let bestDesc = "";
+        
         const candidatesToTest = SUB_CANDIDATES.filter(cand => {
             if (!statConfig.applyRelicCrit && cand === 'cm') return false; 
             if (!statConfig.applyRelicDot && cand === 'dot') return false;
-            if (currentGuideMode === 'current' && cand === 'cf') return false; // Crit Rate ignored in bugged mode
+            if (currentGuideMode === 'current' && cand === 'cf') return false; 
             return true;
         });
         if (candidatesToTest.length === 0 && includeHead) candidatesToTest.push('dmg');
 
         candidatesToTest.forEach(cand => {
             let testBuild = { ...build };
-            const applyPieceStats = () => {
-                    for (let k in PERFECT_SUBS) {
-                    let mult = (k === cand) ? 6 : 1; 
+            
+            // Helper to apply stats for a specific piece with Range fallback
+            const applyPiece = (mainStatType) => {
+                let target = cand;
+                let forbidden = null;
+                // If Main Stat matches Candidate, force Range
+                if (mainStatType === cand) {
+                    target = 'range';
+                    forbidden = cand;
+                }
+                
+                for (let k in PERFECT_SUBS) {
+                    if (k === forbidden) continue;
+                    let mult = (k === target) ? 6 : 1; 
                     testBuild[k] += PERFECT_SUBS[k] * mult;
                 }
             };
+
             if (includeSubs) {
-                if(testBuild.bodyType !== cand) applyPieceStats();
-                else for (let k in PERFECT_SUBS) { if(k !== testBuild.bodyType) testBuild[k] += PERFECT_SUBS[k]; }
-                if(testBuild.legType !== cand) applyPieceStats();
-                else for (let k in PERFECT_SUBS) { if(k !== testBuild.legType) testBuild[k] += PERFECT_SUBS[k]; }
+                applyPiece(testBuild.bodyType);
+                applyPiece(testBuild.legType);
             }
-            if (includeHead) applyPieceStats();
+            if (includeHead) {
+                // Head (Sun God) has no conflicts in this calculator
+                for (let k in PERFECT_SUBS) {
+                    let mult = (k === cand) ? 6 : 1; 
+                    testBuild[k] += PERFECT_SUBS[k] * mult;
+                }
+            }
 
             let res = calculateDPS(effectiveStats, testBuild, context);
             if (res.total > bestRes.total) { bestRes = res; bestDesc = SUB_NAMES[cand]; }
@@ -537,12 +537,18 @@ function getUnitResultsHTML(unit, effectiveStats) {
     };
 
     const formatBuildName = (name) => {
-        let s = name.replace(/Crit Rate/g, '##CR##').replace(/Crit Dmg/g, '##CD##').replace(/Dmg/g, '##D##').replace(/DoT/g, '##DT##').replace(/Spa/g, '##S##');
+        let s = name.replace(/Crit Rate/g, '##CR##')
+                    .replace(/Crit Dmg/g, '##CD##')
+                    .replace(/Dmg/g, '##D##')
+                    .replace(/DoT/g, '##DT##')
+                    .replace(/Spa/g, '##S##')
+                    .replace(/Range/g, '##R##');
         return s.replace(/##CR##/g, "<span style='color:var(--gold)'>Crit Rate</span>")
             .replace(/##CD##/g, "<span style='background: linear-gradient(to right, #a855f7, #ff5555); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 800;'>Crit Dmg</span>")
             .replace(/##D##/g, "<span style='color:#F5564F'>Dmg</span>")
             .replace(/##DT##/g, "<span style='color:#4ade80'>DoT</span>")
-            .replace(/##S##/g, "<span style='color:#68E7F5'>Spa</span>");
+            .replace(/##S##/g, "<span style='color:#68E7F5'>Spa</span>")
+            .replace(/##R##/g, "<span style='color:#ffa500'>Range</span>");
     };
 
     activeTraits.forEach(trait => {
@@ -682,26 +688,42 @@ function openComparison() {
             const candidatesToTest = SUB_CANDIDATES.filter(cand => {
                 if (!statConfig.applyRelicCrit && cand === 'cm') return false; 
                 if (!statConfig.applyRelicDot && cand === 'dot') return false;
-                if (currentGuideMode === 'current' && cand === 'cf') return false; // Crit Rate ignored in bugged mode
+                if (currentGuideMode === 'current' && cand === 'cf') return false; 
                 return true;
             });
             if (candidatesToTest.length === 0 && includeHead) candidatesToTest.push('dmg');
 
             candidatesToTest.forEach(cand => {
                 let testBuild = { ...build };
-                const applyPieceStats = () => {
-                        for (let k in PERFECT_SUBS) {
-                        let mult = (k === cand) ? 6 : 1; 
+                
+                // Helper to apply stats for a specific piece with Range fallback
+                const applyPiece = (mainStatType) => {
+                    let target = cand;
+                    let forbidden = null;
+                    // If Main Stat matches Candidate, force Range
+                    if (mainStatType === cand) {
+                        target = 'range';
+                        forbidden = cand;
+                    }
+                    
+                    for (let k in PERFECT_SUBS) {
+                        if (k === forbidden) continue;
+                        let mult = (k === target) ? 6 : 1; 
                         testBuild[k] += PERFECT_SUBS[k] * mult;
                     }
                 };
+
                 if (includeSubs) {
-                    if(testBuild.bodyType !== cand) applyPieceStats();
-                    else for (let k in PERFECT_SUBS) { if(k !== testBuild.bodyType) testBuild[k] += PERFECT_SUBS[k]; }
-                    if(testBuild.legType !== cand) applyPieceStats();
-                    else for (let k in PERFECT_SUBS) { if(k !== testBuild.legType) testBuild[k] += PERFECT_SUBS[k]; }
+                    applyPiece(testBuild.bodyType);
+                    applyPiece(testBuild.legType);
                 }
-                if (includeHead) applyPieceStats();
+                if (includeHead) {
+                    for (let k in PERFECT_SUBS) {
+                        let mult = (k === cand) ? 6 : 1; 
+                        testBuild[k] += PERFECT_SUBS[k] * mult;
+                    }
+                }
+                
                 let res = calculateDPS(statsObj, testBuild, context);
                 if (res.total > bRes.total) { bRes = res; bDesc = SUB_NAMES[cand]; }
             });
@@ -716,16 +738,14 @@ function openComparison() {
             let place = Math.min(unitObj.placement, trait.limitPlace || unitObj.placement);
             let baseCtx = { level: 99, wave: 25, isBoss: false, traitObj: trait, placement: place, isSSS: true };
             globalBuilds.forEach(build => {
-                // --- MODIFIED HERE ---
                 if (currentGuideMode === 'current') {
                     if (!statConfig.applyRelicCrit && build.cm > 0) return;
-                    if (!statConfig.applyRelicCrit && build.cf > 0) return; // Crit Rate ignored
+                    if (!statConfig.applyRelicCrit && build.cf > 0) return; 
                     if (!statConfig.applyRelicDot && build.dot > 0) return;
                 } else {
                     if (!statConfig.applyRelicCrit && build.cm > 0) return;
                     if (!statConfig.applyRelicDot && build.dot > 0) return;
                 }
-                // --- END MODIFICATION ---
 
                 if (!statConfig.applyRelicDmg && build.dmg > 10) return; 
                 if (!statConfig.applyRelicSpa && build.spa > 10) return; 
@@ -1020,20 +1040,18 @@ function getTopBuildsForGuide(unit, trait) {
     const includeHead = guideHeadCb ? guideHeadCb.checked : false;
 
     const validBuilds = globalBuilds.filter(b => {
-            // --- MODIFIED HERE ---
         if (currentGuideMode === 'current') {
             if (!statConfig.applyRelicCrit && b.cm > 0) return false;
-            if (!statConfig.applyRelicCrit && b.cf > 0) return false; // Crit Rate ignored
+            if (!statConfig.applyRelicCrit && b.cf > 0) return false; 
             if (!statConfig.applyRelicDot && b.dot > 0) return false;
         } else {
             if (!statConfig.applyRelicCrit && b.cm > 0) return false;
             if (!statConfig.applyRelicDot && b.dot > 0) return false;
         }
-        // --- END MODIFICATION ---
 
-            if (!statConfig.applyRelicDmg && b.dmg > 10) return false; 
-            if (!statConfig.applyRelicSpa && b.spa > 10) return false; 
-            return true;
+        if (!statConfig.applyRelicDmg && b.dmg > 10) return false; 
+        if (!statConfig.applyRelicSpa && b.spa > 10) return false; 
+        return true;
     });
 
     const getBestSubConfigurationForGuide = (build, priority, context) => {
@@ -1042,26 +1060,42 @@ function getTopBuildsForGuide(unit, trait) {
         const currentSubCandidates = SUB_CANDIDATES.filter(cand => {
             if (!statConfig.applyRelicCrit && cand === 'cm') return false; 
             if (!statConfig.applyRelicDot && cand === 'dot') return false;
-            if (currentGuideMode === 'current' && cand === 'cf') return false; // Crit Rate ignored in bugged mode
+            if (currentGuideMode === 'current' && cand === 'cf') return false; 
             return true;
         });
         if (currentSubCandidates.length === 0 && includeHead) currentSubCandidates.push('dmg');
 
         currentSubCandidates.forEach(cand => {
             let testBuild = { ...build };
-            const applyPieceStats = () => {
-                    for (let k in PERFECT_SUBS) {
-                    let mult = (k === cand) ? 6 : 1; 
+            
+            // Helper to apply stats for a specific piece with Range fallback
+            const applyPiece = (mainStatType) => {
+                let target = cand;
+                let forbidden = null;
+                // If Main Stat matches Candidate, force Range
+                if (mainStatType === cand) {
+                    target = 'range';
+                    forbidden = cand;
+                }
+                
+                for (let k in PERFECT_SUBS) {
+                    if (k === forbidden) continue;
+                    let mult = (k === target) ? 6 : 1; 
                     testBuild[k] += PERFECT_SUBS[k] * mult;
                 }
             };
+
             if (includeSubs) {
-                if(testBuild.bodyType !== cand) applyPieceStats();
-                else for (let k in PERFECT_SUBS) { if(k !== testBuild.bodyType) testBuild[k] += PERFECT_SUBS[k]; }
-                if(testBuild.legType !== cand) applyPieceStats();
-                else for (let k in PERFECT_SUBS) { if(k !== testBuild.legType) testBuild[k] += PERFECT_SUBS[k]; }
+                applyPiece(testBuild.bodyType);
+                applyPiece(testBuild.legType);
             }
-            if (includeHead) applyPieceStats();
+            if (includeHead) {
+                for (let k in PERFECT_SUBS) {
+                    let mult = (k === cand) ? 6 : 1; 
+                    testBuild[k] += PERFECT_SUBS[k] * mult;
+                }
+            }
+
             let res = calculateDPS(effectiveStats, testBuild, context);
             if (res.total > bestRes.total) { bestRes = res; bestName = SUB_NAMES[cand]; }
         });
@@ -1074,7 +1108,6 @@ function getTopBuildsForGuide(unit, trait) {
         context.priority = 'spa';
         let bestSpaConfig = getBestSubConfigurationForGuide(build, 'spa', context);
         
-        // Determine which stat priority yielded higher DPS
         let finalConfig, finalPrio;
         if (bestDmgConfig.res.total >= bestSpaConfig.res.total) {
             finalConfig = bestDmgConfig;
@@ -1119,7 +1152,6 @@ function renderGuides() {
         const tr = document.createElement('tr');
         tr.className = 'guide-row';
         const imgHtml = row.img ? `<img src="${row.img}" style="width:35px; height:35px; border-radius:50%; margin-right:8px; border:2px solid #fff; vertical-align:middle;">` : '';
-        // Added mobile-value wrapper div
         tr.innerHTML = `<td data-label="Unit"><div style="display:flex; align-items:center;">${imgHtml}<span style="font-weight:bold; color:#fff;">${row.unit}</span></div></td><td data-label="Trait"><div class="mobile-value" style="color:var(--accent-end); font-weight:bold; font-size:0.8rem;">${data.trait}</div></td><td data-label="Set"><div class="mobile-value">${data.set}</div></td><td data-label="DPS"><div class="mobile-value" style="color:#666; font-size:0.8rem;">-</div></td><td data-label="Main"><div class="mobile-value">${formatStatBadge(data.main)}</div></td><td data-label="Sub"><div class="mobile-value">${formatStatBadge(data.sub)}</div></td>`;
         tableBody.appendChild(tr);
     });
@@ -1162,7 +1194,6 @@ function renderGuides() {
             
             const prioHtml = `<div style="font-size:0.6rem; margin-top:4px; font-weight:bold; border:1px solid; border-radius:4px; display:inline-block; padding:1px 5px; ${prioStyle}">LVL: ${prioLabel}</div>`;
 
-            // Added mobile-value wrapper div
             tr.innerHTML = `<td data-label="Unit"><div style="display:flex; align-items:center;">${showUnitInfo ? imgHtml : '<div style="width:43px; display:inline-block;"></div>'}<span style="font-weight:bold; color:#fff; ${showUnitInfo ? '' : 'opacity:0;'}">${item.unit.name}</span></div></td><td data-label="Trait"><div class="mobile-value" style="color:var(--accent-end); font-weight:bold; font-size:0.8rem;">${showUnitInfo ? item.trait.name : ''}</div></td><td data-label="Build"><div class="mobile-value"><span style="font-weight:bold; color:${rankColor};">${index + 1}. ${build.name}</span></div></td><td data-label="DPS"><div class="mobile-value" style="font-weight:900; color:var(--accent-start); font-size:1.15rem; font-family:'Consolas', monospace; text-shadow: 0 0 8px rgba(59, 130, 246, 0.2); line-height:1.1; text-align:right;">${format(build.dps)}<br>${prioHtml}</div></td><td data-label="Main"><div class="mobile-value">${build.main}</div></td><td data-label="Sub"><div class="mobile-value">${build.sub}</div></td>`;
             tableBody.appendChild(tr);
         });
@@ -1197,7 +1228,6 @@ function switchPage(pid) {
     document.getElementById(pid+'Page').classList.add('active');
     
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-    // Find button that matches
     const btns = document.querySelectorAll('.nav-btn');
     btns.forEach(b => {
         if(b.getAttribute('onclick') && b.getAttribute('onclick').includes(pid)) {
@@ -1210,12 +1240,11 @@ function switchPage(pid) {
     const selectAllBtn = document.getElementById('selectAllBtn');
     const compareBtn = document.getElementById('compareBtn');
     
-    // Hide/Show toolbars based on page
     if(pid === 'db') {
         dbToolbar.style.display = 'flex'; 
         guidesToolbar.style.display = 'none';
         selectAllBtn.style.display = 'block'; 
-        updateCompareBtn(); // Show compare if units selected
+        updateCompareBtn();
     } else {
         dbToolbar.style.display = 'none'; 
         guidesToolbar.style.display = 'flex';
