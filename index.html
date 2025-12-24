@@ -139,20 +139,20 @@
         /* Guide Specific Toolbar Buttons */
         .guide-toggle-btn {
             background: rgba(0, 0, 0, 0.05);
-            border: 1px solid #333;             /* Match nav-toggle border */
+            border: 1px solid #333;             
             color: #888;
-            padding: 6px 15px;                  /* Increased padding to match */
+            padding: 6px 15px;                  
             border-radius: 6px; 
             font-weight: 700;
             text-transform: uppercase; 
-            font-size: 0.75rem;                 /* Increased font size to match */
+            font-size: 0.75rem;                 
             cursor: pointer; 
             transition: all 0.3s ease;
         }
         .guide-toggle-btn:hover { border-color: #fff; color: #fff; }
         .guide-toggle-btn.active { 
             background: var(--accent-start); 
-            color: #000; /* Changed from white to black */
+            color: #000; 
             border-color: var(--accent-start); 
             box-shadow: 0 0 10px rgba(59, 130, 246, 0.4);
         }
@@ -339,8 +339,13 @@
             padding: 15px 10px; border-bottom: 1px solid rgba(255,255,255,0.05); color: #ddd; vertical-align: middle;
         }
         .guide-row:hover { background: rgba(255,255,255,0.03); }
+        
+        /* Updated: use inline-flex for perfect text centering */
         .stat-badge {
-            display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 0.75rem;
+            display: inline-flex; 
+            align-items: center; 
+            justify-content: center;
+            padding: 3px 8px; border-radius: 4px; font-size: 0.75rem;
             font-weight: 700; text-transform: uppercase; margin-right: 5px; margin-bottom: 3px;
         }
         .stat-dmg { background: rgba(255, 50, 50, 0.15); color: #ff8888; border: 1px solid rgba(255,50,50,0.3); }
@@ -365,7 +370,6 @@
         /* --- NEW GUIDE TABLE STYLES --- */
         .g-row { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
         .g-row:last-child { margin-bottom: 0; }
-        /* Fix for alignment: Remove bottom margin from badges inside guide rows */
         .g-row .stat-badge { margin-bottom: 0; }
 
         .g-lbl { 
@@ -471,21 +475,18 @@
         @media (max-width: 900px) {
             .injector-panel { flex-wrap: wrap; } 
             
-            /* FIX 2: Removed width: 100% to stop stretching, added flex: 1 for equal sharing */
-            .guide-toggle-btn { width: auto; flex: 1; text-align: center;}
+            /* FIX 2: Set width to 48% so they fit side-by-side (2 per row) */
+            .guide-toggle-btn { width: 48%; text-align: center; flex-grow: 0; }
             
-            /* FIX 1: Unit Database Scroll Logic */
             .unit-card { height: 500px !important; }
             .top-builds-list { max-height: 100%; }
 
-            /* FIX 2: IMPROVED Mobile Card View for Guides Table */
             .guide-table, .guide-table tbody, .guide-table tr, .guide-table td {
                 display: block;
                 width: 100%;
             }
             .guide-table thead { display: none; }
             
-            /* The CARD Container */
             .guide-table tr {
                 margin-bottom: 25px;
                 border: 1px solid var(--card-border);
@@ -495,7 +496,6 @@
                 overflow: hidden;
             }
             
-            /* Generic Cell Styling */
             .guide-table td {
                 display: flex;
                 justify-content: space-between;
@@ -506,7 +506,6 @@
             }
             .guide-table td:last-child { border-bottom: none; }
 
-            /* Left Side Label (Unit, Trait, etc.) */
             .guide-table td::before {
                 content: attr(data-label);
                 font-weight: 700;
@@ -518,22 +517,19 @@
                 flex-shrink: 0;
             }
 
-            /* SPECIAL: Header Row (Unit Name) */
             .guide-table td[data-label="Unit"] {
                 background: linear-gradient(90deg, rgba(46, 16, 101, 0.6), rgba(0,0,0,0));
                 border-bottom: 1px solid var(--banner-border);
                 padding: 15px 16px;
             }
-            .guide-table td[data-label="Unit"]::before { display: none; } /* Hide label for header */
-            .guide-table td[data-label="Unit"] > div { width: 100%; } /* Ensure content fills width */
+            .guide-table td[data-label="Unit"]::before { display: none; } 
+            .guide-table td[data-label="Unit"] > div { width: 100%; } 
             .guide-table td[data-label="Unit"] span { font-size: 1.1rem; color: white; }
 
-            /* SPECIAL: DPS Row Highlight */
             .guide-table td[data-label="DPS"] {
                 background: rgba(0,0,0,0.2);
             }
 
-            /* Right Side Value Grouping */
             .mobile-value {
                 display: flex;
                 align-items: center;
@@ -543,6 +539,10 @@
                 text-align: right;
                 width: 100%;
             }
+            
+            /* FIX 1: Remove margin-bottom from .g-row inside mobile view 
+               so alignment with flexbox is perfect */
+            .g-row { margin-bottom: 0; }
         }
     </style>
 </head>
