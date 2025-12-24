@@ -495,9 +495,9 @@
             <button class="add-btn" onclick="addCustomTrait()">Add</button>
             
             <!-- Global Toggles -->
-            <label id="hypoToggle" class="nav-toggle-label" title="Enable fixed Relic stats (Crit/DoT)">
+            <label id="hypoToggle" class="nav-toggle-label" title="Current: Relic Stats for DoT/Crit Dmg are ignored (Bugged). Check to apply fixes.">
                 <input type="checkbox" id="globalHypothetical" onchange="toggleHypothetical(this)">
-                <span>Hypothetical</span>
+                <span id="hypoLabel">Bugged Relics</span>
             </label>
 
             <label id="headPieceToggle" class="nav-toggle-label" title="Adds Perfect Head Piece (Best Sub Stat)">
@@ -1492,8 +1492,10 @@
                 <div class="dd-section">
                     <div class="dd-title" style="color:var(--accent-end);">4. Status Effect (DoT)</div>
                     <table class="calc-table">
+                        <tr><td class="col-label calc-sub">Base Hit Ref</td><td class="col-val calc-sub">${num(data.dmgVal)}</td></tr>
                         <tr><td class="col-label">Tick % (Base+Trait)</td><td class="col-val">${data.dotData.base}%</td></tr>
                         <tr><td class="col-label">Relic Mult (x${fix(data.dotData.relicMult, 2)})</td><td class="col-val" style="color:var(--accent-end);">${fix(data.dotData.finalPct, 1)}%</td></tr>
+                        <tr><td class="col-label" style="color:var(--custom);">Crit Avg Mult</td><td class="col-val" style="color:var(--custom);">x${fix(data.critData.avgMult, 3)}</td></tr>
                         <tr><td class="col-label">Total Damage (Lifetime)</td><td class="col-val">${num(data.dotData.finalTick)}</td></tr>
                         <tr><td class="col-label calc-sub">Time Basis</td><td class="col-val calc-sub">${fix(data.dotData.timeUsed, 2)}s</td></tr>
                         <tr><td class="col-label" style="color:#fff;">DoT DPS (1 Unit)</td><td class="col-val" style="color:var(--accent-end);">${num(data.singleUnitDoT)}</td></tr>
@@ -1536,12 +1538,21 @@
         buttons.forEach(btn => btn.classList.remove('active'));
         const activeBtn = Array.from(buttons).find(btn => btn.innerText.toLowerCase().includes(mode === 'current' ? 'current' : 'hypothetical'));
         if(activeBtn) activeBtn.classList.add('active');
+        
         const hypoCb = document.getElementById('globalHypothetical');
+        const hypoLabel = document.getElementById('hypoLabel');
+
         if(hypoCb) {
             hypoCb.checked = (mode === 'fixed');
-            if(mode === 'fixed') hypoCb.parentNode.classList.add('is-checked');
-            else hypoCb.parentNode.classList.remove('is-checked');
+            if(mode === 'fixed') {
+                hypoCb.parentNode.classList.add('is-checked');
+                if(hypoLabel) hypoLabel.innerText = "Fixed Relics";
+            } else {
+                hypoCb.parentNode.classList.remove('is-checked');
+                if(hypoLabel) hypoLabel.innerText = "Bugged Relics";
+            }
         }
+        
         const warning = document.getElementById('guideWarning');
         warning.style.display = (mode === 'current') ? 'block' : 'none';
         renderGuides(); 
