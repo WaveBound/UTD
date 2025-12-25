@@ -84,7 +84,7 @@ const toggleHypothetical = (cb) => toggleCheckbox(cb, null, true);
 const toggleGuideSubStats = (cb) => toggleCheckbox(cb, renderGuides);
 const toggleGuideHeadPiece = (cb) => toggleCheckbox(cb, renderGuides);
 
-// New Function to handle Kirito's specific toggles
+// New Function to handle Kirito's specific toggles (Handles both DB and Guide pages)
 function toggleKiritoMode(mode, checkbox) {
     if (mode === 'realm') {
         kiritoState.realm = checkbox.checked;
@@ -92,7 +92,12 @@ function toggleKiritoMode(mode, checkbox) {
     } else if (mode === 'card') {
         kiritoState.card = checkbox.checked;
     }
-    renderDatabase();
+
+    if (document.getElementById('guidesPage').classList.contains('active')) {
+        renderGuides();
+    } else {
+        renderDatabase();
+    }
 }
 
 const getFilteredBuilds = () => globalBuilds.filter(b => {
@@ -573,6 +578,15 @@ function getTopBuildsForGuide(unit, trait) {
     let effectiveStats = { ...unit.stats };
     if (activeAbilityIds.has(unit.id) && unit.ability) Object.assign(effectiveStats, unit.ability);
     effectiveStats.id = unit.id;
+    
+    // --- NEW: APPLY KIRITO LOGIC TO GUIDES ---
+    if (unit.id === 'kirito' && kiritoState.realm && kiritoState.card) {
+        effectiveStats.dot = 200;       // 200% DoT
+        effectiveStats.dotDuration = 4; // 4 Seconds
+        effectiveStats.dotStacks = unit.stats.hitCount || 14; 
+    }
+    // -----------------------------------------
+
     let actualPlacement = Math.min(unit.placement, trait.limitPlace || unit.placement);
     const includeSubs = document.getElementById('guideSubStats')?.checked ?? true;
     const includeHead = document.getElementById('guideHeadPiece')?.checked ?? false;
@@ -701,6 +715,33 @@ function renderGuides() {
         const card = document.createElement('div');
         card.className = 'guide-card';
 
+        // --- NEW: KIRITO CONTROLS INJECTED INTO CARD ---
+        let kiritoGuideControls = '';
+        if (item.unit.id === 'kirito') {
+            const isRealm = kiritoState.realm;
+            const isCard = kiritoState.card;
+            kiritoGuideControls = `
+                <div class="unit-toolbar" style="border-bottom:none; padding-top:5px; padding-bottom:10px; flex-wrap:wrap; justify-content:flex-start; gap:15px; background:rgba(255,255,255,0.02); padding-left:15px; padding-right:15px;">
+                    <div class="toggle-wrapper">
+                        <span>Virtual Realm</span>
+                        <label>
+                            <input type="checkbox" ${isRealm ? 'checked' : ''} onchange="toggleKiritoMode('realm', this)">
+                            <div class="mini-switch"></div>
+                        </label>
+                    </div>
+                    ${isRealm ? `
+                    <div class="toggle-wrapper" style="animation:fadeIn 0.3s ease;">
+                        <span style="color:${isCard ? 'var(--custom)' : '#888'}; font-weight:${isCard ? 'bold' : 'normal'};">Magician Card</span>
+                        <label>
+                            <input type="checkbox" ${isCard ? 'checked' : ''} onchange="toggleKiritoMode('card', this)">
+                            <div class="mini-switch" style="${isCard ? 'background:var(--custom);' : ''}"></div>
+                        </label>
+                    </div>` : ''}
+                </div>
+            `;
+        }
+        // ------------------------------------------------
+
         let buildsHtml = item.topBuilds.map((build, index) => {
             let rankColor = index === 0 ? 'var(--gold)' : (index === 1 ? 'var(--silver)' : 'var(--bronze)');
             
@@ -748,6 +789,7 @@ function renderGuides() {
                     <span style="font-size:0.6rem; color:#666; font-weight:bold;">DPS</span>
                 </div>
             </div>
+            ${kiritoGuideControls}
             <div class="guide-card-body">
                 ${buildsHtml}
             </div>
