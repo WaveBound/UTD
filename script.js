@@ -5,21 +5,32 @@ let activeAbilityIds = new Set();
 let cachedResults = {}; 
 let currentGuideMode = 'current';
 
+// New State for Kirito
+let kiritoState = {
+    realm: false,
+    card: false
+};
+
 function formatStatBadge(text) {
     if(!text) return '';
     if (text.includes('<')) return text;
     
-    return text.replace(/(Crit Dmg|Crit Damage)|(Crit Rate)|(Damage|Dmg)|(Spa|SPA)|(DoT|Buff Potency)|(Range|Rng)/gi, 
-        (match, cdmg, crate, dmg, spa, dot, rng) => {
-            if (cdmg) return '<span class="stat-badge stat-cdmg"><span class="stat-cdmg-text">Crit Dmg</span></span>';
-            if (crate) return '<span class="stat-badge stat-crit">Crit Rate</span>';
-            if (dmg) return '<span class="stat-badge stat-dmg">Dmg</span>';
-            if (spa) return '<span class="stat-badge stat-spa">Spa</span>';
-            if (dot) return '<span class="stat-badge stat-dot">' + match + '</span>';
-            if (rng) return '<span class="stat-badge stat-range">Range</span>';
-            return match;
-        }
-    );
+    // Updated Logic: Split by separators and remove them
+    const parts = text.split(/[\/>,]+/).map(p => p.trim()).filter(p => p);
+
+    return parts.map(part => {
+        return part.replace(/(Crit Dmg|Crit Damage)|(Crit Rate)|(Damage|Dmg)|(Spa|SPA)|(DoT|Buff Potency)|(Range|Rng)/gi, 
+            (match, cdmg, crate, dmg, spa, dot, rng) => {
+                if (cdmg) return '<span class="stat-badge stat-cdmg"><span class="stat-cdmg-text">Crit Dmg</span></span>';
+                if (crate) return '<span class="stat-badge stat-crit">Crit Rate</span>';
+                if (dmg) return '<span class="stat-badge stat-dmg">Dmg</span>';
+                if (spa) return '<span class="stat-badge stat-spa">Spa</span>';
+                if (dot) return '<span class="stat-badge stat-dot">' + match + '</span>';
+                if (rng) return '<span class="stat-badge stat-range">Range</span>';
+                return match;
+            }
+        );
+    }).join(''); // Joined with no spacer because CSS gap handles spacing
 }
 
 function populateInjectorUnitSelect() {
@@ -72,6 +83,17 @@ const toggleHeadPiece = (cb) => toggleCheckbox(cb, renderDatabase);
 const toggleHypothetical = (cb) => toggleCheckbox(cb, null, true);
 const toggleGuideSubStats = (cb) => toggleCheckbox(cb, renderGuides);
 const toggleGuideHeadPiece = (cb) => toggleCheckbox(cb, renderGuides);
+
+// New Function to handle Kirito's specific toggles
+function toggleKiritoMode(mode, checkbox) {
+    if (mode === 'realm') {
+        kiritoState.realm = checkbox.checked;
+        if (!checkbox.checked) kiritoState.card = false; // Reset card if realm is off
+    } else if (mode === 'card') {
+        kiritoState.card = checkbox.checked;
+    }
+    renderDatabase();
+}
 
 const getFilteredBuilds = () => globalBuilds.filter(b => {
     if (currentGuideMode === 'current' && (!statConfig.applyRelicCrit && (b.cf > 0 || b.cm > 0)) || (!statConfig.applyRelicDot && b.dot > 0)) return false;
@@ -159,6 +181,14 @@ function getUnitResultsHTML(unit, effectiveStats) {
     const includeHead = document.getElementById('globalHeadPiece').checked;
     effectiveStats.id = unit.id;
 
+    // --- KIRITO SPECIFIC LOGIC ---
+    if (unit.id === 'kirito' && kiritoState.realm && kiritoState.card) {
+        effectiveStats.dot = 200;       // 200% DoT
+        effectiveStats.dotDuration = 4; // 4 Seconds
+        // Explicitly set stacks to hitCount (14) for Astral calculations
+        effectiveStats.dotStacks = unit.stats.hitCount || 14; 
+    }
+
     let unitResults = [];
 
     const formatBuildName = (name) => {
@@ -184,6 +214,13 @@ function getUnitResultsHTML(unit, effectiveStats) {
             let resSpa = bestSpaConfig.res;
 
             let suffix = isAbilActive ? '-ABILITY' : '-BASE';
+            
+            // Add Kirito specific suffix for caching
+            if (unit.id === 'kirito') {
+                if (kiritoState.realm) suffix += '-VR';
+                if (kiritoState.card) suffix += '-CARD';
+            }
+
             let subsSuffix = includeSubs ? '-SUBS' : '-NOSUBS';
             let headSuffix = includeHead ? '-HEAD' : '-NOHEAD';
             let safeBuildName = build.name.replace(/[^a-zA-Z0-9]/g, '');
@@ -204,7 +241,7 @@ function getUnitResultsHTML(unit, effectiveStats) {
     unitResults.sort((a, b) => b.dps - a.dps);
     if(unitResults.length === 0) return '<div style="padding:10px; color:#666;">No valid builds found.</div>';
 
-    return unitResults.slice(0, 50).map((r, i) => {
+    return unitResults.slice(0, 200).map((r, i) => {
         let rankClass = i < 3 ? `rank-${i+1}` : 'rank-other';
         if(r.isCustom) rankClass += ' is-custom';
         const searchText = (r.traitName + ' ' + r.buildName.replace(/<[^>]*>?/gm, '') + ' ' + r.prio).toLowerCase();
@@ -309,6 +346,12 @@ function openComparison() {
     selectedUnits.forEach(u => {
         let effectiveStats = { ...u.stats };
         if (activeAbilityIds.has(u.id) && u.ability) Object.assign(effectiveStats, u.ability);
+        
+        // Custom logic for Comparison with Kirito settings (UPDATED TO 14 STACKS)
+        if(u.id === 'kirito' && kiritoState.realm && kiritoState.card) {
+             effectiveStats.dot = 200; effectiveStats.dotDuration = 4; effectiveStats.dotStacks = 14;
+        }
+
         const std = findBest(u, effectiveStats, traitsList);
         if(std) comparisonData.push(std);
         const customSet = [...customTraits, ...(unitSpecificTraits[u.id] || [])];
@@ -336,6 +379,33 @@ function renderDatabase() {
         const isAbilActive = activeAbilityIds.has(unit.id);
         let currentStats = { ...unit.stats };
         if (isAbilActive && unit.ability) Object.assign(currentStats, unit.ability);
+        
+        // Render Kirito Controls
+        let kiritoControlsHtml = '';
+        if (unit.id === 'kirito') {
+            const isRealm = kiritoState.realm;
+            const isCard = kiritoState.card;
+            kiritoControlsHtml = `
+                <div class="unit-toolbar" style="border-bottom:none; padding-top:5px; padding-bottom:10px; flex-wrap:wrap; justify-content:flex-start; gap:15px; background:rgba(255,255,255,0.02);">
+                    <div class="toggle-wrapper">
+                        <span>Virtual Realm</span>
+                        <label>
+                            <input type="checkbox" ${isRealm ? 'checked' : ''} onchange="toggleKiritoMode('realm', this)">
+                            <div class="mini-switch"></div>
+                        </label>
+                    </div>
+                    ${isRealm ? `
+                    <div class="toggle-wrapper" style="animation:fadeIn 0.3s ease;">
+                        <span style="color:${isCard ? 'var(--custom)' : '#888'}; font-weight:${isCard ? 'bold' : 'normal'};">Magician Card</span>
+                        <label>
+                            <input type="checkbox" ${isCard ? 'checked' : ''} onchange="toggleKiritoMode('card', this)">
+                            <div class="mini-switch" style="${isCard ? 'background:var(--custom);' : ''}"></div>
+                        </label>
+                    </div>` : ''}
+                </div>
+            `;
+        }
+
         const listHtml = getUnitResultsHTML(unit, currentStats);
         const card = document.createElement('div');
         card.className = 'unit-card';
@@ -343,7 +413,8 @@ function renderDatabase() {
         if(selectedUnitIds.has(unit.id)) card.classList.add('is-selected');
         const abilityToggleHtml = unit.ability ? `<div class="toggle-wrapper"><span>Ability</span><label><input type="checkbox" class="ability-cb" ${isAbilActive ? 'checked' : ''} onchange="toggleAbility('${unit.id}', this)"><div class="mini-switch"></div></label></div>` : '<div></div>';
         const toolbarHtml = `<div class="unit-toolbar"><button class="select-btn" onclick="toggleSelection('${unit.id}')">${selectedUnitIds.has(unit.id) ? 'Selected' : 'Select'}</button>${abilityToggleHtml}</div>`;
-        card.innerHTML = `<div class="unit-banner"><div class="placement-badge">Max Place: ${unit.placement}</div><img src="${unit.img}" class="unit-avatar"><div class="unit-title"><h2>${unit.name}</h2><span>${unit.role} <span class="sss-tag">SSS</span></span></div></div>${toolbarHtml}<div class="search-container" style="display:flex; gap:8px;"><input type="text" placeholder="Search..." style="flex-grow:1; width:auto; padding:6px; border-radius:5px; border:1px solid #333; background:#111; color:#fff; font-size:0.8rem;" onkeyup="filterList(this)"><select onchange="filterList(this)" style="width:90px; padding:0 0 0 5px; font-size:0.75rem; height:30px;"><option value="all">All Prio</option><option value="dmg">Dmg Stat</option><option value="spa">SPA Stat</option></select></div><div class="top-builds-list" id="results-${unit.id}">${listHtml}</div>`;
+        
+        card.innerHTML = `<div class="unit-banner"><div class="placement-badge">Max Place: ${unit.placement}</div><img src="${unit.img}" class="unit-avatar"><div class="unit-title"><h2>${unit.name}</h2><span>${unit.role} <span class="sss-tag">SSS</span></span></div></div>${toolbarHtml}${kiritoControlsHtml}<div class="search-container" style="display:flex; gap:8px;"><input type="text" placeholder="Search..." style="flex-grow:1; width:auto; padding:6px; border-radius:5px; border:1px solid #333; background:#111; color:#fff; font-size:0.8rem;" onkeyup="filterList(this)"><select onchange="filterList(this)" style="width:90px; padding:0 0 0 5px; font-size:0.75rem; height:30px;"><option value="all">All Prio</option><option value="dmg">Dmg Stat</option><option value="spa">SPA Stat</option></select></div><div class="top-builds-list" id="results-${unit.id}">${listHtml}</div>`;
         container.appendChild(card);
     });
     updateCompareBtn();
@@ -524,36 +595,86 @@ function getTopBuildsForGuide(unit, trait) {
         let set = SETS.find(s => s.id === globalBuilds.find(b => b.name === name)?.set);
         let build = globalBuilds.find(b => b.name === name);
         const getStatName = (t) => ({ dmg: 'Dmg', dot: 'DoT', cm: 'Crit Dmg', spa: 'SPA', cf: 'Crit Rate' }[t] || 'N/A');
-        let main = `<div class="g-row"><span class="g-lbl">TOP</span>${formatStatBadge(getStatName(build.bodyType))}</div><div class="g-row"><span class="g-lbl">LEG</span>${formatStatBadge(getStatName(build.legType))}</div>`;
-        let sub = '';
+
+        // Create structured data instead of just raw strings
+        let mainStructs = [
+            { label: 'BODY', stat: getStatName(build.bodyType) },
+            { label: 'LEGS', stat: getStatName(build.legType) }
+        ];
+
+        let subStructs = [];
         if (finalCfg.assignments && Object.keys(finalCfg.assignments).length > 0) {
-            if (finalCfg.assignments.head) sub += `<div class="g-row"><span class="g-lbl">HEAD</span>${formatStatBadge(finalCfg.assignments.head)}</div>`;
-            if (finalCfg.assignments.body) sub += `<div class="g-row"><span class="g-lbl">BODY</span>${formatStatBadge(finalCfg.assignments.body)}</div>`;
-            if (finalCfg.assignments.legs) sub += `<div class="g-row"><span class="g-lbl">LEG</span>${formatStatBadge(finalCfg.assignments.legs)}</div>`;
-        } else {
-             sub = '<span style="color:#666; font-size:0.75rem">None</span>';
+            if (finalCfg.assignments.head) subStructs.push({ label: 'HEAD', stat: finalCfg.assignments.head });
+            if (finalCfg.assignments.body) subStructs.push({ label: 'BODY', stat: finalCfg.assignments.body });
+            if (finalCfg.assignments.legs) subStructs.push({ label: 'LEGS', stat: finalCfg.assignments.legs });
         }
-        return { name: name, dps: finalCfg.res.total, prio: prio, set: set?.name || 'Unknown', main, sub };
-    }).sort((a, b) => b.dps - a.dps).slice(0, 5);
+        
+        return { 
+            name: name, 
+            dps: finalCfg.res.total, 
+            prio: prio, 
+            set: set?.name || 'Unknown', 
+            mainStructs: mainStructs,
+            subStructs: subStructs
+        };
+    }).sort((a, b) => b.dps - a.dps).slice(0, 3); // Top 3 builds
 }
 
 function renderGuides() {
-    const tableBody = document.getElementById('guideTableBody');
-    tableBody.innerHTML = '';
+    const guideGrid = document.getElementById('guideList');
+    guideGrid.innerHTML = '';
     const selectedUnitId = document.getElementById('guideUnitSelect').value;
     const selectedTraitId = document.getElementById('guideTraitSelect').value;
 
+    // --- GENERIC GUIDES ---
     const genericGuides = guideData.filter(d => !d.isCalculated);
     genericGuides.forEach(row => {
         if (selectedUnitId !== 'all' && unitDatabase.some(u => u.id === selectedUnitId)) return;
         const data = row[currentGuideMode]; 
-        const tr = document.createElement('tr');
-        tr.className = 'guide-row';
-        const imgHtml = row.img ? `<img src="${row.img}" style="width:35px; height:35px; border-radius:50%; margin-right:8px; border:2px solid #fff; vertical-align:middle;">` : '';
-        tr.innerHTML = `<td data-label="Unit"><div style="display:flex; align-items:center;">${imgHtml}<span style="font-weight:bold; color:#fff;">${row.unit}</span></div></td><td data-label="Trait"><div class="mobile-value" style="color:var(--accent-end); font-weight:bold; font-size:0.8rem;">${data.trait}</div></td><td data-label="Set"><div class="mobile-value">${data.set}</div></td><td data-label="DPS"><div class="mobile-value" style="color:#666; font-size:0.8rem;">-</div></td><td data-label="Main"><div class="mobile-value">${formatStatBadge(data.main)}</div></td><td data-label="Sub"><div class="mobile-value">${formatStatBadge(data.sub)}</div></td>`;
-        tableBody.appendChild(tr);
+        
+        const card = document.createElement('div');
+        card.className = 'guide-card';
+        
+        const imgHtml = row.img ? `<img src="${row.img}">` : '';
+        
+        // Format manual text into badges if possible
+        const mainBadgeHtml = formatStatBadge(data.main);
+        const subBadgeHtml = formatStatBadge(data.sub);
+
+        card.innerHTML = `
+            <div class="guide-card-header">
+                <div class="guide-unit-info">
+                    ${imgHtml}
+                    <div>
+                        <span style="display:block; line-height:1;">${row.unit}</span>
+                        <span style="font-size:0.7rem; color:var(--accent-end); font-weight:bold;">${data.trait}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="guide-card-body">
+                <div class="guide-entry">
+                    <div class="ge-header">
+                        <span class="ge-rank" style="color:#aaa;">#1</span>
+                        <span class="ge-set">${data.set}</span>
+                    </div>
+                    <div class="ge-stats-row">
+                        <div class="ge-group">
+                            <span class="ge-lbl">MAIN</span>
+                            <div class="ge-badges">${mainBadgeHtml}</div>
+                        </div>
+                        <div class="ge-sep"></div>
+                        <div class="ge-group">
+                            <span class="ge-lbl">SUB</span>
+                            <div class="ge-badges">${subBadgeHtml}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        guideGrid.appendChild(card);
     });
 
+    // --- CALCULATED UNITS ---
     let unitsToDisplay = [];
     if (selectedUnitId !== 'all') {
         const unit = unitDatabase.find(u => u.id === selectedUnitId);
@@ -577,24 +698,61 @@ function renderGuides() {
     calculatedUnits.sort((a, b) => b.maxDps - a.maxDps);
 
     calculatedUnits.forEach(item => {
-        const showCount = (selectedUnitId === 'all') ? 1 : 5;
-        item.topBuilds.slice(0, showCount).forEach((build, index) => {
-            const tr = document.createElement('tr');
-            tr.className = 'guide-row';
-            const imgHtml = item.unit.img ? `<img src="${item.unit.img}" style="width:35px; height:35px; border-radius:50%; margin-right:8px; border:2px solid #fff; vertical-align:middle;">` : '';
-            const showUnitInfo = (selectedUnitId !== 'all') ? true : (index === 0); 
+        const card = document.createElement('div');
+        card.className = 'guide-card';
+
+        let buildsHtml = item.topBuilds.map((build, index) => {
             let rankColor = index === 0 ? 'var(--gold)' : (index === 1 ? 'var(--silver)' : 'var(--bronze)');
             
-            const prioLabel = build.prio === 'dmg' ? 'DMG' : 'SPA';
-            const prioStyle = build.prio === 'dmg' 
-                ? 'color:var(--gold); border-color:var(--gold); background:rgba(255, 215, 0, 0.1);' 
-                : 'color:var(--custom); border-color:var(--custom); background:rgba(6, 182, 212, 0.1);';
-            
-            const prioHtml = `<div style="font-size:0.6rem; margin-top:4px; font-weight:bold; border:1px solid; border-radius:4px; display:inline-block; padding:1px 5px; ${prioStyle}">LVL: ${prioLabel}</div>`;
+            // Format badges using the new structure with labels
+            let mainHtml = build.mainStructs.map(s => {
+                return `<div class="stat-pair"><span class="stat-prefix">${s.label}</span>${formatStatBadge(s.stat)}</div>`;
+            }).join('');
 
-            tr.innerHTML = `<td data-label="Unit"><div style="display:flex; align-items:center;">${showUnitInfo ? imgHtml : '<div style="width:43px; display:inline-block;"></div>'}<span style="font-weight:bold; color:#fff; ${showUnitInfo ? '' : 'opacity:0;'}">${item.unit.name}</span></div></td><td data-label="Trait"><div class="mobile-value" style="color:var(--accent-end); font-weight:bold; font-size:0.8rem;">${showUnitInfo ? item.trait.name : ''}</div></td><td data-label="Build"><div class="mobile-value"><span style="font-weight:bold; color:${rankColor};">${index + 1}. ${build.name}</span></div></td><td data-label="DPS"><div class="mobile-value" style="font-weight:900; color:var(--accent-start); font-size:1.15rem; font-family:'Consolas', monospace; text-shadow: 0 0 8px rgba(59, 130, 246, 0.2); line-height:1.1; text-align:right;">${format(build.dps)}<br>${prioHtml}</div></td><td data-label="Main"><div class="mobile-value">${build.main}</div></td><td data-label="Sub"><div class="mobile-value">${build.sub}</div></td>`;
-            tableBody.appendChild(tr);
-        });
+            let subHtml = build.subStructs.length > 0 
+                ? build.subStructs.map(s => `<div class="stat-pair"><span class="stat-prefix">${s.label}</span>${formatStatBadge(s.stat)}</div>`).join('') 
+                : '<span style="font-size:0.65rem; color:#555;">None</span>';
+
+            return `
+                <div class="guide-entry">
+                    <div class="ge-header">
+                        <span class="ge-rank" style="color:${rankColor}">#${index+1}</span>
+                        <span class="ge-set">${build.name}</span>
+                    </div>
+                    <div class="ge-stats-row">
+                        <div class="ge-group">
+                            <span class="ge-lbl">MAIN Stat</span>
+                            <div class="ge-badges">${mainHtml}</div>
+                        </div>
+                        <div class="ge-sep"></div>
+                        <div class="ge-group">
+                            <span class="ge-lbl">SUB Stat</span>
+                            <div class="ge-badges">${subHtml}</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        card.innerHTML = `
+            <div class="guide-card-header">
+                <div class="guide-unit-info">
+                    <img src="${item.unit.img}">
+                    <div>
+                        <span style="display:block; line-height:1;">${item.unit.name}</span>
+                        <span style="font-size:0.75rem; color:var(--accent-end); font-weight:bold;">${item.trait.name}</span>
+                    </div>
+                </div>
+                <div class="guide-dps-box">
+                    <span class="guide-dps-val">${format(item.maxDps)}</span>
+                    <span style="font-size:0.6rem; color:#666; font-weight:bold;">DPS</span>
+                </div>
+            </div>
+            <div class="guide-card-body">
+                ${buildsHtml}
+            </div>
+        `;
+        guideGrid.appendChild(card);
     });
 }
 

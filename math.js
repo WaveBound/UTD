@@ -1,7 +1,3 @@
-// =========================================
-// MATH & LOGIC
-// =========================================
-
 function combineTraits(t1, t2) {
     if (t1.id === 'none' && t2.id === 'none') return t1;
     if (t1.id === 'none') return t2;
@@ -62,9 +58,16 @@ function calculateDPS(uStats, relicStats, context) {
 
     let sBonus = setBonuses[relicStats.set] || setBonuses.none;
     
+    // --- SET BONUS LOGIC ---
+    const unitElement = uStats.element || "None";
+
     if (relicStats.set === 'ninja') {
-        const unitElement = uStats.element || "None";
         const allowedElements = ["Dark", "Rose", "Fire"];
+        if (!allowedElements.includes(unitElement)) {
+            sBonus = setBonuses.none;
+        }
+    } else if (relicStats.set === 'sun_god') {
+        const allowedElements = ["Ice", "Light", "Water"];
         if (!allowedElements.includes(unitElement)) {
             sBonus = setBonuses.none;
         }

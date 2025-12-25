@@ -43,12 +43,14 @@ const guideData = [
     { unit: "Kenpachi", img: "images/Kenpachi.png", isCalculated: true },
     { unit: "Ragna", img: "images/Ragna.png", isCalculated: true },
     { unit: "Mob", img: "images/Mob.png", isCalculated: true },
-    { unit: "Shanks", img: "images/Shanks.png", isCalculated: true }
+    { unit: "Shanks", img: "images/Shanks.png", isCalculated: true },
+    { unit: "Genos", img: "images/Genos.png", isCalculated: true }
 ];
 
 const setBonuses = {
     laughing: { dmg: 5, spa: 5, cf: 0, cm: 0 },
     ninja: { dmg: 10, spa: 0, cf: 0, cm: 0 },
+    sun_god: { dmg: 10, spa: 0, cf: 0, cm: 0 }, // Logic handled in math.js
     ex: { dmg: 0, spa: 0, cf: 0, cm: 25 }, 
     none: { dmg: 0, spa: 0, cf: 0, cm: 0 }
 };
@@ -63,6 +65,7 @@ const LEG_CRIT  = { dmg: 0,  spa: 0,    desc: "Crit Rate", type: "cf", cf: 37.5 
 
 const SETS = [
     { id: "ninja",    name: "Master Ninja",     bonus: { dmg: 10, spa: 0, cm: 0 } },
+    { id: "sun_god",  name: "Sun God",          bonus: { dmg: 10, spa: 0, cm: 0 } },
     { id: "laughing", name: "Laughing Captain", bonus: { dmg: 5, spa: 5, cm: 0 } },
     { id: "ex",       name: "Ex Captain",       bonus: { dmg: 0, spa: 0, cm: 25 } }
 ];

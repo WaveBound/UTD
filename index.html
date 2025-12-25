@@ -21,7 +21,6 @@
             <button class="nav-btn" onclick="switchPage('guides')">Build Guides</button>
             <button id="selectAllBtn" class="nav-btn" onclick="selectAllUnits()">Select All</button>
             <button id="compareBtn" class="nav-btn" onclick="openComparison()">Compare (<span id="compareCount">0</span>)</button>
-            <!-- NEW BUTTON -->
             <button class="nav-btn" onclick="openPatchNotes()">Patch Notes</button>
         </div>
 
@@ -95,31 +94,17 @@
 
     <!-- GUIDES PAGE -->
     <div id="guidesPage" class="page">
-        <div class="guide-container">
-            <div class="panel-header" style="justify-content:center; border:none;">Relic Efficiency Guide</div>
+        <div class="guide-container" style="background:transparent; border:none; padding:0;">
             
-            <!-- Controls have been moved to header toolbar -->
-
             <div id="guideWarning" class="guide-warning">
                 ⚠️ CURRENT BUG: Relic Stats for <b>DoT%</b>, <b>Crit Rate%</b> and <b>Crit Dmg%</b> are currently ignored by the game. <br>
                 Only Damage% - SPA% relics are working effectively.
             </div>
 
-            <div style="overflow-x: auto;">
-                <table class="guide-table">
-                    <thead>
-                        <tr>
-                            <th style="width:12%;">Unit</th>
-                            <th style="width:15%;">Build Trait</th>
-                            <th style="width:20%;">Relic Set</th>
-                            <th style="width:12%;">DPS</th>
-                            <th style="width:20%;">Main Stat Priority</th>
-                            <th>Sub Stats</th>
-                        </tr>
-                    </thead>
-                    <tbody id="guideTableBody"></tbody>
-                </table>
+            <div id="guideList" class="guide-grid">
+                <!-- Cards injected via JS -->
             </div>
+            
             <div style="margin-top:20px; text-align:center; color:#666; font-size:0.7rem;">
                 *Head Piece should always be Sun God (Elemental) for maximum output unless specified.
             </div>
@@ -161,30 +146,28 @@
             <div class="modal-scroll-area">
                 
                 <div class="patch-entry">
-                    <div class="patch-version">v1.3 (Current)</div>
-                    <div class="patch-date">Dec 25, 2025</div>
+                    <div class="patch-version">v1.8</div>
+                    <div class="patch-date">Dec 26, 2025</div>
                     <ul>
-                        <li><b>Guides Fix:</b> Fixed broken layout for Sub-Stats in the Build Guides table.</li>
-                        <li><b>Guides Fix:</b> "+ Head Relic" is now enabled by default in Build Guides.</li>
+                        <li><b>Fix:</b> Fixed Virtual Realm + Magician Card stacking logic for Kirito (Now correctly uses 14 stacks).</li>
                     </ul>
                 </div>
 
                 <div class="patch-entry">
-                    <div class="patch-version">v1.2</div>
-                    <div class="patch-date">Dec 24, 2025</div>
+                    <div class="patch-version">v1.7</div>
+                    <div class="patch-date">Dec 26, 2025</div>
                     <ul>
-                        <li><b>UI Update:</b> Added "DPS" label under damage numbers for clarity.</li>
-                        <li><b>UI Fix:</b> Fixed "SSS" tag overlapping with unit placement badge on mobile.</li>
-                        <li><b>Defaults:</b> "+ Head Relic" and "+ Sub Stats" are now enabled by default in Unit Database.</li>
+                        <li><b>Feature:</b> Added Virtual Realm / Magician Card toggles for Kirito.</li>
+                        <li><b>Calculations:</b> Magician Card sets bleed to 200% over 4s.</li>
                     </ul>
                 </div>
 
                 <div class="patch-entry">
-                    <div class="patch-version">v1.1</div>
-                    <div class="patch-date">Dec 23, 2025</div>
+                    <div class="patch-version">v1.6</div>
+                    <div class="patch-date">Dec 26, 2025</div>
                     <ul>
-                        <li><b>Logic Update:</b> Sub-Stats can no longer match the Main Stat of a relic piece.</li>
-                        <li><b>Logic Update:</b> If a conflict occurs (e.g., Dmg Sub on Dmg Main), the slot now falls back to "Range" (Blank).</li>
+                        <li><b>New Set:</b> Added "Sun God" Set (+10% Dmg).</li>
+                        <li><b>Logic Update:</b> Sun God set bonus only applies to Ice, Light, and Water units.</li>
                     </ul>
                 </div>
 
