@@ -403,6 +403,15 @@ input[type="checkbox"]:checked + .toggle-switch::after { transform: translateX(2
 .dps-container { display: flex; flex-direction: column; align-items: flex-end; margin-right: 10px; }
 .dps-label { font-size: 0.6rem; color: #666; font-weight: 700; line-height: 1; }
 
+/* PATCH NOTES Styles */
+.patch-entry { margin-bottom: 25px; border-bottom: 1px solid #333; padding-bottom: 15px; }
+.patch-entry:last-child { border-bottom: none; }
+.patch-version { color: var(--accent-start); font-weight: 800; font-size: 1.1rem; }
+.patch-date { color: #666; font-size: 0.8rem; margin-bottom: 10px; }
+.patch-entry ul { margin: 0; padding-left: 20px; color: #ddd; }
+.patch-entry li { margin-bottom: 6px; font-size: 0.9rem; }
+.patch-entry b { color: #fff; }
+
 /* --- MOBILE STYLES START HERE --- */
 @media (max-width: 900px) {
     .injector-panel { flex-wrap: wrap; } 

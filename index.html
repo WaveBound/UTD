@@ -21,6 +21,8 @@
             <button class="nav-btn" onclick="switchPage('guides')">Build Guides</button>
             <button id="selectAllBtn" class="nav-btn" onclick="selectAllUnits()">Select All</button>
             <button id="compareBtn" class="nav-btn" onclick="openComparison()">Compare (<span id="compareCount">0</span>)</button>
+            <!-- NEW BUTTON -->
+            <button class="nav-btn" onclick="openPatchNotes()">Patch Notes</button>
         </div>
 
         <!-- 1. DATABASE TOOLBAR (Custom Pair Injector) -->
@@ -74,7 +76,6 @@
             <button class="guide-toggle-btn" onclick="setGuideMode('fixed')">Hypothetical (Fixed Relics)</button>
 
             <!-- Toggles -->
-            <!-- UPDATED: Enabled by default now -->
             <label class="nav-toggle-label is-checked">
                 <input type="checkbox" id="guideHeadPiece" onchange="toggleGuideHeadPiece(this)" checked>
                 <span>+ Head Relic</span>
@@ -147,6 +148,49 @@
             <div id="compareContent" class="modal-scroll-area"></div>
             <div class="modal-footer-fixed">
                 <button class="action-btn" style="background:var(--card-border);" onclick="closeCompare()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- NEW PATCH NOTES MODAL -->
+    <div id="patchModal" class="modal-overlay" onclick="closePatchNotes()">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="modal-header-fixed">
+                <h2 style="margin:0; font-size: 1.5rem; text-transform:uppercase; color: #fff;">Patch Notes</h2>
+            </div>
+            <div class="modal-scroll-area">
+                
+                <div class="patch-entry">
+                    <div class="patch-version">v1.3 (Current)</div>
+                    <div class="patch-date">Dec 25, 2025</div>
+                    <ul>
+                        <li><b>Guides Fix:</b> Fixed broken layout for Sub-Stats in the Build Guides table.</li>
+                        <li><b>Guides Fix:</b> "+ Head Relic" is now enabled by default in Build Guides.</li>
+                    </ul>
+                </div>
+
+                <div class="patch-entry">
+                    <div class="patch-version">v1.2</div>
+                    <div class="patch-date">Dec 24, 2025</div>
+                    <ul>
+                        <li><b>UI Update:</b> Added "DPS" label under damage numbers for clarity.</li>
+                        <li><b>UI Fix:</b> Fixed "SSS" tag overlapping with unit placement badge on mobile.</li>
+                        <li><b>Defaults:</b> "+ Head Relic" and "+ Sub Stats" are now enabled by default in Unit Database.</li>
+                    </ul>
+                </div>
+
+                <div class="patch-entry">
+                    <div class="patch-version">v1.1</div>
+                    <div class="patch-date">Dec 23, 2025</div>
+                    <ul>
+                        <li><b>Logic Update:</b> Sub-Stats can no longer match the Main Stat of a relic piece.</li>
+                        <li><b>Logic Update:</b> If a conflict occurs (e.g., Dmg Sub on Dmg Main), the slot now falls back to "Range" (Blank).</li>
+                    </ul>
+                </div>
+
+            </div>
+            <div class="modal-footer-fixed">
+                <button class="action-btn" onclick="closePatchNotes()">Close</button>
             </div>
         </div>
     </div>

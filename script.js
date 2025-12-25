@@ -390,7 +390,7 @@ function renderMathContent(data) {
                 <table class="calc-table">
                     <tr><td class="col-label">Base Stats (Lv 1)</td><td class="col-formula"></td><td class="col-val">${num(data.baseStats.dmg)}</td></tr>
                     <tr><td class="col-label">Level Scaling (Lv ${data.level})</td><td class="col-formula"><span class="op">×</span>${fix(levelMult, 3)}</td><td class="col-val">${num(data.baseStats.dmg * levelMult)}</td></tr>
-                    ${data.isSSS ? `<tr><td class="col-label">SSS Rank Bonus</td><td class="col-formula"><span class="op">×</span>1.16</td><td class="col-val">${num(data.lvStats.dmg)}</td></tr>` : ''}
+                    ${data.isSSS ? `<tr><td class="col-label">SSS Rank Bonus</td><td class="col-formula"><span class="op">×</span>1.2</td><td class="col-val">${num(data.lvStats.dmg)}</td></tr>` : ''}
                     <tr><td class="col-label">Trait Multiplier</td><td class="col-formula">${pct(data.traitBuffs.dmg)}</td><td class="col-val">${num(dmgAfterTrait)}</td></tr>
                     <tr><td class="col-label" style="color:var(--accent-end);">Relic Stat Multiplier</td><td class="col-formula" style="color:var(--accent-end);">${pct(data.relicBuffs.dmg)}</td><td class="col-val">${num(dmgAfterRelic)}</td></tr>
                     <tr><td class="col-label">Set Bonus + Passive</td><td class="col-formula">${pct(data.setBuffs.dmg + data.passiveBuff)}</td><td class="col-val calc-highlight">${num(data.dmgVal)}</td></tr>
@@ -451,6 +451,8 @@ function renderMathContent(data) {
 
 const showMath = (id) => { const data = cachedResults[id]; if(!data) return; const modal = document.getElementById('mathModal'), content = document.getElementById('mathContent'); modal.style.display = "flex"; content.innerHTML = renderMathContent(data); };
 const closeMath = () => document.getElementById('mathModal').style.display = "none";
+const openPatchNotes = () => document.getElementById('patchModal').style.display = 'flex';
+const closePatchNotes = () => document.getElementById('patchModal').style.display = 'none';
 
 function setGuideMode(mode) {
     currentGuideMode = mode;
