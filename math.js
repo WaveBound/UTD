@@ -46,7 +46,7 @@ function calculateDPS(uStats, relicStats, context) {
     let lvStats = getLevelStats(uStats.dmg, uStats.spa, level, priority);
 
     if (isSSS) {
-        lvStats.dmg *= 1.16;
+        lvStats.dmg *= 1.2;
         lvStats.spa *= 0.92;
     }
 
