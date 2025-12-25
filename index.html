@@ -46,13 +46,13 @@
                 <span id="hypoLabel">Bugged Relics</span>
             </label>
 
-            <label id="headPieceToggle" class="nav-toggle-label" title="Adds Perfect Head Piece (Best Sub Stat)">
-                <input type="checkbox" id="globalHeadPiece" onchange="toggleHeadPiece(this)">
+            <label id="headPieceToggle" class="nav-toggle-label is-checked" title="Adds Perfect Head Piece (Best Sub Stat)">
+                <input type="checkbox" id="globalHeadPiece" onchange="toggleHeadPiece(this)" checked>
                 <span>+ Head Relic</span>
             </label>
 
-            <label id="subStatsToggle" class="nav-toggle-label" title="Adds Perfect Sub-Stats to Calculations">
-                <input type="checkbox" id="globalSubStats" onchange="toggleSubStats(this)">
+            <label id="subStatsToggle" class="nav-toggle-label is-checked" title="Adds Perfect Sub-Stats to Calculations">
+                <input type="checkbox" id="globalSubStats" onchange="toggleSubStats(this)" checked>
                 <span>+ Sub Stats</span>
             </label>
         </div>
@@ -74,8 +74,9 @@
             <button class="guide-toggle-btn" onclick="setGuideMode('fixed')">Hypothetical (Fixed Relics)</button>
 
             <!-- Toggles -->
-            <label class="nav-toggle-label">
-                <input type="checkbox" id="guideHeadPiece" onchange="toggleGuideHeadPiece(this)">
+            <!-- UPDATED: Enabled by default now -->
+            <label class="nav-toggle-label is-checked">
+                <input type="checkbox" id="guideHeadPiece" onchange="toggleGuideHeadPiece(this)" checked>
                 <span>+ Head Relic</span>
             </label>
 
@@ -150,6 +151,9 @@
         </div>
     </div>
 
+    <!-- SCRIPTS -->
+    <script src="data.js"></script>
+    <script src="math.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
