@@ -532,3 +532,40 @@ input[type="checkbox"]:checked + .toggle-switch::after { transform: translateX(2
     border-top-left-radius: 4px;
     border-bottom-left-radius: 4px;
 }
+
+/* --- GUIDE CONFIG MODAL STYLES (NEW) --- */
+.config-header { font-size: 0.9rem; font-weight: 700; color: #aaa; text-transform: uppercase; margin-bottom: 10px; }
+
+.config-grid { 
+    display: grid; 
+    grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); 
+    gap: 12px; 
+}
+
+.config-item {
+    background: rgba(255,255,255,0.03); border: 2px solid #333;
+    border-radius: 8px; padding: 10px; text-align: center; cursor: pointer;
+    transition: 0.2s; display: flex; flex-direction: column; align-items: center; gap: 8px;
+}
+.config-item:hover { background: rgba(255,255,255,0.08); border-color: #666; }
+.config-item.selected { 
+    border-color: var(--accent-start); 
+    background: rgba(59, 130, 246, 0.1); 
+    box-shadow: 0 0 15px rgba(59, 130, 246, 0.3); 
+}
+
+.config-item img { width: 50px; height: 50px; border-radius: 50%; border: 2px solid #fff; object-fit: cover; }
+.config-item span { font-size: 0.75rem; color: #fff; font-weight: bold; line-height: 1.1; }
+
+.config-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.config-chip {
+    background: #111; border: 1px solid #444; color: #aaa;
+    padding: 6px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: bold;
+    cursor: pointer; transition: 0.2s;
+}
+.config-chip:hover { color: #fff; border-color: #888; }
+.config-chip.selected { 
+    background: var(--accent-end); border-color: var(--accent-end); 
+    color: #fff; box-shadow: 0 0 10px rgba(168, 85, 247, 0.4); 
+}

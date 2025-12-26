@@ -26,20 +26,11 @@
 
         <!-- 1. DATABASE TOOLBAR (Custom Pair Injector) -->
         <div id="dbInjector" class="injector-panel">
-            <span style="color:#fff; font-weight:bold;">Custom Pair:</span>
             
-            <select id="injectorUnitSelect" style="border:1px solid #444; color:var(--accent-start); font-weight:bold; margin-right:5px;">
-                <option value="all">All Units</option>
-                <!-- Populated via JS -->
-            </select>
-            
-            <span style="color:#666; margin:0 5px;">with</span>
-
-            <select id="db_t1" class="trait-select"></select>
-            <span style="color:#666;">+</span>
-            <select id="db_t2" class="trait-select"></select>
-            
-            <button class="add-btn" onclick="addCustomTrait()">Add</button>
+            <!-- NEW: ADD CUSTOM PAIR BUTTON (Updated Color) -->
+            <button class="add-btn" style="background: linear-gradient(135deg, var(--accent-start), var(--accent-end)); color: #fff; padding: 8px 20px; font-size: 0.8rem; margin-right: 15px; border:none; box-shadow: 0 0 15px rgba(168, 85, 247, 0.4);" onclick="openCustomPairModal()">
+                + Add Custom Pair
+            </button>
             
             <!-- Global Toggles for DB -->
             <label id="hypoToggle" class="nav-toggle-label" title="Current: Relic Stats for DoT/Crit Dmg are ignored (Bugged). Check to apply fixes.">
@@ -60,15 +51,15 @@
 
         <!-- 2. GUIDES TOOLBAR -->
         <div id="guidesToolbar" class="injector-panel" style="display:none;">
-            <select id="guideUnitSelect" style="border:1px solid #444; background: #000; color: #fff; border-radius: 8px; margin-right:5px;"
-                    onchange="renderGuides()">
-                <option value="all">All Units</option>
-            </select>
             
-            <select id="guideTraitSelect" style="border:1px solid #444; background: #000; color: #fff; border-radius: 8px; margin-right:10px;"
-                    onchange="renderGuides()">
-                <option value="auto">Auto (Best Trait)</option>
-            </select>
+            <!-- Hidden Selects (Used for logic compatibility) -->
+            <select id="guideUnitSelect" style="display:none;"><option value="all">All Units</option></select>
+            <select id="guideTraitSelect" style="display:none;"><option value="auto">Auto</option></select>
+
+            <!-- CONFIG BUTTON (Remains for Guides) -->
+            <button class="nav-btn" style="border:1px solid var(--accent-start); color:var(--accent-start); margin-right:15px;" onclick="openGuideConfig()">
+                ⚙️ Configure View
+            </button>
 
             <!-- Mode Buttons -->
             <button class="guide-toggle-btn active" onclick="setGuideMode('current')">Current Meta (Bugged Relics)</button>
@@ -96,6 +87,11 @@
     <div id="guidesPage" class="page">
         <div class="guide-container" style="background:transparent; border:none; padding:0;">
             
+            <!-- Selection Display Banner -->
+            <div id="activeGuideSelection" style="text-align:center; margin-bottom:15px; font-size:0.9rem; color:#aaa;">
+                Showing: <b style="color:#fff;" id="dispGuideUnit">All Units</b> with <b style="color:var(--accent-end);" id="dispGuideTrait">Auto Trait</b>
+            </div>
+
             <div id="guideWarning" class="guide-warning">
                 ⚠️ CURRENT BUG: Relic Stats for <b>DoT%</b>, <b>Crit Rate%</b> and <b>Crit Dmg%</b> are currently ignored by the game. <br>
                 Only Damage% - SPA% relics are working effectively.
@@ -107,6 +103,79 @@
             
             <div style="margin-top:20px; text-align:center; color:#666; font-size:0.7rem;">
                 *Head Piece should always be Sun God (Elemental) for maximum output unless specified.
+            </div>
+        </div>
+    </div>
+
+    <!-- GUIDE CONFIGURATION MODAL -->
+    <div id="guideConfigModal" class="modal-overlay" onclick="closeGuideConfig()">
+        <div class="modal-content" style="max-width: 800px;" onclick="event.stopPropagation()">
+            <div class="modal-header-fixed">
+                <h2 style="margin:0; font-size: 1.2rem; text-transform:uppercase;">Guide Configuration</h2>
+            </div>
+            
+            <div class="modal-scroll-area">
+                <div class="config-section">
+                    <div class="config-header">1. Select Unit</div>
+                    <div class="config-grid" id="guideConfigUnitGrid"></div>
+                </div>
+                <div class="config-section" style="margin-top:20px;">
+                    <div class="config-header">2. Select Trait</div>
+                    <div class="config-chips" id="guideConfigTraitList"></div>
+                </div>
+            </div>
+
+            <div class="modal-footer-fixed" style="display:flex; gap:10px;">
+                <button class="action-btn secondary" onclick="closeGuideConfig()">Cancel</button>
+                <button class="action-btn" onclick="applyGuideConfig()">Apply Settings</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- NEW: ADD CUSTOM PAIR MODAL -->
+    <div id="customPairModal" class="modal-overlay" onclick="closeCustomPairModal()">
+        <div class="modal-content" style="max-width: 800px;" onclick="event.stopPropagation()">
+            <div class="modal-header-fixed" style="background: linear-gradient(to right, #06b6d4, #0f1014); border-bottom: 1px solid #06b6d4;">
+                <h2 style="margin:0; font-size: 1.2rem; text-transform:uppercase; color:#fff;">Create Custom Pair</h2>
+            </div>
+            
+            <div class="modal-scroll-area">
+                
+                <!-- Section 1: Unit Selection -->
+                <div class="config-section">
+                    <div class="config-header" style="color:#06b6d4;">1. Assign To Unit</div>
+                    <div class="config-grid" id="cpUnitGrid">
+                        <!-- Injected via JS -->
+                    </div>
+                </div>
+
+                <!-- Section 2: Trait 1 Selection -->
+                <div class="config-section" style="margin-top:20px;">
+                    <div class="config-header" style="color:#06b6d4;">2. Select First Trait</div>
+                    <div class="config-chips" id="cpTrait1List">
+                        <!-- Injected via JS -->
+                    </div>
+                </div>
+
+                <!-- Section 3: Trait 2 Selection -->
+                <div class="config-section" style="margin-top:20px;">
+                    <div class="config-header" style="color:#06b6d4;">3. Select Second Trait</div>
+                    <div class="config-chips" id="cpTrait2List">
+                        <!-- Injected via JS -->
+                    </div>
+                </div>
+
+                <!-- Preview -->
+                <div style="margin-top:25px; background:rgba(6, 182, 212, 0.1); padding:10px; border-radius:8px; border:1px solid #06b6d4; text-align:center;">
+                    <span style="color:#aaa; font-size:0.8rem; text-transform:uppercase;">Creating Combination:</span><br>
+                    <b style="color:#fff; font-size:1.1rem;" id="cpPreviewText">Loading...</b>
+                </div>
+
+            </div>
+
+            <div class="modal-footer-fixed" style="display:flex; gap:10px;">
+                <button class="action-btn secondary" onclick="closeCustomPairModal()">Cancel</button>
+                <button class="action-btn" style="background:var(--custom); color:#000;" onclick="confirmAddCustomPair()">Create Pair</button>
             </div>
         </div>
     </div>
@@ -137,41 +206,22 @@
         </div>
     </div>
 
-    <!-- NEW PATCH NOTES MODAL -->
+    <!-- Patch Notes Modal -->
     <div id="patchModal" class="modal-overlay" onclick="closePatchNotes()">
         <div class="modal-content" onclick="event.stopPropagation()">
             <div class="modal-header-fixed">
                 <h2 style="margin:0; font-size: 1.5rem; text-transform:uppercase; color: #fff;">Patch Notes</h2>
             </div>
             <div class="modal-scroll-area">
-                
                 <div class="patch-entry">
-                    <div class="patch-version">v1.8</div>
+                    <div class="patch-version">v2.0</div>
                     <div class="patch-date">Dec 26, 2025</div>
                     <ul>
-                        <li><b>Feature:</b> Added Virtual Realm / Magician Card toggles directly to Build Guides card for Kirito.</li>
-                        <li><b>Fix:</b> Fixed Virtual Realm + Magician Card stacking logic for Kirito (Now correctly uses 14 stacks).</li>
+                        <li><b>Feature:</b> Added "Configure View" to Build Guides for specific setups.</li>
+                        <li><b>Feature:</b> Added new "Add Custom Pair" Modal to easily build and assign custom trait combinations to the database.</li>
                     </ul>
                 </div>
-
-                <div class="patch-entry">
-                    <div class="patch-version">v1.7</div>
-                    <div class="patch-date">Dec 26, 2025</div>
-                    <ul>
-                        <li><b>Feature:</b> Added Virtual Realm / Magician Card toggles for Kirito (DB Page).</li>
-                        <li><b>Calculations:</b> Magician Card sets bleed to 200% over 4s.</li>
-                    </ul>
-                </div>
-
-                <div class="patch-entry">
-                    <div class="patch-version">v1.6</div>
-                    <div class="patch-date">Dec 26, 2025</div>
-                    <ul>
-                        <li><b>New Set:</b> Added "Sun God" Set (+10% Dmg).</li>
-                        <li><b>Logic Update:</b> Sun God set bonus only applies to Ice, Light, and Water units.</li>
-                    </ul>
-                </div>
-
+                <!-- ... existing patch notes ... -->
             </div>
             <div class="modal-footer-fixed">
                 <button class="action-btn" onclick="closePatchNotes()">Close</button>

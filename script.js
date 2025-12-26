@@ -11,6 +11,15 @@ let kiritoState = {
     card: false
 };
 
+// --- GUIDE CONFIG STATE ---
+let tempGuideUnit = 'all';
+let tempGuideTrait = 'auto';
+
+// --- CUSTOM PAIR MODAL STATE ---
+let cpUnit = 'all';
+let cpT1 = 'eternal'; // default
+let cpT2 = 'none';    // default
+
 function formatStatBadge(text) {
     if(!text) return '';
     if (text.includes('<')) return text;
@@ -30,46 +39,7 @@ function formatStatBadge(text) {
                 return match;
             }
         );
-    }).join(''); // Joined with no spacer because CSS gap handles spacing
-}
-
-function populateInjectorUnitSelect() {
-    const sel = document.getElementById('injectorUnitSelect');
-    sel.length = 1; 
-    unitDatabase.forEach(u => {
-        sel.add(new Option(u.name, u.id));
-    });
-}
-
-function addCustomTrait() {
-    const id1 = document.getElementById('db_t1').value;
-    const id2 = document.getElementById('db_t2').value;
-    const targetUnitId = document.getElementById('injectorUnitSelect').value;
-    const t1 = traitsList.find(t => t.id === id1);
-    const t2 = traitsList.find(t => t.id === id2);
-    
-    if (t1 && t2) {
-        const combo = combineTraits(t1, t2);
-        if (targetUnitId === 'all') {
-            const allTraits = [...traitsList, ...customTraits];
-            const alreadyExists = allTraits.some(t => t.name === combo.name);
-            if (!alreadyExists && combo.id !== 'none') {
-                customTraits.push(combo);
-                alert(`Added global custom trait: ${combo.name}`);
-            } else alert("Trait combination already exists!");
-        } else {
-            if (!unitSpecificTraits[targetUnitId]) unitSpecificTraits[targetUnitId] = [];
-            const unitList = unitSpecificTraits[targetUnitId];
-            const alreadyExists = unitList.some(t => t.name === combo.name);
-            if (!alreadyExists && combo.id !== 'none') {
-                unitList.push(combo);
-                const uName = unitDatabase.find(u => u.id === targetUnitId).name;
-                alert(`Added custom trait to ${uName}: ${combo.name}`);
-            } else alert("Trait combination already exists for this unit!");
-        }
-        renderDatabase();
-        if(document.getElementById('guidesPage').classList.contains('active')) renderGuides();
-    }
+    }).join(''); 
 }
 
 function toggleCheckbox(checkbox, callback, isHypothetical = false) {
@@ -84,20 +54,15 @@ const toggleHypothetical = (cb) => toggleCheckbox(cb, null, true);
 const toggleGuideSubStats = (cb) => toggleCheckbox(cb, renderGuides);
 const toggleGuideHeadPiece = (cb) => toggleCheckbox(cb, renderGuides);
 
-// New Function to handle Kirito's specific toggles (Handles both DB and Guide pages)
 function toggleKiritoMode(mode, checkbox) {
     if (mode === 'realm') {
         kiritoState.realm = checkbox.checked;
-        if (!checkbox.checked) kiritoState.card = false; // Reset card if realm is off
+        if (!checkbox.checked) kiritoState.card = false; 
     } else if (mode === 'card') {
         kiritoState.card = checkbox.checked;
     }
-
-    if (document.getElementById('guidesPage').classList.contains('active')) {
-        renderGuides();
-    } else {
-        renderDatabase();
-    }
+    if (document.getElementById('guidesPage').classList.contains('active')) renderGuides();
+    else renderDatabase();
 }
 
 const getFilteredBuilds = () => globalBuilds.filter(b => {
@@ -110,9 +75,7 @@ const getSubCandidates = () => SUB_CANDIDATES.filter(c => !((!statConfig.applyRe
 
 const applySubPiece = (testBuild, cand, mainStatType) => {
     let primaryTarget = cand;
-    if (primaryTarget === mainStatType) {
-        primaryTarget = 'range';
-    }
+    if (primaryTarget === mainStatType) primaryTarget = 'range';
     for (let k in PERFECT_SUBS) {
         if (k === mainStatType) continue;
         let multiplier = (k === primaryTarget) ? 6 : 1;
@@ -125,23 +88,15 @@ const getBestSubConfig = (build, stats, includeSubs, includeHead) => {
     
     let bestRes = { total: -1 };
     let bestCandKey = null;
-
     const candidates = getSubCandidates();
     if (candidates.length === 0 && includeHead) candidates.push('dmg');
     
     candidates.forEach(cand => {
         let testBuild = { ...build };
-        if (includeSubs) { 
-            applySubPiece(testBuild, cand, build.bodyType); 
-            applySubPiece(testBuild, cand, build.legType); 
-        }
+        if (includeSubs) { applySubPiece(testBuild, cand, build.bodyType); applySubPiece(testBuild, cand, build.legType); }
         if (includeHead) applySubPiece(testBuild, cand, null);
-        
         let res = calculateDPS(stats, testBuild, stats.context);
-        if (res.total > bestRes.total) { 
-            bestRes = res; 
-            bestCandKey = cand;
-        }
+        if (res.total > bestRes.total) { bestRes = res; bestCandKey = cand; }
     });
 
     let descParts = [];
@@ -150,30 +105,19 @@ const getBestSubConfig = (build, stats, includeSubs, includeHead) => {
     const resolve = (cand, main) => (cand === main ? 'range' : cand);
 
     if (bestCandKey) {
-        if (includeHead) {
-            const val = getDisp(bestCandKey);
-            descParts.push(`Head: ${val}`);
-            assignments.head = val;
-        }
+        if (includeHead) { const val = getDisp(bestCandKey); descParts.push(`Head: ${val}`); assignments.head = val; }
         if (includeSubs) {
             let bSub = resolve(bestCandKey, build.bodyType);
             let lSub = resolve(bestCandKey, build.legType);
             const bVal = getDisp(bSub);
             const lVal = getDisp(lSub);
-            
             descParts.push(`Body: ${bVal}`);
             descParts.push(`Legs: ${lVal}`);
-            
             assignments.body = bVal;
             assignments.legs = lVal;
         }
     }
-    
-    return { 
-        res: bestRes, 
-        desc: descParts.join(' <span style="color:#555">|</span> '), 
-        assignments: assignments 
-    };
+    return { res: bestRes, desc: descParts.join(' <span style="color:#555">|</span> '), assignments: assignments };
 };
 
 // --- RENDER DB RESULTS ---
@@ -186,16 +130,11 @@ function getUnitResultsHTML(unit, effectiveStats) {
     const includeHead = document.getElementById('globalHeadPiece').checked;
     effectiveStats.id = unit.id;
 
-    // --- KIRITO SPECIFIC LOGIC ---
     if (unit.id === 'kirito' && kiritoState.realm && kiritoState.card) {
-        effectiveStats.dot = 200;       // 200% DoT
-        effectiveStats.dotDuration = 4; // 4 Seconds
-        // Explicitly set stacks to hitCount (14) for Astral calculations
-        effectiveStats.dotStacks = unit.stats.hitCount || 14; 
+        effectiveStats.dot = 200; effectiveStats.dotDuration = 4; effectiveStats.dotStacks = unit.stats.hitCount || 14; 
     }
 
     let unitResults = [];
-
     const formatBuildName = (name) => {
         let s = name.replace(/Crit Rate/g, '##CR##').replace(/Crit Dmg/g, '##CD##').replace(/Dmg/g, '##D##').replace(/DoT/g, '##DT##').replace(/Spa/g, '##S##').replace(/Range/g, '##R##');
         return s.replace(/##CR##/g, "<span style='color:var(--gold)'>Crit Rate</span>").replace(/##CD##/g, "<span style='background: linear-gradient(to right, #a855f7, #ff5555); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 800;'>Crit Dmg</span>").replace(/##D##/g, "<span style='color:#F5564F'>Dmg</span>").replace(/##DT##/g, "<span style='color:#4ade80'>DoT</span>").replace(/##S##/g, "<span style='color:#68E7F5'>Spa</span>").replace(/##R##/g, "<span style='color:#ffa500'>Range</span>");
@@ -205,6 +144,7 @@ function getUnitResultsHTML(unit, effectiveStats) {
 
     activeTraits.forEach(trait => {
         if (trait.id === 'none') return; 
+
         let actualPlacement = unit.placement;
         if (trait.limitPlace) actualPlacement = Math.min(unit.placement, trait.limitPlace);
         filteredBuilds.forEach(build => {
@@ -219,12 +159,7 @@ function getUnitResultsHTML(unit, effectiveStats) {
             let resSpa = bestSpaConfig.res;
 
             let suffix = isAbilActive ? '-ABILITY' : '-BASE';
-            
-            // Add Kirito specific suffix for caching
-            if (unit.id === 'kirito') {
-                if (kiritoState.realm) suffix += '-VR';
-                if (kiritoState.card) suffix += '-CARD';
-            }
+            if (unit.id === 'kirito') { if (kiritoState.realm) suffix += '-VR'; if (kiritoState.card) suffix += '-CARD'; }
 
             let subsSuffix = includeSubs ? '-SUBS' : '-NOSUBS';
             let headSuffix = includeHead ? '-HEAD' : '-NOHEAD';
@@ -299,13 +234,8 @@ const updateCompareBtn = () => {
 };
 
 function toggleSelection(id) {
-    if (selectedUnitIds.has(id)) {
-        selectedUnitIds.delete(id);
-        document.getElementById('card-' + id).classList.remove('is-selected');
-    } else {
-        selectedUnitIds.add(id);
-        document.getElementById('card-' + id).classList.add('is-selected');
-    }
+    if (selectedUnitIds.has(id)) { selectedUnitIds.delete(id); document.getElementById('card-' + id).classList.remove('is-selected'); } 
+    else { selectedUnitIds.add(id); document.getElementById('card-' + id).classList.add('is-selected'); }
     updateCompareBtn();
 }
 
@@ -323,7 +253,6 @@ function openComparison() {
         let bestResult = { total: -1 }, bestTraitName = "", bestBuildName = "", bestSpa = 0, bestPrio = "", bestVariant = "";
         statsObj.id = unitObj.id;
         const filteredBuilds = getFilteredBuilds();
-        
         availableTraits.forEach(trait => {
             if(trait.id === 'none') return;
             let place = Math.min(unitObj.placement, trait.limitPlace || unitObj.placement);
@@ -334,12 +263,7 @@ function openComparison() {
                     statsObj.context = ctx;
                     let cfg = getBestSubConfig(build, statsObj, includeSubs, includeHead), res = cfg.res;
                     if (res.total > bestResult.total) {
-                        bestResult = res;
-                        bestPrio = p === 'dmg' ? "DMG" : "SPA";
-                        bestTraitName = trait.name;
-                        bestBuildName = build.name;
-                        bestSpa = res.spa;
-                        bestVariant = cfg.desc;
+                        bestResult = res; bestPrio = p === 'dmg' ? "DMG" : "SPA"; bestTraitName = trait.name; bestBuildName = build.name; bestSpa = res.spa; bestVariant = cfg.desc;
                     }
                 });
             });
@@ -351,12 +275,7 @@ function openComparison() {
     selectedUnits.forEach(u => {
         let effectiveStats = { ...u.stats };
         if (activeAbilityIds.has(u.id) && u.ability) Object.assign(effectiveStats, u.ability);
-        
-        // Custom logic for Comparison with Kirito settings (UPDATED TO 14 STACKS)
-        if(u.id === 'kirito' && kiritoState.realm && kiritoState.card) {
-             effectiveStats.dot = 200; effectiveStats.dotDuration = 4; effectiveStats.dotStacks = 14;
-        }
-
+        if(u.id === 'kirito' && kiritoState.realm && kiritoState.card) { effectiveStats.dot = 200; effectiveStats.dotDuration = 4; effectiveStats.dotStacks = 14; }
         const std = findBest(u, effectiveStats, traitsList);
         if(std) comparisonData.push(std);
         const customSet = [...customTraits, ...(unitSpecificTraits[u.id] || [])];
@@ -385,28 +304,14 @@ function renderDatabase() {
         let currentStats = { ...unit.stats };
         if (isAbilActive && unit.ability) Object.assign(currentStats, unit.ability);
         
-        // Render Kirito Controls
         let kiritoControlsHtml = '';
         if (unit.id === 'kirito') {
             const isRealm = kiritoState.realm;
             const isCard = kiritoState.card;
             kiritoControlsHtml = `
                 <div class="unit-toolbar" style="border-bottom:none; padding-top:5px; padding-bottom:10px; flex-wrap:wrap; justify-content:flex-start; gap:15px; background:rgba(255,255,255,0.02);">
-                    <div class="toggle-wrapper">
-                        <span>Virtual Realm</span>
-                        <label>
-                            <input type="checkbox" ${isRealm ? 'checked' : ''} onchange="toggleKiritoMode('realm', this)">
-                            <div class="mini-switch"></div>
-                        </label>
-                    </div>
-                    ${isRealm ? `
-                    <div class="toggle-wrapper" style="animation:fadeIn 0.3s ease;">
-                        <span style="color:${isCard ? 'var(--custom)' : '#888'}; font-weight:${isCard ? 'bold' : 'normal'};">Magician Card</span>
-                        <label>
-                            <input type="checkbox" ${isCard ? 'checked' : ''} onchange="toggleKiritoMode('card', this)">
-                            <div class="mini-switch" style="${isCard ? 'background:var(--custom);' : ''}"></div>
-                        </label>
-                    </div>` : ''}
+                    <div class="toggle-wrapper"><span>Virtual Realm</span><label><input type="checkbox" ${isRealm ? 'checked' : ''} onchange="toggleKiritoMode('realm', this)"><div class="mini-switch"></div></label></div>
+                    ${isRealm ? `<div class="toggle-wrapper" style="animation:fadeIn 0.3s ease;"><span style="color:${isCard ? 'var(--custom)' : '#888'}; font-weight:${isCard ? 'bold' : 'normal'};">Magician Card</span><label><input type="checkbox" ${isCard ? 'checked' : ''} onchange="toggleKiritoMode('card', this)"><div class="mini-switch" style="${isCard ? 'background:var(--custom);' : ''}"></div></label></div>` : ''}
                 </div>
             `;
         }
@@ -434,10 +339,8 @@ function renderMathContent(data) {
     const pct = (n) => `${n >= 0 ? '+' : ''}${n.toFixed(1)}%`;
     const num = (n) => n.toLocaleString(undefined, {maximumFractionDigits: 1});
     const fix = (n, d=2) => n.toFixed(d);
-
     const levelMult = data.lvStats.dmgMult; 
     const avgHitPerUnit = data.dmgVal * data.critData.avgMult;
-    
     const dmgAfterTrait = data.lvStats.dmg * (1 + data.traitBuffs.dmg/100);
     const dmgAfterRelic = dmgAfterTrait * (1 + data.relicBuffs.dmg/100);
 
@@ -532,13 +435,7 @@ const closePatchNotes = () => document.getElementById('patchModal').style.displa
 
 function setGuideMode(mode) {
     currentGuideMode = mode;
-    if (mode === 'current') {
-        statConfig.applyRelicCrit = false;
-        statConfig.applyRelicDot = false;
-    } else {
-        statConfig.applyRelicCrit = true;
-        statConfig.applyRelicDot = true;
-    }
+    if (mode === 'current') { statConfig.applyRelicCrit = false; statConfig.applyRelicDot = false; } else { statConfig.applyRelicCrit = true; statConfig.applyRelicDot = true; }
     const buttons = document.querySelectorAll('.guide-toggle-btn');
     buttons.forEach(btn => btn.classList.remove('active'));
     const activeBtn = Array.from(buttons).find(btn => btn.innerText.toLowerCase().includes(mode === 'current' ? 'current' : 'hypothetical'));
@@ -546,46 +443,135 @@ function setGuideMode(mode) {
     
     const hypoCb = document.getElementById('globalHypothetical');
     const hypoLabel = document.getElementById('hypoLabel');
-
     if(hypoCb) {
         hypoCb.checked = (mode === 'fixed');
-        if(mode === 'fixed') {
-            hypoCb.parentNode.classList.add('is-checked');
-            if(hypoLabel) hypoLabel.innerText = "Fixed Relics";
-        } else {
-            hypoCb.parentNode.classList.remove('is-checked');
-            if(hypoLabel) hypoLabel.innerText = "Bugged Relics";
-        }
+        if(mode === 'fixed') { hypoCb.parentNode.classList.add('is-checked'); if(hypoLabel) hypoLabel.innerText = "Fixed Relics"; } 
+        else { hypoCb.parentNode.classList.remove('is-checked'); if(hypoLabel) hypoLabel.innerText = "Bugged Relics"; }
     }
-    
     const warning = document.getElementById('guideWarning');
     warning.style.display = (mode === 'current') ? 'block' : 'none';
-    renderGuides(); 
-    renderDatabase(); 
+    renderGuides(); renderDatabase(); 
 }
 
 function populateGuideDropdowns() {
     const unitSelect = document.getElementById('guideUnitSelect');
     const traitSelect = document.getElementById('guideTraitSelect');
+    unitSelect.innerHTML = '<option value="all">All Units</option>';
+    traitSelect.innerHTML = '<option value="auto">Auto (Best Trait)</option>';
     unitDatabase.forEach(unit => { unitSelect.add(new Option(unit.name, unit.id)); });
-    traitsList.forEach(trait => { 
-        if (trait.id !== 'none') traitSelect.add(new Option(trait.name, trait.id)); 
-    });
+    traitsList.forEach(trait => { if (trait.id !== 'none') traitSelect.add(new Option(trait.name, trait.id)); });
 }
+
+// --- GUIDE CONFIG MODAL LOGIC ---
+function openGuideConfig() {
+    const modal = document.getElementById('guideConfigModal');
+    tempGuideUnit = document.getElementById('guideUnitSelect').value;
+    tempGuideTrait = document.getElementById('guideTraitSelect').value;
+    renderGuideConfigUI();
+    modal.style.display = 'flex';
+}
+function closeGuideConfig() { document.getElementById('guideConfigModal').style.display = 'none'; }
+function selectGuideUnit(id) { tempGuideUnit = id; renderGuideConfigUI(); }
+function selectGuideTrait(id) { tempGuideTrait = id; renderGuideConfigUI(); }
+
+function renderGuideConfigUI() {
+    const unitGrid = document.getElementById('guideConfigUnitGrid');
+    const traitList = document.getElementById('guideConfigTraitList');
+    let unitsHtml = `<div class="config-item ${tempGuideUnit === 'all' ? 'selected' : ''}" onclick="selectGuideUnit('all')"><div style="width:50px; height:50px; border-radius:50%; border:2px solid #555; background:#000; display:flex; align-items:center; justify-content:center; font-weight:bold; color:#fff;">ALL</div><span>All Units</span></div>`;
+    unitDatabase.forEach(u => { unitsHtml += `<div class="config-item ${tempGuideUnit === u.id ? 'selected' : ''}" onclick="selectGuideUnit('${u.id}')"><img src="${u.img}"><span>${u.name}</span></div>`; });
+    unitGrid.innerHTML = unitsHtml;
+
+    let availableTraits = [...traitsList];
+    if (tempGuideUnit !== 'all') { const specific = unitSpecificTraits[tempGuideUnit] || []; availableTraits = [...availableTraits, ...specific]; } else { availableTraits = [...availableTraits, ...customTraits]; }
+    availableTraits = availableTraits.filter((t, index, self) => index === self.findIndex((x) => x.id === t.id) && t.id !== 'none');
+    let traitsHtml = `<div class="config-chip ${tempGuideTrait === 'auto' ? 'selected' : ''}" onclick="selectGuideTrait('auto')">Auto (Best)</div>`;
+    availableTraits.forEach(t => { traitsHtml += `<div class="config-chip ${tempGuideTrait === t.id ? 'selected' : ''}" onclick="selectGuideTrait('${t.id}')">${t.name}</div>`; });
+    traitList.innerHTML = traitsHtml;
+}
+function applyGuideConfig() {
+    document.getElementById('guideUnitSelect').value = tempGuideUnit;
+    document.getElementById('guideTraitSelect').value = tempGuideTrait;
+    renderGuides(); closeGuideConfig();
+}
+
+// --- NEW: ADD CUSTOM PAIR MODAL LOGIC ---
+function openCustomPairModal() {
+    const modal = document.getElementById('customPairModal');
+    cpUnit = 'all'; cpT1 = 'eternal'; cpT2 = 'none';
+    renderCustomPairUI();
+    modal.style.display = 'flex';
+}
+function closeCustomPairModal() { document.getElementById('customPairModal').style.display = 'none'; }
+function selectCpUnit(id) { cpUnit = id; renderCustomPairUI(); }
+function selectCpT1(id) { cpT1 = id; renderCustomPairUI(); }
+function selectCpT2(id) { cpT2 = id; renderCustomPairUI(); }
+
+function renderCustomPairUI() {
+    const unitGrid = document.getElementById('cpUnitGrid');
+    const t1List = document.getElementById('cpTrait1List');
+    const t2List = document.getElementById('cpTrait2List');
+    
+    // 1. Unit Grid
+    let unitsHtml = `<div class="config-item ${cpUnit === 'all' ? 'selected' : ''}" onclick="selectCpUnit('all')"><div style="width:50px; height:50px; border-radius:50%; border:2px solid #555; background:#000; display:flex; align-items:center; justify-content:center; font-weight:bold; color:#fff;">ALL</div><span>All Units</span></div>`;
+    unitDatabase.forEach(u => { unitsHtml += `<div class="config-item ${cpUnit === u.id ? 'selected' : ''}" onclick="selectCpUnit('${u.id}')"><img src="${u.img}"><span>${u.name}</span></div>`; });
+    unitGrid.innerHTML = unitsHtml;
+
+    // 2. Trait Lists
+    const standardTraits = traitsList.filter(t => t.id !== 'none'); // "None" is only allowed for T2 really, or specific logic
+    let t1Html = '';
+    standardTraits.forEach(t => { t1Html += `<div class="config-chip ${cpT1 === t.id ? 'selected' : ''}" onclick="selectCpT1('${t.id}')">${t.name}</div>`; });
+    t1List.innerHTML = t1Html;
+
+    let t2Html = `<div class="config-chip ${cpT2 === 'none' ? 'selected' : ''}" onclick="selectCpT2('none')">None</div>`;
+    standardTraits.forEach(t => { t2Html += `<div class="config-chip ${cpT2 === t.id ? 'selected' : ''}" onclick="selectCpT2('${t.id}')">${t.name}</div>`; });
+    t2List.innerHTML = t2Html;
+
+    // Update Preview Text
+    const uName = cpUnit === 'all' ? 'All Units' : unitDatabase.find(u => u.id === cpUnit).name;
+    const t1Name = traitsList.find(t => t.id === cpT1).name;
+    const t2Name = (cpT2 === 'none') ? '(None)' : traitsList.find(t => t.id === cpT2).name;
+    document.getElementById('cpPreviewText').innerHTML = `${uName} <span style="color:#666">+</span> <span style="color:var(--accent-start)">${t1Name}</span> <span style="color:#666">+</span> <span style="color:var(--accent-end)">${t2Name}</span>`;
+}
+
+function confirmAddCustomPair() {
+    const t1 = traitsList.find(t => t.id === cpT1);
+    const t2 = traitsList.find(t => t.id === cpT2); // t2 can be 'none'
+
+    if (t1 && t2) {
+        const combo = combineTraits(t1, t2);
+        
+        if (cpUnit === 'all') {
+            const allTraits = [...traitsList, ...customTraits];
+            const alreadyExists = allTraits.some(t => t.name === combo.name);
+            if (!alreadyExists && combo.id !== 'none') {
+                customTraits.push(combo);
+                alert(`Added global custom trait: ${combo.name}`);
+            } else alert("Trait combination already exists!");
+        } else {
+            if (!unitSpecificTraits[cpUnit]) unitSpecificTraits[cpUnit] = [];
+            const unitList = unitSpecificTraits[cpUnit];
+            const alreadyExists = unitList.some(t => t.name === combo.name);
+            if (!alreadyExists && combo.id !== 'none') {
+                unitList.push(combo);
+                const uName = unitDatabase.find(u => u.id === cpUnit).name;
+                alert(`Added custom trait to ${uName}: ${combo.name}`);
+            } else alert("Trait combination already exists for this unit!");
+        }
+        
+        renderDatabase();
+        if(document.getElementById('guidesPage').classList.contains('active')) renderGuides();
+        closeCustomPairModal();
+    }
+}
+
+// ------------------------------------
 
 function getTopBuildsForGuide(unit, trait) {
     let results = [];
     let effectiveStats = { ...unit.stats };
     if (activeAbilityIds.has(unit.id) && unit.ability) Object.assign(effectiveStats, unit.ability);
     effectiveStats.id = unit.id;
-    
-    // --- NEW: APPLY KIRITO LOGIC TO GUIDES ---
-    if (unit.id === 'kirito' && kiritoState.realm && kiritoState.card) {
-        effectiveStats.dot = 200;       // 200% DoT
-        effectiveStats.dotDuration = 4; // 4 Seconds
-        effectiveStats.dotStacks = unit.stats.hitCount || 14; 
-    }
-    // -----------------------------------------
+    if (unit.id === 'kirito' && kiritoState.realm && kiritoState.card) { effectiveStats.dot = 200; effectiveStats.dotDuration = 4; effectiveStats.dotStacks = unit.stats.hitCount || 14; }
 
     let actualPlacement = Math.min(unit.placement, trait.limitPlace || unit.placement);
     const includeSubs = document.getElementById('guideSubStats')?.checked ?? true;
@@ -598,8 +584,7 @@ function getTopBuildsForGuide(unit, trait) {
             effectiveStats.context = ctx;
             let cfg = getBestSubConfig(build, effectiveStats, includeSubs, includeHead);
             if (!results[build.name]) results[build.name] = { dps: -1, dmgCfg: null, spaCfg: null };
-            if (p === 'dmg') results[build.name].dmgCfg = cfg;
-            else results[build.name].spaCfg = cfg;
+            if (p === 'dmg') results[build.name].dmgCfg = cfg; else results[build.name].spaCfg = cfg;
         });
     });
 
@@ -609,29 +594,15 @@ function getTopBuildsForGuide(unit, trait) {
         let set = SETS.find(s => s.id === globalBuilds.find(b => b.name === name)?.set);
         let build = globalBuilds.find(b => b.name === name);
         const getStatName = (t) => ({ dmg: 'Dmg', dot: 'DoT', cm: 'Crit Dmg', spa: 'SPA', cf: 'Crit Rate' }[t] || 'N/A');
-
-        // Create structured data instead of just raw strings
-        let mainStructs = [
-            { label: 'BODY', stat: getStatName(build.bodyType) },
-            { label: 'LEGS', stat: getStatName(build.legType) }
-        ];
-
+        let mainStructs = [ { label: 'BODY', stat: getStatName(build.bodyType) }, { label: 'LEGS', stat: getStatName(build.legType) } ];
         let subStructs = [];
         if (finalCfg.assignments && Object.keys(finalCfg.assignments).length > 0) {
             if (finalCfg.assignments.head) subStructs.push({ label: 'HEAD', stat: finalCfg.assignments.head });
             if (finalCfg.assignments.body) subStructs.push({ label: 'BODY', stat: finalCfg.assignments.body });
             if (finalCfg.assignments.legs) subStructs.push({ label: 'LEGS', stat: finalCfg.assignments.legs });
         }
-        
-        return { 
-            name: name, 
-            dps: finalCfg.res.total, 
-            prio: prio, 
-            set: set?.name || 'Unknown', 
-            mainStructs: mainStructs,
-            subStructs: subStructs
-        };
-    }).sort((a, b) => b.dps - a.dps).slice(0, 3); // Top 3 builds
+        return { name: name, dps: finalCfg.res.total, prio: prio, set: set?.name || 'Unknown', mainStructs: mainStructs, subStructs: subStructs };
+    }).sort((a, b) => b.dps - a.dps).slice(0, 3);
 }
 
 function renderGuides() {
@@ -639,61 +610,24 @@ function renderGuides() {
     guideGrid.innerHTML = '';
     const selectedUnitId = document.getElementById('guideUnitSelect').value;
     const selectedTraitId = document.getElementById('guideTraitSelect').value;
+    const uName = selectedUnitId === 'all' ? 'All Units' : unitDatabase.find(u => u.id === selectedUnitId)?.name || 'Unknown';
+    let tName = 'Auto Trait';
+    if(selectedTraitId !== 'auto') { const found = traitsList.find(t => t.id === selectedTraitId) || customTraits.find(t => t.id === selectedTraitId); if(found) tName = found.name; }
+    document.getElementById('dispGuideUnit').innerText = uName; document.getElementById('dispGuideTrait').innerText = tName;
 
-    // --- GENERIC GUIDES ---
     const genericGuides = guideData.filter(d => !d.isCalculated);
     genericGuides.forEach(row => {
         if (selectedUnitId !== 'all' && unitDatabase.some(u => u.id === selectedUnitId)) return;
         const data = row[currentGuideMode]; 
-        
-        const card = document.createElement('div');
-        card.className = 'guide-card';
-        
+        const card = document.createElement('div'); card.className = 'guide-card';
         const imgHtml = row.img ? `<img src="${row.img}">` : '';
-        
-        // Format manual text into badges if possible
-        const mainBadgeHtml = formatStatBadge(data.main);
-        const subBadgeHtml = formatStatBadge(data.sub);
-
-        card.innerHTML = `
-            <div class="guide-card-header">
-                <div class="guide-unit-info">
-                    ${imgHtml}
-                    <div>
-                        <span style="display:block; line-height:1;">${row.unit}</span>
-                        <span style="font-size:0.7rem; color:var(--accent-end); font-weight:bold;">${data.trait}</span>
-                    </div>
-                </div>
-            </div>
-            <div class="guide-card-body">
-                <div class="guide-entry">
-                    <div class="ge-header">
-                        <span class="ge-rank" style="color:#aaa;">#1</span>
-                        <span class="ge-set">${data.set}</span>
-                    </div>
-                    <div class="ge-stats-row">
-                        <div class="ge-group">
-                            <span class="ge-lbl">MAIN</span>
-                            <div class="ge-badges">${mainBadgeHtml}</div>
-                        </div>
-                        <div class="ge-sep"></div>
-                        <div class="ge-group">
-                            <span class="ge-lbl">SUB</span>
-                            <div class="ge-badges">${subBadgeHtml}</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
+        const mainBadgeHtml = formatStatBadge(data.main); const subBadgeHtml = formatStatBadge(data.sub);
+        card.innerHTML = `<div class="guide-card-header"><div class="guide-unit-info">${imgHtml}<div><span style="display:block; line-height:1;">${row.unit}</span><span style="font-size:0.7rem; color:var(--accent-end); font-weight:bold;">${data.trait}</span></div></div></div><div class="guide-card-body"><div class="guide-entry"><div class="ge-header"><span class="ge-rank" style="color:#aaa;">#1</span><span class="ge-set">${data.set}</span></div><div class="ge-stats-row"><div class="ge-group"><span class="ge-lbl">MAIN</span><div class="ge-badges">${mainBadgeHtml}</div></div><div class="ge-sep"></div><div class="ge-group"><span class="ge-lbl">SUB</span><div class="ge-badges">${subBadgeHtml}</div></div></div></div></div>`;
         guideGrid.appendChild(card);
     });
 
-    // --- CALCULATED UNITS ---
     let unitsToDisplay = [];
-    if (selectedUnitId !== 'all') {
-        const unit = unitDatabase.find(u => u.id === selectedUnitId);
-        if (unit) unitsToDisplay.push(unit);
-    } else { unitsToDisplay = unitDatabase; }
+    if (selectedUnitId !== 'all') { const unit = unitDatabase.find(u => u.id === selectedUnitId); if (unit) unitsToDisplay.push(unit); } else { unitsToDisplay = unitDatabase; }
 
     let calculatedUnits = unitsToDisplay.map(unit => {
         let traitToUse = null;
@@ -712,88 +646,22 @@ function renderGuides() {
     calculatedUnits.sort((a, b) => b.maxDps - a.maxDps);
 
     calculatedUnits.forEach(item => {
-        const card = document.createElement('div');
-        card.className = 'guide-card';
-
-        // --- NEW: KIRITO CONTROLS INJECTED INTO CARD ---
+        const card = document.createElement('div'); card.className = 'guide-card';
         let kiritoGuideControls = '';
         if (item.unit.id === 'kirito') {
-            const isRealm = kiritoState.realm;
-            const isCard = kiritoState.card;
-            kiritoGuideControls = `
-                <div class="unit-toolbar" style="border-bottom:none; padding-top:5px; padding-bottom:10px; flex-wrap:wrap; justify-content:flex-start; gap:15px; background:rgba(255,255,255,0.02); padding-left:15px; padding-right:15px;">
-                    <div class="toggle-wrapper">
-                        <span>Virtual Realm</span>
-                        <label>
-                            <input type="checkbox" ${isRealm ? 'checked' : ''} onchange="toggleKiritoMode('realm', this)">
-                            <div class="mini-switch"></div>
-                        </label>
-                    </div>
-                    ${isRealm ? `
-                    <div class="toggle-wrapper" style="animation:fadeIn 0.3s ease;">
-                        <span style="color:${isCard ? 'var(--custom)' : '#888'}; font-weight:${isCard ? 'bold' : 'normal'};">Magician Card</span>
-                        <label>
-                            <input type="checkbox" ${isCard ? 'checked' : ''} onchange="toggleKiritoMode('card', this)">
-                            <div class="mini-switch" style="${isCard ? 'background:var(--custom);' : ''}"></div>
-                        </label>
-                    </div>` : ''}
-                </div>
-            `;
+            const isRealm = kiritoState.realm; const isCard = kiritoState.card;
+            kiritoGuideControls = `<div class="unit-toolbar" style="border-bottom:none; padding-top:5px; padding-bottom:10px; flex-wrap:wrap; justify-content:flex-start; gap:15px; background:rgba(255,255,255,0.02); padding-left:15px; padding-right:15px;"><div class="toggle-wrapper"><span>Virtual Realm</span><label><input type="checkbox" ${isRealm ? 'checked' : ''} onchange="toggleKiritoMode('realm', this)"><div class="mini-switch"></div></label></div>${isRealm ? `<div class="toggle-wrapper" style="animation:fadeIn 0.3s ease;"><span style="color:${isCard ? 'var(--custom)' : '#888'}; font-weight:${isCard ? 'bold' : 'normal'};">Magician Card</span><label><input type="checkbox" ${isCard ? 'checked' : ''} onchange="toggleKiritoMode('card', this)"><div class="mini-switch" style="${isCard ? 'background:var(--custom);' : ''}"></div></label></div>` : ''}</div>`;
         }
-        // ------------------------------------------------
 
         let buildsHtml = item.topBuilds.map((build, index) => {
             let rankColor = index === 0 ? 'var(--gold)' : (index === 1 ? 'var(--silver)' : 'var(--bronze)');
-            
-            // Format badges using the new structure with labels
-            let mainHtml = build.mainStructs.map(s => {
-                return `<div class="stat-pair"><span class="stat-prefix">${s.label}</span>${formatStatBadge(s.stat)}</div>`;
-            }).join('');
-
-            let subHtml = build.subStructs.length > 0 
-                ? build.subStructs.map(s => `<div class="stat-pair"><span class="stat-prefix">${s.label}</span>${formatStatBadge(s.stat)}</div>`).join('') 
-                : '<span style="font-size:0.65rem; color:#555;">None</span>';
-
-            return `
-                <div class="guide-entry">
-                    <div class="ge-header">
-                        <span class="ge-rank" style="color:${rankColor}">#${index+1}</span>
-                        <span class="ge-set">${build.name}</span>
-                    </div>
-                    <div class="ge-stats-row">
-                        <div class="ge-group">
-                            <span class="ge-lbl">MAIN Stat</span>
-                            <div class="ge-badges">${mainHtml}</div>
-                        </div>
-                        <div class="ge-sep"></div>
-                        <div class="ge-group">
-                            <span class="ge-lbl">SUB Stat</span>
-                            <div class="ge-badges">${subHtml}</div>
-                        </div>
-                    </div>
-                </div>
-            `;
+            let mainHtml = build.mainStructs.map(s => `<div class="stat-pair"><span class="stat-prefix">${s.label}</span>${formatStatBadge(s.stat)}</div>`).join('');
+            let subHtml = build.subStructs.length > 0 ? build.subStructs.map(s => `<div class="stat-pair"><span class="stat-prefix">${s.label}</span>${formatStatBadge(s.stat)}</div>`).join('') : '<span style="font-size:0.65rem; color:#555;">None</span>';
+            let prioLabel = build.prio === 'dmg' ? 'DMG STAT' : 'SPA STAT'; let prioColor = build.prio === 'dmg' ? '#ff5555' : 'var(--custom)';
+            return `<div class="guide-entry"><div class="ge-header" style="display:flex; align-items:center; gap:8px; width:100%;"><span class="ge-rank" style="color:${rankColor}; flex-shrink:0;">#${index+1}</span><span class="ge-set" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex-grow:1; min-width:0; margin-right:5px;">${build.name}</span><div style="display:flex; align-items:center; gap:6px; flex-shrink:0;"><span style="font-size:0.6rem; font-weight:800; color:${prioColor}; background:linear-gradient(to bottom, #2e1065, #000); border:1px solid ${prioColor}; padding:2px 6px; border-radius:4px; text-transform:uppercase; box-shadow: 0 2px 4px rgba(0,0,0,0.5);">${prioLabel}</span><span style="font-weight:bold; color:var(--text-primary); font-size:0.85rem;">${format(build.dps)} <span style="color:#666; font-size:0.7rem;">DPS</span></span></div></div><div class="ge-stats-row"><div class="ge-group"><span class="ge-lbl">MAIN Stat</span><div class="ge-badges">${mainHtml}</div></div><div class="ge-sep"></div><div class="ge-group"><span class="ge-lbl">SUB Stat</span><div class="ge-badges">${subHtml}</div></div></div></div>`;
         }).join('');
 
-        card.innerHTML = `
-            <div class="guide-card-header">
-                <div class="guide-unit-info">
-                    <img src="${item.unit.img}">
-                    <div>
-                        <span style="display:block; line-height:1;">${item.unit.name}</span>
-                        <span style="font-size:0.75rem; color:var(--accent-end); font-weight:bold;">${item.trait.name}</span>
-                    </div>
-                </div>
-                <div class="guide-dps-box">
-                    <span class="guide-dps-val">${format(item.maxDps)}</span>
-                    <span style="font-size:0.6rem; color:#666; font-weight:bold;">DPS</span>
-                </div>
-            </div>
-            ${kiritoGuideControls}
-            <div class="guide-card-body">
-                ${buildsHtml}
-            </div>
-        `;
+        card.innerHTML = `<div class="guide-card-header"><div class="guide-unit-info"><img src="${item.unit.img}"><div><span style="display:block; line-height:1;">${item.unit.name}</span><span style="font-size:0.75rem; color:var(--accent-end); font-weight:bold;">${item.trait.name}</span></div></div><div class="guide-dps-box"><span class="guide-dps-val">${format(item.maxDps)}</span><span style="font-size:0.6rem; color:#666; font-weight:bold; letter-spacing:1px;">MAX POTENTIAL</span></div></div>${kiritoGuideControls}<div class="guide-card-body">${buildsHtml}</div>`;
         guideGrid.appendChild(card);
     });
 }
@@ -804,14 +672,10 @@ function findOverallBestTraitForUnit(unit) {
     const allToCheck = [...traitsList, ...customTraits, ...specificTraits];
     allToCheck.filter(t => t.id !== 'none').forEach(trait => {
         const topBuilds = getTopBuildsForGuide(unit, trait);
-        if (topBuilds.length > 0 && topBuilds[0].dps > maxDps) {
-            maxDps = topBuilds[0].dps; bestTrait = trait;
-        }
+        if (topBuilds.length > 0 && topBuilds[0].dps > maxDps) { maxDps = topBuilds[0].dps; bestTrait = trait; }
     });
     return bestTrait;
 }
-
-const initCalcDropdown = () => { const s1 = document.getElementById('db_t1'), s2 = document.getElementById('db_t2'); traitsList.forEach(t => { s1.add(new Option(t.name, t.id)); s2.add(new Option(t.name, t.id)); }); s1.value = 'astral'; s2.value = 'none'; };
 
 function switchPage(pid) {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -821,11 +685,10 @@ function switchPage(pid) {
     document.getElementById('dbInjector').style.display = isDb ? 'flex' : 'none';
     document.getElementById('guidesToolbar').style.display = isDb ? 'none' : 'flex';
     document.getElementById('selectAllBtn').style.display = isDb ? 'block' : 'none';
-    if (!isDb) document.getElementById('compareBtn').style.display = 'none';
-    else updateCompareBtn();
+    if (!isDb) document.getElementById('compareBtn').style.display = 'none'; else updateCompareBtn();
     if (pid === 'guides') renderGuides();
 }
 
 const format = (n) => n >= 1e9 ? (n/1e9).toFixed(2) + 'B' : n >= 1e6 ? (n/1e6).toFixed(2) + 'M' : n >= 1e3 ? (n/1e3).toFixed(1) + 'k' : n.toLocaleString(undefined, {maximumFractionDigits:0});
 
-window.onload = () => { initCalcDropdown(); populateGuideDropdowns(); populateInjectorUnitSelect(); setGuideMode('current'); };
+window.onload = () => { populateGuideDropdowns(); setGuideMode('current'); };
