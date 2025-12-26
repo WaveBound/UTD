@@ -1,3 +1,4 @@
+<!-- START OF FILE index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -24,15 +25,10 @@
             <button class="nav-btn" onclick="openPatchNotes()">Patch Notes</button>
         </div>
 
-        <!-- 1. DATABASE TOOLBAR (Custom Pair Injector) -->
+        <!-- 1. DATABASE TOOLBAR -->
         <div id="dbInjector" class="injector-panel">
+            <button class="nav-btn add-btn" onclick="openCustomPairModal()">+ Add Custom Pair</button>
             
-            <!-- NEW: ADD CUSTOM PAIR BUTTON (Updated Color) -->
-            <button class="add-btn" style="background: linear-gradient(135deg, var(--accent-start), var(--accent-end)); color: #fff; padding: 8px 20px; font-size: 0.8rem; margin-right: 15px; border:none; box-shadow: 0 0 15px rgba(168, 85, 247, 0.4);" onclick="openCustomPairModal()">
-                + Add Custom Pair
-            </button>
-            
-            <!-- Global Toggles for DB -->
             <label id="hypoToggle" class="nav-toggle-label" title="Current: Relic Stats for DoT/Crit Dmg are ignored (Bugged). Check to apply fixes.">
                 <input type="checkbox" id="globalHypothetical" onchange="toggleHypothetical(this)">
                 <span id="hypoLabel">Bugged Relics</span>
@@ -51,21 +47,18 @@
 
         <!-- 2. GUIDES TOOLBAR -->
         <div id="guidesToolbar" class="injector-panel" style="display:none;">
-            
-            <!-- Hidden Selects (Used for logic compatibility) -->
             <select id="guideUnitSelect" style="display:none;"><option value="all">All Units</option></select>
             <select id="guideTraitSelect" style="display:none;"><option value="auto">Auto</option></select>
 
-            <!-- CONFIG BUTTON (Remains for Guides) -->
             <button class="nav-btn" style="border:1px solid var(--accent-start); color:var(--accent-start); margin-right:15px;" onclick="openGuideConfig()">
-                ⚙️ Configure View
+            Configure View
             </button>
 
-            <!-- Mode Buttons -->
-            <button class="guide-toggle-btn active" onclick="setGuideMode('current')">Current Meta (Bugged Relics)</button>
-            <button class="guide-toggle-btn" onclick="setGuideMode('fixed')">Hypothetical (Fixed Relics)</button>
+            <label id="guideHypoToggleWrapper" class="nav-toggle-label">
+                <input type="checkbox" id="guideHypoToggle" onchange="toggleHypothetical(this)">
+                <span id="guideHypoLabel">Bugged Relics</span>
+            </label>
 
-            <!-- Toggles -->
             <label class="nav-toggle-label is-checked">
                 <input type="checkbox" id="guideHeadPiece" onchange="toggleGuideHeadPiece(this)" checked>
                 <span>+ Head Relic</span>
@@ -85,9 +78,7 @@
 
     <!-- GUIDES PAGE -->
     <div id="guidesPage" class="page">
-        <div class="guide-container" style="background:transparent; border:none; padding:0;">
-            
-            <!-- Selection Display Banner -->
+        <div class="guide-container">
             <div id="activeGuideSelection" style="text-align:center; margin-bottom:15px; font-size:0.9rem; color:#aaa;">
                 Showing: <b style="color:#fff;" id="dispGuideUnit">All Units</b> with <b style="color:var(--accent-end);" id="dispGuideTrait">Auto Trait</b>
             </div>
@@ -100,20 +91,16 @@
             <div id="guideList" class="guide-grid">
                 <!-- Cards injected via JS -->
             </div>
-            
-            <div style="margin-top:20px; text-align:center; color:#666; font-size:0.7rem;">
-                *Head Piece should always be Sun God (Elemental) for maximum output unless specified.
-            </div>
         </div>
     </div>
 
-    <!-- GUIDE CONFIGURATION MODAL -->
+    <!-- MODALS -->
+    <!-- Guide Config -->
     <div id="guideConfigModal" class="modal-overlay" onclick="closeGuideConfig()">
         <div class="modal-content" style="max-width: 800px;" onclick="event.stopPropagation()">
             <div class="modal-header-fixed">
                 <h2 style="margin:0; font-size: 1.2rem; text-transform:uppercase;">Guide Configuration</h2>
             </div>
-            
             <div class="modal-scroll-area">
                 <div class="config-section">
                     <div class="config-header">1. Select Unit</div>
@@ -124,7 +111,6 @@
                     <div class="config-chips" id="guideConfigTraitList"></div>
                 </div>
             </div>
-
             <div class="modal-footer-fixed" style="display:flex; gap:10px;">
                 <button class="action-btn secondary" onclick="closeGuideConfig()">Cancel</button>
                 <button class="action-btn" onclick="applyGuideConfig()">Apply Settings</button>
@@ -132,47 +118,30 @@
         </div>
     </div>
 
-    <!-- NEW: ADD CUSTOM PAIR MODAL -->
+    <!-- Custom Pair -->
     <div id="customPairModal" class="modal-overlay" onclick="closeCustomPairModal()">
         <div class="modal-content" style="max-width: 800px;" onclick="event.stopPropagation()">
             <div class="modal-header-fixed" style="background: linear-gradient(to right, #06b6d4, #0f1014); border-bottom: 1px solid #06b6d4;">
                 <h2 style="margin:0; font-size: 1.2rem; text-transform:uppercase; color:#fff;">Create Custom Pair</h2>
             </div>
-            
             <div class="modal-scroll-area">
-                
-                <!-- Section 1: Unit Selection -->
                 <div class="config-section">
                     <div class="config-header" style="color:#06b6d4;">1. Assign To Unit</div>
-                    <div class="config-grid" id="cpUnitGrid">
-                        <!-- Injected via JS -->
-                    </div>
+                    <div class="config-grid" id="cpUnitGrid"></div>
                 </div>
-
-                <!-- Section 2: Trait 1 Selection -->
                 <div class="config-section" style="margin-top:20px;">
                     <div class="config-header" style="color:#06b6d4;">2. Select First Trait</div>
-                    <div class="config-chips" id="cpTrait1List">
-                        <!-- Injected via JS -->
-                    </div>
+                    <div class="config-chips" id="cpTrait1List"></div>
                 </div>
-
-                <!-- Section 3: Trait 2 Selection -->
                 <div class="config-section" style="margin-top:20px;">
                     <div class="config-header" style="color:#06b6d4;">3. Select Second Trait</div>
-                    <div class="config-chips" id="cpTrait2List">
-                        <!-- Injected via JS -->
-                    </div>
+                    <div class="config-chips" id="cpTrait2List"></div>
                 </div>
-
-                <!-- Preview -->
                 <div style="margin-top:25px; background:rgba(6, 182, 212, 0.1); padding:10px; border-radius:8px; border:1px solid #06b6d4; text-align:center;">
                     <span style="color:#aaa; font-size:0.8rem; text-transform:uppercase;">Creating Combination:</span><br>
                     <b style="color:#fff; font-size:1.1rem;" id="cpPreviewText">Loading...</b>
                 </div>
-
             </div>
-
             <div class="modal-footer-fixed" style="display:flex; gap:10px;">
                 <button class="action-btn secondary" onclick="closeCustomPairModal()">Cancel</button>
                 <button class="action-btn" style="background:var(--custom); color:#000;" onclick="confirmAddCustomPair()">Create Pair</button>
@@ -180,56 +149,61 @@
         </div>
     </div>
 
-    <!-- Math Modal (Sticky Footer) -->
+    <!-- Math Modal -->
     <div id="mathModal" class="modal-overlay" onclick="closeMath()">
         <div class="modal-content" onclick="event.stopPropagation()">
             <div class="modal-header-fixed">
-                <h2 style="margin:0; color:var(--accent-start); font-size: 1.5rem; text-transform:uppercase; letter-spacing:1px;">DPS Breakdown</h2>
+                <h2 style="margin:0; color:var(--accent-start); font-size: 1.5rem; text-transform:uppercase;">DPS Breakdown</h2>
             </div>
             <div id="mathContent" class="modal-scroll-area"></div>
-            <div class="modal-footer-fixed">
-                <button class="action-btn" onclick="closeMath()">Close</button>
-            </div>
+            <div class="modal-footer-fixed"><button class="action-btn" onclick="closeMath()">Close</button></div>
         </div>
     </div>
 
-    <!-- Comparison Modal -->
+    <!-- Compare Modal -->
     <div id="compareModal" class="modal-overlay" onclick="closeCompare()">
         <div class="modal-content" onclick="event.stopPropagation()">
             <div class="modal-header-fixed">
                 <h2 style="margin:0; font-size: 1.5rem; text-transform:uppercase;">Meta Comparison</h2>
             </div>
             <div id="compareContent" class="modal-scroll-area"></div>
-            <div class="modal-footer-fixed">
-                <button class="action-btn" style="background:var(--card-border);" onclick="closeCompare()">Close</button>
-            </div>
+            <div class="modal-footer-fixed"><button class="action-btn secondary" onclick="closeCompare()">Close</button></div>
         </div>
     </div>
 
-    <!-- Patch Notes Modal -->
+    <!-- Patch Notes -->
     <div id="patchModal" class="modal-overlay" onclick="closePatchNotes()">
         <div class="modal-content" onclick="event.stopPropagation()">
-            <div class="modal-header-fixed">
-                <h2 style="margin:0; font-size: 1.5rem; text-transform:uppercase; color: #fff;">Patch Notes</h2>
-            </div>
+            <div class="modal-header-fixed"><h2 style="margin:0; font-size: 1.5rem; text-transform:uppercase;">Patch Notes</h2></div>
             <div class="modal-scroll-area">
+                
                 <div class="patch-entry">
-                    <div class="patch-version">v2.0</div>
-                    <div class="patch-date">Dec 26, 2025</div>
-                    <ul>
-                        <li><b>Feature:</b> Added "Configure View" to Build Guides for specific setups.</li>
-                        <li><b>Feature:</b> Added new "Add Custom Pair" Modal to easily build and assign custom trait combinations to the database.</li>
+                    <div class="patch-header">
+                        <span class="patch-version">v2.1</span>
+                        <span class="patch-date">Dec 26, 2025</span>
+                    </div>
+                    <ul class="patch-list">
+                        <li><span class="patch-tag">UI Overhaul</span> Consistent Layout For DataBase And Guides.</li>
+                        <li><span class="patch-tag">Consistency</span> Unified Stat Badges across Guides and Database.</li>
                     </ul>
                 </div>
-                <!-- ... existing patch notes ... -->
+
+                <div class="patch-entry">
+                    <div class="patch-header">
+                        <span class="patch-version">v2.0</span>
+                        <span class="patch-date">Dec 26, 2025</span>
+                    </div>
+                    <ul class="patch-list">
+                        <li><span class="patch-tag">Feature</span> Added "Configure View" to Build Guides for specific setups.</li>
+                        <li><span class="patch-tag">Feature</span> Added new "Add Custom Pair" Modal to easily build and assign custom trait combinations to the database.</li>
+                    </ul>
+                </div>
+
             </div>
-            <div class="modal-footer-fixed">
-                <button class="action-btn" onclick="closePatchNotes()">Close</button>
-            </div>
+            <div class="modal-footer-fixed"><button class="action-btn" onclick="closePatchNotes()">Close</button></div>
         </div>
     </div>
 
-    <!-- SCRIPTS -->
     <script src="data.js"></script>
     <script src="math.js"></script>
     <script src="script.js"></script>

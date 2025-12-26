@@ -1,3 +1,4 @@
+// START OF FILE script.js
 let customTraits = [];
 let unitSpecificTraits = {}; 
 let selectedUnitIds = new Set();
@@ -6,40 +7,46 @@ let cachedResults = {};
 let currentGuideMode = 'current';
 
 // New State for Kirito
-let kiritoState = {
-    realm: false,
-    card: false
-};
+let kiritoState = { realm: false, card: false };
 
 // --- GUIDE CONFIG STATE ---
 let tempGuideUnit = 'all';
 let tempGuideTrait = 'auto';
 
-// --- CUSTOM PAIR MODAL STATE ---
-let cpUnit = 'all';
-let cpT1 = 'eternal'; // default
-let cpT2 = 'none';    // default
+// --- UNIFIED BADGE GENERATOR ---
+function getBadgeHtml(statKeyOrName) {
+    if (!statKeyOrName) return '<span style="font-size:0.65rem; color:#444;">-</span>';
+    
+    // Normalize Input
+    let type = statKeyOrName.toLowerCase();
+    let label = statKeyOrName;
+    let innerContent = label;
 
+    if (type === 'dmg' || type === 'damage') { type = 'dmg'; label = 'Dmg'; innerContent = 'Dmg'; }
+    else if (type === 'spa') { type = 'spa'; label = 'SPA'; innerContent = 'SPA'; }
+    else if (type === 'cm' || type === 'crit dmg' || type === 'crit damage') { 
+        type = 'cdmg'; 
+        label = 'Crit Dmg'; 
+        innerContent = '<span class="stat-cdmg-text">Crit Dmg</span>'; 
+    }
+    else if (type === 'cf' || type === 'crit rate') { type = 'crit'; label = 'Crit Rate'; innerContent = 'Crit Rate'; }
+    else if (type === 'dot') { type = 'dot'; label = 'DoT'; innerContent = 'DoT'; }
+    else if (type === 'buff potency' || type === 'buff') { 
+        type = 'dot'; // Re-use Green style
+        label = 'Buff Potency'; 
+        innerContent = 'Buff Potency'; 
+    }
+    else if (type === 'range' || type === 'rng') { type = 'range'; label = 'Range'; innerContent = 'Range'; }
+
+    return `<span class="stat-badge stat-${type}">${innerContent}</span>`;
+}
+
+// Old wrapper for compatibility
 function formatStatBadge(text) {
     if(!text) return '';
     if (text.includes('<')) return text;
-    
-    // Updated Logic: Split by separators and remove them
     const parts = text.split(/[\/>,]+/).map(p => p.trim()).filter(p => p);
-
-    return parts.map(part => {
-        return part.replace(/(Crit Dmg|Crit Damage)|(Crit Rate)|(Damage|Dmg)|(Spa|SPA)|(DoT|Buff Potency)|(Range|Rng)/gi, 
-            (match, cdmg, crate, dmg, spa, dot, rng) => {
-                if (cdmg) return '<span class="stat-badge stat-cdmg"><span class="stat-cdmg-text">Crit Dmg</span></span>';
-                if (crate) return '<span class="stat-badge stat-crit">Crit Rate</span>';
-                if (dmg) return '<span class="stat-badge stat-dmg">Dmg</span>';
-                if (spa) return '<span class="stat-badge stat-spa">Spa</span>';
-                if (dot) return '<span class="stat-badge stat-dot">' + match + '</span>';
-                if (rng) return '<span class="stat-badge stat-range">Range</span>';
-                return match;
-            }
-        );
-    }).join(''); 
+    return parts.map(part => getBadgeHtml(part)).join(''); 
 }
 
 function toggleCheckbox(checkbox, callback, isHypothetical = false) {
@@ -84,7 +91,7 @@ const applySubPiece = (testBuild, cand, mainStatType) => {
 };
 
 const getBestSubConfig = (build, stats, includeSubs, includeHead) => {
-    if (!includeSubs && !includeHead) return { res: calculateDPS(stats, build, stats.context), desc: "" };
+    if (!includeSubs && !includeHead) return { res: calculateDPS(stats, build, stats.context), desc: "", assignments: {} };
     
     let bestRes = { total: -1 };
     let bestCandKey = null;
@@ -99,28 +106,23 @@ const getBestSubConfig = (build, stats, includeSubs, includeHead) => {
         if (res.total > bestRes.total) { bestRes = res; bestCandKey = cand; }
     });
 
-    let descParts = [];
     let assignments = {};
     const getDisp = (k) => SUB_NAMES[k] || k;
     const resolve = (cand, main) => (cand === main ? 'range' : cand);
 
     if (bestCandKey) {
-        if (includeHead) { const val = getDisp(bestCandKey); descParts.push(`Head: ${val}`); assignments.head = val; }
+        if (includeHead) { const val = getDisp(bestCandKey); assignments.head = val; }
         if (includeSubs) {
             let bSub = resolve(bestCandKey, build.bodyType);
             let lSub = resolve(bestCandKey, build.legType);
-            const bVal = getDisp(bSub);
-            const lVal = getDisp(lSub);
-            descParts.push(`Body: ${bVal}`);
-            descParts.push(`Legs: ${lVal}`);
-            assignments.body = bVal;
-            assignments.legs = lVal;
+            assignments.body = getDisp(bSub);
+            assignments.legs = getDisp(lSub);
         }
     }
-    return { res: bestRes, desc: descParts.join(' <span style="color:#555">|</span> '), assignments: assignments };
+    return { res: bestRes, desc: "", assignments: assignments };
 };
 
-// --- RENDER DB RESULTS ---
+// --- RENDER DB RESULTS (GRID LAYOUT) ---
 function getUnitResultsHTML(unit, effectiveStats) {
     cachedResults = cachedResults || {};
     const specificTraits = unitSpecificTraits[unit.id] || [];
@@ -135,11 +137,6 @@ function getUnitResultsHTML(unit, effectiveStats) {
     }
 
     let unitResults = [];
-    const formatBuildName = (name) => {
-        let s = name.replace(/Crit Rate/g, '##CR##').replace(/Crit Dmg/g, '##CD##').replace(/Dmg/g, '##D##').replace(/DoT/g, '##DT##').replace(/Spa/g, '##S##').replace(/Range/g, '##R##');
-        return s.replace(/##CR##/g, "<span style='color:var(--gold)'>Crit Rate</span>").replace(/##CD##/g, "<span style='background: linear-gradient(to right, #a855f7, #ff5555); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 800;'>Crit Dmg</span>").replace(/##D##/g, "<span style='color:#F5564F'>Dmg</span>").replace(/##DT##/g, "<span style='color:#4ade80'>DoT</span>").replace(/##S##/g, "<span style='color:#68E7F5'>Spa</span>").replace(/##R##/g, "<span style='color:#ffa500'>Range</span>");
-    };
-
     const filteredBuilds = getFilteredBuilds();
 
     activeTraits.forEach(trait => {
@@ -147,12 +144,15 @@ function getUnitResultsHTML(unit, effectiveStats) {
 
         let actualPlacement = unit.placement;
         if (trait.limitPlace) actualPlacement = Math.min(unit.placement, trait.limitPlace);
+        
         filteredBuilds.forEach(build => {
+            // DMG Prio Calculation
             let contextDmg = { level: 99, priority: 'dmg', wave: 25, isBoss: false, traitObj: trait, placement: actualPlacement, isSSS: true };
             effectiveStats.context = contextDmg;
             let bestDmgConfig = getBestSubConfig(build, effectiveStats, includeSubs, includeHead);
             let resDmg = bestDmgConfig.res;
 
+            // SPA Prio Calculation
             let contextSpa = { level: 99, priority: 'spa', wave: 25, isBoss: false, traitObj: trait, placement: actualPlacement, isSSS: true };
             effectiveStats.context = contextSpa;
             let bestSpaConfig = getBestSubConfig(build, effectiveStats, includeSubs, includeHead);
@@ -160,20 +160,36 @@ function getUnitResultsHTML(unit, effectiveStats) {
 
             let suffix = isAbilActive ? '-ABILITY' : '-BASE';
             if (unit.id === 'kirito') { if (kiritoState.realm) suffix += '-VR'; if (kiritoState.card) suffix += '-CARD'; }
-
             let subsSuffix = includeSubs ? '-SUBS' : '-NOSUBS';
             let headSuffix = includeHead ? '-HEAD' : '-NOHEAD';
             let safeBuildName = build.name.replace(/[^a-zA-Z0-9]/g, '');
-            
+
+            // Push DMG Result
             if (!isNaN(resDmg.total)) {
                 let id = `${unit.id}${suffix}-${trait.id}-${safeBuildName}-dmg${subsSuffix}${headSuffix}`;
                 cachedResults[id] = resDmg;
-                unitResults.push({ id: id, buildName: formatBuildName(build.name), traitName: trait.name, dps: resDmg.total, spa: resDmg.spa, prio: "Dmg Stat", subVariant: bestDmgConfig.desc, isCustom: trait.isCustom });
+                let setName = build.name.split('(')[0].trim();
+                
+                unitResults.push({ 
+                    id: id, setName: setName, traitName: trait.name, dps: resDmg.total, spa: resDmg.spa, prio: "dmg",
+                    mainStats: { body: build.bodyType, legs: build.legType },
+                    subStats: bestDmgConfig.assignments,
+                    isCustom: trait.isCustom 
+                });
             }
+
+            // Push SPA Result (if significant)
             if (!isNaN(resSpa.total) && resSpa.total > 0 && Math.abs(resSpa.total - resDmg.total) > 1) {
                 let id = `${unit.id}${suffix}-${trait.id}-${safeBuildName}-spa${subsSuffix}${headSuffix}`;
                 cachedResults[id] = resSpa;
-                unitResults.push({ id: id, buildName: formatBuildName(build.name), traitName: trait.name, dps: resSpa.total, spa: resSpa.spa, prio: "Spa Stat", subVariant: bestSpaConfig.desc, isCustom: trait.isCustom });
+                let setName = build.name.split('(')[0].trim();
+
+                unitResults.push({ 
+                    id: id, setName: setName, traitName: trait.name, dps: resSpa.total, spa: resSpa.spa, prio: "spa",
+                    mainStats: { body: build.bodyType, legs: build.legType },
+                    subStats: bestSpaConfig.assignments,
+                    isCustom: trait.isCustom 
+                });
             }
         });
     });
@@ -181,30 +197,61 @@ function getUnitResultsHTML(unit, effectiveStats) {
     unitResults.sort((a, b) => b.dps - a.dps);
     if(unitResults.length === 0) return '<div style="padding:10px; color:#666;">No valid builds found.</div>';
 
-    return unitResults.slice(0, 200).map((r, i) => {
+    // --- HTML GENERATION (GRID LAYOUT) ---
+    return unitResults.slice(0, 100).map((r, i) => {
         let rankClass = i < 3 ? `rank-${i+1}` : 'rank-other';
         if(r.isCustom) rankClass += ' is-custom';
-        const searchText = (r.traitName + ' ' + r.buildName.replace(/<[^>]*>?/gm, '') + ' ' + r.prio).toLowerCase();
-        const prioType = r.prio === 'Dmg Stat' ? 'dmg' : 'spa';
+        const searchText = (r.traitName + ' ' + r.setName + ' ' + r.prio).toLowerCase();
+        
+        // Prio Badge Logic
+        const prioColor = r.prio === 'dmg' ? '#ff5555' : 'var(--custom)';
+        const prioLabel = r.prio === 'dmg' ? 'DMG STAT' : 'SPA STAT';
+
+        // Main Stat Badges
+        const mainBodyBadge = getBadgeHtml(r.mainStats.body);
+        const mainLegsBadge = getBadgeHtml(r.mainStats.legs);
+
+        // Sub Stat Logic
+        let subInnerHtml = '';
+        const s = r.subStats;
+        const hasSubs = s.head || s.body || s.legs;
+
+        if (hasSubs) {
+            if (s.head) subInnerHtml += `<div class="stat-line"><span class="sl-label">HEAD</span> ${getBadgeHtml(s.head)}</div>`;
+            if (s.body) subInnerHtml += `<div class="stat-line"><span class="sl-label">BODY</span> ${getBadgeHtml(s.body)}</div>`;
+            if (s.legs) subInnerHtml += `<div class="stat-line"><span class="sl-label">LEGS</span> ${getBadgeHtml(s.legs)}</div>`;
+        } else {
+            subInnerHtml = '<span style="font-size:0.65rem; color:#555;">None</span>';
+        }
 
         return `
-            <div class="build-row ${rankClass}" data-filter-text="${searchText}" data-prio-type="${prioType}">
-                <div class="rank-number">#${i+1}</div>
-                <div class="build-info" style="flex-grow:1;">
-                    <span class="trait-tag" title="${r.traitName}">${r.traitName}</span>
-                    <span class="build-name">${r.buildName}</span>
-                    ${r.subVariant ? `<div class="build-variant"><span>${r.subVariant}</span></div>` : ''}
-                    <div class="build-stats-row">
-                        <span class="build-stat">SPA: ${r.spa.toFixed(2)}s</span>
-                        <span class="build-stat" style="color:${r.prio === 'Dmg Stat' ? 'var(--gold)' : 'var(--custom)'};">[${r.prio}]</span>
+            <div class="build-row ${rankClass}" data-filter-text="${searchText}" data-prio-type="${r.prio}">
+                <div class="br-header">
+                    <div style="display:flex; align-items:center; gap:8px; min-width:0;">
+                        <span class="br-rank">#${i+1}</span>
+                        <span class="br-set">${r.setName}</span>
+                        <span class="br-sep">/</span>
+                        <span class="br-trait">${r.traitName}</span>
                     </div>
+                    <span class="prio-badge" style="color:${prioColor}; border-color:${prioColor};">${prioLabel}</span>
                 </div>
-                <div class="build-right">
-                    <div class="dps-container">
-                        <span class="build-dps">${format(r.dps)}</span>
-                        <span class="dps-label">DPS</span>
+                <div class="br-grid">
+                    <div class="br-col">
+                        <div class="br-col-title">MAIN STAT</div>
+                        <div class="stat-line"><span class="sl-label">BODY</span> ${mainBodyBadge}</div>
+                        <div class="stat-line"><span class="sl-label">LEGS</span> ${mainLegsBadge}</div>
                     </div>
-                    <button class="info-btn" onclick="showMath('${r.id}')">?</button>
+                    <div class="br-col" style="border-left:1px solid rgba(255,255,255,0.05); padding-left:8px;">
+                        <div class="br-col-title">SUB STAT</div>
+                        ${subInnerHtml}
+                    </div>
+                    <div class="br-res-col">
+                        <div class="dps-container">
+                            <span class="build-dps">${format(r.dps)}</span>
+                            <span class="dps-label">DPS</span>
+                        </div>
+                        <button class="info-btn" onclick="showMath('${r.id}')">?</button>
+                    </div>
                 </div>
             </div>
         `;
@@ -214,14 +261,10 @@ function getUnitResultsHTML(unit, effectiveStats) {
 function toggleAbility(unitId, checkbox) {
     const unit = unitDatabase.find(u => u.id === unitId);
     if(!unit) return;
-    if (checkbox.checked) activeAbilityIds.add(unitId);
-    else activeAbilityIds.delete(unitId);
+    if (checkbox.checked) activeAbilityIds.add(unitId); else activeAbilityIds.delete(unitId);
     let currentStats = { ...unit.stats };
     if (checkbox.checked && unit.ability) Object.assign(currentStats, unit.ability);
-    const html = getUnitResultsHTML(unit, currentStats);
-    document.getElementById('results-' + unitId).innerHTML = html;
-    const searchInput = checkbox.closest('.unit-card').querySelector('.search-container input');
-    if(searchInput && searchInput.value) filterList(searchInput);
+    document.getElementById('results-' + unitId).innerHTML = getUnitResultsHTML(unit, currentStats);
 }
 
 const updateCompareBtn = () => {
@@ -234,8 +277,20 @@ const updateCompareBtn = () => {
 };
 
 function toggleSelection(id) {
-    if (selectedUnitIds.has(id)) { selectedUnitIds.delete(id); document.getElementById('card-' + id).classList.remove('is-selected'); } 
-    else { selectedUnitIds.add(id); document.getElementById('card-' + id).classList.add('is-selected'); }
+    // Get the card element
+    const card = document.getElementById('card-' + id);
+    // Find the button inside this card
+    const btn = card.querySelector('.select-btn');
+
+    if (selectedUnitIds.has(id)) { 
+        selectedUnitIds.delete(id); 
+        card.classList.remove('is-selected'); 
+        btn.innerText = "Select"; // Fix: Manually revert text
+    } else { 
+        selectedUnitIds.add(id); 
+        card.classList.add('is-selected'); 
+        btn.innerText = "Selected"; // Fix: Manually update text
+    }
     updateCompareBtn();
 }
 
@@ -243,14 +298,14 @@ const selectAllUnits = () => { const alreadyAll = selectedUnitIds.size === unitD
 
 function openComparison() {
     if(selectedUnitIds.size === 0) return;
-    const modal = document.getElementById('compareModal'), content = document.getElementById('compareContent');
-    modal.style.display = 'flex';
+    toggleModal('compareModal', true);
+    const content = document.getElementById('compareContent');
     const selectedUnits = unitDatabase.filter(u => selectedUnitIds.has(u.id));
     const includeSubs = document.getElementById('globalSubStats').checked;
     const includeHead = document.getElementById('globalHeadPiece').checked;
     
     const findBest = (unitObj, statsObj, availableTraits) => {
-        let bestResult = { total: -1 }, bestTraitName = "", bestBuildName = "", bestSpa = 0, bestPrio = "", bestVariant = "";
+        let bestResult = { total: -1 }, bestTraitName = "", bestBuildName = "", bestSpa = 0, bestPrio = "";
         statsObj.id = unitObj.id;
         const filteredBuilds = getFilteredBuilds();
         availableTraits.forEach(trait => {
@@ -263,12 +318,12 @@ function openComparison() {
                     statsObj.context = ctx;
                     let cfg = getBestSubConfig(build, statsObj, includeSubs, includeHead), res = cfg.res;
                     if (res.total > bestResult.total) {
-                        bestResult = res; bestPrio = p === 'dmg' ? "DMG" : "SPA"; bestTraitName = trait.name; bestBuildName = build.name; bestSpa = res.spa; bestVariant = cfg.desc;
+                        bestResult = res; bestPrio = p === 'dmg' ? "DMG" : "SPA"; bestTraitName = trait.name; bestBuildName = build.name; bestSpa = res.spa;
                     }
                 });
             });
         });
-        return bestResult.total !== -1 ? { u: unitObj, bestResult, bestTraitName, bestBuildName, bestSpa, bestPrio, bestVariant } : null;
+        return bestResult.total !== -1 ? { u: unitObj, bestResult, bestTraitName, bestBuildName, bestSpa, bestPrio } : null;
     };
 
     let comparisonData = [];
@@ -287,13 +342,13 @@ function openComparison() {
     let html = `<table class="compare-table"><thead><tr><th style="width:25%">Unit</th><th>DPS</th><th>Best Meta Build</th></tr></thead><tbody>`;
     comparisonData.forEach(data => {
         const rowClass = data.isCustom ? 'comp-row-custom' : '';
-        html += `<tr class="${rowClass}"><td><div class="comp-unit-wrap"><img src="${data.u.img}" class="comp-img"><div><div style="font-weight:bold; color:#fff;">${data.u.name}</div><span class="comp-sub">${data.isCustom ? 'Custom' : data.u.role}</span></div></div></td><td><div class="comp-highlight">${format(data.bestResult.total)}</div><span class="comp-sub">SPA: ${data.bestSpa.toFixed(3)}s</span></td><td><span class="comp-tag">${data.bestTraitName}</span><div style="font-size:0.75rem; margin-top:4px; opacity:0.8;">${data.bestBuildName} ${data.bestVariant ? `<span style="color:var(--success); font-weight:bold; margin-left:5px;">(${data.bestVariant})</span>` : ''} <span style="color:${data.bestPrio === 'SPA' ? 'var(--custom)' : 'var(--gold)'}; font-weight:bold; font-size:0.7rem;">[${data.bestPrio}]</span></div></td></tr>`;
+        html += `<tr class="${rowClass}"><td><div class="comp-unit-wrap"><img src="${data.u.img}" class="comp-img"><div><div style="font-weight:bold; color:#fff;">${data.u.name}</div><span class="comp-sub">${data.isCustom ? 'Custom' : data.u.role}</span></div></div></td><td><div class="comp-highlight">${format(data.bestResult.total)}</div><span class="comp-sub">SPA: ${data.bestSpa.toFixed(3)}s</span></td><td><span class="comp-tag">${data.bestTraitName}</span><div style="font-size:0.75rem; margin-top:4px; opacity:0.8;">${data.bestBuildName} <span style="color:${data.bestPrio === 'SPA' ? 'var(--custom)' : 'var(--gold)'}; font-weight:bold; font-size:0.7rem;">[${data.bestPrio}]</span></div></td></tr>`;
     });
     html += `</tbody></table>`;
     content.innerHTML = html;
 }
 
-function closeCompare() { document.getElementById('compareModal').style.display = 'none'; }
+function closeCompare() { toggleModal('compareModal', false); }
 
 function renderDatabase() {
     const container = document.getElementById('dbPage');
@@ -308,12 +363,7 @@ function renderDatabase() {
         if (unit.id === 'kirito') {
             const isRealm = kiritoState.realm;
             const isCard = kiritoState.card;
-            kiritoControlsHtml = `
-                <div class="unit-toolbar" style="border-bottom:none; padding-top:5px; padding-bottom:10px; flex-wrap:wrap; justify-content:flex-start; gap:15px; background:rgba(255,255,255,0.02);">
-                    <div class="toggle-wrapper"><span>Virtual Realm</span><label><input type="checkbox" ${isRealm ? 'checked' : ''} onchange="toggleKiritoMode('realm', this)"><div class="mini-switch"></div></label></div>
-                    ${isRealm ? `<div class="toggle-wrapper" style="animation:fadeIn 0.3s ease;"><span style="color:${isCard ? 'var(--custom)' : '#888'}; font-weight:${isCard ? 'bold' : 'normal'};">Magician Card</span><label><input type="checkbox" ${isCard ? 'checked' : ''} onchange="toggleKiritoMode('card', this)"><div class="mini-switch" style="${isCard ? 'background:var(--custom);' : ''}"></div></label></div>` : ''}
-                </div>
-            `;
+            kiritoControlsHtml = `<div class="unit-toolbar" style="border-bottom:none; padding-top:5px; padding-bottom:10px; flex-wrap:wrap; justify-content:flex-start; gap:15px; background:rgba(255,255,255,0.02);"><div class="toggle-wrapper"><span>Virtual Realm</span><label><input type="checkbox" ${isRealm ? 'checked' : ''} onchange="toggleKiritoMode('realm', this)"><div class="mini-switch"></div></label></div>${isRealm ? `<div class="toggle-wrapper" style="animation:fadeIn 0.3s ease;"><span style="color:${isCard ? 'var(--custom)' : '#888'}; font-weight:${isCard ? 'bold' : 'normal'};">Magician Card</span><label><input type="checkbox" ${isCard ? 'checked' : ''} onchange="toggleKiritoMode('card', this)"><div class="mini-switch" style="${isCard ? 'background:var(--custom);' : ''}"></div></label></div>` : ''}</div>`;
         }
 
         const listHtml = getUnitResultsHTML(unit, currentStats);
@@ -324,7 +374,7 @@ function renderDatabase() {
         const abilityToggleHtml = unit.ability ? `<div class="toggle-wrapper"><span>Ability</span><label><input type="checkbox" class="ability-cb" ${isAbilActive ? 'checked' : ''} onchange="toggleAbility('${unit.id}', this)"><div class="mini-switch"></div></label></div>` : '<div></div>';
         const toolbarHtml = `<div class="unit-toolbar"><button class="select-btn" onclick="toggleSelection('${unit.id}')">${selectedUnitIds.has(unit.id) ? 'Selected' : 'Select'}</button>${abilityToggleHtml}</div>`;
         
-        card.innerHTML = `<div class="unit-banner"><div class="placement-badge">Max Place: ${unit.placement}</div><img src="${unit.img}" class="unit-avatar"><div class="unit-title"><h2>${unit.name}</h2><span>${unit.role} <span class="sss-tag">SSS</span></span></div></div>${toolbarHtml}${kiritoControlsHtml}<div class="search-container" style="display:flex; gap:8px;"><input type="text" placeholder="Search..." style="flex-grow:1; width:auto; padding:6px; border-radius:5px; border:1px solid #333; background:#111; color:#fff; font-size:0.8rem;" onkeyup="filterList(this)"><select onchange="filterList(this)" style="width:90px; padding:0 0 0 5px; font-size:0.75rem; height:30px;"><option value="all">All Prio</option><option value="dmg">Dmg Stat</option><option value="spa">SPA Stat</option></select></div><div class="top-builds-list" id="results-${unit.id}">${listHtml}</div>`;
+        card.innerHTML = `<div class="unit-banner"><div class="placement-badge">Max Place: ${unit.placement}</div><img src="${unit.img}" class="unit-avatar"><div class="unit-title"><h2>${unit.name}</h2><span>${unit.role} <span class="sss-tag">SSS</span></span></div></div>${toolbarHtml}${kiritoControlsHtml}<div class="search-container"><input type="text" placeholder="Search..." style="flex-grow:1; width:auto; padding:6px; border-radius:5px; border:1px solid #333; background:#111; color:#fff; font-size:0.8rem;" onkeyup="filterList(this)"><select onchange="filterList(this)" style="width:90px; padding:0 0 0 5px; font-size:0.75rem; height:30px;"><option value="all">All Prio</option><option value="dmg">Dmg Stat</option><option value="spa">SPA Stat</option></select></div><div class="top-builds-list" id="results-${unit.id}">${listHtml}</div>`;
         container.appendChild(card);
     });
     updateCompareBtn();
@@ -334,7 +384,7 @@ const filterList = (e) => { const sc = e.closest('.search-container'); const iv 
 
 const toggleDeepDive = () => { const c = document.getElementById('deepDiveContent'), a = document.getElementById('ddArrow'); c.style.display === 'none' ? (c.style.display = 'block', a.innerText = '▲') : (c.style.display = 'none', a.innerText = '▼'); };
 
-// --- MATH MODAL LOGIC ---
+// --- MATH MODAL LOGIC (REVERTED TO DETAILED VERSION) ---
 function renderMathContent(data) {
     const pct = (n) => `${n >= 0 ? '+' : ''}${n.toFixed(1)}%`;
     const num = (n) => n.toLocaleString(undefined, {maximumFractionDigits: 1});
@@ -428,28 +478,32 @@ function renderMathContent(data) {
     `;
 }
 
-const showMath = (id) => { const data = cachedResults[id]; if(!data) return; const modal = document.getElementById('mathModal'), content = document.getElementById('mathContent'); modal.style.display = "flex"; content.innerHTML = renderMathContent(data); };
-const closeMath = () => document.getElementById('mathModal').style.display = "none";
-const openPatchNotes = () => document.getElementById('patchModal').style.display = 'flex';
-const closePatchNotes = () => document.getElementById('patchModal').style.display = 'none';
+// --- UNIFIED MODAL HELPER ---
+const toggleModal = (modalId, show = true) => {
+    const modal = document.getElementById(modalId);
+    if (modal) modal.style.display = show ? 'flex' : 'none';
+};
+
+const showMath = (id) => { const data = cachedResults[id]; if(!data) return; const content = document.getElementById('mathContent'); content.innerHTML = renderMathContent(data); toggleModal('mathModal', true); };
+const closeMath = () => toggleModal('mathModal', false);
+const openPatchNotes = () => toggleModal('patchModal', true);
+const closePatchNotes = () => toggleModal('patchModal', false);
 
 function setGuideMode(mode) {
     currentGuideMode = mode;
-    if (mode === 'current') { statConfig.applyRelicCrit = false; statConfig.applyRelicDot = false; } else { statConfig.applyRelicCrit = true; statConfig.applyRelicDot = true; }
-    const buttons = document.querySelectorAll('.guide-toggle-btn');
-    buttons.forEach(btn => btn.classList.remove('active'));
-    const activeBtn = Array.from(buttons).find(btn => btn.innerText.toLowerCase().includes(mode === 'current' ? 'current' : 'hypothetical'));
-    if(activeBtn) activeBtn.classList.add('active');
+    if (mode === 'current') { statConfig.applyRelicCrit = false; statConfig.applyRelicDot = false; } 
+    else { statConfig.applyRelicCrit = true; statConfig.applyRelicDot = true; }
+
+    const isFixed = (mode === 'fixed');
+    const labelText = isFixed ? "Fixed Relics" : "Bugged Relics";
     
-    const hypoCb = document.getElementById('globalHypothetical');
-    const hypoLabel = document.getElementById('hypoLabel');
-    if(hypoCb) {
-        hypoCb.checked = (mode === 'fixed');
-        if(mode === 'fixed') { hypoCb.parentNode.classList.add('is-checked'); if(hypoLabel) hypoLabel.innerText = "Fixed Relics"; } 
-        else { hypoCb.parentNode.classList.remove('is-checked'); if(hypoLabel) hypoLabel.innerText = "Bugged Relics"; }
-    }
-    const warning = document.getElementById('guideWarning');
-    warning.style.display = (mode === 'current') ? 'block' : 'none';
+    ['globalHypothetical', 'guideHypoToggle'].forEach(id => {
+        const cb = document.getElementById(id); if(cb) { cb.checked = isFixed; cb.parentNode.classList.toggle('is-checked', isFixed); }
+    });
+    
+    document.getElementById('hypoLabel').innerText = labelText;
+    document.getElementById('guideHypoLabel').innerText = labelText;
+    document.getElementById('guideWarning').style.display = (mode === 'current') ? 'block' : 'none';
     renderGuides(); renderDatabase(); 
 }
 
@@ -462,15 +516,13 @@ function populateGuideDropdowns() {
     traitsList.forEach(trait => { if (trait.id !== 'none') traitSelect.add(new Option(trait.name, trait.id)); });
 }
 
-// --- GUIDE CONFIG MODAL LOGIC ---
 function openGuideConfig() {
-    const modal = document.getElementById('guideConfigModal');
     tempGuideUnit = document.getElementById('guideUnitSelect').value;
     tempGuideTrait = document.getElementById('guideTraitSelect').value;
     renderGuideConfigUI();
-    modal.style.display = 'flex';
+    toggleModal('guideConfigModal', true);
 }
-function closeGuideConfig() { document.getElementById('guideConfigModal').style.display = 'none'; }
+function closeGuideConfig() { toggleModal('guideConfigModal', false); }
 function selectGuideUnit(id) { tempGuideUnit = id; renderGuideConfigUI(); }
 function selectGuideTrait(id) { tempGuideTrait = id; renderGuideConfigUI(); }
 
@@ -494,14 +546,13 @@ function applyGuideConfig() {
     renderGuides(); closeGuideConfig();
 }
 
-// --- NEW: ADD CUSTOM PAIR MODAL LOGIC ---
+// --- CUSTOM PAIR MODAL ---
 function openCustomPairModal() {
-    const modal = document.getElementById('customPairModal');
-    cpUnit = 'all'; cpT1 = 'eternal'; cpT2 = 'none';
+    cpUnit = 'all'; cpT1 = 'ruler'; cpT2 = 'none';
     renderCustomPairUI();
-    modal.style.display = 'flex';
+    toggleModal('customPairModal', true);
 }
-function closeCustomPairModal() { document.getElementById('customPairModal').style.display = 'none'; }
+function closeCustomPairModal() { toggleModal('customPairModal', false); }
 function selectCpUnit(id) { cpUnit = id; renderCustomPairUI(); }
 function selectCpT1(id) { cpT1 = id; renderCustomPairUI(); }
 function selectCpT2(id) { cpT2 = id; renderCustomPairUI(); }
@@ -511,13 +562,11 @@ function renderCustomPairUI() {
     const t1List = document.getElementById('cpTrait1List');
     const t2List = document.getElementById('cpTrait2List');
     
-    // 1. Unit Grid
     let unitsHtml = `<div class="config-item ${cpUnit === 'all' ? 'selected' : ''}" onclick="selectCpUnit('all')"><div style="width:50px; height:50px; border-radius:50%; border:2px solid #555; background:#000; display:flex; align-items:center; justify-content:center; font-weight:bold; color:#fff;">ALL</div><span>All Units</span></div>`;
     unitDatabase.forEach(u => { unitsHtml += `<div class="config-item ${cpUnit === u.id ? 'selected' : ''}" onclick="selectCpUnit('${u.id}')"><img src="${u.img}"><span>${u.name}</span></div>`; });
     unitGrid.innerHTML = unitsHtml;
 
-    // 2. Trait Lists
-    const standardTraits = traitsList.filter(t => t.id !== 'none'); // "None" is only allowed for T2 really, or specific logic
+    const standardTraits = traitsList.filter(t => t.id !== 'none');
     let t1Html = '';
     standardTraits.forEach(t => { t1Html += `<div class="config-chip ${cpT1 === t.id ? 'selected' : ''}" onclick="selectCpT1('${t.id}')">${t.name}</div>`; });
     t1List.innerHTML = t1Html;
@@ -526,7 +575,6 @@ function renderCustomPairUI() {
     standardTraits.forEach(t => { t2Html += `<div class="config-chip ${cpT2 === t.id ? 'selected' : ''}" onclick="selectCpT2('${t.id}')">${t.name}</div>`; });
     t2List.innerHTML = t2Html;
 
-    // Update Preview Text
     const uName = cpUnit === 'all' ? 'All Units' : unitDatabase.find(u => u.id === cpUnit).name;
     const t1Name = traitsList.find(t => t.id === cpT1).name;
     const t2Name = (cpT2 === 'none') ? '(None)' : traitsList.find(t => t.id === cpT2).name;
@@ -535,37 +583,29 @@ function renderCustomPairUI() {
 
 function confirmAddCustomPair() {
     const t1 = traitsList.find(t => t.id === cpT1);
-    const t2 = traitsList.find(t => t.id === cpT2); // t2 can be 'none'
+    const t2 = traitsList.find(t => t.id === cpT2); 
 
     if (t1 && t2) {
         const combo = combineTraits(t1, t2);
-        
         if (cpUnit === 'all') {
             const allTraits = [...traitsList, ...customTraits];
             const alreadyExists = allTraits.some(t => t.name === combo.name);
-            if (!alreadyExists && combo.id !== 'none') {
-                customTraits.push(combo);
-                alert(`Added global custom trait: ${combo.name}`);
-            } else alert("Trait combination already exists!");
+            if (!alreadyExists && combo.id !== 'none') { customTraits.push(combo); alert(`Added global custom trait: ${combo.name}`); } 
+            else alert("Trait combination already exists!");
         } else {
             if (!unitSpecificTraits[cpUnit]) unitSpecificTraits[cpUnit] = [];
             const unitList = unitSpecificTraits[cpUnit];
             const alreadyExists = unitList.some(t => t.name === combo.name);
-            if (!alreadyExists && combo.id !== 'none') {
-                unitList.push(combo);
-                const uName = unitDatabase.find(u => u.id === cpUnit).name;
-                alert(`Added custom trait to ${uName}: ${combo.name}`);
-            } else alert("Trait combination already exists for this unit!");
+            if (!alreadyExists && combo.id !== 'none') { unitList.push(combo); alert(`Added custom trait to unit.`); } 
+            else alert("Trait combination already exists for this unit!");
         }
-        
         renderDatabase();
         if(document.getElementById('guidesPage').classList.contains('active')) renderGuides();
         closeCustomPairModal();
     }
 }
 
-// ------------------------------------
-
+// --- GUIDES RENDER ---
 function getTopBuildsForGuide(unit, trait) {
     let results = [];
     let effectiveStats = { ...unit.stats };
@@ -593,8 +633,8 @@ function getTopBuildsForGuide(unit, trait) {
         let prio = data.dmgCfg.res.total >= data.spaCfg.res.total ? 'dmg' : 'spa';
         let set = SETS.find(s => s.id === globalBuilds.find(b => b.name === name)?.set);
         let build = globalBuilds.find(b => b.name === name);
-        const getStatName = (t) => ({ dmg: 'Dmg', dot: 'DoT', cm: 'Crit Dmg', spa: 'SPA', cf: 'Crit Rate' }[t] || 'N/A');
-        let mainStructs = [ { label: 'BODY', stat: getStatName(build.bodyType) }, { label: 'LEGS', stat: getStatName(build.legType) } ];
+        
+        let mainStructs = [ { label: 'BODY', stat: build.bodyType }, { label: 'LEGS', stat: build.legType } ];
         let subStructs = [];
         if (finalCfg.assignments && Object.keys(finalCfg.assignments).length > 0) {
             if (finalCfg.assignments.head) subStructs.push({ label: 'HEAD', stat: finalCfg.assignments.head });
@@ -622,7 +662,7 @@ function renderGuides() {
         const card = document.createElement('div'); card.className = 'guide-card';
         const imgHtml = row.img ? `<img src="${row.img}">` : '';
         const mainBadgeHtml = formatStatBadge(data.main); const subBadgeHtml = formatStatBadge(data.sub);
-        card.innerHTML = `<div class="guide-card-header"><div class="guide-unit-info">${imgHtml}<div><span style="display:block; line-height:1;">${row.unit}</span><span style="font-size:0.7rem; color:var(--accent-end); font-weight:bold;">${data.trait}</span></div></div></div><div class="guide-card-body"><div class="guide-entry"><div class="ge-header"><span class="ge-rank" style="color:#aaa;">#1</span><span class="ge-set">${data.set}</span></div><div class="ge-stats-row"><div class="ge-group"><span class="ge-lbl">MAIN</span><div class="ge-badges">${mainBadgeHtml}</div></div><div class="ge-sep"></div><div class="ge-group"><span class="ge-lbl">SUB</span><div class="ge-badges">${subBadgeHtml}</div></div></div></div></div>`;
+        card.innerHTML = `<div class="guide-card-header"><div class="guide-unit-info">${imgHtml}<div><span style="display:block; line-height:1;">${row.unit}</span><span class="guide-trait-tag">${data.trait}</span></div></div></div><div class="guide-card-body"><div class="build-row rank-1" style="pointer-events:none;"><div class="br-header"><div style="display:flex; align-items:center; gap:8px;"><span class="br-rank">#1</span><span class="br-set">${data.set}</span></div></div><div class="br-grid"><div class="br-col"><div class="br-col-title">MAIN STAT</div><div class="stat-line">${mainBadgeHtml}</div></div><div class="br-col"><div class="br-col-title">SUB STAT</div><div class="stat-line">${subBadgeHtml}</div></div></div></div></div>`;
         guideGrid.appendChild(card);
     });
 
@@ -633,8 +673,7 @@ function renderGuides() {
         let traitToUse = null;
         if (selectedTraitId === 'auto') traitToUse = findOverallBestTraitForUnit(unit);
         else {
-            traitToUse = traitsList.find(t => t.id === selectedTraitId);
-            if (!traitToUse) traitToUse = customTraits.find(t => t.id === selectedTraitId);
+            traitToUse = traitsList.find(t => t.id === selectedTraitId) || customTraits.find(t => t.id === selectedTraitId);
             if (!traitToUse && unitSpecificTraits[unit.id]) traitToUse = unitSpecificTraits[unit.id].find(t => t.id === selectedTraitId);
         }
         if (!traitToUse) return null;
@@ -654,14 +693,45 @@ function renderGuides() {
         }
 
         let buildsHtml = item.topBuilds.map((build, index) => {
-            let rankColor = index === 0 ? 'var(--gold)' : (index === 1 ? 'var(--silver)' : 'var(--bronze)');
-            let mainHtml = build.mainStructs.map(s => `<div class="stat-pair"><span class="stat-prefix">${s.label}</span>${formatStatBadge(s.stat)}</div>`).join('');
-            let subHtml = build.subStructs.length > 0 ? build.subStructs.map(s => `<div class="stat-pair"><span class="stat-prefix">${s.label}</span>${formatStatBadge(s.stat)}</div>`).join('') : '<span style="font-size:0.65rem; color:#555;">None</span>';
+            let rankClass = index === 0 ? 'rank-1' : (index === 1 ? 'rank-2' : 'rank-3');
+            // Clean the set name (remove parentheses part)
+            let cleanSetName = build.name.split('(')[0].trim();
+            
+            // Use getBadgeHtml for consistency
+            let mainHtml = build.mainStructs.map(s => `<div class="stat-line"><span class="sl-label">${s.label}</span>${getBadgeHtml(s.stat)}</div>`).join('');
+            let subHtml = build.subStructs.length > 0 ? build.subStructs.map(s => `<div class="stat-line"><span class="sl-label">${s.label}</span>${getBadgeHtml(s.stat)}</div>`).join('') : '<span style="font-size:0.65rem; color:#555;">None</span>';
             let prioLabel = build.prio === 'dmg' ? 'DMG STAT' : 'SPA STAT'; let prioColor = build.prio === 'dmg' ? '#ff5555' : 'var(--custom)';
-            return `<div class="guide-entry"><div class="ge-header" style="display:flex; align-items:center; gap:8px; width:100%;"><span class="ge-rank" style="color:${rankColor}; flex-shrink:0;">#${index+1}</span><span class="ge-set" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex-grow:1; min-width:0; margin-right:5px;">${build.name}</span><div style="display:flex; align-items:center; gap:6px; flex-shrink:0;"><span style="font-size:0.6rem; font-weight:800; color:${prioColor}; background:linear-gradient(to bottom, #2e1065, #000); border:1px solid ${prioColor}; padding:2px 6px; border-radius:4px; text-transform:uppercase; box-shadow: 0 2px 4px rgba(0,0,0,0.5);">${prioLabel}</span><span style="font-weight:bold; color:var(--text-primary); font-size:0.85rem;">${format(build.dps)} <span style="color:#666; font-size:0.7rem;">DPS</span></span></div></div><div class="ge-stats-row"><div class="ge-group"><span class="ge-lbl">MAIN Stat</span><div class="ge-badges">${mainHtml}</div></div><div class="ge-sep"></div><div class="ge-group"><span class="ge-lbl">SUB Stat</span><div class="ge-badges">${subHtml}</div></div></div></div>`;
+            
+            return `
+                <div class="build-row ${rankClass}">
+                    <div class="br-header">
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <span class="br-rank">#${index+1}</span>
+                            <span class="br-set">${cleanSetName}</span>
+                        </div>
+                        <span class="prio-badge" style="color:${prioColor}; border-color:${prioColor};">${prioLabel}</span>
+                    </div>
+                    <div class="br-grid">
+                        <div class="br-col">
+                            <div class="br-col-title">MAIN STAT</div>
+                            ${mainHtml}
+                        </div>
+                        <div class="br-col" style="border-left:1px solid rgba(255,255,255,0.05); padding-left:8px;">
+                            <div class="br-col-title">SUB STAT</div>
+                            ${subHtml}
+                        </div>
+                        <div class="br-res-col">
+                            <div class="dps-container">
+                                <span class="build-dps" style="font-size:0.9rem;">${format(build.dps)}</span>
+                                <span class="dps-label">DPS</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
         }).join('');
 
-        card.innerHTML = `<div class="guide-card-header"><div class="guide-unit-info"><img src="${item.unit.img}"><div><span style="display:block; line-height:1;">${item.unit.name}</span><span style="font-size:0.75rem; color:var(--accent-end); font-weight:bold;">${item.trait.name}</span></div></div><div class="guide-dps-box"><span class="guide-dps-val">${format(item.maxDps)}</span><span style="font-size:0.6rem; color:#666; font-weight:bold; letter-spacing:1px;">MAX POTENTIAL</span></div></div>${kiritoGuideControls}<div class="guide-card-body">${buildsHtml}</div>`;
+        card.innerHTML = `<div class="guide-card-header"><div class="guide-unit-info"><img src="${item.unit.img}"><div><span style="display:block; line-height:1;">${item.unit.name}</span><span class="guide-trait-tag">${item.trait.name}</span></div></div><div class="guide-dps-box"><span class="guide-dps-val">${format(item.maxDps)}</span><span style="font-size:0.6rem; color:#666; font-weight:bold; letter-spacing:1px;">MAX POTENTIAL</span></div></div>${kiritoGuideControls}<div class="guide-card-body">${buildsHtml}</div>`;
         guideGrid.appendChild(card);
     });
 }

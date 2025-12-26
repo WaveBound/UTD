@@ -92,14 +92,14 @@ SETS.forEach(set => {
 });
 
 const traitsList = [
-    { id: "eternal", name: "Eternal", dmg: 0, spa: 20, desc: "-20% SPA, +Dmg/Wave", isEternal: true },
-    { id: "fission", name: "Fission", dmg: 15, spa: 15, desc: "+15% Dmg/SPA", hasRadiation: true },
     { id: "ruler", name: "Ruler", dmg: 200, spa: 20, desc: "+200% Dmg, Limit 1", limitPlace: 1 },
-    { id: "artificer", name: "Artificer", dmg: 0, spa: 0, desc: "+15% Relic Stats", relicBuff: 1.15 },
-    { id: "wizard", name: "Wizard", dmg: 0, spa: 15, desc: "+30% DoT, -15% SPA", dotBuff: 30 },
-    { id: "astral", name: "Astral", dmg: 0, spa: 20, desc: "DoT Stacks, Limit 1", limitPlace: 1, allowDotStack: true },
-    { id: "duelist", name: "Duelist", dmg: 0, spa: 0, desc: "+Crit/Boss Dmg", critRate: 25, bossDmg: 35 },
+    { id: "fission", name: "Fission", dmg: 15, spa: 15, desc: "+15% Dmg/SPA", hasRadiation: true },
+    { id: "eternal", name: "Eternal", dmg: 0, spa: 20, desc: "-20% SPA, +Dmg/Wave", isEternal: true },
     { id: "sacred", name: "Sacred", dmg: 25, spa: 10, desc: "+25% Dmg, -10% SPA" },
+    { id: "astral", name: "Astral", dmg: 0, spa: 20, desc: "DoT Stacks, Limit 1", limitPlace: 1, allowDotStack: true },
+    { id: "wizard", name: "Wizard", dmg: 0, spa: 15, desc: "+30% DoT, -15% SPA", dotBuff: 30 },
+    { id: "artificer", name: "Artificer", dmg: 0, spa: 0, desc: "+15% Relic Stats", relicBuff: 1.15 },
+    { id: "duelist", name: "Duelist", dmg: 0, spa: 0, desc: "+Crit/Boss Dmg", critRate: 25, bossDmg: 35 },
     { id: "none", name: "None", dmg: 0, spa: 0, desc: "No buffs" }
 ];
 
