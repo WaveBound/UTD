@@ -164,5 +164,11 @@ const unitDatabase = [
         img: "images/Genos.png", 
         placement: 3,
         stats: { dmg: 1450, spa: 5.5, crit: 0, cdmg: 150, dot: 14, dotStacks: 7, spaCap: 4, passiveDmg: 0, element: "Fire", dotDuration: 7 }
+    },
+        {
+        id: "law", name: "Rule (Room)", role: "Support / Dmg",
+        img: "images/Law.png", 
+        placement: 2,
+        stats: { dmg: 1300, spa: 5, crit: 0, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 2, passiveDmg: 20, passiveSpa: 10, element: "Water", dotDuration: 0 }
     }
 ];

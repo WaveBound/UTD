@@ -47,6 +47,7 @@ function calculateDPS(uStats, relicStats, context) {
     }
 
     let passivePcent = uStats.passiveDmg || 0;
+    let passiveSpaPcent = uStats.passiveSpa || 0;
     let traitDmgPct = traitObj.dmg;
     let traitSpaPct = traitObj.spa; 
     let traitCritRate = traitObj.critRate || 0;
@@ -94,7 +95,7 @@ function calculateDPS(uStats, relicStats, context) {
     const finalDmg = lvStats.dmg * traitMult * relicMult * setAndPassiveMult;
 
     const afterTraitSpa = lvStats.spa * (1 - traitSpaPct / 100);
-    let rSpaTotal = baseR_Spa + sBonus.spa;
+    let rSpaTotal = baseR_Spa + sBonus.spa + passiveSpaPcent;
     const rawFinalSpa = afterTraitSpa * (1 - rSpaTotal / 100);
     const cap = uStats.spaCap || 0.1;
     const finalSpa = Math.max(rawFinalSpa, cap);
@@ -169,6 +170,7 @@ function calculateDPS(uStats, relicStats, context) {
         relicBuffs: { dmg: baseR_Dmg, spa: baseR_Spa, dot: baseR_Dot }, 
         setBuffs: { dmg: sBonus.dmg, spa: sBonus.spa }, 
         passiveBuff: passivePcent,
+        passiveSpaBuff: passiveSpaPcent,
         dotData: dotBreakdown,
         critData: { 
             rate: finalCritRate, cdmg: finalCdmgStat, baseCdmg: uStats.cdmg, relicCmPct: baseR_Cm, setCdmg: setCm, preRelicCdmg: preRelicCdmg, avgMult: avgCritMult 

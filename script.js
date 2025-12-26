@@ -446,7 +446,7 @@ function renderMathContent(data) {
                     <tr><td class="col-label">Level Reductions</td><td class="col-formula"><span class="op">×</span>${fix(data.lvStats.spaMult, 3)}</td><td class="col-val">${fix(data.baseStats.spa * data.lvStats.spaMult, 3)}s</td></tr>
                     ${data.isSSS ? `<tr><td class="col-label">SSS Rank (-8%)</td><td class="col-formula"><span class="op">×</span>0.92</td><td class="col-val">${fix(data.lvStats.spa, 3)}s</td></tr>` : ''}
                     <tr><td class="col-label">Trait Reduction</td><td class="col-formula">-${fix(data.traitBuffs.spa, 1)}%</td><td class="col-val">${fix(data.lvStats.spa * (1 - data.traitBuffs.spa/100), 3)}s</td></tr>
-                    <tr><td class="col-label">Relic & Set Reduction</td><td class="col-formula">-${fix(data.relicBuffs.spa + data.setBuffs.spa, 1)}%</td><td class="col-val">${fix(data.rawFinalSpa, 3)}s</td></tr>
+                    <tr><td class="col-label">Relic, Set & Passive</td><td class="col-formula">-${fix(data.relicBuffs.spa + data.setBuffs.spa + (data.passiveSpaBuff || 0), 1)}%</td><td class="col-val">${fix(data.rawFinalSpa, 3)}s</td></tr>
                     <tr><td class="col-label">Cap Check (${data.baseStats.spaCap}s)</td><td class="col-formula">MAX</td><td class="col-val calc-result">${fix(data.spa, 3)}s</td></tr>
                 </table>
             </div>
