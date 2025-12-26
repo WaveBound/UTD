@@ -127,7 +127,7 @@ const unitDatabase = [
         id: "ace", name: "Ace", role: "Burn / DoT",
         img: "images/Ace.png",
         placement: 3,
-        stats: { dmg: 1500, spa: 6, crit: 0, cdmg: 150, dot: 100, dotStacks: 5, spaCap: 6, passiveDmg: 60, element: "Fire", dotDuration: 4 }
+        stats: { dmg: 1500, spa: 9, crit: 0, cdmg: 150, dot: 100, dotStacks: 5, spaCap: 6, passiveDmg: 60, element: "Fire", dotDuration: 4 }
     },
     {
         id: "kirito", name: "Kirito", role: "Burst / Crit",
