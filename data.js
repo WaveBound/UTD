@@ -49,8 +49,8 @@ const guideData = [
 
 const setBonuses = {
     laughing: { dmg: 5, spa: 5, cf: 0, cm: 0 },
-    ninja: { dmg: 10, spa: 0, cf: 0, cm: 0 },
-    sun_god: { dmg: 10, spa: 0, cf: 0, cm: 0 }, // Logic handled in math.js
+    ninja: { dmg: 5, spa: 0, cf: 0, cm: 0 },
+    sun_god: { dmg: 5, spa: 0, cf: 0, cm: 0 }, // Changed from 10 to 5 (Base)
     ex: { dmg: 0, spa: 0, cf: 0, cm: 25 }, 
     none: { dmg: 0, spa: 0, cf: 0, cm: 0 }
 };
@@ -62,10 +62,11 @@ const BODY_CDMG = { dmg: 0,  dot: 0,  cm: 120, desc: "Crit Dmg", type: "cm" };
 const LEG_DMG   = { dmg: 60, spa: 0,    desc: "Dmg", type: "dmg" };
 const LEG_SPA   = { dmg: 0,  spa: 22.5, desc: "Spa", type: "spa" };
 const LEG_CRIT  = { dmg: 0,  spa: 0,    desc: "Crit Rate", type: "cf", cf: 37.5 }; 
+const LEG_RANGE = { dmg: 0,  spa: 0,    desc: "Range", type: "range", range: 30 };
 
 const SETS = [
-    { id: "ninja",    name: "Master Ninja",     bonus: { dmg: 10, spa: 0, cm: 0 } },
-    { id: "sun_god",  name: "Sun God",          bonus: { dmg: 10, spa: 0, cm: 0 } },
+    { id: "ninja",    name: "Master Ninja",     bonus: { dmg: 5, spa: 0, cm: 0 } },
+    { id: "sun_god",  name: "Sun God",          bonus: { dmg: 5, spa: 0, cm: 0 } }, // Visually updated to 5
     { id: "laughing", name: "Laughing Captain", bonus: { dmg: 5, spa: 5, cm: 0 } },
     { id: "ex",       name: "Ex Captain",       bonus: { dmg: 0, spa: 0, cm: 25 } }
 ];
@@ -73,7 +74,7 @@ const SETS = [
 const globalBuilds = [];
 SETS.forEach(set => {
     const bodies = [BODY_DMG, BODY_DOT, BODY_CDMG];
-    const legs   = [LEG_DMG, LEG_SPA, LEG_CRIT];
+    const legs   = [LEG_DMG, LEG_SPA, LEG_CRIT, LEG_RANGE];
     bodies.forEach(body => {
         legs.forEach(leg => {
             globalBuilds.push({
@@ -84,6 +85,7 @@ SETS.forEach(set => {
                 dot:  body.dot,
                 cm:   body.cm, 
                 cf:   (body.cf || 0) + (leg.cf || 0),
+                range: (leg.range || 0),
                 bodyType: body.type,
                 legType: leg.type
             });
@@ -165,10 +167,10 @@ const unitDatabase = [
         placement: 3,
         stats: { dmg: 1450, spa: 5.5, crit: 0, cdmg: 150, dot: 14, dotStacks: 7, spaCap: 4, passiveDmg: 0, element: "Fire", dotDuration: 7 }
     },
-        {
+    {
         id: "law", name: "Rule (Room)", role: "Support / Dmg",
         img: "images/Law.png", 
         placement: 2,
-        stats: { dmg: 1300, spa: 5, crit: 0, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 2, passiveDmg: 20, passiveSpa: 10, element: "Water", dotDuration: 0 }
+        stats: { dmg: 1300, spa: 5, crit: 0, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 2, passiveDmg: 20, passiveSpa: 10, element: "Water", dotDuration: 0, range: 31.5 }
     }
 ];

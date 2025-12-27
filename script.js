@@ -1,4 +1,3 @@
-// START OF FILE script.js
 let customTraits = [];
 let unitSpecificTraits = {}; 
 let selectedUnitIds = new Set();
@@ -82,7 +81,9 @@ const getSubCandidates = () => SUB_CANDIDATES.filter(c => !((!statConfig.applyRe
 
 const applySubPiece = (testBuild, cand, mainStatType) => {
     let primaryTarget = cand;
-    if (primaryTarget === mainStatType) primaryTarget = 'range';
+    if (primaryTarget === mainStatType) {
+        primaryTarget = (mainStatType === 'range') ? 'dmg' : 'range';
+    }
     for (let k in PERFECT_SUBS) {
         if (k === mainStatType) continue;
         let multiplier = (k === primaryTarget) ? 6 : 1;
@@ -90,10 +91,10 @@ const applySubPiece = (testBuild, cand, mainStatType) => {
     }
 };
 
-const getBestSubConfig = (build, stats, includeSubs, includeHead) => {
+const getBestSubConfig = (build, stats, includeSubs, includeHead, optimizeFor = 'dps') => {
     if (!includeSubs && !includeHead) return { res: calculateDPS(stats, build, stats.context), desc: "", assignments: {} };
     
-    let bestRes = { total: -1 };
+    let bestRes = { total: -1, range: -1 };
     let bestCandKey = null;
     const candidates = getSubCandidates();
     if (candidates.length === 0 && includeHead) candidates.push('dmg');
@@ -103,12 +104,21 @@ const getBestSubConfig = (build, stats, includeSubs, includeHead) => {
         if (includeSubs) { applySubPiece(testBuild, cand, build.bodyType); applySubPiece(testBuild, cand, build.legType); }
         if (includeHead) applySubPiece(testBuild, cand, null);
         let res = calculateDPS(stats, testBuild, stats.context);
-        if (res.total > bestRes.total) { bestRes = res; bestCandKey = cand; }
+        
+        if (optimizeFor === 'range') {
+             if (res.range > bestRes.range) { bestRes = res; bestCandKey = cand; }
+             else if (res.range === bestRes.range && res.total > bestRes.total) { bestRes = res; bestCandKey = cand; }
+        } else {
+             if (res.total > bestRes.total) { bestRes = res; bestCandKey = cand; }
+        }
     });
 
     let assignments = {};
     const getDisp = (k) => SUB_NAMES[k] || k;
-    const resolve = (cand, main) => (cand === main ? 'range' : cand);
+    const resolve = (cand, main) => {
+        if (cand === main) return (main === 'range') ? 'dmg' : 'range';
+        return cand;
+    };
 
     if (bestCandKey) {
         if (includeHead) { const val = getDisp(bestCandKey); assignments.head = val; }
@@ -191,10 +201,38 @@ function getUnitResultsHTML(unit, effectiveStats) {
                     isCustom: trait.isCustom 
                 });
             }
+
+            // Push Range Result (if unit has range)
+            if (unit.stats.range && unit.stats.range > 0) {
+                 let contextRange = { level: 99, priority: 'dmg', wave: 25, isBoss: false, traitObj: trait, placement: actualPlacement, isSSS: true };
+                 effectiveStats.context = contextRange;
+                 let bestRangeConfig = getBestSubConfig(build, effectiveStats, includeSubs, includeHead, 'range');
+                 let resRange = bestRangeConfig.res;
+
+                 if (!isNaN(resRange.total)) {
+                    let id = `${unit.id}${suffix}-${trait.id}-${safeBuildName}-range${subsSuffix}${headSuffix}`;
+                    cachedResults[id] = resRange;
+                    let setName = build.name.split('(')[0].trim();
+    
+                    unitResults.push({ 
+                        id: id, setName: setName, traitName: trait.name, dps: resRange.total, spa: resRange.spa, range: resRange.range, prio: "range",
+                        mainStats: { body: build.bodyType, legs: build.legType },
+                        subStats: bestRangeConfig.assignments,
+                        isCustom: trait.isCustom 
+                    });
+                 }
+            }
         });
     });
 
-    unitResults.sort((a, b) => b.dps - a.dps);
+    // --- SORTING LOGIC ---
+    // If unit is Law, prioritize Range for sorting
+    if (unit.id === 'law') {
+        unitResults.sort((a, b) => (b.range || 0) - (a.range || 0));
+    } else {
+        unitResults.sort((a, b) => b.dps - a.dps);
+    }
+    
     if(unitResults.length === 0) return '<div style="padding:10px; color:#666;">No valid builds found.</div>';
 
     // --- HTML GENERATION (GRID LAYOUT) ---
@@ -204,8 +242,10 @@ function getUnitResultsHTML(unit, effectiveStats) {
         const searchText = (r.traitName + ' ' + r.setName + ' ' + r.prio).toLowerCase();
         
         // Prio Badge Logic
-        const prioColor = r.prio === 'dmg' ? '#ff5555' : 'var(--custom)';
-        const prioLabel = r.prio === 'dmg' ? 'DMG STAT' : 'SPA STAT';
+        let prioLabel = 'DMG STAT';
+        let prioColor = '#ff5555';
+        if (r.prio === 'spa') { prioLabel = 'SPA STAT'; prioColor = 'var(--custom)'; }
+        if (r.prio === 'range') { prioLabel = 'RANGE STAT'; prioColor = '#4caf50'; }
 
         // Main Stat Badges
         const mainBodyBadge = getBadgeHtml(r.mainStats.body);
@@ -222,6 +262,13 @@ function getUnitResultsHTML(unit, effectiveStats) {
             if (s.legs) subInnerHtml += `<div class="stat-line"><span class="sl-label">LEGS</span> ${getBadgeHtml(s.legs)}</div>`;
         } else {
             subInnerHtml = '<span style="font-size:0.65rem; color:#555;">None</span>';
+        }
+
+        let displayVal = format(r.dps);
+        let displayLabel = "DPS";
+        if (r.prio === 'range') {
+             displayVal = r.range.toFixed(1);
+             displayLabel = "RANGE";
         }
 
         return `
@@ -247,8 +294,8 @@ function getUnitResultsHTML(unit, effectiveStats) {
                     </div>
                     <div class="br-res-col">
                         <div class="dps-container">
-                            <span class="build-dps">${format(r.dps)}</span>
-                            <span class="dps-label">DPS</span>
+                            <span class="build-dps">${displayVal}</span>
+                            <span class="dps-label">${displayLabel}</span>
                         </div>
                         <button class="info-btn" onclick="showMath('${r.id}')">?</button>
                     </div>
@@ -374,7 +421,7 @@ function renderDatabase() {
         const abilityToggleHtml = unit.ability ? `<div class="toggle-wrapper"><span>Ability</span><label><input type="checkbox" class="ability-cb" ${isAbilActive ? 'checked' : ''} onchange="toggleAbility('${unit.id}', this)"><div class="mini-switch"></div></label></div>` : '<div></div>';
         const toolbarHtml = `<div class="unit-toolbar"><button class="select-btn" onclick="toggleSelection('${unit.id}')">${selectedUnitIds.has(unit.id) ? 'Selected' : 'Select'}</button>${abilityToggleHtml}</div>`;
         
-        card.innerHTML = `<div class="unit-banner"><div class="placement-badge">Max Place: ${unit.placement}</div><img src="${unit.img}" class="unit-avatar"><div class="unit-title"><h2>${unit.name}</h2><span>${unit.role} <span class="sss-tag">SSS</span></span></div></div>${toolbarHtml}${kiritoControlsHtml}<div class="search-container"><input type="text" placeholder="Search..." style="flex-grow:1; width:auto; padding:6px; border-radius:5px; border:1px solid #333; background:#111; color:#fff; font-size:0.8rem;" onkeyup="filterList(this)"><select onchange="filterList(this)" style="width:90px; padding:0 0 0 5px; font-size:0.75rem; height:30px;"><option value="all">All Prio</option><option value="dmg">Dmg Stat</option><option value="spa">SPA Stat</option></select></div><div class="top-builds-list" id="results-${unit.id}">${listHtml}</div>`;
+        card.innerHTML = `<div class="unit-banner"><div class="placement-badge">Max Place: ${unit.placement}</div><img src="${unit.img}" class="unit-avatar"><div class="unit-title"><h2>${unit.name}</h2><span>${unit.role} <span class="sss-tag">SSS</span></span></div></div>${toolbarHtml}${kiritoControlsHtml}<div class="search-container"><input type="text" placeholder="Search..." style="flex-grow:1; width:auto; padding:6px; border-radius:5px; border:1px solid #333; background:#111; color:#fff; font-size:0.8rem;" onkeyup="filterList(this)"><select onchange="filterList(this)" style="width:90px; padding:0 0 0 5px; font-size:0.75rem; height:30px;"><option value="all">All Prio</option><option value="dmg">Dmg Stat</option><option value="spa">SPA Stat</option><option value="range">Range Stat</option></select></div><div class="top-builds-list" id="results-${unit.id}">${listHtml}</div>`;
         container.appendChild(card);
     });
     updateCompareBtn();
@@ -384,15 +431,55 @@ const filterList = (e) => { const sc = e.closest('.search-container'); const iv 
 
 const toggleDeepDive = () => { const c = document.getElementById('deepDiveContent'), a = document.getElementById('ddArrow'); c.style.display === 'none' ? (c.style.display = 'block', a.innerText = '▲') : (c.style.display = 'none', a.innerText = '▼'); };
 
-// --- MATH MODAL LOGIC (REVERTED TO DETAILED VERSION) ---
+// --- MATH MODAL LOGIC (DETAILED) ---
 function renderMathContent(data) {
     const pct = (n) => `${n >= 0 ? '+' : ''}${n.toFixed(1)}%`;
     const num = (n) => n.toLocaleString(undefined, {maximumFractionDigits: 1});
     const fix = (n, d=2) => n.toFixed(d);
+    
     const levelMult = data.lvStats.dmgMult; 
     const avgHitPerUnit = data.dmgVal * data.critData.avgMult;
-    const dmgAfterTrait = data.lvStats.dmg * (1 + data.traitBuffs.dmg/100);
-    const dmgAfterRelic = dmgAfterTrait * (1 + data.relicBuffs.dmg/100);
+    
+    // Dynamic generation of Trait Rows (Handling Custom Pairs Split)
+    let traitRowsDmg = '';
+    let traitRowsSpa = '';
+    
+    let runningDmg = data.isSSS ? data.lvStats.dmg : (data.baseStats.dmg * levelMult); // Start after level/sss
+    if (data.isSSS) runningDmg = data.lvStats.dmg; 
+
+    let runningSpa = data.isSSS ? data.lvStats.spa : (data.baseStats.spa * data.lvStats.spaMult);
+
+    if (data.traitObj && data.traitObj.subTraits && data.traitObj.subTraits.length > 0) {
+        // Render Sequential Traits (Split Mode)
+        data.traitObj.subTraits.forEach((t, i) => {
+            // DMG
+            const tDmg = t.dmg || 0;
+            const nextDmg = runningDmg * (1 + tDmg/100);
+            traitRowsDmg += `<tr><td class="col-label" style="padding-left:10px;">↳ ${t.name}</td><td class="col-formula">${pct(tDmg)}</td><td class="col-val">${num(nextDmg)}</td></tr>`;
+            runningDmg = nextDmg;
+
+            // SPA
+            const tSpa = t.spa || 0;
+            const nextSpa = runningSpa * (1 - tSpa/100);
+            traitRowsSpa += `<tr><td class="col-label" style="padding-left:10px;">↳ ${t.name}</td><td class="col-formula">-${fix(tSpa,1)}%</td><td class="col-val">${fix(nextSpa,3)}s</td></tr>`;
+            runningSpa = nextSpa;
+        });
+    } else {
+        // Standard Single Trait
+        const dmgAfterTrait = runningDmg * (1 + data.traitBuffs.dmg/100);
+        traitRowsDmg = `<tr><td class="col-label">Trait Multiplier</td><td class="col-formula">${pct(data.traitBuffs.dmg)}</td><td class="col-val">${num(dmgAfterTrait)}</td></tr>`;
+        
+        const spaAfterTrait = runningSpa * (1 - data.traitBuffs.spa/100);
+        traitRowsSpa = `<tr><td class="col-label">Trait Reduction</td><td class="col-formula">-${fix(data.traitBuffs.spa, 1)}%</td><td class="col-val">${fix(spaAfterTrait, 3)}s</td></tr>`;
+        runningDmg = dmgAfterTrait; // Update for next steps
+        runningSpa = spaAfterTrait;
+    }
+
+    // Continue calcs for Relic/Set relative to the updated running values
+    const dmgAfterRelic = runningDmg * (1 + data.relicBuffs.dmg/100);
+    // Note: data.rawFinalSpa in object is pre-calculated correctly, but for step-by-step
+    // we use runningSpa * (1 - relic/set%)
+    const finalSpaStep = runningSpa * (1 - (data.relicBuffs.spa + data.setBuffs.spa + (data.passiveSpaBuff||0))/100);
 
     return `
         <div class="math-section">
@@ -420,7 +507,9 @@ function renderMathContent(data) {
                     <tr><td class="col-label">Base Stats (Lv 1)</td><td class="col-formula"></td><td class="col-val">${num(data.baseStats.dmg)}</td></tr>
                     <tr><td class="col-label">Level Scaling (Lv ${data.level})</td><td class="col-formula"><span class="op">×</span>${fix(levelMult, 3)}</td><td class="col-val">${num(data.baseStats.dmg * levelMult)}</td></tr>
                     ${data.isSSS ? `<tr><td class="col-label">SSS Rank Bonus</td><td class="col-formula"><span class="op">×</span>1.2</td><td class="col-val">${num(data.lvStats.dmg)}</td></tr>` : ''}
-                    <tr><td class="col-label">Trait Multiplier</td><td class="col-formula">${pct(data.traitBuffs.dmg)}</td><td class="col-val">${num(dmgAfterTrait)}</td></tr>
+                    
+                    ${traitRowsDmg}
+
                     <tr><td class="col-label" style="color:var(--accent-end);">Relic Stat Multiplier</td><td class="col-formula" style="color:var(--accent-end);">${pct(data.relicBuffs.dmg)}</td><td class="col-val">${num(dmgAfterRelic)}</td></tr>
                     <tr><td class="col-label">Set Bonus + Passive</td><td class="col-formula">${pct(data.setBuffs.dmg + data.passiveBuff)}</td><td class="col-val calc-highlight">${num(data.dmgVal)}</td></tr>
                 </table>
@@ -445,8 +534,10 @@ function renderMathContent(data) {
                     <tr><td class="col-label">Base SPA (Lv 1)</td><td class="col-formula"></td><td class="col-val">${data.baseStats.spa}s</td></tr>
                     <tr><td class="col-label">Level Reductions</td><td class="col-formula"><span class="op">×</span>${fix(data.lvStats.spaMult, 3)}</td><td class="col-val">${fix(data.baseStats.spa * data.lvStats.spaMult, 3)}s</td></tr>
                     ${data.isSSS ? `<tr><td class="col-label">SSS Rank (-8%)</td><td class="col-formula"><span class="op">×</span>0.92</td><td class="col-val">${fix(data.lvStats.spa, 3)}s</td></tr>` : ''}
-                    <tr><td class="col-label">Trait Reduction</td><td class="col-formula">-${fix(data.traitBuffs.spa, 1)}%</td><td class="col-val">${fix(data.lvStats.spa * (1 - data.traitBuffs.spa/100), 3)}s</td></tr>
-                    <tr><td class="col-label">Relic, Set & Passive</td><td class="col-formula">-${fix(data.relicBuffs.spa + data.setBuffs.spa + (data.passiveSpaBuff || 0), 1)}%</td><td class="col-val">${fix(data.rawFinalSpa, 3)}s</td></tr>
+                    
+                    ${traitRowsSpa}
+
+                    <tr><td class="col-label">Relic, Set & Passive</td><td class="col-formula">-${fix(data.relicBuffs.spa + data.setBuffs.spa + (data.passiveSpaBuff || 0), 1)}%</td><td class="col-val">${fix(finalSpaStep, 3)}s</td></tr>
                     <tr><td class="col-label">Cap Check (${data.baseStats.spaCap}s)</td><td class="col-formula">MAX</td><td class="col-val calc-result">${fix(data.spa, 3)}s</td></tr>
                 </table>
             </div>
@@ -606,143 +697,319 @@ function confirmAddCustomPair() {
 }
 
 // --- GUIDES RENDER ---
+
 function getTopBuildsForGuide(unit, trait) {
+
     let results = [];
+
     let effectiveStats = { ...unit.stats };
+
     if (activeAbilityIds.has(unit.id) && unit.ability) Object.assign(effectiveStats, unit.ability);
+
     effectiveStats.id = unit.id;
+
     if (unit.id === 'kirito' && kiritoState.realm && kiritoState.card) { effectiveStats.dot = 200; effectiveStats.dotDuration = 4; effectiveStats.dotStacks = unit.stats.hitCount || 14; }
 
+
+
     let actualPlacement = Math.min(unit.placement, trait.limitPlace || unit.placement);
+
     const includeSubs = document.getElementById('guideSubStats')?.checked ?? true;
+
     const includeHead = document.getElementById('guideHeadPiece')?.checked ?? false;
 
+
+
     const validBuilds = getFilteredBuilds();
+
+    const isLaw = unit.id === 'law';
+
+
+
     validBuilds.forEach(build => {
-        ['dmg', 'spa'].forEach(p => {
-            let ctx = { level: 99, priority: p, wave: 25, isBoss: false, traitObj: trait, placement: actualPlacement, isSSS: true };
-            effectiveStats.context = ctx;
-            let cfg = getBestSubConfig(build, effectiveStats, includeSubs, includeHead);
-            if (!results[build.name]) results[build.name] = { dps: -1, dmgCfg: null, spaCfg: null };
-            if (p === 'dmg') results[build.name].dmgCfg = cfg; else results[build.name].spaCfg = cfg;
-        });
+
+        if (isLaw) {
+
+             let ctx = { level: 99, priority: 'dmg', wave: 25, isBoss: false, traitObj: trait, placement: actualPlacement, isSSS: true };
+
+             effectiveStats.context = ctx;
+
+             let cfg = getBestSubConfig(build, effectiveStats, includeSubs, includeHead, 'range');
+
+             if (!results[build.name]) results[build.name] = { dps: -1, rangeCfg: cfg };
+
+             else results[build.name].rangeCfg = cfg;
+
+        } else {
+
+            ['dmg', 'spa'].forEach(p => {
+
+                let ctx = { level: 99, priority: p, wave: 25, isBoss: false, traitObj: trait, placement: actualPlacement, isSSS: true };
+
+                effectiveStats.context = ctx;
+
+                let cfg = getBestSubConfig(build, effectiveStats, includeSubs, includeHead);
+
+                if (!results[build.name]) results[build.name] = { dps: -1, dmgCfg: null, spaCfg: null };
+
+                if (p === 'dmg') results[build.name].dmgCfg = cfg; else results[build.name].spaCfg = cfg;
+
+            });
+
+        }
+
     });
+
+
 
     return Object.entries(results).map(([name, data]) => {
-        let finalCfg = data.dmgCfg.res.total >= data.spaCfg.res.total ? data.dmgCfg : data.spaCfg;
-        let prio = data.dmgCfg.res.total >= data.spaCfg.res.total ? 'dmg' : 'spa';
-        let set = SETS.find(s => s.id === globalBuilds.find(b => b.name === name)?.set);
-        let build = globalBuilds.find(b => b.name === name);
-        
-        let mainStructs = [ { label: 'BODY', stat: build.bodyType }, { label: 'LEGS', stat: build.legType } ];
-        let subStructs = [];
-        if (finalCfg.assignments && Object.keys(finalCfg.assignments).length > 0) {
-            if (finalCfg.assignments.head) subStructs.push({ label: 'HEAD', stat: finalCfg.assignments.head });
-            if (finalCfg.assignments.body) subStructs.push({ label: 'BODY', stat: finalCfg.assignments.body });
-            if (finalCfg.assignments.legs) subStructs.push({ label: 'LEGS', stat: finalCfg.assignments.legs });
+
+        let finalCfg, prio;
+
+        if (isLaw) {
+
+            finalCfg = data.rangeCfg;
+
+            prio = 'range';
+
+        } else {
+
+            finalCfg = data.dmgCfg.res.total >= data.spaCfg.res.total ? data.dmgCfg : data.spaCfg;
+
+            prio = data.dmgCfg.res.total >= data.spaCfg.res.total ? 'dmg' : 'spa';
+
         }
-        return { name: name, dps: finalCfg.res.total, prio: prio, set: set?.name || 'Unknown', mainStructs: mainStructs, subStructs: subStructs };
+
+
+
+        let set = SETS.find(s => s.id === globalBuilds.find(b => b.name === name)?.set);
+
+        let build = globalBuilds.find(b => b.name === name);
+
+        
+
+        let mainStructs = [ { label: 'BODY', stat: build.bodyType }, { label: 'LEGS', stat: build.legType } ];
+
+        let subStructs = [];
+
+        if (finalCfg.assignments && Object.keys(finalCfg.assignments).length > 0) {
+
+            if (finalCfg.assignments.head) subStructs.push({ label: 'HEAD', stat: finalCfg.assignments.head });
+
+            if (finalCfg.assignments.body) subStructs.push({ label: 'BODY', stat: finalCfg.assignments.body });
+
+            if (finalCfg.assignments.legs) subStructs.push({ label: 'LEGS', stat: finalCfg.assignments.legs });
+
+        }
+
+        // Use range value as 'dps' for Law so sorting works based on Range
+
+        let score = isLaw ? finalCfg.res.range : finalCfg.res.total;
+
+        return { name: name, dps: score, prio: prio, set: set?.name || 'Unknown', mainStructs: mainStructs, subStructs: subStructs };
+
     }).sort((a, b) => b.dps - a.dps).slice(0, 3);
+
 }
 
+
+
 function renderGuides() {
+
     const guideGrid = document.getElementById('guideList');
+
     guideGrid.innerHTML = '';
+
     const selectedUnitId = document.getElementById('guideUnitSelect').value;
+
     const selectedTraitId = document.getElementById('guideTraitSelect').value;
+
     const uName = selectedUnitId === 'all' ? 'All Units' : unitDatabase.find(u => u.id === selectedUnitId)?.name || 'Unknown';
+
     let tName = 'Auto Trait';
+
     if(selectedTraitId !== 'auto') { const found = traitsList.find(t => t.id === selectedTraitId) || customTraits.find(t => t.id === selectedTraitId); if(found) tName = found.name; }
+
     document.getElementById('dispGuideUnit').innerText = uName; document.getElementById('dispGuideTrait').innerText = tName;
 
+
+
     const genericGuides = guideData.filter(d => !d.isCalculated);
+
     genericGuides.forEach(row => {
+
         if (selectedUnitId !== 'all' && unitDatabase.some(u => u.id === selectedUnitId)) return;
+
         const data = row[currentGuideMode]; 
+
         const card = document.createElement('div'); card.className = 'guide-card';
+
         const imgHtml = row.img ? `<img src="${row.img}">` : '';
+
         const mainBadgeHtml = formatStatBadge(data.main); const subBadgeHtml = formatStatBadge(data.sub);
+
         card.innerHTML = `<div class="guide-card-header"><div class="guide-unit-info">${imgHtml}<div><span style="display:block; line-height:1;">${row.unit}</span><span class="guide-trait-tag">${data.trait}</span></div></div></div><div class="guide-card-body"><div class="build-row rank-1" style="pointer-events:none;"><div class="br-header"><div style="display:flex; align-items:center; gap:8px;"><span class="br-rank">#1</span><span class="br-set">${data.set}</span></div></div><div class="br-grid"><div class="br-col"><div class="br-col-title">MAIN STAT</div><div class="stat-line">${mainBadgeHtml}</div></div><div class="br-col"><div class="br-col-title">SUB STAT</div><div class="stat-line">${subBadgeHtml}</div></div></div></div></div>`;
+
         guideGrid.appendChild(card);
+
     });
 
+
+
     let unitsToDisplay = [];
+
     if (selectedUnitId !== 'all') { const unit = unitDatabase.find(u => u.id === selectedUnitId); if (unit) unitsToDisplay.push(unit); } else { unitsToDisplay = unitDatabase; }
 
+
+
     let calculatedUnits = unitsToDisplay.map(unit => {
+
         let traitToUse = null;
+
         if (selectedTraitId === 'auto') traitToUse = findOverallBestTraitForUnit(unit);
+
         else {
+
             traitToUse = traitsList.find(t => t.id === selectedTraitId) || customTraits.find(t => t.id === selectedTraitId);
+
             if (!traitToUse && unitSpecificTraits[unit.id]) traitToUse = unitSpecificTraits[unit.id].find(t => t.id === selectedTraitId);
+
         }
+
         if (!traitToUse) return null;
+
         const topBuilds = getTopBuildsForGuide(unit, traitToUse);
+
         if (topBuilds.length === 0) return null;
+
         return { unit: unit, trait: traitToUse, topBuilds: topBuilds, maxDps: topBuilds[0].dps };
+
     }).filter(item => item !== null);
+
+
 
     calculatedUnits.sort((a, b) => b.maxDps - a.maxDps);
 
+
+
     calculatedUnits.forEach(item => {
+
         const card = document.createElement('div'); card.className = 'guide-card';
+
         let kiritoGuideControls = '';
+
         if (item.unit.id === 'kirito') {
+
             const isRealm = kiritoState.realm; const isCard = kiritoState.card;
+
             kiritoGuideControls = `<div class="unit-toolbar" style="border-bottom:none; padding-top:5px; padding-bottom:10px; flex-wrap:wrap; justify-content:flex-start; gap:15px; background:rgba(255,255,255,0.02); padding-left:15px; padding-right:15px;"><div class="toggle-wrapper"><span>Virtual Realm</span><label><input type="checkbox" ${isRealm ? 'checked' : ''} onchange="toggleKiritoMode('realm', this)"><div class="mini-switch"></div></label></div>${isRealm ? `<div class="toggle-wrapper" style="animation:fadeIn 0.3s ease;"><span style="color:${isCard ? 'var(--custom)' : '#888'}; font-weight:${isCard ? 'bold' : 'normal'};">Magician Card</span><label><input type="checkbox" ${isCard ? 'checked' : ''} onchange="toggleKiritoMode('card', this)"><div class="mini-switch" style="${isCard ? 'background:var(--custom);' : ''}"></div></label></div>` : ''}</div>`;
+
         }
 
+
+
         let buildsHtml = item.topBuilds.map((build, index) => {
+
             let rankClass = index === 0 ? 'rank-1' : (index === 1 ? 'rank-2' : 'rank-3');
+
             // Clean the set name (remove parentheses part)
+
             let cleanSetName = build.name.split('(')[0].trim();
+
             
+
             // Use getBadgeHtml for consistency
+
             let mainHtml = build.mainStructs.map(s => `<div class="stat-line"><span class="sl-label">${s.label}</span>${getBadgeHtml(s.stat)}</div>`).join('');
+
             let subHtml = build.subStructs.length > 0 ? build.subStructs.map(s => `<div class="stat-line"><span class="sl-label">${s.label}</span>${getBadgeHtml(s.stat)}</div>`).join('') : '<span style="font-size:0.65rem; color:#555;">None</span>';
-            let prioLabel = build.prio === 'dmg' ? 'DMG STAT' : 'SPA STAT'; let prioColor = build.prio === 'dmg' ? '#ff5555' : 'var(--custom)';
+
+            let prioLabel = build.prio === 'dmg' ? 'DMG STAT' : (build.prio === 'range' ? 'RANGE STAT' : 'SPA STAT');
+
+            let prioColor = build.prio === 'dmg' ? '#ff5555' : (build.prio === 'range' ? '#4caf50' : 'var(--custom)');
+
+            let label = build.prio === 'range' ? 'RANGE' : 'DPS';
+
             
+
             return `
+
                 <div class="build-row ${rankClass}">
+
                     <div class="br-header">
+
                         <div style="display:flex; align-items:center; gap:8px;">
+
                             <span class="br-rank">#${index+1}</span>
+
                             <span class="br-set">${cleanSetName}</span>
+
                         </div>
+
                         <span class="prio-badge" style="color:${prioColor}; border-color:${prioColor};">${prioLabel}</span>
+
                     </div>
+
                     <div class="br-grid">
+
                         <div class="br-col">
+
                             <div class="br-col-title">MAIN STAT</div>
+
                             ${mainHtml}
+
                         </div>
+
                         <div class="br-col" style="border-left:1px solid rgba(255,255,255,0.05); padding-left:8px;">
+
                             <div class="br-col-title">SUB STAT</div>
+
                             ${subHtml}
+
                         </div>
+
                         <div class="br-res-col">
+
                             <div class="dps-container">
+
                                 <span class="build-dps" style="font-size:0.9rem;">${format(build.dps)}</span>
-                                <span class="dps-label">DPS</span>
+
+                                <span class="dps-label">${label}</span>
+
                             </div>
+
                         </div>
+
                     </div>
+
                 </div>
+
             `;
+
         }).join('');
 
-        card.innerHTML = `<div class="guide-card-header"><div class="guide-unit-info"><img src="${item.unit.img}"><div><span style="display:block; line-height:1;">${item.unit.name}</span><span class="guide-trait-tag">${item.trait.name}</span></div></div><div class="guide-dps-box"><span class="guide-dps-val">${format(item.maxDps)}</span><span style="font-size:0.6rem; color:#666; font-weight:bold; letter-spacing:1px;">MAX POTENTIAL</span></div></div>${kiritoGuideControls}<div class="guide-card-body">${buildsHtml}</div>`;
+
+
+        let maxLabel = item.unit.id === 'law' ? 'MAX RANGE' : 'MAX POTENTIAL';
+
+
+
+        card.innerHTML = `<div class="guide-card-header"><div class="guide-unit-info"><img src="${item.unit.img}"><div><span style="display:block; line-height:1;">${item.unit.name}</span><span class="guide-trait-tag">${item.trait.name}</span></div></div><div class="guide-dps-box"><span class="guide-dps-val">${format(item.maxDps)}</span><span style="font-size:0.6rem; color:#666; font-weight:bold; letter-spacing:1px;">${maxLabel}</span></div></div>${kiritoGuideControls}<div class="guide-card-body">${buildsHtml}</div>`;
+
         guideGrid.appendChild(card);
+
     });
+
 }
 
 function findOverallBestTraitForUnit(unit) {
-    let bestTrait = null; let maxDps = -1;
+    let bestTrait = null; let maxScore = -1;
     const specificTraits = unitSpecificTraits[unit.id] || [];
     const allToCheck = [...traitsList, ...customTraits, ...specificTraits];
     allToCheck.filter(t => t.id !== 'none').forEach(trait => {
         const topBuilds = getTopBuildsForGuide(unit, trait);
-        if (topBuilds.length > 0 && topBuilds[0].dps > maxDps) { maxDps = topBuilds[0].dps; bestTrait = trait; }
+        // topBuilds[0].dps contains DPS or Range (for Law)
+        if (topBuilds.length > 0 && topBuilds[0].dps > maxScore) { maxScore = topBuilds[0].dps; bestTrait = trait; }
     });
     return bestTrait;
 }
