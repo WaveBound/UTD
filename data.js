@@ -50,7 +50,7 @@ const guideData = [
 const setBonuses = {
     laughing: { dmg: 5, spa: 5, cf: 0, cm: 0 },
     ninja: { dmg: 5, spa: 0, cf: 0, cm: 0 },
-    sun_god: { dmg: 5, spa: 0, cf: 0, cm: 0 }, // Changed from 10 to 5 (Base)
+    sun_god: { dmg: 5, spa: 0, cf: 0, cm: 0 },
     ex: { dmg: 0, spa: 0, cf: 0, cm: 25 }, 
     none: { dmg: 0, spa: 0, cf: 0, cm: 0 }
 };
@@ -66,7 +66,7 @@ const LEG_RANGE = { dmg: 0,  spa: 0,    desc: "Range", type: "range", range: 30 
 
 const SETS = [
     { id: "ninja",    name: "Master Ninja",     bonus: { dmg: 5, spa: 0, cm: 0 } },
-    { id: "sun_god",  name: "Sun God",          bonus: { dmg: 5, spa: 0, cm: 0 } }, // Visually updated to 5
+    { id: "sun_god",  name: "Sun God",          bonus: { dmg: 5, spa: 0, cm: 0 } },
     { id: "laughing", name: "Laughing Captain", bonus: { dmg: 5, spa: 5, cm: 0 } },
     { id: "ex",       name: "Ex Captain",       bonus: { dmg: 0, spa: 0, cm: 25 } }
 ];
@@ -94,83 +94,98 @@ SETS.forEach(set => {
 });
 
 const traitsList = [
-    { id: "ruler", name: "Ruler", dmg: 200, spa: 20, desc: "+200% Dmg, Limit 1", limitPlace: 1 },
-    { id: "fission", name: "Fission", dmg: 15, spa: 15, desc: "+15% Dmg/SPA", hasRadiation: true },
-    { id: "eternal", name: "Eternal", dmg: 0, spa: 20, desc: "-20% SPA, +Dmg/Wave", isEternal: true },
-    { id: "sacred", name: "Sacred", dmg: 25, spa: 10, desc: "+25% Dmg, -10% SPA" },
-    { id: "astral", name: "Astral", dmg: 0, spa: 20, desc: "DoT Stacks, Limit 1", limitPlace: 1, allowDotStack: true },
-    { id: "wizard", name: "Wizard", dmg: 0, spa: 15, desc: "+30% DoT, -15% SPA", dotBuff: 30 },
-    { id: "artificer", name: "Artificer", dmg: 0, spa: 0, desc: "+15% Relic Stats", relicBuff: 1.15 },
-    { id: "duelist", name: "Duelist", dmg: 0, spa: 0, desc: "+Crit/Boss Dmg", critRate: 25, bossDmg: 35 },
-    { id: "none", name: "None", dmg: 0, spa: 0, desc: "No buffs" }
+    { id: "ruler", name: "Ruler", dmg: 200, spa: 20, range: 30, desc: "+200% Dmg, Limit 1", limitPlace: 1 },
+    { id: "fission", name: "Fission", dmg: 15, spa: 15, range: 25, dotBuff: 20, radiationDuration: 10, desc: "+15% Dmg/SPA, Rad DoT", hasRadiation: true },
+    { id: "eternal", name: "Eternal", dmg: 0, spa: 20, range: 0, desc: "-20% SPA, +Dmg/Rng/Wave", isEternal: true },
+    { id: "sacred", name: "Sacred", dmg: 25, spa: 10, range: 25, desc: "+25% Dmg, -10% SPA" },
+    { id: "astral", name: "Astral", dmg: 0, spa: 20, range: 15, desc: "DoT Stacks, Limit 1", limitPlace: 1, allowDotStack: true },
+    { id: "wizard", name: "Wizard", dmg: 0, spa: 15, range: 20, desc: "+30% DoT, -15% SPA", dotBuff: 30 },
+    { id: "artificer", name: "Artificer", dmg: 0, spa: 0, range: 0, desc: "+15% Relic Stats", relicBuff: 1.15 },
+    { id: "duelist", name: "Duelist", dmg: 0, spa: 0, range: 0, desc: "+Crit/Boss Dmg", critRate: 25, bossDmg: 35 },
+    { id: "none", name: "None", dmg: 0, spa: 0, range: 0, desc: "No buffs" }
 ];
+
+const elementIcons = {
+    "Water": "images/elements/Water.png",
+    "Fire": "images/elements/Fire.png",
+    "Light": "images/elements/Light.png",
+    "Dark": "images/elements/Dark.png",
+    "Ice": "images/elements/Ice.png",
+    "Rose": "images/elements/Rose.png"
+};
 
 const unitDatabase = [
     {
         id: "Maid", name: "Scarlet Maid (World)", role: "Dmg / Support",
         img: "images/Maid.png", 
         placement: 1,
-        stats: { dmg: 2950, spa: 5, crit: 0, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 3.5, passiveDmg: 0, element: "Light", dotDuration: 0 }
+        stats: { dmg: 2950, spa: 5, crit: 0, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 3.5, passiveDmg: 0, element: "Light", dotDuration: 0, range: 28 }
     },
     {
         id: "sjw", name: "SJW (Monarch)", role: "Raw Dmg",
         img: "images/Sjw.png", 
         placement: 1,
-        stats: { dmg: 3350, spa: 5, crit: 0, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 5, passiveDmg: 15, element: "Dark" }
+        stats: { dmg: 3350, spa: 5, crit: 0, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 5, passiveDmg: 15, element: "Dark", range: 35 }
     },
     {
         id: "ragna", name: "Ragna (Silverite)", role: "Burst / Hybrid",
         img: "images/Ragna.png", 
         placement: 1,
-        stats: { dmg: 1800, spa: 9, crit: 0, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 3, passiveDmg: 0, element: "Ice" },
+        stats: { dmg: 1800, spa: 9, crit: 0, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 3, passiveDmg: 0, element: "Ice", range: 35 },
         ability: { dmg: 3960, spa: 15 } 
     },
     {
         id: "ace", name: "Ace", role: "Burn / DoT",
         img: "images/Ace.png",
         placement: 3,
-        stats: { dmg: 1500, spa: 9, crit: 0, cdmg: 150, dot: 100, dotStacks: 5, spaCap: 6, passiveDmg: 60, element: "Fire", dotDuration: 4 }
+        stats: { dmg: 1500, spa: 9, crit: 0, cdmg: 150, dot: 100, dotStacks: 5, spaCap: 6, passiveDmg: 60, element: "Fire", dotDuration: 4, range: 30 }
     },
     {
         id: "kirito", name: "Kirito", role: "Burst / Crit",
         img: "images/Kirito.png",
         placement: 3,
-        stats: { dmg: 1200, spa: 7, crit: 50, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 4, hitCount: 14, reqCrits: 50, extraAttacks: 0, element: "Ice" }
+        stats: { dmg: 1200, spa: 7, crit: 50, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 4, hitCount: 14, reqCrits: 50, extraAttacks: 0, element: "Ice", range: 30 }
     },
     {
         id: "kenpachi", name: "Kenpachi", role: "Raw Dmg / Slow",
         img: "images/Kenpachi.png",
         placement: 1,
-        stats: { dmg: 2900, spa: 10, crit: 0, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 2.0, element: "Light" }
+        stats: { dmg: 2875, spa: 10, crit: 0, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 2.0, element: "Light", range: 27 }
     },
     {
         id: "sasuke", name: "Sasuke (Chakra)", role: "Raw Dmg",
         img: "images/Sasuke.png", 
         placement: 2,
-        stats: { dmg: 2450, spa: 6.75, crit: 0, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 4, passiveDmg: 25, element: "Dark" }
+        stats: { dmg: 2450, spa: 6.75, crit: 0, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 4, passiveDmg: 25, element: "Dark", range: 28 }
     },
     {
         id: "mob", name: "Pyscho (100%)", role: "Raw Dmg",
         img: "images/Mob.png", 
         placement: 2,
-        stats: { dmg: 2600, spa: 6.5, crit: 0, cdmg: 150, dot: 20, dotStacks: 1, spaCap: 5.5, passiveDmg: 0, element: "Rose", dotDuration: 4 }
+        stats: { dmg: 2600, spa: 6.5, crit: 0, cdmg: 150, dot: 20, dotStacks: 1, spaCap: 5.5, passiveDmg: 0, element: "Rose", dotDuration: 4, range: 35 }
     },
     {
         id: "shanks", name: "Shanks (Conqueror)", role: "Raw Dmg",
         img: "images/Shanks.png", 
         placement: 1,
-        stats: { dmg: 2750, spa: 12, crit: 0, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 2.5, passiveDmg: 0, element: "Rose", dotDuration: 0}
+        stats: { dmg: 2750, spa: 12, crit: 0, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 2.5, passiveDmg: 0, element: "Rose", dotDuration: 0, range: 30}
     },
     {
         id: "genos", name: "Cyborg (Fearless)", role: "Dmg / Burn",
         img: "images/Genos.png", 
         placement: 3,
-        stats: { dmg: 1450, spa: 5.5, crit: 0, cdmg: 150, dot: 14, dotStacks: 7, spaCap: 4, passiveDmg: 0, element: "Fire", dotDuration: 7 }
+        stats: { dmg: 1450, spa: 5.5, crit: 0, cdmg: 150, dot: 14, dotStacks: 7, spaCap: 4, passiveDmg: 0, element: "Fire", dotDuration: 7, range: 32 }
     },
     {
         id: "law", name: "Rule (Room)", role: "Support / Dmg",
         img: "images/Law.png", 
         placement: 2,
         stats: { dmg: 1300, spa: 5, crit: 0, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 2, passiveDmg: 20, passiveSpa: 10, element: "Water", dotDuration: 0, range: 31.5 }
+    },
+    {
+        id: "akainu", name: "Admiral (Magma)", role: "Support / Dmg",
+        img: "images/Akainu.png", 
+        placement: 3,
+        stats: { dmg: 1100, spa: 5, crit: 0, cdmg: 150, dot: 60, dotStacks: 4, spaCap: 2, passiveDmg: 0, passiveSpa: 0, element: "Fire", dotDuration: 7, range: 37}
     }
 ];

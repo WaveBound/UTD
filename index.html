@@ -1,4 +1,3 @@
-<!-- START OF FILE index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -34,7 +33,8 @@
                 <span id="hypoLabel">Bugged Relics</span>
             </label>
 
-            <label id="headPieceToggle" class="nav-toggle-label is-checked" title="Adds Perfect Head Piece (Best Sub Stat)">
+            <!-- RESTORED TO CHECKBOX for "Auto Head" -->
+            <label id="headPieceToggle" class="nav-toggle-label is-checked" title="Auto-equips the best Unique Head Piece (Sun God or Master Ninja)">
                 <input type="checkbox" id="globalHeadPiece" onchange="toggleHeadPiece(this)" checked>
                 <span>+ Head Relic</span>
             </label>
@@ -59,7 +59,8 @@
                 <span id="guideHypoLabel">Bugged Relics</span>
             </label>
 
-            <label class="nav-toggle-label is-checked">
+            <!-- RESTORED TO CHECKBOX for "Auto Head" -->
+            <label class="nav-toggle-label is-checked" title="Auto-equips the best Unique Head Piece">
                 <input type="checkbox" id="guideHeadPiece" onchange="toggleGuideHeadPiece(this)" checked>
                 <span>+ Head Relic</span>
             </label>
@@ -179,23 +180,25 @@
                 
                 <div class="patch-entry">
                     <div class="patch-header">
-                        <span class="patch-version">v2.1</span>
-                        <span class="patch-date">Dec 26, 2025</span>
+                        <span class="patch-version">v2.3</span>
+                        <span class="patch-date">Dec 27, 2025</span>
                     </div>
                     <ul class="patch-list">
-                        <li><span class="patch-tag">UI Overhaul</span> Consistent Layout For DataBase And Guides.</li>
-                        <li><span class="patch-tag">Consistency</span> Unified Stat Badges across Guides and Database.</li>
+                        <li><span class="patch-tag">Optimizer</span> Added Auto-Head Piece selection. System now automatically tests "Sun God" vs "Ninja" heads for every build.</li>
+                        <li><span class="patch-tag">UI</span> Added detailed calculation breakdown for Sun God and Ninja head passives in the DPS Breakdown modal.</li>
+                        <li><span class="patch-tag">Math</span> Refined Sun God math: 7s Duration / (6 * SPA). Shows Range and Uptime scaling.</li>
                     </ul>
                 </div>
 
                 <div class="patch-entry">
                     <div class="patch-header">
-                        <span class="patch-version">v2.0</span>
-                        <span class="patch-date">Dec 26, 2025</span>
+                        <span class="patch-version">v2.2</span>
+                        <span class="patch-date">Dec 27, 2025</span>
                     </div>
                     <ul class="patch-list">
-                        <li><span class="patch-tag">Feature</span> Added "Configure View" to Build Guides for specific setups.</li>
-                        <li><span class="patch-tag">Feature</span> Added new "Add Custom Pair" Modal to easily build and assign custom trait combinations to the database.</li>
+                        <li><span class="patch-tag">Feature</span> Added Specific Head Piece Selection logic (backend support).</li>
+                        <li><span class="patch-tag">Math</span> Implemented Sun God Passive: +Range% DMG.</li>
+                        <li><span class="patch-tag">Math</span> Implemented Ninja Head Passive: +20% DoT Potency.</li>
                     </ul>
                 </div>
 
