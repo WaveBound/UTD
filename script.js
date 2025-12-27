@@ -3,7 +3,7 @@ let unitSpecificTraits = {};
 let selectedUnitIds = new Set();
 let activeAbilityIds = new Set(); 
 let cachedResults = {}; 
-let unitBuildsCache = {}; // Cache for calculated build arrays
+let unitBuildsCache = {}; 
 let currentGuideMode = 'current';
 
 let kiritoState = { realm: false, card: false };
@@ -11,34 +11,109 @@ let kiritoState = { realm: false, card: false };
 let tempGuideUnit = 'all';
 let tempGuideTrait = 'auto';
 
-// --- BADGE GENERATION ---
-function getBadgeHtml(statKeyOrName) {
-    if (!statKeyOrName) return '<span style="font-size:0.65rem; color:#444;">-</span>';
-    
-    let type = statKeyOrName.toLowerCase();
-    let label = statKeyOrName;
-    let innerContent = label;
+// --- CONSTANTS ---
+const MAIN_STAT_VALS = {
+    body: { dmg: 60, dot: 75, cm: 120 },
+    legs: { dmg: 60, spa: 22.5, cf: 37.5, range: 30 }
+};
 
-    if (type === 'dmg' || type === 'damage') { type = 'dmg'; label = 'Dmg'; innerContent = 'Dmg'; }
-    else if (type === 'spa') { type = 'spa'; label = 'SPA'; innerContent = 'SPA'; }
-    else if (type === 'cm' || type === 'crit dmg' || type === 'crit damage') { 
-        type = 'cdmg'; 
-        label = 'Crit Dmg'; 
-        innerContent = '<span class="stat-cdmg-text">Crit Dmg</span>'; 
-    }
-    else if (type === 'cf' || type === 'crit rate') { type = 'crit'; label = 'Crit Rate'; innerContent = 'Crit Rate'; }
-    else if (type === 'dot') { type = 'dot'; label = 'DoT'; innerContent = 'DoT'; }
-    else if (type === 'buff potency' || type === 'buff') { type = 'dot'; label = 'Buff Potency'; innerContent = 'Buff Potency'; }
-    else if (type === 'range' || type === 'rng') { type = 'range'; label = 'Range'; innerContent = 'Range'; }
+const NAME_TO_CODE = {
+    "Dmg": "dmg", "Damage": "dmg",
+    "SPA": "spa",
+    "Crit Dmg": "cm", "Crit Damage": "cm",
+    "Crit Rate": "cf",
+    "DoT": "dot", "Buff Potency": "dot",
+    "Range": "range"
+};
 
-    return `<span class="stat-badge stat-${type}">${innerContent}</span>`;
+// Styling Configuration for Stats
+const STAT_INFO = {
+    dmg:   { label: 'Dmg',       color: '#ff8888', border: 'rgba(255,50,50,0.3)' },
+    spa:   { label: 'SPA',       color: '#88ccff', border: 'rgba(50,150,255,0.3)' },
+    cdmg:  { label: 'Crit Dmg',  color: '#d8b4fe', border: '#a855f7', special: '<span class="stat-cdmg-text">Crit Dmg</span>' },
+    crit:  { label: 'Crit Rate', color: '#ffd700', border: 'rgba(255, 215, 0, 0.3)' },
+    dot:   { label: 'DoT',       color: '#4ade80', border: 'rgba(74, 222, 128, 0.3)' },
+    range: { label: 'Range',     color: '#ffa500', border: 'rgba(255, 140, 0, 0.3)' }
+};
+
+// Helper to resolve stat type
+function getStatType(key) {
+    if (!key) return 'dmg';
+    let k = key.toLowerCase();
+    if (k === 'dmg' || k === 'damage') return 'dmg';
+    if (k === 'spa') return 'spa';
+    if (k === 'cm' || k.includes('crit dmg') || k.includes('crit damage')) return 'cdmg';
+    if (k === 'cf' || k.includes('crit rate')) return 'crit';
+    if (k === 'dot' || k.includes('buff')) return 'dot';
+    if (k.includes('range') || k === 'rng') return 'range';
+    return 'dmg';
 }
 
-function formatStatBadge(text) {
+// --- BADGE GENERATION ---
+
+// 1. Standard Single Badge
+function getBadgeHtml(statKeyOrName, value = null) {
+    if (!statKeyOrName) return '<span style="font-size:0.65rem; color:#444;">-</span>';
+    
+    const type = getStatType(statKeyOrName);
+    const info = STAT_INFO[type];
+    const innerContent = info.special || info.label;
+
+    let valueHtml = '';
+    if (value !== null && !isNaN(value)) {
+        const fmtVal = Number.isInteger(value) ? value : value.toFixed(1);
+        valueHtml = ` <span style="font-size:0.9em; opacity:1; margin-left:3px; font-weight:800;">${fmtVal}%</span>`;
+    }
+
+    return `<span class="stat-badge" style="color:${info.color}; border-color:${info.border};">${innerContent}${valueHtml}</span>`;
+}
+
+// 2. Formatting Logic (Handles Split Stats)
+function formatStatBadge(text, totalRolls = null) {
     if(!text) return '';
     if (text.includes('<')) return text;
+    
     const parts = text.split(/[\/>,]+/).map(p => p.trim()).filter(p => p);
-    return parts.map(part => getBadgeHtml(part)).join(''); 
+    
+    // Case A: Single Stat
+    if (parts.length === 1) {
+        let val = null;
+        if (totalRolls) {
+            const code = NAME_TO_CODE[parts[0]] || parts[0].toLowerCase();
+            if (PERFECT_SUBS[code]) val = PERFECT_SUBS[code] * totalRolls;
+        }
+        return getBadgeHtml(parts[0], val);
+    }
+
+    // Case B: Hybrid/Split Stat (Combined Badge)
+    if (parts.length === 2) {
+        const rolls = totalRolls ? totalRolls / 2 : 0;
+        
+        // Helper to format part
+        const formatPart = (name) => {
+            const type = getStatType(name);
+            const info = STAT_INFO[type];
+            let valStr = '';
+            if (rolls) {
+                const code = NAME_TO_CODE[name] || type;
+                if (PERFECT_SUBS[code]) valStr = (PERFECT_SUBS[code] * rolls).toFixed(1) + '%';
+            }
+            return { info, valStr };
+        };
+
+        const p1 = formatPart(parts[0]);
+        const p2 = formatPart(parts[1]);
+
+        // Updated Compact CSS: Reduced gap to 2px and padding to 3px to fit better
+        return `
+        <div class="stat-badge" style="border-color:#444; background:rgba(0,0,0,0.4); display:inline-flex; align-items:center; gap:2px; padding:0 3px; width:fit-content; height:18px;">
+            <span style="color:${p1.info.color}; white-space:nowrap; font-size:0.6rem; font-weight:700;">${p1.info.label} <span style="font-weight:800; color:#fff; font-size:0.85em;">${p1.valStr}</span></span>
+            <span style="color:#444; font-size:0.8em; font-weight:bold; margin:0 1px;">|</span>
+            <span style="color:${p2.info.color}; white-space:nowrap; font-size:0.6rem; font-weight:700;">${p2.info.label} <span style="font-weight:800; color:#fff; font-size:0.85em;">${p2.valStr}</span></span>
+        </div>`;
+    }
+
+    return parts.map(p => getBadgeHtml(p)).join('');
 }
 
 function getUnitImgHtml(unit, imgClass = '', iconSizeClass = '') {
@@ -93,6 +168,25 @@ const applySubPiece = (testBuild, cand, mainStatType) => {
     }
 };
 
+const generateAssignments = (cand, build, includeSubs, includeHead) => {
+    let assignments = {};
+    const getDisp = (k) => SUB_NAMES[k] || k;
+    const resolve = (cand, main) => {
+        if (cand === main) return (main === 'range') ? 'dmg' : 'range';
+        return cand;
+    };
+
+    if (includeHead) { const val = getDisp(cand); assignments.head = val; }
+    if (includeSubs) {
+        let bSub = resolve(cand, build.bodyType);
+        let lSub = resolve(cand, build.legType);
+        assignments.body = getDisp(bSub);
+        assignments.legs = getDisp(lSub);
+    }
+    return assignments;
+};
+
+// --- CORE OPTIMIZATION LOGIC ---
 const getBestSubConfig = (build, stats, includeSubs, headMode, optimizeFor = 'dps') => {
     let mode = headMode;
     if (mode === true) mode = 'auto';
@@ -121,10 +215,7 @@ const getBestSubConfig = (build, stats, includeSubs, headMode, optimizeFor = 'dp
 
         let candidates = getSubCandidates();
         if (candidates.length === 0 && actualIncludeHead) candidates.push('dmg');
-        
-        if (!includeSubs && actualIncludeHead) {
-             candidates = ['dmg']; 
-        }
+        if (!includeSubs && actualIncludeHead) candidates = ['dmg', 'spa']; 
 
         candidates.forEach(cand => {
             let testBuild = { ...build };
@@ -135,7 +226,7 @@ const getBestSubConfig = (build, stats, includeSubs, headMode, optimizeFor = 'dp
             }
             
             if (actualIncludeHead) {
-                applySubPiece(testBuild, cand, null);
+                applySubPiece(testBuild, cand, null); 
             }
             
             let res = calculateDPS(stats, testBuild, stats.context);
@@ -143,22 +234,37 @@ const getBestSubConfig = (build, stats, includeSubs, headMode, optimizeFor = 'dp
             if (checkIsBetter(res, globalBestRes, optimizeFor)) {
                 globalBestRes = res; 
                 globalBestHead = headType;
-                
-                let assignments = {};
-                const getDisp = (k) => SUB_NAMES[k] || k;
-                const resolve = (cand, main) => {
-                    if (cand === main) return (main === 'range') ? 'dmg' : 'range';
-                    return cand;
-                };
+                globalBestAssignments = generateAssignments(cand, build, includeSubs, actualIncludeHead);
+                globalBestAssignments.selectedHead = headType;
+            }
 
-                if (actualIncludeHead) { const val = getDisp(cand); assignments.head = val; }
-                if (includeSubs) {
-                    let bSub = resolve(cand, build.bodyType);
-                    let lSub = resolve(cand, build.legType);
-                    assignments.body = getDisp(bSub);
-                    assignments.legs = getDisp(lSub);
-                }
-                globalBestAssignments = assignments;
+            if (actualIncludeHead) {
+                candidates.forEach(subCand => {
+                    if (cand === subCand) return; 
+
+                    let hybridBuild = { ...build };
+
+                    if (includeSubs) { 
+                        applySubPiece(hybridBuild, cand, build.bodyType); 
+                        applySubPiece(hybridBuild, cand, build.legType); 
+                    }
+
+                    hybridBuild[cand] = (hybridBuild[cand] || 0) + (PERFECT_SUBS[cand] * 3);
+                    hybridBuild[subCand] = (hybridBuild[subCand] || 0) + (PERFECT_SUBS[subCand] * 3);
+
+                    let hybridRes = calculateDPS(stats, hybridBuild, stats.context);
+
+                    if (checkIsBetter(hybridRes, globalBestRes, optimizeFor)) {
+                        globalBestRes = hybridRes;
+                        globalBestHead = headType;
+                        
+                        let assign = generateAssignments(cand, build, includeSubs, false);
+                        const getDisp = (k) => SUB_NAMES[k] || k;
+                        assign.head = `${getDisp(cand)}/${getDisp(subCand)}`; 
+                        assign.selectedHead = headType;
+                        globalBestAssignments = assign;
+                    }
+                });
             }
         });
     });
@@ -280,15 +386,17 @@ function generateBuildRowHTML(r, i) {
     if (r.prio === 'spa') { prioLabel = 'SPA STAT'; prioColor = 'var(--custom)'; }
     if (r.prio === 'range') { prioLabel = 'RANGE STAT'; prioColor = '#4caf50'; }
 
-    const mainBodyBadge = getBadgeHtml(r.mainStats.body);
-    const mainLegsBadge = getBadgeHtml(r.mainStats.legs);
+    const bodyVal = MAIN_STAT_VALS.body[r.mainStats.body];
+    const legsVal = MAIN_STAT_VALS.legs[r.mainStats.legs];
+    
+    const mainBodyBadge = getBadgeHtml(r.mainStats.body, bodyVal);
+    const mainLegsBadge = getBadgeHtml(r.mainStats.legs, legsVal);
 
     let headHtml = '';
     if (r.headUsed && r.headUsed !== 'none') {
         let isSun = r.headUsed === 'sun_god';
         let headName = isSun ? 'Sun God' : 'Master Ninja';
         let headColor = isSun ? '#38bdf8' : '#ffffff'; 
-        
         headHtml = `<div class="stat-line"><span class="sl-label">HEAD</span> <span style="display:inline-flex; align-items:center; justify-content:center; padding:0 4px; height:18px; border-radius:4px; font-size:0.6rem; font-weight:800; text-transform:uppercase; border:1px solid ${headColor}; white-space:nowrap; background:rgba(0,0,0,0.4); color:${headColor};">${headName}</span></div>`;
     }
 
@@ -297,9 +405,9 @@ function generateBuildRowHTML(r, i) {
     const hasSubs = s.head || s.body || s.legs;
 
     if (hasSubs) {
-        if (s.head) subInnerHtml += `<div class="stat-line"><span class="sl-label">SUB</span> ${getBadgeHtml(s.head)}</div>`;
-        if (s.body) subInnerHtml += `<div class="stat-line"><span class="sl-label">BODY</span> ${getBadgeHtml(s.body)}</div>`;
-        if (s.legs) subInnerHtml += `<div class="stat-line"><span class="sl-label">LEGS</span> ${getBadgeHtml(s.legs)}</div>`;
+        if (s.head) subInnerHtml += `<div class="stat-line"><span class="sl-label">SUB</span> ${formatStatBadge(s.head, 6)}</div>`;
+        if (s.body) subInnerHtml += `<div class="stat-line"><span class="sl-label">BODY</span> ${formatStatBadge(s.body, 6)}</div>`;
+        if (s.legs) subInnerHtml += `<div class="stat-line"><span class="sl-label">LEGS</span> ${formatStatBadge(s.legs, 6)}</div>`;
     } else {
         subInnerHtml = '<span style="font-size:0.65rem; color:#555;">None</span>';
     }
@@ -311,6 +419,7 @@ function generateBuildRowHTML(r, i) {
             displayLabel = "RANGE";
     }
 
+    // UPDATED LAYOUT: Adjusted flex values (0.9 vs 1.3) to allow sub stats more room
     return `
         <div class="build-row ${rankClass}">
             <div class="br-header">
@@ -323,13 +432,13 @@ function generateBuildRowHTML(r, i) {
                 <span class="prio-badge" style="color:${prioColor}; border-color:${prioColor};">${prioLabel}</span>
             </div>
             <div class="br-grid">
-                <div class="br-col">
+                <div class="br-col" style="flex:0.9;">
                     <div class="br-col-title">MAIN STAT</div>
                     ${headHtml}
                     <div class="stat-line"><span class="sl-label">BODY</span> ${mainBodyBadge}</div>
                     <div class="stat-line"><span class="sl-label">LEGS</span> ${mainLegsBadge}</div>
                 </div>
-                <div class="br-col" style="border-left:1px solid rgba(255,255,255,0.05); padding-left:8px;">
+                <div class="br-col" style="flex:1.3; border-left:1px solid rgba(255,255,255,0.05); padding-left:12px;">
                     <div class="br-col-title">SUB STAT</div>
                     ${subInnerHtml}
                 </div>
@@ -383,10 +492,8 @@ function updateBuildListDisplay(unitId) {
         return;
     }
 
-    // SLICE TOP 50
     let displaySlice = filtered.slice(0, 50);
 
-    // Force "Astral" to show for Kirito even if low ranked
     if(unitId === 'kirito' && searchInput === '') {
         const astralBuild = filtered.find(b => b.traitName === 'Astral');
         if(astralBuild && !displaySlice.includes(astralBuild)) {
@@ -976,13 +1083,19 @@ function renderGuides() {
             let mainHtml = build.mainStructs.map(s => {
                 if(s.isHead) {
                      let headColor = s.stat === 'Sun God' ? '#38bdf8' : '#ffffff';
-                     return `<div class="stat-line" style="margin-bottom:4px;"><span class="sl-label">HEAD</span> <span style="display:inline-flex; align-items:center; justify-content:center; padding:0 4px; height:18px; border-radius:4px; font-size:0.6rem; font-weight:800; text-transform:uppercase; border:1px solid ${headColor}; white-space:nowrap; background:rgba(0,0,0,0.4); color:${headColor};">${s.stat}</span></div>`;
+                     return `<div class="stat-line"><span class="sl-label">HEAD</span> <span style="display:inline-flex; align-items:center; justify-content:center; padding:0 4px; height:18px; border-radius:4px; font-size:0.6rem; font-weight:800; text-transform:uppercase; border:1px solid ${headColor}; white-space:nowrap; background:rgba(0,0,0,0.4); color:${headColor};">${s.stat}</span></div>`;
                 }
-                return `<div class="stat-line"><span class="sl-label">${s.label}</span>${getBadgeHtml(s.stat)}</div>`;
+                // Lookup value for Main Stats
+                let val = null;
+                if(s.label === 'BODY' && MAIN_STAT_VALS.body[s.stat]) val = MAIN_STAT_VALS.body[s.stat];
+                if(s.label === 'LEGS' && MAIN_STAT_VALS.legs[s.stat]) val = MAIN_STAT_VALS.legs[s.stat];
+                
+                return `<div class="stat-line"><span class="sl-label">${s.label}</span>${getBadgeHtml(s.stat, val)}</div>`;
             }).join('');
             
             let subHtml = build.subStructs.map(s => {
-                return `<div class="stat-line"><span class="sl-label">${s.label}</span>${getBadgeHtml(s.stat)}</div>`;
+                // Fixed UI for Guides
+                return `<div class="stat-line"><span class="sl-label">${s.label}</span>${formatStatBadge(s.stat, 6)}</div>`;
             }).join('');
             if(!subHtml) subHtml = '<span style="font-size:0.65rem; color:#555;">None</span>';
 
@@ -999,11 +1112,11 @@ function renderGuides() {
                         <span class="prio-badge" style="color:${prioColor}; border-color:${prioColor};">${prioLabel}</span>
                     </div>
                     <div class="br-grid">
-                        <div class="br-col">
+                        <div class="br-col" style="flex:0.9;">
                             <div class="br-col-title">MAIN STAT</div>
                             ${mainHtml}
                         </div>
-                        <div class="br-col" style="border-left:1px solid rgba(255,255,255,0.05); padding-left:8px;">
+                        <div class="br-col" style="flex:1.3; border-left:1px solid rgba(255,255,255,0.05); padding-left:12px;">
                             <div class="br-col-title">SUB STAT</div>
                             ${subHtml}
                         </div>

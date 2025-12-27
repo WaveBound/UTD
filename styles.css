@@ -196,8 +196,8 @@ input[type="checkbox"]:checked + .mini-switch::after { transform: translateX(14p
 /* Stat Line: Label + Badge */
 .stat-line { display: flex; align-items: center; gap: 4px; }
 .sl-label {
-    background: #1f2937; border: 1px solid #333; color: #999;
-    font-size: 0.5rem; font-weight: 800; padding: 1px 4px; border-radius: 3px;
+    background: #1f2937; border: 1px solid #333; color: #9e9e9e;
+    font-size: 0.55rem; font-weight: 1000; padding: 1px 2px; border-radius: 3px;
     min-width: 30px; text-align: center;
 }
 
