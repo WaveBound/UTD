@@ -332,3 +332,20 @@ input[type="checkbox"]:checked + .mini-switch::after { transform: translateX(14p
     background: rgba(59, 130, 246, 0.15); padding: 2px 6px; border-radius: 4px;
     margin-right: 10px; flex-shrink: 0;
 }
+
+/* --- MOBILE RESPONSIVE FIX --- */
+@media (max-width: 600px) {
+    .page {
+        padding: 0 10px 20px 10px;
+    }
+    .db-grid {
+        grid-template-columns: 1fr;
+    }
+    .guide-grid {
+        grid-template-columns: 1fr;
+    }
+    .unit-card {
+        height: auto;
+        min-height: 500px;
+    }
+}
