@@ -344,8 +344,4 @@ input[type="checkbox"]:checked + .mini-switch::after { transform: translateX(14p
     .guide-grid {
         grid-template-columns: 1fr;
     }
-    .unit-card {
-        height: auto;
-        min-height: 500px;
-    }
 }
