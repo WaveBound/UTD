@@ -236,7 +236,7 @@ function getUnitResultsHTML(unit, effectiveStats) {
     if(unitResults.length === 0) return '<div style="padding:10px; color:#666;">No valid builds found.</div>';
 
     // --- HTML GENERATION (GRID LAYOUT) ---
-    return unitResults.slice(0, 100).map((r, i) => {
+    return unitResults.slice(0, 50).map((r, i) => {
         let rankClass = i < 3 ? `rank-${i+1}` : 'rank-other';
         if(r.isCustom) rankClass += ' is-custom';
         const searchText = (r.traitName + ' ' + r.setName + ' ' + r.prio).toLowerCase();
