@@ -36,6 +36,55 @@ const STAT_INFO = {
     range: { label: 'Range',     color: '#ffa500', border: 'rgba(255, 140, 0, 0.3)' }
 };
 
+// --- INFO DEFINITIONS FOR POPUPS ---
+const infoDefinitions = {
+    'level_scale': {
+        title: "Level Scaling Formula",
+        formula: "Base * (1.004525 ^ Level)",
+        desc: "Damage increases exponentially by approx 0.45% per level.<br>SPA decreases by approx 0.45% per level.<br><br><b>SSS Rank:</b> Adds a flat multiplier (x1.2 Dmg, x0.92 SPA) applied <i>after</i> level scaling."
+    },
+    'trait_logic': {
+        title: "Trait Multipliers",
+        formula: "Combined = (1 + T1%) * (1 + T2%)",
+        desc: "Traits are direct multipliers to your Base Stats.<br><br><b>Double Traits:</b> When using a Custom Pair, the traits are <b>Compounded</b> (multiplied together), not just added.<br><i>Example:</i> A +200% Trait (x3.0) and a +15% Trait (x1.15) result in a <b>x3.45</b> total multiplier (+245%), making double traits extremely powerful."
+    },
+    'relic_multi': {
+        title: "Relic Stat Logic",
+        formula: "Sum of (Main Stats + Sub Stats + Set Bonus)",
+        desc: "Relic Stats are additive with each other but multiplicative to the Base Stats.<br>Example: 60% Body + 60% Legs + 20% Subs = 140% Total Additive Bonus.<br>Final Multiplier = (1 + 1.40)."
+    },
+    'spa_calc': {
+        title: "SPA (Speed) Calculation",
+        formula: "Base * LevelScale * (1 - Trait%) * (1 - Relic%)",
+        desc: "Speed reductions are calculated in stages.<br>1. <b>Traits</b> are multiplicative reductions (stronger).<br>2. <b>Relics/Sets</b> are additive reductions (summed together first).<br>3. <b>Cap:</b> The final value cannot go lower than the unit's specific SPA Cap."
+    },
+    'sungod_passive': {
+        title: "Sun God Head Passive",
+        formula: "Buff Value = Current Range Stat",
+        desc: "The Sun God Head grants a temporary Damage % Buff equal to your total Range.<br><br><b>Trigger:</b> Every 6 Attacks.<br><b>Duration:</b> 7 Seconds.<br><b>Uptime:</b> 7 / (6 * SPA).<br><br>If Uptime > 100%, the buff is permanent. If less, we average the damage bonus over time."
+    },
+    'ninja_passive': {
+        title: "Ninja Head Passive",
+        formula: "+20% DoT Potency",
+        desc: "The Master Ninja Head grants +20% Damage over Time (DoT) effectiveness.<br><br><b>Trigger:</b> Every 5 Attacks.<br><b>Duration:</b> 10 Seconds.<br><b>Uptime:</b> 10 / (5 * SPA).<br><br>Most fast units maintain 100% uptime easily."
+    },
+    'crit_avg': {
+        title: "Crit Averaging",
+        formula: "Avg Hit = Base * (1 + (CritRate% * CritDmg%))",
+        desc: "Since Crits are probabilistic, we calculate the <b>Average Damage</b> per hit over a long period.<br><br><b>Crit Rate:</b> Hard capped at 100%.<br><b>Crit Dmg:</b> Base 150% + Additions.<br>Note: In the formula, 150% is represented as 1.5."
+    },
+    'dot_logic': {
+        title: "Damage Over Time (DoT)",
+        formula: "Total Dmg = (BaseHit * Tick%) * Stacks",
+        desc: "<b>Tick %:</b> The percentage of the hit damage dealt per tick.<br><b>Stacks:</b> How many times the DoT applies (e.g., Burn stacks 5 times).<br><b>Time Basis:</b> We convert total DoT damage into DPS by dividing by the time it takes to apply (usually SPA)."
+    },
+    'attack_rate': {
+        title: "Attack Rate & Multi-Hit",
+        formula: "Multiplier = 1 + (ExtraHits / HitsNeeded)",
+        desc: "Used for units like Kirito who trigger extra attacks upon critting.<br>If a unit hits multiple times per 'Attack Cycle' (SPA), we multiply the final DPS to account for the extra hits generated per second."
+    }
+};
+
 // Helper to resolve stat type
 function getStatType(key) {
     if (!key) return 'dmg';
@@ -73,7 +122,7 @@ function formatStatBadge(text, totalRolls = null) {
     if(!text) return '';
     if (text.includes('<')) return text;
     
-    const parts = text.split(/[\/>,]+/).map(p => p.trim()).filter(p => p);
+    let parts = text.split(/[\/>,]+/).map(p => p.trim()).filter(p => p);
     
     // Case A: Single Stat
     if (parts.length === 1) {
@@ -87,6 +136,14 @@ function formatStatBadge(text, totalRolls = null) {
 
     // Case B: Hybrid/Split Stat (Combined Badge)
     if (parts.length === 2) {
+        // PRIORITY SORTING: Damage > Range > SPA > Others
+        const priority = { 'dmg': 1, 'damage': 1, 'range': 2, 'spa': 3 };
+        parts.sort((a, b) => {
+            const pa = priority[a.toLowerCase()] || 99;
+            const pb = priority[b.toLowerCase()] || 99;
+            return pa - pb;
+        });
+
         const rolls = totalRolls ? totalRolls / 2 : 0;
         
         // Helper to format part
@@ -104,12 +161,12 @@ function formatStatBadge(text, totalRolls = null) {
         const p1 = formatPart(parts[0]);
         const p2 = formatPart(parts[1]);
 
-        // Updated Compact CSS: Reduced gap to 2px and padding to 3px to fit better
+        // CHANGE: Use p1.info.border for the container color
         return `
-        <div class="stat-badge" style="border-color:#444; background:rgba(0,0,0,0.4); display:inline-flex; align-items:center; gap:2px; padding:0 3px; width:fit-content; height:18px;">
-            <span style="color:${p1.info.color}; white-space:nowrap; font-size:0.6rem; font-weight:700;">${p1.info.label} <span style="font-weight:800; color:#fff; font-size:0.85em;">${p1.valStr}</span></span>
-            <span style="color:#444; font-size:0.8em; font-weight:bold; margin:0 1px;">|</span>
-            <span style="color:${p2.info.color}; white-space:nowrap; font-size:0.6rem; font-weight:700;">${p2.info.label} <span style="font-weight:800; color:#fff; font-size:0.85em;">${p2.valStr}</span></span>
+        <div class="stat-badge" style="border-color:${p1.info.border}; background:rgba(0,0,0,0.4); display:inline-flex; align-items:center; gap:2px; padding:0 4px; width:fit-content; max-width:100%; height:18px; white-space:nowrap;">
+            <span style="color:${p1.info.color}; font-size:0.6rem; font-weight:700;">${p1.info.label} <span style="font-weight:800; color:#fff; font-size:0.9em;">${p1.valStr}</span></span>
+            <span style="color:#666; font-size:0.7em; font-weight:bold; margin:0 1px; opacity:0.8;">|</span>
+            <span style="color:${p2.info.color}; font-size:0.6rem; font-weight:700;">${p2.info.label} <span style="font-weight:800; color:#fff; font-size:0.9em;">${p2.valStr}</span></span>
         </div>`;
     }
 
@@ -419,7 +476,7 @@ function generateBuildRowHTML(r, i) {
             displayLabel = "RANGE";
     }
 
-    // UPDATED LAYOUT: Adjusted flex values to 1.2 vs 1.2 (50/50 split)
+    // UPDATED FLEX VALUES HERE: Main(0.75), Sub(1.4)
     return `
         <div class="build-row ${rankClass}">
             <div class="br-header">
@@ -432,7 +489,7 @@ function generateBuildRowHTML(r, i) {
                 <span class="prio-badge" style="color:${prioColor}; border-color:${prioColor};">${prioLabel}</span>
             </div>
             <div class="br-grid">
-                <div class="br-col" style="flex:1.2;">
+                <div class="br-col" style="flex:0.75;">
                     <div class="br-col-title">MAIN STAT</div>
                     ${headHtml}
                     <div class="stat-line"><span class="sl-label">BODY</span> ${mainBodyBadge}</div>
@@ -663,7 +720,42 @@ const filterList = (e) => {
 
 const toggleDeepDive = () => { const c = document.getElementById('deepDiveContent'), a = document.getElementById('ddArrow'); c.style.display === 'none' ? (c.style.display = 'block', a.innerText = '▲') : (c.style.display = 'none', a.innerText = '▼'); };
 
-// --- MATH MODAL LOGIC (UPDATED WITH BETTER VISUALS) ---
+// --- POPUP SYSTEM ---
+function openInfoPopup(key) {
+    const data = infoDefinitions[key];
+    if(!data) return;
+    
+    // Create popup if it doesn't exist inside the math modal context
+    let overlay = document.getElementById('mathInfoPopup');
+    if(!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'mathInfoPopup';
+        overlay.className = 'info-popup-overlay';
+        // Inject inside the math modal so it layers correctly
+        document.getElementById('mathModal').querySelector('.modal-content').appendChild(overlay);
+    }
+    
+    overlay.innerHTML = `
+        <div class="info-popup-content">
+            <button class="ip-close" onclick="closeInfoPopup()">×</button>
+            <div class="ip-header">
+                <span style="color:var(--custom); font-size:1.2rem;">?</span> ${data.title}
+            </div>
+            <div class="ip-body">
+                ${data.desc}
+                <div class="ip-formula">${data.formula}</div>
+            </div>
+        </div>
+    `;
+    overlay.style.display = 'flex';
+}
+
+function closeInfoPopup() {
+    const overlay = document.getElementById('mathInfoPopup');
+    if(overlay) overlay.style.display = 'none';
+}
+
+// --- UPDATED MATH RENDER ---
 function renderMathContent(data) {
     const pct = (n) => `${n >= 0 ? '+' : ''}${n.toFixed(1)}%`;
     const num = (n) => n.toLocaleString(undefined, {maximumFractionDigits: 1});
@@ -682,7 +774,12 @@ function renderMathContent(data) {
         data.traitObj.subTraits.forEach((t, i) => {
             const tDmg = t.dmg || 0;
             const nextDmg = runningDmg * (1 + tDmg/100);
-            traitRowsDmg += `<tr><td class="col-label" style="padding-left:10px;">↳ ${t.name}</td><td class="col-formula">${pct(tDmg)}</td><td class="col-val">${num(nextDmg)}</td></tr>`;
+            
+            // Add the question mark to the first trait row only for clarity
+            let labelHtml = `↳ ${t.name}`;
+            if (i === 0) labelHtml += ` <button class="calc-info-btn" onclick="openInfoPopup('trait_logic')">?</button>`;
+
+            traitRowsDmg += `<tr><td class="col-label" style="padding-left:10px;">${labelHtml}</td><td class="col-formula">${pct(tDmg)}</td><td class="col-val">${num(nextDmg)}</td></tr>`;
             runningDmg = nextDmg;
 
             const tSpa = t.spa || 0;
@@ -692,7 +789,7 @@ function renderMathContent(data) {
         });
     } else {
         const dmgAfterTrait = runningDmg * (1 + data.traitBuffs.dmg/100);
-        traitRowsDmg = `<tr><td class="col-label">Trait Multiplier</td><td class="col-formula">${pct(data.traitBuffs.dmg)}</td><td class="col-val">${num(dmgAfterTrait)}</td></tr>`;
+        traitRowsDmg = `<tr><td class="col-label">Trait Multiplier <button class="calc-info-btn" onclick="openInfoPopup('trait_logic')">?</button></td><td class="col-formula">${pct(data.traitBuffs.dmg)}</td><td class="col-val">${num(dmgAfterTrait)}</td></tr>`;
         const spaAfterTrait = runningSpa * (1 - data.traitBuffs.spa/100);
         traitRowsSpa = `<tr><td class="col-label">Trait Reduction</td><td class="col-formula">-${fix(data.traitBuffs.spa, 1)}%</td><td class="col-val">${fix(spaAfterTrait, 3)}s</td></tr>`;
         runningDmg = dmgAfterTrait; runningSpa = spaAfterTrait;
@@ -705,21 +802,17 @@ function renderMathContent(data) {
     let headDmgHtml = '';
     if (data.headBuffs && data.headBuffs.type === 'sun_god') {
         const uptimePct = (data.headBuffs.uptime || 0);
-        const spaVal = fix(data.spa, 2);
         const trigTime = fix(data.headBuffs.trigger, 2);
         headDmgHtml = `
         <tr style="background:rgba(255,215,0,0.08); border-left:3px solid var(--gold);">
             <td colspan="3" style="padding:8px;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
                     <span style="font-size:0.75rem; color:var(--gold); font-weight:900; letter-spacing:0.5px;">SUN GOD PASSIVE</span>
-                    <span title="The Sun God Head grants a Damage Buff equal to your Range stat.\nIt triggers every 6 attacks and lasts for 7 seconds.\nUptime = 7s / (6 * SPA)." 
-                          style="cursor:help; font-size:0.7rem; background:rgba(0,0,0,0.5); color:#fff; width:16px; height:16px; border-radius:50%; text-align:center; line-height:16px;">?</span>
+                    <button class="calc-info-btn" onclick="openInfoPopup('sungod_passive')">?</button>
                 </div>
                 <div style="font-size:0.75rem; color:#eee; display:grid; grid-template-columns:1fr 1fr; gap:4px; margin-bottom:6px;">
-                    <span style="opacity:0.8;">Trigger Rate:</span> <span style="text-align:right; font-family:'Consolas', monospace;">Every ${trigTime}s</span>
-                    <span style="opacity:0.8;">Buff Duration:</span> <span style="text-align:right; font-family:'Consolas', monospace;">7.00s</span>
-                    <span style="opacity:0.8;">Uptime %:</span> <span style="text-align:right; font-family:'Consolas', monospace; color:${uptimePct >= 1 ? '#4ade80' : '#ffcc00'}">${fix(uptimePct*100,1)}%</span>
                     <span style="opacity:0.8;">Range Stat:</span> <span style="text-align:right; font-family:'Consolas', monospace; color:#ffa500;">${fix(data.range,1)}</span>
+                    <span style="opacity:0.8;">Uptime:</span> <span style="text-align:right; font-family:'Consolas', monospace; color:${uptimePct >= 1 ? '#4ade80' : '#ffcc00'}">${fix(uptimePct*100,1)}%</span>
                 </div>
                 <div style="display:flex; justify-content:space-between; border-top:1px solid rgba(255,255,255,0.1); padding-top:4px;">
                     <span style="color:#fff; font-size:0.75rem; font-weight:bold;">Avg Damage Buff</span>
@@ -733,20 +826,16 @@ function renderMathContent(data) {
     let headDotRow = '';
     if (data.headBuffs && data.headBuffs.type === 'ninja') {
         const uptimePct = (data.headBuffs.uptime || 0);
-        const spaVal = fix(data.spa, 2);
-        const trigTime = fix(data.headBuffs.trigger, 2);
         headDotRow = `
         <tr style="background:rgba(6,182,212,0.08); border-left:3px solid var(--custom);">
             <td colspan="2" style="padding:8px;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
                     <span style="font-size:0.75rem; color:var(--custom); font-weight:900; letter-spacing:0.5px;">NINJA HEAD PASSIVE</span>
-                    <span title="Master Ninja Head grants +20% DoT Potency.\nIt triggers every 5 attacks and lasts for 10 seconds.\nUptime = 10s / (5 * SPA)." 
-                          style="cursor:help; font-size:0.7rem; background:rgba(0,0,0,0.5); color:#fff; width:16px; height:16px; border-radius:50%; text-align:center; line-height:16px;">?</span>
+                    <button class="calc-info-btn" onclick="openInfoPopup('ninja_passive')">?</button>
                 </div>
-                <div style="font-size:0.75rem; color:#eee; display:grid; grid-template-columns:1fr 1fr; gap:4px;">
-                    <span style="opacity:0.8;">Trigger Rate:</span> <span style="text-align:right; font-family:'Consolas', monospace;">Every ${trigTime}s</span>
-                    <span style="opacity:0.8;">Duration:</span> <span style="text-align:right; font-family:'Consolas', monospace;">10.00s</span>
-                    <span style="opacity:0.8;">Uptime:</span> <span style="text-align:right; font-family:'Consolas', monospace; color:${uptimePct >= 1 ? '#4ade80' : '#ffcc00'}">${fix(uptimePct*100,1)}%</span>
+                <div style="font-size:0.75rem; color:#eee; display:flex; justify-content:space-between;">
+                    <span style="opacity:0.8;">Buff Uptime:</span>
+                    <span style="font-family:'Consolas', monospace; color:${uptimePct >= 1 ? '#4ade80' : '#ffcc00'}">${fix(uptimePct*100,1)}%</span>
                 </div>
             </td>
             <td class="col-val" style="color:var(--custom); vertical-align:middle; font-size:0.85rem;">+${fix(data.headBuffs.dot, 2)}%</td>
@@ -775,27 +864,40 @@ function renderMathContent(data) {
 
         <div id="deepDiveContent" style="display:none;">
             <div class="dd-section">
-                <div class="dd-title">1. Base Damage Calculation</div>
+                <div class="dd-title"><span>1. Base Damage Calculation</span></div>
                 <table class="calc-table">
-                    <tr><td class="col-label">Base Stats (Lv 1)</td><td class="col-formula"></td><td class="col-val">${num(data.baseStats.dmg)}</td></tr>
-                    <tr><td class="col-label">Level Scaling (Lv ${data.level})</td><td class="col-formula"><span class="op">×</span>${fix(levelMult, 3)}</td><td class="col-val">${num(data.baseStats.dmg * levelMult)}</td></tr>
+                    <tr>
+                        <td class="col-label">Base Stats (Lv 1)</td>
+                        <td class="col-formula"></td>
+                        <td class="col-val">${num(data.baseStats.dmg)}</td>
+                    </tr>
+                    <tr>
+                        <td class="col-label">Level Scaling (Lv ${data.level}) <button class="calc-info-btn" onclick="openInfoPopup('level_scale')">?</button></td>
+                        <td class="col-formula"><span class="op">×</span>${fix(levelMult, 3)}</td>
+                        <td class="col-val">${num(data.baseStats.dmg * levelMult)}</td>
+                    </tr>
                     ${data.isSSS ? `<tr><td class="col-label">SSS Rank Bonus</td><td class="col-formula"><span class="op">×</span>1.2</td><td class="col-val">${num(data.lvStats.dmg)}</td></tr>` : ''}
+                    
                     ${traitRowsDmg}
-                    <tr><td class="col-label" style="color:var(--accent-end);">Relic Stat Multiplier</td><td class="col-formula" style="color:var(--accent-end);">${pct(data.relicBuffs.dmg)}</td><td class="col-val">${num(dmgAfterRelic)}</td></tr>
+
+                    <tr>
+                        <td class="col-label" style="color:var(--accent-end);">Relic Multiplier <button class="calc-info-btn" onclick="openInfoPopup('relic_multi')">?</button></td>
+                        <td class="col-formula" style="color:var(--accent-end);">${pct(data.relicBuffs.dmg)}</td>
+                        <td class="col-val">${num(dmgAfterRelic)}</td>
+                    </tr>
                     
                     ${headDmgHtml}
 
-                    <tr><td class="col-label">Set Bonus + Passive + Head</td><td class="col-formula">${pct(data.setBuffs.dmg + data.passiveBuff)}</td><td class="col-val calc-highlight">${num(data.dmgVal)}</td></tr>
+                    <tr><td class="col-label">Set Bonus + Passive</td><td class="col-formula">${pct(data.setBuffs.dmg + data.passiveBuff - (data.headBuffs.dmg || 0))}</td><td class="col-val calc-highlight">${num(data.dmgVal)}</td></tr>
                 </table>
             </div>
 
             <div class="dd-section">
-                <div class="dd-title">2. Crit Averaging</div>
+                <div class="dd-title"><span>2. Crit Averaging</span> <button class="calc-info-btn" onclick="openInfoPopup('crit_avg')">?</button></div>
                 <table class="calc-table">
                     <tr><td class="col-label">Base Hit (Non-Crit)</td><td class="col-formula"></td><td class="col-val">${num(data.dmgVal)}</td></tr>
                     <tr><td class="col-label" style="color:#888; padding-left:8px;">↳ Crit Rate</td><td class="col-formula"></td><td class="col-val" style="color:#888; font-weight:normal;">${fix(data.critData.rate, 1)}%</td></tr>
                     <tr><td class="col-label" style="color:#888; padding-left:8px;">↳ CDmg Base</td><td class="col-formula"></td><td class="col-val" style="color:#888; font-weight:normal;">${fix(data.critData.baseCdmg,0)}</td></tr>
-                    <tr><td class="col-label" style="color:#888; padding-left:8px;">↳ Set Bonus</td><td class="col-formula">+</td><td class="col-val" style="color:#888; font-weight:normal;">${fix(data.critData.setCdmg,0)}</td></tr>
                     <tr><td class="col-label" style="color:var(--accent-start); padding-left:8px;">↳ Relic Stat (Multi)</td><td class="col-formula" style="color:var(--accent-start); font-size:0.7rem;">x(1+%)</td><td class="col-val" style="color:var(--accent-start); font-weight:normal;">${data.critData.relicCmPct}%</td></tr>
                     <tr><td class="col-label">Total Crit Damage</td><td class="col-formula">=</td><td class="col-val calc-highlight">${fix(data.critData.cdmg, 0)}%</td></tr>
                     <tr><td class="col-label" colspan="2" style="text-align:right; padding-right:10px;">Avg Damage Per Hit</td><td class="col-val calc-result">${num(data.dmgVal * data.critData.avgMult)}</td></tr>
@@ -803,7 +905,7 @@ function renderMathContent(data) {
             </div>
 
             <div class="dd-section">
-                <div class="dd-title">3. SPA (Speed) Calculation</div>
+                <div class="dd-title"><span>3. SPA (Speed) Calculation</span> <button class="calc-info-btn" onclick="openInfoPopup('spa_calc')">?</button></div>
                 <table class="calc-table">
                     <tr><td class="col-label">Base SPA (Lv 1)</td><td class="col-formula"></td><td class="col-val">${data.baseStats.spa}s</td></tr>
                     <tr><td class="col-label">Level Reductions</td><td class="col-formula"><span class="op">×</span>${fix(data.lvStats.spaMult, 3)}</td><td class="col-val">${fix(data.baseStats.spa * data.lvStats.spaMult, 3)}s</td></tr>
@@ -814,9 +916,20 @@ function renderMathContent(data) {
                 </table>
             </div>
 
+            ${data.extraAttacks ? `
+            <div class="dd-section">
+                 <div class="dd-title"><span>4. Attack Rate Multiplier</span> <button class="calc-info-btn" onclick="openInfoPopup('attack_rate')">?</button></div>
+                 <table class="calc-table">
+                    <tr><td class="col-label">Hits Per Attack</td><td class="col-val">${data.extraAttacks.hits}</td></tr>
+                    <tr><td class="col-label">Crits Req. for Extra</td><td class="col-val">${data.extraAttacks.req}</td></tr>
+                    <tr><td class="col-label">Attacks needed to Trig</td><td class="col-val">${fix(data.extraAttacks.attacksNeeded, 2)}</td></tr>
+                    <tr><td class="col-label">Final Dps Mult</td><td class="col-val calc-highlight">x${fix(data.extraAttacks.mult, 3)}</td></tr>
+                 </table>
+            </div>` : ''}
+
             ${data.dot > 0 ? `
             <div class="dd-section">
-                <div class="dd-title" style="color:var(--accent-end);">4. Status Effect (DoT)</div>
+                <div class="dd-title" style="color:var(--accent-end);"><span>${data.extraAttacks ? 5 : 4}. Status Effect (DoT)</span> <button class="calc-info-btn" onclick="openInfoPopup('dot_logic')">?</button></div>
                 <table class="calc-table">
                     <tr><td class="col-label calc-sub">Base Hit Ref</td><td class="col-val calc-sub">${num(data.dmgVal)}</td></tr>
                     <tr><td class="col-label">Base Tick %</td><td class="col-val">${fix(data.dotData.baseNoHead, 2)}%</td></tr>
@@ -832,7 +945,7 @@ function renderMathContent(data) {
             </div>` : ''}
 
             <div class="dd-section" style="border-left-color:var(--gold);">
-                <div class="dd-title" style="color:var(--gold);">5. Final Synthesis</div>
+                <div class="dd-title" style="color:var(--gold);">Final Synthesis</div>
                 <table class="calc-table">
                     <tr><td class="col-label">Hit DPS (x${data.placement} Units)</td><td class="col-formula"><span class="op">×</span>${data.placement}</td><td class="col-val calc-highlight">${num(data.hit)}</td></tr>
                     ${data.dot > 0 ? `<tr><td class="col-label">DoT DPS</td><td class="col-formula">+</td><td class="col-val" style="color:var(--accent-end);">${num(data.dot)}</td></tr>` : ''}
@@ -1048,7 +1161,19 @@ function renderGuides() {
         const card = document.createElement('div'); card.className = 'guide-card';
         const imgHtml = row.img ? `<img src="${row.img}">` : '';
         const mainBadgeHtml = formatStatBadge(data.main); const subBadgeHtml = formatStatBadge(data.sub);
-        card.innerHTML = `<div class="guide-card-header"><div class="guide-unit-info">${imgHtml}<div><span style="display:block; line-height:1;">${row.unit}</span><span class="guide-trait-tag">${data.trait}</span></div></div></div><div class="guide-card-body"><div class="build-row rank-1" style="pointer-events:none;"><div class="br-header"><div style="display:flex; align-items:center; gap:8px;"><span class="br-rank">#1</span><span class="br-set">${data.set}</span></div></div><div class="br-grid"><div class="br-col"><div class="br-col-title">MAIN STAT</div><div class="stat-line">${mainBadgeHtml}</div></div><div class="br-col"><div class="br-col-title">SUB STAT</div><div class="stat-line">${subBadgeHtml}</div></div></div></div></div>`;
+        
+        // UPDATED FLEX VALUES HERE FOR GENERIC GUIDES
+        card.innerHTML = `
+            <div class="guide-card-header"><div class="guide-unit-info">${imgHtml}<div><span style="display:block; line-height:1;">${row.unit}</span><span class="guide-trait-tag">${data.trait}</span></div></div></div>
+            <div class="guide-card-body">
+                <div class="build-row rank-1" style="pointer-events:none;">
+                    <div class="br-header"><div style="display:flex; align-items:center; gap:8px;"><span class="br-rank">#1</span><span class="br-set">${data.set}</span></div></div>
+                    <div class="br-grid">
+                        <div class="br-col" style="flex:0.75;"><div class="br-col-title">MAIN STAT</div><div class="stat-line">${mainBadgeHtml}</div></div>
+                        <div class="br-col" style="flex:1.4; border-left:1px solid rgba(255,255,255,0.05); padding-left:12px;"><div class="br-col-title">SUB STAT</div><div class="stat-line">${subBadgeHtml}</div></div>
+                    </div>
+                </div>
+            </div>`;
         guideGrid.appendChild(card);
     });
 
@@ -1102,6 +1227,8 @@ function renderGuides() {
             let prioLabel = build.prio === 'dmg' ? 'DMG STAT' : (build.prio === 'range' ? 'RANGE STAT' : 'SPA STAT');
             let prioColor = build.prio === 'dmg' ? '#ff5555' : (build.prio === 'range' ? '#4caf50' : 'var(--custom)');
             let label = build.prio === 'range' ? 'RANGE' : 'DPS';
+            
+            // UPDATED FLEX VALUES HERE FOR CALCULATED GUIDES
             return `
                 <div class="build-row ${rankClass}">
                     <div class="br-header">
@@ -1112,11 +1239,11 @@ function renderGuides() {
                         <span class="prio-badge" style="color:${prioColor}; border-color:${prioColor};">${prioLabel}</span>
                     </div>
                     <div class="br-grid">
-                        <div class="br-col" style="flex:1.2;">
+                        <div class="br-col" style="flex:0.75;">
                             <div class="br-col-title">MAIN STAT</div>
                             ${mainHtml}
                         </div>
-                        <div class="br-col" style="flex:1.2; border-left:1px solid rgba(255,255,255,0.05); padding-left:12px;">
+                        <div class="br-col" style="flex:1.4; border-left:1px solid rgba(255,255,255,0.05); padding-left:12px;">
                             <div class="br-col-title">SUB STAT</div>
                             ${subHtml}
                         </div>
