@@ -33,7 +33,6 @@
                 <span id="hypoLabel">Bugged Relics</span>
             </label>
 
-            <!-- RESTORED TO CHECKBOX for "Auto Head" -->
             <label id="headPieceToggle" class="nav-toggle-label is-checked" title="Auto-equips the best Unique Head Piece (Sun God or Master Ninja)">
                 <input type="checkbox" id="globalHeadPiece" onchange="toggleHeadPiece(this)" checked>
                 <span>+ Head Relic</span>
@@ -59,7 +58,6 @@
                 <span id="guideHypoLabel">Bugged Relics</span>
             </label>
 
-            <!-- RESTORED TO CHECKBOX for "Auto Head" -->
             <label class="nav-toggle-label is-checked" title="Auto-equips the best Unique Head Piece">
                 <input type="checkbox" id="guideHeadPiece" onchange="toggleGuideHeadPiece(this)" checked>
                 <span>+ Head Relic</span>
@@ -184,6 +182,7 @@
                         <span class="patch-date">Dec 27, 2025</span>
                     </div>
                     <ul class="patch-list">
+                        <li><span class="patch-tag">UI</span> Fixed text overflow for "Crit Dmg" in build cards.</li>
                         <li><span class="patch-tag">Optimizer</span> Added Auto-Head Piece selection. System now automatically tests "Sun God" vs "Ninja" heads for every build.</li>
                         <li><span class="patch-tag">UI</span> Added detailed calculation breakdown for Sun God and Ninja head passives in the DPS Breakdown modal.</li>
                         <li><span class="patch-tag">Math</span> Refined Sun God math: 7s Duration / (6 * SPA). Shows Range and Uptime scaling.</li>

@@ -131,8 +131,8 @@ const unitDatabase = [
         id: "ragna", name: "Ragna (Silverite)", role: "Burst / Hybrid",
         img: "images/Ragna.png", 
         placement: 1,
-        stats: { dmg: 1800, spa: 9, crit: 0, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 3, passiveDmg: 0, element: "Ice", range: 35 },
-        ability: { dmg: 3960, spa: 15 } 
+        stats: { dmg: 1800, spa: 9, crit: 0, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 3, passiveDmg: 72, element: "Ice", range: 35 },
+        ability: { dmg: 3600, spa: 15 } 
     },
     {
         id: "ace", name: "Ace", role: "Burn / DoT",

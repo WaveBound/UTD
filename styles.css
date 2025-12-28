@@ -61,6 +61,7 @@ input:focus, select:focus { border-color: var(--accent-start); outline: none; }
 select { appearance: none; background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22white%22%3E%3Cpath%20d%3D%22M7%2010l5%205%205-5z%22%2F%3E%3C%2Fsvg%3E"); background-repeat: no-repeat; background-position: right 10px center; background-size: 20px; padding-right: 30px; cursor: pointer; }
 
 /* --- DATABASE LAYOUT --- */
+/* REVERTED: Back to 380px to fit 3 per row */
 .db-grid { grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 20px; width: 100%; }
 
 .unit-card { background: var(--card-bg); border: 2px solid var(--card-border); border-radius: 16px; overflow: hidden; position: relative; transition: all 0.2s; display: flex; flex-direction: column; height: 500px; }
@@ -110,11 +111,13 @@ input[type="checkbox"]:checked + .mini-switch::after { transform: translateX(14p
 .top-builds-list { padding: 8px; overflow-y: auto; flex-grow: 1; scrollbar-width: thin; scrollbar-color: #333 #111; }
 
 /* --- UNIFIED STAT BADGES --- */
+/* UPDATED: tighter padding and slightly smaller font to fit long text */
 .stat-badge { 
     display: inline-flex; align-items: center; justify-content: center; 
-    padding: 0 8px; height: 18px; border-radius: 4px; 
-    font-size: 0.65rem; font-weight: 800; text-transform: uppercase; 
+    padding: 0 4px; height: 18px; border-radius: 4px; 
+    font-size: 0.6rem; font-weight: 800; text-transform: uppercase; 
     border: 1px solid; white-space: nowrap; background: rgba(0,0,0,0.4); 
+    letter-spacing: -0.3px;
 }
 .stat-dmg { color: #ff8888; border-color: rgba(255,50,50,0.3); }
 .stat-spa { color: #88ccff; border-color: rgba(50,150,255,0.3); }
@@ -221,7 +224,8 @@ input[type="checkbox"]:checked + .mini-switch::after { transform: translateX(14p
 
 /* --- GUIDES PAGE --- */
 .guide-container { width: 100%; }
-.guide-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 20px; width: 100%; }
+/* REVERTED: Back to 380px */
+.guide-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 20px; width: 100%; }
 .guide-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
 .guide-card:hover { border-color: var(--accent-start); transform: translateY(-3px); }
 .guide-card-header { background: linear-gradient(to right, rgba(46, 16, 101, 0.6), rgba(0,0,0,0.2)); padding: 12px 15px; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center; }

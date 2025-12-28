@@ -419,7 +419,7 @@ function generateBuildRowHTML(r, i) {
             displayLabel = "RANGE";
     }
 
-    // UPDATED LAYOUT: Adjusted flex values (0.9 vs 1.3) to allow sub stats more room
+    // UPDATED LAYOUT: Adjusted flex values to 1.2 vs 1.2 (50/50 split)
     return `
         <div class="build-row ${rankClass}">
             <div class="br-header">
@@ -432,13 +432,13 @@ function generateBuildRowHTML(r, i) {
                 <span class="prio-badge" style="color:${prioColor}; border-color:${prioColor};">${prioLabel}</span>
             </div>
             <div class="br-grid">
-                <div class="br-col" style="flex:0.9;">
+                <div class="br-col" style="flex:1.2;">
                     <div class="br-col-title">MAIN STAT</div>
                     ${headHtml}
                     <div class="stat-line"><span class="sl-label">BODY</span> ${mainBodyBadge}</div>
                     <div class="stat-line"><span class="sl-label">LEGS</span> ${mainLegsBadge}</div>
                 </div>
-                <div class="br-col" style="flex:1.3; border-left:1px solid rgba(255,255,255,0.05); padding-left:12px;">
+                <div class="br-col" style="flex:1.2; border-left:1px solid rgba(255,255,255,0.05); padding-left:12px;">
                     <div class="br-col-title">SUB STAT</div>
                     ${subInnerHtml}
                 </div>
@@ -1112,11 +1112,11 @@ function renderGuides() {
                         <span class="prio-badge" style="color:${prioColor}; border-color:${prioColor};">${prioLabel}</span>
                     </div>
                     <div class="br-grid">
-                        <div class="br-col" style="flex:0.9;">
+                        <div class="br-col" style="flex:1.2;">
                             <div class="br-col-title">MAIN STAT</div>
                             ${mainHtml}
                         </div>
-                        <div class="br-col" style="flex:1.3; border-left:1px solid rgba(255,255,255,0.05); padding-left:12px;">
+                        <div class="br-col" style="flex:1.2; border-left:1px solid rgba(255,255,255,0.05); padding-left:12px;">
                             <div class="br-col-title">SUB STAT</div>
                             ${subHtml}
                         </div>
