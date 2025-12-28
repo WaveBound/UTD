@@ -30,7 +30,7 @@ const NAME_TO_CODE = {
 const STAT_INFO = {
     dmg:   { label: 'Dmg',       color: '#ff8888', border: 'rgba(255,50,50,0.3)' },
     spa:   { label: 'SPA',       color: '#88ccff', border: 'rgba(50,150,255,0.3)' },
-    cdmg:  { label: 'Crit Dmg',  color: '#d8b4fe', border: '#a855f7', special: '<span class="stat-cdmg-text">Crit Dmg</span>' },
+    cdmg:  { label: 'Crit Dmg',  color: '#d8b4fe', border: '#a855f7', special: '<span class="stat-cdmg-text" style="letter-spacing:-0.5px;">Crit Dmg</span>' },
     crit:  { label: 'Crit Rate', color: '#ffd700', border: 'rgba(255, 215, 0, 0.3)' },
     dot:   { label: 'DoT',       color: '#4ade80', border: 'rgba(74, 222, 128, 0.3)' },
     range: { label: 'Range',     color: '#ffa500', border: 'rgba(255, 140, 0, 0.3)' }
@@ -161,12 +161,11 @@ function formatStatBadge(text, totalRolls = null) {
         const p1 = formatPart(parts[0]);
         const p2 = formatPart(parts[1]);
 
-        // CHANGE: Use p1.info.border for the container color
         return `
-        <div class="stat-badge" style="border-color:${p1.info.border}; background:rgba(0,0,0,0.4); display:inline-flex; align-items:center; gap:2px; padding:0 4px; width:fit-content; max-width:100%; height:18px; white-space:nowrap;">
-            <span style="color:${p1.info.color}; font-size:0.6rem; font-weight:700;">${p1.info.label} <span style="font-weight:800; color:#fff; font-size:0.9em;">${p1.valStr}</span></span>
+        <div class="stat-badge" style="border-color:${p1.info.border}; background:rgba(0,0,0,0.4); display:inline-flex; align-items:center; gap:2px; padding:0 3px; width:fit-content; max-width:100%; height:18px; white-space:nowrap;">
+            <span style="color:${p1.info.color}; font-size:0.55rem; font-weight:700;">${p1.info.label} <span style="font-weight:800; color:#fff; font-size:0.9em;">${p1.valStr}</span></span>
             <span style="color:#666; font-size:0.7em; font-weight:bold; margin:0 1px; opacity:0.8;">|</span>
-            <span style="color:${p2.info.color}; font-size:0.6rem; font-weight:700;">${p2.info.label} <span style="font-weight:800; color:#fff; font-size:0.9em;">${p2.valStr}</span></span>
+            <span style="color:${p2.info.color}; font-size:0.55rem; font-weight:700;">${p2.info.label} <span style="font-weight:800; color:#fff; font-size:0.9em;">${p2.valStr}</span></span>
         </div>`;
     }
 
@@ -476,7 +475,7 @@ function generateBuildRowHTML(r, i) {
             displayLabel = "RANGE";
     }
 
-    // UPDATED FLEX VALUES HERE: Main(0.75), Sub(1.4)
+    // FIX: Moved info-btn to result column, positioned absolute top-right
     return `
         <div class="build-row ${rankClass}">
             <div class="br-header">
@@ -489,7 +488,7 @@ function generateBuildRowHTML(r, i) {
                 <span class="prio-badge" style="color:${prioColor}; border-color:${prioColor};">${prioLabel}</span>
             </div>
             <div class="br-grid">
-                <div class="br-col" style="flex:0.75;">
+                <div class="br-col" style="flex:1;">
                     <div class="br-col-title">MAIN STAT</div>
                     ${headHtml}
                     <div class="stat-line"><span class="sl-label">BODY</span> ${mainBodyBadge}</div>
@@ -499,12 +498,12 @@ function generateBuildRowHTML(r, i) {
                     <div class="br-col-title">SUB STAT</div>
                     ${subInnerHtml}
                 </div>
-                <div class="br-res-col">
+                <div class="br-res-col" style="position:relative;">
+                    <button class="info-btn" onclick="showMath('${r.id}')" style="position:absolute; top:-2px; right:0; width:18px; height:18px; font-size:0.6rem; line-height:1;">?</button>
                     <div class="dps-container">
                         <span class="build-dps">${displayVal}</span>
                         <span class="dps-label">${displayLabel}</span>
                     </div>
-                    <button class="info-btn" onclick="showMath('${r.id}')">?</button>
                 </div>
             </div>
         </div>
@@ -1124,6 +1123,11 @@ function getTopBuildsForGuide(unit, trait) {
             finalCfg = data.dmgCfg.res.total >= data.spaCfg.res.total ? data.dmgCfg : data.spaCfg;
             prio = data.dmgCfg.res.total >= data.spaCfg.res.total ? 'dmg' : 'spa';
         }
+        
+        // Generate Unique ID for Guide Result and Cache it for Modal
+        let buildId = `guide-${unit.id}-${trait.id}-${name.replace(/[^a-zA-Z0-9]/g,'')}-${prio}`;
+        cachedResults[buildId] = finalCfg.res;
+
         let set = SETS.find(s => s.id === globalBuilds.find(b => b.name === name)?.set);
         let build = globalBuilds.find(b => b.name === name);
         let mainStructs = [ { label: 'BODY', stat: build.bodyType }, { label: 'LEGS', stat: build.legType } ];
@@ -1140,7 +1144,11 @@ function getTopBuildsForGuide(unit, trait) {
             if (finalCfg.assignments.legs) subStructs.push({ label: 'LEGS', stat: finalCfg.assignments.legs });
         }
         let score = isLaw ? finalCfg.res.range : finalCfg.res.total;
-        return { name: name, dps: score, prio: prio, set: set?.name || 'Unknown', mainStructs: mainStructs, subStructs: subStructs };
+        
+        return { 
+            id: buildId, // Pass the generated ID
+            name: name, dps: score, prio: prio, set: set?.name || 'Unknown', mainStructs: mainStructs, subStructs: subStructs 
+        };
     }).sort((a, b) => b.dps - a.dps).slice(0, 3);
 }
 
@@ -1162,15 +1170,15 @@ function renderGuides() {
         const imgHtml = row.img ? `<img src="${row.img}">` : '';
         const mainBadgeHtml = formatStatBadge(data.main); const subBadgeHtml = formatStatBadge(data.sub);
         
-        // UPDATED FLEX VALUES HERE FOR GENERIC GUIDES
+        // GENERIC GUIDE LAYOUT
         card.innerHTML = `
             <div class="guide-card-header"><div class="guide-unit-info">${imgHtml}<div><span style="display:block; line-height:1;">${row.unit}</span><span class="guide-trait-tag">${data.trait}</span></div></div></div>
             <div class="guide-card-body">
                 <div class="build-row rank-1" style="pointer-events:none;">
                     <div class="br-header"><div style="display:flex; align-items:center; gap:8px;"><span class="br-rank">#1</span><span class="br-set">${data.set}</span></div></div>
                     <div class="br-grid">
-                        <div class="br-col" style="flex:0.75;"><div class="br-col-title">MAIN STAT</div><div class="stat-line">${mainBadgeHtml}</div></div>
-                        <div class="br-col" style="flex:1.4; border-left:1px solid rgba(255,255,255,0.05); padding-left:12px;"><div class="br-col-title">SUB STAT</div><div class="stat-line">${subBadgeHtml}</div></div>
+                        <div class="br-col" style="flex:0.95;"><div class="br-col-title">MAIN STAT</div><div class="stat-line">${mainBadgeHtml}</div></div>
+                        <div class="br-col" style="flex:1.3; border-left:1px solid rgba(255,255,255,0.05); padding-left:12px;"><div class="br-col-title">SUB STAT</div><div class="stat-line">${subBadgeHtml}</div></div>
                     </div>
                 </div>
             </div>`;
@@ -1228,7 +1236,7 @@ function renderGuides() {
             let prioColor = build.prio === 'dmg' ? '#ff5555' : (build.prio === 'range' ? '#4caf50' : 'var(--custom)');
             let label = build.prio === 'range' ? 'RANGE' : 'DPS';
             
-            // UPDATED FLEX VALUES HERE FOR CALCULATED GUIDES
+            // CALCULATED GUIDE LAYOUT
             return `
                 <div class="build-row ${rankClass}">
                     <div class="br-header">
@@ -1236,18 +1244,21 @@ function renderGuides() {
                             <span class="br-rank">#${index+1}</span>
                             <span class="br-set">${cleanSetName}</span>
                         </div>
-                        <span class="prio-badge" style="color:${prioColor}; border-color:${prioColor};">${prioLabel}</span>
+                        <div style="display:flex; align-items:center; gap:6px;">
+                            <span class="prio-badge" style="color:${prioColor}; border-color:${prioColor};">${prioLabel}</span>
+                        </div>
                     </div>
                     <div class="br-grid">
-                        <div class="br-col" style="flex:0.75;">
+                        <div class="br-col" style="flex:0.95;">
                             <div class="br-col-title">MAIN STAT</div>
                             ${mainHtml}
                         </div>
-                        <div class="br-col" style="flex:1.4; border-left:1px solid rgba(255,255,255,0.05); padding-left:12px;">
+                        <div class="br-col" style="flex:1.3; border-left:1px solid rgba(255,255,255,0.05); padding-left:12px;">
                             <div class="br-col-title">SUB STAT</div>
                             ${subHtml}
                         </div>
-                        <div class="br-res-col">
+                        <div class="br-res-col" style="position:relative;">
+                            <button class="info-btn" onclick="showMath('${build.id}')" style="position:absolute; top:-2px; right:0; width:18px; height:18px; font-size:0.6rem; line-height:1;">?</button>
                             <div class="dps-container">
                                 <span class="build-dps" style="font-size:0.9rem;">${format(build.dps)}</span>
                                 <span class="dps-label">${label}</span>
