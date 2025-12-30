@@ -31,7 +31,6 @@ function combineTraits(t1, t2) {
 
         isEternal: t1.isEternal || t2.isEternal,
         hasRadiation: t1.hasRadiation || t2.hasRadiation,
-        // Take the max duration if both have it, or just the one that has it
         radiationDuration: Math.max(t1.radiationDuration || 0, t2.radiationDuration || 0),
         
         allowDotStack: t1.allowDotStack || t2.allowDotStack,
@@ -56,6 +55,145 @@ function getLevelStats(baseDmg, baseSpa, level, priority) {
         dmgMult, spaMult 
     };
 }
+
+// --- OPTIMIZATION HELPERS (Moved from script.js) ---
+
+const applySubPiece = (testBuild, cand, mainStatType) => {
+    let primaryTarget = cand;
+    if (primaryTarget === mainStatType) {
+        primaryTarget = (mainStatType === 'range') ? 'dmg' : 'range';
+    }
+    for (let k in PERFECT_SUBS) {
+        if (k === mainStatType) continue;
+        let multiplier = (k === primaryTarget) ? 6 : 1;
+        testBuild[k] = (testBuild[k] || 0) + (PERFECT_SUBS[k] * multiplier);
+    }
+};
+
+const generateAssignments = (cand, build, includeSubs, includeHead) => {
+    let assignments = {};
+    const getDisp = (k) => SUB_NAMES[k] || k;
+    const resolve = (cand, main) => {
+        if (cand === main) return (main === 'range') ? 'dmg' : 'range';
+        return cand;
+    };
+
+    if (includeHead) { const val = getDisp(cand); assignments.head = val; }
+    if (includeSubs) {
+        let bSub = resolve(cand, build.bodyType);
+        let lSub = resolve(cand, build.legType);
+        assignments.body = getDisp(bSub);
+        assignments.legs = getDisp(lSub);
+    }
+    return assignments;
+};
+
+const checkIsBetter = (res, currentBest, optimizeFor) => {
+    if (optimizeFor === 'range') {
+        if (res.range > currentBest.range) return true;
+        if (res.range === currentBest.range && res.total > currentBest.total) return true;
+        return false;
+    }
+    return res.total > currentBest.total;
+};
+
+/**
+ * Calculates the best sub-stat configuration for a given build.
+ * @param {Object} build - The base build configuration.
+ * @param {Object} stats - The unit's effective stats.
+ * @param {boolean} includeSubs - Whether to optimize sub-stats.
+ * @param {string|boolean} headMode - 'auto', 'sun_god', 'ninja', 'none', or boolean.
+ * @param {Array<string>} candidates - List of sub-stat candidates to test.
+ * @param {string} [optimizeFor='dps'] - What to optimize for ('dps' or 'range').
+ */
+const getBestSubConfig = (build, stats, includeSubs, headMode, candidates, optimizeFor = 'dps') => {
+    let mode = headMode;
+    if (mode === true) mode = 'auto';
+    if (mode === false) mode = 'none';
+
+    let headOptions = [];
+    if (mode === 'auto') headOptions = ['sun_god', 'ninja'];
+    else if (mode && mode !== 'none') headOptions = [mode];
+    else headOptions = ['none'];
+    
+    let globalBestRes = { total: -1, range: -1 };
+    let globalBestAssignments = {};
+    let globalBestHead = 'none';
+
+    headOptions.forEach(headType => {
+        const actualIncludeHead = (headType !== 'none');
+        stats.context.headPiece = headType;
+
+        if (!includeSubs && !actualIncludeHead) {
+            let res = calculateDPS(stats, build, stats.context);
+            if(checkIsBetter(res, globalBestRes, optimizeFor)) {
+                globalBestRes = res; globalBestAssignments = {}; globalBestHead = headType;
+            }
+            return;
+        }
+
+        let currentCandidates = [...candidates];
+        if (currentCandidates.length === 0 && actualIncludeHead) currentCandidates.push('dmg');
+        if (!includeSubs && actualIncludeHead) currentCandidates = ['dmg', 'spa']; 
+
+        currentCandidates.forEach(cand => {
+            let testBuild = { ...build };
+            
+            if (includeSubs) { 
+                applySubPiece(testBuild, cand, build.bodyType); 
+                applySubPiece(testBuild, cand, build.legType); 
+            }
+            
+            if (actualIncludeHead) {
+                applySubPiece(testBuild, cand, null); 
+            }
+            
+            let res = calculateDPS(stats, testBuild, stats.context);
+            
+            if (checkIsBetter(res, globalBestRes, optimizeFor)) {
+                globalBestRes = res; 
+                globalBestHead = headType;
+                globalBestAssignments = generateAssignments(cand, build, includeSubs, actualIncludeHead);
+                globalBestAssignments.selectedHead = headType;
+            }
+
+            if (actualIncludeHead) {
+                currentCandidates.forEach(subCand => {
+                    if (cand === subCand) return; 
+
+                    let hybridBuild = { ...build };
+
+                    if (includeSubs) { 
+                        applySubPiece(hybridBuild, cand, build.bodyType); 
+                        applySubPiece(hybridBuild, cand, build.legType); 
+                    }
+
+                    hybridBuild[cand] = (hybridBuild[cand] || 0) + (PERFECT_SUBS[cand] * 3);
+                    hybridBuild[subCand] = (hybridBuild[subCand] || 0) + (PERFECT_SUBS[subCand] * 3);
+
+                    let hybridRes = calculateDPS(stats, hybridBuild, stats.context);
+
+                    if (checkIsBetter(hybridRes, globalBestRes, optimizeFor)) {
+                        globalBestRes = hybridRes;
+                        globalBestHead = headType;
+                        
+                        let assign = generateAssignments(cand, build, includeSubs, false);
+                        const getDisp = (k) => SUB_NAMES[k] || k;
+                        assign.head = `${getDisp(cand)}/${getDisp(subCand)}`; 
+                        assign.selectedHead = headType;
+                        globalBestAssignments = assign;
+                    }
+                });
+            }
+        });
+    });
+
+    globalBestAssignments.selectedHead = globalBestHead;
+    return { res: globalBestRes, desc: "", assignments: globalBestAssignments };
+};
+
+
+// --- CORE CALCULATION LOGIC ---
 
 function calculateDPS(uStats, relicStats, context) {
     const { level, priority, wave, isBoss, traitObj, placement, isSSS, headPiece } = context;
@@ -89,11 +227,9 @@ function calculateDPS(uStats, relicStats, context) {
     const unitElement = uStats.element || "None";
 
     if (relicStats.set === 'ninja') {
-        const allowedElements = ["Dark", "Rose", "Fire"];
-        if (allowedElements.includes(unitElement)) sBonus.dmg += 10; 
+        if (["Dark", "Rose", "Fire"].includes(unitElement)) sBonus.dmg += 10; 
     } else if (relicStats.set === 'sun_god') {
-        const allowedElements = ["Ice", "Light", "Water"];
-        if (allowedElements.includes(unitElement)) sBonus.dmg += 10;
+        if (["Ice", "Light", "Water"].includes(unitElement)) sBonus.dmg += 10;
     }
 
     // 4. Relic Base Stats
@@ -110,21 +246,21 @@ function calculateDPS(uStats, relicStats, context) {
         baseR_Dot *= mult; baseR_Cf  *= mult; baseR_Range *= mult;
     }
 
-    // 5. CALCULATE FINAL SPA (Speed) - Needed for Head Piece Uptime
+    // 5. CALCULATE FINAL SPA (Speed)
     const afterTraitSpa = lvStats.spa * (1 - traitSpaPct / 100);
     let rSpaTotal = baseR_Spa + sBonus.spa + passiveSpaPcent;
     const rawFinalSpa = afterTraitSpa * (1 - rSpaTotal / 100);
     const cap = uStats.spaCap || 0.1;
     const finalSpa = Math.max(rawFinalSpa, cap);
 
-    // 6. CALCULATE FINAL RANGE - Needed for Sun God Head
+    // 6. CALCULATE FINAL RANGE
     const baseRange = uStats.range || 0;
     const levelRange = baseRange * lvStats.dmgMult; 
     const passiveRange = uStats.passiveRange || 0;
     const rangeMult = 1 + (traitRangePct + baseR_Range + passiveRange) / 100;
     const finalRange = levelRange * rangeMult;
 
-    // 7. HEAD PIECE PASSIVES (Dependent on SPA & Range)
+    // 7. HEAD PIECE PASSIVES
     let headDmgBuff = 0;
     let headDotBuff = 0;
     let headCalc = { type: headPiece, uptime: 0, trigger: 0, duration: 0, attacks: 0 };
@@ -134,35 +270,22 @@ function calculateDPS(uStats, relicStats, context) {
         headCalc.attacks = 6;
         headCalc.duration = 7;
         headCalc.trigger = headCalc.attacks * finalSpa;
-        
-        if (headCalc.trigger <= headCalc.duration) headCalc.uptime = 1.0; 
-        else headCalc.uptime = headCalc.duration / headCalc.trigger;
-
-        // Effect: Buff = Range Value
-        const avgBuffVal = finalRange * headCalc.uptime;
-        headDmgBuff += avgBuffVal;
-    }
-
-    if (headPiece === 'ninja') {
+        headCalc.uptime = (headCalc.trigger <= headCalc.duration) ? 1.0 : headCalc.duration / headCalc.trigger;
+        headDmgBuff += finalRange * headCalc.uptime;
+    } else if (headPiece === 'ninja') {
         // Ninja: Every 5 attacks, +20% DoT for 10s
         headCalc.attacks = 5;
         headCalc.duration = 10;
         headCalc.trigger = headCalc.attacks * finalSpa;
-
-        if (headCalc.trigger <= headCalc.duration) headCalc.uptime = 1.0; 
-        else headCalc.uptime = headCalc.duration / headCalc.trigger;
-
-        // Effect: +20% DoT
-        const avgBuffVal = 20 * headCalc.uptime;
-        headDotBuff += avgBuffVal;
+        headCalc.uptime = (headCalc.trigger <= headCalc.duration) ? 1.0 : headCalc.duration / headCalc.trigger;
+        headDotBuff += 20 * headCalc.uptime;
     }
 
     // 8. FINAL DAMAGE CALCULATION
     const traitMult = (1 + traitDmgPct / 100);
     const relicMult = (1 + baseR_Dmg / 100);
     
-    // *** ADDITIVE BUCKET ***
-    // Sun God Head (headDmgBuff) is added here alongside Set Bonus and Unit Passive
+    // Additive Bucket: Set Bonus + Unit Passive + Head Piece
     const additiveTotal = sBonus.dmg + passivePcent + headDmgBuff;
     const setAndPassiveMult = (1 + additiveTotal / 100);
     
@@ -179,7 +302,7 @@ function calculateDPS(uStats, relicStats, context) {
     const avgCritMult = (1 + ((finalCdmgStat / 100) * (finalCritRate / 100)));
     const avgHit = finalDmg * avgCritMult;
     
-    // 10. ATTACK MULTIPLIER (Multi-Hit/Extra Attacks)
+    // 10. ATTACK MULTIPLIER
     let attackMultiplier = 1;
     let extraAttacksData = null;
 
@@ -199,7 +322,6 @@ function calculateDPS(uStats, relicStats, context) {
 
     // 11. DoT CALCULATION
     let dotDpsTotal = 0;
-    // Add Head DoT Buff here
     let totalDotBuffs = (traitObj.dotBuff || 0) + headDotBuff;
     
     let dotBreakdown = { 
@@ -220,23 +342,17 @@ function calculateDPS(uStats, relicStats, context) {
         const totalDoTPct = singleTickPct * internalStacks;
         const totalDoTDmg = finalDmg * (totalDoTPct / 100) * avgCritMult;
         
-        // --- TIME BASIS CALCULATION ---
+        // Time Basis
         let timeBasis = finalSpa; 
         if (!traitObj.allowDotStack && uStats.dotDuration && uStats.dotDuration > 0) {
-                // If unit has innate dot duration (like Ace 4s)
                 timeBasis = Math.max(uStats.dotDuration, finalSpa);
         } else if (traitObj.hasRadiation && traitObj.radiationDuration) {
-                // FISSION LOGIC: If radiation has a specific duration (10s)
-                // We typically use the longer of (Fixed Duration, SPA) to avoid division by near-zero if SPA is huge
                 timeBasis = Math.max(traitObj.radiationDuration, finalSpa);
         }
 
         const oneUnitDoTDps = totalDoTDmg / timeBasis;
-        if (traitObj.allowDotStack) {
-            dotDpsTotal = oneUnitDoTDps * placement;
-        } else {
-            dotDpsTotal = oneUnitDoTDps * 1; 
-        }
+        dotDpsTotal = oneUnitDoTDps * (traitObj.allowDotStack ? placement : 1); 
+
         dotBreakdown.internal = internalStacks;
         dotBreakdown.finalTick = totalDoTDmg;
         dotBreakdown.timeUsed = timeBasis;
@@ -256,7 +372,6 @@ function calculateDPS(uStats, relicStats, context) {
         setBuffs: { dmg: sBonus.dmg, spa: sBonus.spa }, 
         passiveBuff: passivePcent + headDmgBuff, 
         passiveSpaBuff: passiveSpaPcent,
-        // Pass detailed head calculation data
         headBuffs: { 
             dmg: headDmgBuff, 
             dot: headDotBuff, 

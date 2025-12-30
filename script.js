@@ -11,6 +11,10 @@ let kiritoState = { realm: false, card: false };
 let tempGuideUnit = 'all';
 let tempGuideTrait = 'auto';
 
+// Async Rendering State
+let renderQueueIndex = 0;
+let renderQueueId = null;
+
 // --- CONSTANTS ---
 const MAIN_STAT_VALS = {
     body: { dmg: 60, dot: 75, cm: 120 },
@@ -99,8 +103,6 @@ function getStatType(key) {
 }
 
 // --- BADGE GENERATION ---
-
-// 1. Standard Single Badge
 function getBadgeHtml(statKeyOrName, value = null) {
     if (!statKeyOrName) return '<span style="font-size:0.65rem; color:#444;">-</span>';
     
@@ -117,14 +119,12 @@ function getBadgeHtml(statKeyOrName, value = null) {
     return `<span class="stat-badge" style="color:${info.color}; border-color:${info.border};">${innerContent}${valueHtml}</span>`;
 }
 
-// 2. Formatting Logic (Handles Split Stats)
 function formatStatBadge(text, totalRolls = null) {
     if(!text) return '';
     if (text.includes('<')) return text;
     
     let parts = text.split(/[\/>,]+/).map(p => p.trim()).filter(p => p);
     
-    // Case A: Single Stat
     if (parts.length === 1) {
         let val = null;
         if (totalRolls) {
@@ -134,9 +134,7 @@ function formatStatBadge(text, totalRolls = null) {
         return getBadgeHtml(parts[0], val);
     }
 
-    // Case B: Hybrid/Split Stat (Combined Badge)
     if (parts.length === 2) {
-        // PRIORITY SORTING: Damage > Range > SPA > Others
         const priority = { 'dmg': 1, 'damage': 1, 'range': 2, 'spa': 3 };
         parts.sort((a, b) => {
             const pa = priority[a.toLowerCase()] || 99;
@@ -146,7 +144,6 @@ function formatStatBadge(text, totalRolls = null) {
 
         const rolls = totalRolls ? totalRolls / 2 : 0;
         
-        // Helper to format part
         const formatPart = (name) => {
             const type = getStatType(name);
             const info = STAT_INFO[type];
@@ -179,15 +176,17 @@ function getUnitImgHtml(unit, imgClass = '', iconSizeClass = '') {
     return `<div class="unit-img-wrapper"><img src="${unit.img}" class="${imgClass}"><img src="${elIcon}" class="element-icon ${iconSizeClass}"></div>`;
 }
 
-// --- TOGGLES ---
+// --- TOGGLES & HELPERS ---
+const resetAndRender = () => { renderQueueIndex = 0; renderDatabase(); };
+
 function toggleCheckbox(checkbox, callback, isHypothetical = false) {
     checkbox.parentNode.classList.toggle('is-checked', checkbox.checked);
     if (isHypothetical) setGuideMode(checkbox.checked ? 'fixed' : 'current');
     else callback();
 }
 
-const toggleSubStats = (cb) => toggleCheckbox(cb, renderDatabase);
-const toggleHeadPiece = (cb) => toggleCheckbox(cb, renderDatabase);
+const toggleSubStats = (cb) => toggleCheckbox(cb, resetAndRender);
+const toggleHeadPiece = (cb) => toggleCheckbox(cb, resetAndRender);
 const toggleHypothetical = (cb) => toggleCheckbox(cb, null, true);
 const toggleGuideSubStats = (cb) => toggleCheckbox(cb, renderGuides);
 const toggleGuideHeadPiece = (cb) => toggleCheckbox(cb, renderGuides);
@@ -200,7 +199,7 @@ function toggleKiritoMode(mode, checkbox) {
         kiritoState.card = checkbox.checked;
     }
     if (document.getElementById('guidesPage').classList.contains('active')) renderGuides();
-    else renderDatabase();
+    else resetAndRender();
 }
 
 // --- CALCULATION HELPERS ---
@@ -210,152 +209,22 @@ const getFilteredBuilds = () => globalBuilds.filter(b => {
     return true;
 });
 
-const getSubCandidates = () => SUB_CANDIDATES.filter(c => !((!statConfig.applyRelicCrit && (c === 'cm' || c === 'cf')) || (!statConfig.applyRelicDot && c === 'dot') || (currentGuideMode === 'current' && c === 'cf')));
-
-const applySubPiece = (testBuild, cand, mainStatType) => {
-    let primaryTarget = cand;
-    if (primaryTarget === mainStatType) {
-        primaryTarget = (mainStatType === 'range') ? 'dmg' : 'range';
-    }
-    for (let k in PERFECT_SUBS) {
-        if (k === mainStatType) continue;
-        let multiplier = (k === primaryTarget) ? 6 : 1;
-        testBuild[k] = (testBuild[k] || 0) + (PERFECT_SUBS[k] * multiplier);
-    }
-};
-
-const generateAssignments = (cand, build, includeSubs, includeHead) => {
-    let assignments = {};
-    const getDisp = (k) => SUB_NAMES[k] || k;
-    const resolve = (cand, main) => {
-        if (cand === main) return (main === 'range') ? 'dmg' : 'range';
-        return cand;
-    };
-
-    if (includeHead) { const val = getDisp(cand); assignments.head = val; }
-    if (includeSubs) {
-        let bSub = resolve(cand, build.bodyType);
-        let lSub = resolve(cand, build.legType);
-        assignments.body = getDisp(bSub);
-        assignments.legs = getDisp(lSub);
-    }
-    return assignments;
-};
-
-// --- CORE OPTIMIZATION LOGIC ---
-const getBestSubConfig = (build, stats, includeSubs, headMode, optimizeFor = 'dps') => {
-    let mode = headMode;
-    if (mode === true) mode = 'auto';
-    if (mode === false) mode = 'none';
-
-    let headOptions = [];
-    if (mode === 'auto') headOptions = ['sun_god', 'ninja'];
-    else if (mode && mode !== 'none') headOptions = [mode];
-    else headOptions = ['none'];
-    
-    let globalBestRes = { total: -1, range: -1 };
-    let globalBestAssignments = {};
-    let globalBestHead = 'none';
-
-    headOptions.forEach(headType => {
-        const actualIncludeHead = (headType !== 'none');
-        stats.context.headPiece = headType;
-
-        if (!includeSubs && !actualIncludeHead) {
-            let res = calculateDPS(stats, build, stats.context);
-            if(checkIsBetter(res, globalBestRes, optimizeFor)) {
-                globalBestRes = res; globalBestAssignments = {}; globalBestHead = headType;
-            }
-            return;
-        }
-
-        let candidates = getSubCandidates();
-        if (candidates.length === 0 && actualIncludeHead) candidates.push('dmg');
-        if (!includeSubs && actualIncludeHead) candidates = ['dmg', 'spa']; 
-
-        candidates.forEach(cand => {
-            let testBuild = { ...build };
-            
-            if (includeSubs) { 
-                applySubPiece(testBuild, cand, build.bodyType); 
-                applySubPiece(testBuild, cand, build.legType); 
-            }
-            
-            if (actualIncludeHead) {
-                applySubPiece(testBuild, cand, null); 
-            }
-            
-            let res = calculateDPS(stats, testBuild, stats.context);
-            
-            if (checkIsBetter(res, globalBestRes, optimizeFor)) {
-                globalBestRes = res; 
-                globalBestHead = headType;
-                globalBestAssignments = generateAssignments(cand, build, includeSubs, actualIncludeHead);
-                globalBestAssignments.selectedHead = headType;
-            }
-
-            if (actualIncludeHead) {
-                candidates.forEach(subCand => {
-                    if (cand === subCand) return; 
-
-                    let hybridBuild = { ...build };
-
-                    if (includeSubs) { 
-                        applySubPiece(hybridBuild, cand, build.bodyType); 
-                        applySubPiece(hybridBuild, cand, build.legType); 
-                    }
-
-                    hybridBuild[cand] = (hybridBuild[cand] || 0) + (PERFECT_SUBS[cand] * 3);
-                    hybridBuild[subCand] = (hybridBuild[subCand] || 0) + (PERFECT_SUBS[subCand] * 3);
-
-                    let hybridRes = calculateDPS(stats, hybridBuild, stats.context);
-
-                    if (checkIsBetter(hybridRes, globalBestRes, optimizeFor)) {
-                        globalBestRes = hybridRes;
-                        globalBestHead = headType;
-                        
-                        let assign = generateAssignments(cand, build, includeSubs, false);
-                        const getDisp = (k) => SUB_NAMES[k] || k;
-                        assign.head = `${getDisp(cand)}/${getDisp(subCand)}`; 
-                        assign.selectedHead = headType;
-                        globalBestAssignments = assign;
-                    }
-                });
-            }
-        });
-    });
-
-    globalBestAssignments.selectedHead = globalBestHead;
-    return { res: globalBestRes, desc: "", assignments: globalBestAssignments };
-};
-
-const checkIsBetter = (res, currentBest, optimizeFor) => {
-    if (optimizeFor === 'range') {
-        if (res.range > currentBest.range) return true;
-        if (res.range === currentBest.range && res.total > currentBest.total) return true;
-        return false;
-    }
-    return res.total > currentBest.total;
-};
+const getValidSubCandidates = () => SUB_CANDIDATES.filter(c => !((!statConfig.applyRelicCrit && (c === 'cm' || c === 'cf')) || (!statConfig.applyRelicDot && c === 'dot') || (currentGuideMode === 'current' && c === 'cf')));
 
 // --- DATA CALCULATION ---
-function calculateUnitBuilds(unit, effectiveStats) {
+// Optimized signature to accept pre-calculated lists
+function calculateUnitBuilds(unit, effectiveStats, filteredBuilds, subCandidates, headsToProcess, includeSubs) {
     cachedResults = cachedResults || {};
     const specificTraits = unitSpecificTraits[unit.id] || [];
     const activeTraits = [...traitsList, ...customTraits, ...specificTraits];
     const isAbilActive = activeAbilityIds.has(unit.id); 
-    const includeSubs = document.getElementById('globalSubStats').checked;
-    const includeHead = document.getElementById('globalHeadPiece').checked;
     
-    const headsToProcess = includeHead ? ['sun_god', 'ninja'] : ['none'];
-
     effectiveStats.id = unit.id;
     if (unit.id === 'kirito' && kiritoState.realm && kiritoState.card) {
         effectiveStats.dot = 200; effectiveStats.dotDuration = 4; effectiveStats.dotStacks = unit.stats.hitCount || 14; 
     }
 
     let unitResults = [];
-    const filteredBuilds = getFilteredBuilds();
 
     activeTraits.forEach(trait => {
         if (trait.id === 'none') return; 
@@ -366,12 +235,12 @@ function calculateUnitBuilds(unit, effectiveStats) {
             headsToProcess.forEach(hMode => {
                 let contextDmg = { level: 99, priority: 'dmg', wave: 25, isBoss: false, traitObj: trait, placement: actualPlacement, isSSS: true };
                 effectiveStats.context = contextDmg;
-                let bestDmgConfig = getBestSubConfig(build, effectiveStats, includeSubs, hMode);
+                let bestDmgConfig = getBestSubConfig(build, effectiveStats, includeSubs, hMode, subCandidates);
                 let resDmg = bestDmgConfig.res;
 
                 let contextSpa = { level: 99, priority: 'spa', wave: 25, isBoss: false, traitObj: trait, placement: actualPlacement, isSSS: true };
                 effectiveStats.context = contextSpa;
-                let bestSpaConfig = getBestSubConfig(build, effectiveStats, includeSubs, hMode);
+                let bestSpaConfig = getBestSubConfig(build, effectiveStats, includeSubs, hMode, subCandidates);
                 let resSpa = bestSpaConfig.res;
 
                 let suffix = isAbilActive ? '-ABILITY' : '-BASE';
@@ -407,7 +276,7 @@ function calculateUnitBuilds(unit, effectiveStats) {
                 if (unit.id === 'law') {
                      let contextRange = { level: 99, priority: 'dmg', wave: 25, isBoss: false, traitObj: trait, placement: actualPlacement, isSSS: true };
                      effectiveStats.context = contextRange;
-                     let bestRangeConfig = getBestSubConfig(build, effectiveStats, includeSubs, hMode, 'range');
+                     let bestRangeConfig = getBestSubConfig(build, effectiveStats, includeSubs, hMode, subCandidates, 'range');
                      let resRange = bestRangeConfig.res;
 
                      if (!isNaN(resRange.total)) {
@@ -475,7 +344,6 @@ function generateBuildRowHTML(r, i) {
             displayLabel = "RANGE";
     }
 
-    // FIX: Moved info-btn to result column, positioned absolute top-right
     return `
         <div class="build-row ${rankClass}">
             <div class="br-header">
@@ -494,12 +362,12 @@ function generateBuildRowHTML(r, i) {
                     <div class="stat-line"><span class="sl-label">BODY</span> ${mainBodyBadge}</div>
                     <div class="stat-line"><span class="sl-label">LEGS</span> ${mainLegsBadge}</div>
                 </div>
-                <div class="br-col" style="flex:1.2; border-left:1px solid rgba(255,255,255,0.05); padding-left:12px;">
+                <div class="br-col" style="flex:1.1; border-left:1px solid rgba(255,255,255,0.05); padding-left:18px;">
                     <div class="br-col-title">SUB STAT</div>
                     ${subInnerHtml}
                 </div>
                 <div class="br-res-col" style="position:relative;">
-                    <button class="info-btn" onclick="showMath('${r.id}')" style="position:absolute; top:-2px; right:0; width:18px; height:18px; font-size:0.6rem; line-height:1;">?</button>
+                    <button class="info-btn" onclick="showMath('${r.id}')" style="position:absolute; bottom:5px; left:15px; width:18px; height:18px; font-size:0.6rem; line-height:1;">?</button>
                     <div class="dps-container">
                         <span class="build-dps">${displayVal}</span>
                         <span class="dps-label">${displayLabel}</span>
@@ -548,7 +416,7 @@ function updateBuildListDisplay(unitId) {
         return;
     }
 
-    let displaySlice = filtered.slice(0, 50);
+    let displaySlice = filtered.slice(0, 25);
 
     if(unitId === 'kirito' && searchInput === '') {
         const astralBuild = filtered.find(b => b.traitName === 'Astral');
@@ -568,7 +436,14 @@ function toggleAbility(unitId, checkbox) {
     let currentStats = { ...unit.stats };
     if (checkbox.checked && unit.ability) Object.assign(currentStats, unit.ability);
     
-    const results = calculateUnitBuilds(unit, currentStats);
+    // Pass global configuration for single unit recalc
+    const filteredBuilds = getFilteredBuilds();
+    const subCandidates = getValidSubCandidates();
+    const includeSubs = document.getElementById('globalSubStats').checked;
+    const includeHead = document.getElementById('globalHeadPiece').checked;
+    const headsToProcess = includeHead ? ['sun_god', 'ninja'] : ['none'];
+
+    const results = calculateUnitBuilds(unit, currentStats, filteredBuilds, subCandidates, headsToProcess, includeSubs);
     unitBuildsCache[unitId] = results;
     updateBuildListDisplay(unitId);
 }
@@ -590,7 +465,7 @@ function toggleSelection(id) {
     updateCompareBtn();
 }
 
-const selectAllUnits = () => { const alreadyAll = selectedUnitIds.size === unitDatabase.length; alreadyAll ? selectedUnitIds.clear() : unitDatabase.forEach(u => selectedUnitIds.add(u.id)); renderDatabase(); };
+const selectAllUnits = () => { const alreadyAll = selectedUnitIds.size === unitDatabase.length; alreadyAll ? selectedUnitIds.clear() : unitDatabase.forEach(u => selectedUnitIds.add(u.id)); resetAndRender(); };
 
 function openComparison() {
     if(selectedUnitIds.size === 0) return;
@@ -600,11 +475,13 @@ function openComparison() {
     const includeSubs = document.getElementById('globalSubStats').checked;
     const includeHead = document.getElementById('globalHeadPiece').checked;
     const comparisonHeadMode = includeHead ? 'auto' : 'none';
+    const subCandidates = getValidSubCandidates();
+    const filteredBuilds = getFilteredBuilds(); // Optimization
 
     const findBest = (unitObj, statsObj, availableTraits) => {
         let bestResult = { total: -1 }, bestTraitName = "", bestBuildName = "", bestSpa = 0, bestPrio = "";
         statsObj.id = unitObj.id;
-        const filteredBuilds = getFilteredBuilds();
+        
         availableTraits.forEach(trait => {
             if(trait.id === 'none') return;
             let place = Math.min(unitObj.placement, trait.limitPlace || unitObj.placement);
@@ -613,7 +490,7 @@ function openComparison() {
                  { p: 'dmg', ctx: { level: 99, priority: 'dmg', wave: 25, isBoss: false, traitObj: trait, placement: place, isSSS: true } }
                 ].forEach(({p, ctx}) => {
                     statsObj.context = ctx;
-                    let cfg = getBestSubConfig(build, statsObj, includeSubs, comparisonHeadMode);
+                    let cfg = getBestSubConfig(build, statsObj, includeSubs, comparisonHeadMode, subCandidates);
                     let res = cfg.res;
                     if (res.total > bestResult.total) {
                         bestResult = res; bestPrio = p === 'dmg' ? "DMG" : "SPA"; bestTraitName = trait.name; bestBuildName = build.name; bestSpa = res.spa;
@@ -648,68 +525,105 @@ function openComparison() {
 
 function closeCompare() { toggleModal('compareModal', false); }
 
+// --- RENDER DATABASE (ASYNC CHUNKED) ---
 function renderDatabase() {
     const container = document.getElementById('dbPage');
-    container.innerHTML = '';
-    cachedResults = {}; 
-    unitBuildsCache = {}; 
     
-    unitDatabase.forEach(unit => {
-        const isAbilActive = activeAbilityIds.has(unit.id);
-        let currentStats = { ...unit.stats };
-        if (isAbilActive && unit.ability) Object.assign(currentStats, unit.ability);
+    // If this is a fresh render, clear everything
+    if (renderQueueIndex === 0) {
+        container.innerHTML = '';
+        cachedResults = {}; 
+        unitBuildsCache = {};
+    }
+
+    // Cancel any existing render loop
+    if (renderQueueId) {
+        cancelAnimationFrame(renderQueueId);
+        renderQueueId = null;
+    }
+
+    // Pre-calculate invariants for this render pass
+    const filteredBuilds = getFilteredBuilds();
+    const subCandidates = getValidSubCandidates();
+    const includeSubs = document.getElementById('globalSubStats').checked;
+    const includeHead = document.getElementById('globalHeadPiece').checked;
+    const headsToProcess = includeHead ? ['sun_god', 'ninja'] : ['none'];
+
+    function processNextChunk() {
+        const startTime = performance.now();
         
-        let kiritoControlsHtml = '';
-        if (unit.id === 'kirito') {
-            const isRealm = kiritoState.realm;
-            const isCard = kiritoState.card;
-            kiritoControlsHtml = `<div class="unit-toolbar" style="border-bottom:none; padding-top:5px; padding-bottom:10px; flex-wrap:wrap; justify-content:flex-start; gap:15px; background:rgba(255,255,255,0.02);"><div class="toggle-wrapper"><span>Virtual Realm</span><label><input type="checkbox" ${isRealm ? 'checked' : ''} onchange="toggleKiritoMode('realm', this)"><div class="mini-switch"></div></label></div>${isRealm ? `<div class="toggle-wrapper" style="animation:fadeIn 0.3s ease;"><span style="color:${isCard ? 'var(--custom)' : '#888'}; font-weight:${isCard ? 'bold' : 'normal'};">Magician Card</span><label><input type="checkbox" ${isCard ? 'checked' : ''} onchange="toggleKiritoMode('card', this)"><div class="mini-switch" style="${isCard ? 'background:var(--custom);' : ''}"></div></label></div>` : ''}</div>`;
+        while (renderQueueIndex < unitDatabase.length) {
+            const unit = unitDatabase[renderQueueIndex];
+            renderQueueIndex++;
+
+            const isAbilActive = activeAbilityIds.has(unit.id);
+            let currentStats = { ...unit.stats };
+            if (isAbilActive && unit.ability) Object.assign(currentStats, unit.ability);
+            
+            let kiritoControlsHtml = '';
+            if (unit.id === 'kirito') {
+                const isRealm = kiritoState.realm;
+                const isCard = kiritoState.card;
+                kiritoControlsHtml = `<div class="unit-toolbar" style="border-bottom:none; padding-top:5px; padding-bottom:10px; flex-wrap:wrap; justify-content:flex-start; gap:15px; background:rgba(255,255,255,0.02);"><div class="toggle-wrapper"><span>Virtual Realm</span><label><input type="checkbox" ${isRealm ? 'checked' : ''} onchange="toggleKiritoMode('realm', this)"><div class="mini-switch"></div></label></div>${isRealm ? `<div class="toggle-wrapper" style="animation:fadeIn 0.3s ease;"><span style="color:${isCard ? 'var(--custom)' : '#888'}; font-weight:${isCard ? 'bold' : 'normal'};">Magician Card</span><label><input type="checkbox" ${isCard ? 'checked' : ''} onchange="toggleKiritoMode('card', this)"><div class="mini-switch" style="${isCard ? 'background:var(--custom);' : ''}"></div></label></div>` : ''}</div>`;
+            }
+
+            // Call optimized calculation with passed invariants
+            const results = calculateUnitBuilds(unit, currentStats, filteredBuilds, subCandidates, headsToProcess, includeSubs);
+            unitBuildsCache[unit.id] = results;
+
+            const card = document.createElement('div');
+            card.className = 'unit-card';
+            card.id = 'card-' + unit.id;
+            card.style.animation = "fadeIn 0.3s ease";
+            
+            if(selectedUnitIds.has(unit.id)) card.classList.add('is-selected');
+            const abilityToggleHtml = unit.ability ? `<div class="toggle-wrapper"><span>Ability</span><label><input type="checkbox" class="ability-cb" ${isAbilActive ? 'checked' : ''} onchange="toggleAbility('${unit.id}', this)"><div class="mini-switch"></div></label></div>` : '<div></div>';
+            const toolbarHtml = `<div class="unit-toolbar"><button class="select-btn" onclick="toggleSelection('${unit.id}')">${selectedUnitIds.has(unit.id) ? 'Selected' : 'Select'}</button>${abilityToggleHtml}</div>`;
+            
+            const searchControls = `
+            <div class="search-container" style="flex-direction:column; gap:8px;">
+                <div style="display:flex; gap:5px; width:100%;">
+                    <input type="text" placeholder="Search traits..." style="flex-grow:1; padding:6px; border-radius:5px; border:1px solid #333; background:#111; color:#fff; font-size:0.8rem;" onkeyup="filterList(this)">
+                    <select onchange="filterList(this)" data-filter="prio" style="width:75px; padding:0 0 0 4px; font-size:0.7rem; height:30px;">
+                        <option value="all">All Prio</option>
+                        <option value="dmg">Dmg</option>
+                        <option value="spa">SPA</option>
+                        <option value="range">Range</option>
+                    </select>
+                </div>
+                <div style="display:flex; gap:5px; width:100%;">
+                    <select onchange="filterList(this)" data-filter="set" style="flex:1; padding:0 0 0 4px; font-size:0.7rem; height:30px;">
+                        <option value="all">All Sets</option>
+                        <option value="Master Ninja">Ninja Set</option>
+                        <option value="Sun God">Sun God Set</option>
+                        <option value="Laughing Captain">Laughing Set</option>
+                        <option value="Ex Captain">Ex Set</option>
+                    </select>
+                    <select onchange="filterList(this)" data-filter="head" style="flex:1; padding:0 0 0 4px; font-size:0.7rem; height:30px;">
+                        <option value="all">All Heads</option>
+                        <option value="sun_god">Sun God</option>
+                        <option value="ninja">Ninja</option>
+                        <option value="none">No Head</option>
+                    </select>
+                </div>
+            </div>`;
+
+            card.innerHTML = `<div class="unit-banner"><div class="placement-badge">Max Place: ${unit.placement}</div>${getUnitImgHtml(unit, 'unit-avatar')}<div class="unit-title"><h2>${unit.name}</h2><span>${unit.role} <span class="sss-tag">SSS</span></span></div></div>${toolbarHtml}${kiritoControlsHtml}${searchControls}<div class="top-builds-list" id="results-${unit.id}"></div>`;
+            container.appendChild(card);
+            
+            updateBuildListDisplay(unit.id);
+
+            // Yield to main thread if we've been working for >10ms
+            if (performance.now() - startTime > 10) {
+                renderQueueId = requestAnimationFrame(processNextChunk);
+                return;
+            }
         }
+        renderQueueId = null;
+        updateCompareBtn();
+    }
 
-        const results = calculateUnitBuilds(unit, currentStats);
-        unitBuildsCache[unit.id] = results;
-
-        const card = document.createElement('div');
-        card.className = 'unit-card';
-        card.id = 'card-' + unit.id;
-        if(selectedUnitIds.has(unit.id)) card.classList.add('is-selected');
-        const abilityToggleHtml = unit.ability ? `<div class="toggle-wrapper"><span>Ability</span><label><input type="checkbox" class="ability-cb" ${isAbilActive ? 'checked' : ''} onchange="toggleAbility('${unit.id}', this)"><div class="mini-switch"></div></label></div>` : '<div></div>';
-        const toolbarHtml = `<div class="unit-toolbar"><button class="select-btn" onclick="toggleSelection('${unit.id}')">${selectedUnitIds.has(unit.id) ? 'Selected' : 'Select'}</button>${abilityToggleHtml}</div>`;
-        
-        const searchControls = `
-        <div class="search-container" style="flex-direction:column; gap:8px;">
-            <div style="display:flex; gap:5px; width:100%;">
-                <input type="text" placeholder="Search traits..." style="flex-grow:1; padding:6px; border-radius:5px; border:1px solid #333; background:#111; color:#fff; font-size:0.8rem;" onkeyup="filterList(this)">
-                <select onchange="filterList(this)" data-filter="prio" style="width:75px; padding:0 0 0 4px; font-size:0.7rem; height:30px;">
-                    <option value="all">All Prio</option>
-                    <option value="dmg">Dmg</option>
-                    <option value="spa">SPA</option>
-                    <option value="range">Range</option>
-                </select>
-            </div>
-            <div style="display:flex; gap:5px; width:100%;">
-                <select onchange="filterList(this)" data-filter="set" style="flex:1; padding:0 0 0 4px; font-size:0.7rem; height:30px;">
-                    <option value="all">All Sets</option>
-                    <option value="Master Ninja">Ninja Set</option>
-                    <option value="Sun God">Sun God Set</option>
-                    <option value="Laughing Captain">Laughing Set</option>
-                    <option value="Ex Captain">Ex Set</option>
-                </select>
-                <select onchange="filterList(this)" data-filter="head" style="flex:1; padding:0 0 0 4px; font-size:0.7rem; height:30px;">
-                    <option value="all">All Heads</option>
-                    <option value="sun_god">Sun God</option>
-                    <option value="ninja">Ninja</option>
-                    <option value="none">No Head</option>
-                </select>
-            </div>
-        </div>`;
-
-        card.innerHTML = `<div class="unit-banner"><div class="placement-badge">Max Place: ${unit.placement}</div>${getUnitImgHtml(unit, 'unit-avatar')}<div class="unit-title"><h2>${unit.name}</h2><span>${unit.role} <span class="sss-tag">SSS</span></span></div></div>${toolbarHtml}${kiritoControlsHtml}${searchControls}<div class="top-builds-list" id="results-${unit.id}"></div>`;
-        container.appendChild(card);
-        
-        updateBuildListDisplay(unit.id);
-    });
-    updateCompareBtn();
+    processNextChunk();
 }
 
 const filterList = (e) => { 
@@ -981,7 +895,8 @@ function setGuideMode(mode) {
     document.getElementById('hypoLabel').innerText = labelText;
     document.getElementById('guideHypoLabel').innerText = labelText;
     document.getElementById('guideWarning').style.display = (mode === 'current') ? 'block' : 'none';
-    renderGuides(); renderDatabase(); 
+    renderGuides(); 
+    resetAndRender(); 
 }
 
 function populateGuideDropdowns() {
@@ -1076,7 +991,7 @@ function confirmAddCustomPair() {
             if (!alreadyExists && combo.id !== 'none') { unitList.push(combo); alert(`Added custom trait to unit.`); } 
             else alert("Trait combination already exists for this unit!");
         }
-        renderDatabase();
+        resetAndRender();
         if(document.getElementById('guidesPage').classList.contains('active')) renderGuides();
         closeCustomPairModal();
     }
@@ -1093,6 +1008,7 @@ function getTopBuildsForGuide(unit, trait) {
     let actualPlacement = Math.min(unit.placement, trait.limitPlace || unit.placement);
     const includeSubs = document.getElementById('guideSubStats')?.checked ?? true;
     const includeHead = document.getElementById('guideHeadPiece')?.checked ? 'auto' : 'none';
+    const subCandidates = getValidSubCandidates();
 
     const validBuilds = getFilteredBuilds();
     const isLaw = unit.id === 'law';
@@ -1101,14 +1017,14 @@ function getTopBuildsForGuide(unit, trait) {
         if (isLaw) {
              let ctx = { level: 99, priority: 'dmg', wave: 25, isBoss: false, traitObj: trait, placement: actualPlacement, isSSS: true };
              effectiveStats.context = ctx;
-             let cfg = getBestSubConfig(build, effectiveStats, includeSubs, includeHead, 'range');
+             let cfg = getBestSubConfig(build, effectiveStats, includeSubs, includeHead, subCandidates, 'range');
              if (!results[build.name]) results[build.name] = { dps: -1, rangeCfg: cfg };
              else results[build.name].rangeCfg = cfg;
         } else {
             ['dmg', 'spa'].forEach(p => {
                 let ctx = { level: 99, priority: p, wave: 25, isBoss: false, traitObj: trait, placement: actualPlacement, isSSS: true };
                 effectiveStats.context = ctx;
-                let cfg = getBestSubConfig(build, effectiveStats, includeSubs, includeHead);
+                let cfg = getBestSubConfig(build, effectiveStats, includeSubs, includeHead, subCandidates);
                 if (!results[build.name]) results[build.name] = { dps: -1, dmgCfg: null, spaCfg: null };
                 if (p === 'dmg') results[build.name].dmgCfg = cfg; else results[build.name].spaCfg = cfg;
             });
@@ -1178,7 +1094,7 @@ function renderGuides() {
                     <div class="br-header"><div style="display:flex; align-items:center; gap:8px;"><span class="br-rank">#1</span><span class="br-set">${data.set}</span></div></div>
                     <div class="br-grid">
                         <div class="br-col" style="flex:0.95;"><div class="br-col-title">MAIN STAT</div><div class="stat-line">${mainBadgeHtml}</div></div>
-                        <div class="br-col" style="flex:1.3; border-left:1px solid rgba(255,255,255,0.05); padding-left:12px;"><div class="br-col-title">SUB STAT</div><div class="stat-line">${subBadgeHtml}</div></div>
+                        <div class="br-col" style="flex:1.3; border-left:1px solid rgba(255,255,255,0.05); padding-left:18px;"><div class="br-col-title">SUB STAT</div><div class="stat-line">${subBadgeHtml}</div></div>
                     </div>
                 </div>
             </div>`;
@@ -1253,12 +1169,12 @@ function renderGuides() {
                             <div class="br-col-title">MAIN STAT</div>
                             ${mainHtml}
                         </div>
-                        <div class="br-col" style="flex:1.3; border-left:1px solid rgba(255,255,255,0.05); padding-left:12px;">
+                        <div class="br-col" style="flex:1.3; border-left:1px solid rgba(255,255,255,0.05); padding-left:18px;">
                             <div class="br-col-title">SUB STAT</div>
                             ${subHtml}
                         </div>
                         <div class="br-res-col" style="position:relative;">
-                            <button class="info-btn" onclick="showMath('${build.id}')" style="position:absolute; top:-2px; right:0; width:18px; height:18px; font-size:0.6rem; line-height:1;">?</button>
+                            <button class="info-btn" onclick="showMath('${build.id}')" style="position:absolute; bottom:6px; left:30px; width:18px; height:18px; font-size:0.6rem; line-height:1;">?</button>
                             <div class="dps-container">
                                 <span class="build-dps" style="font-size:0.9rem;">${format(build.dps)}</span>
                                 <span class="dps-label">${label}</span>
