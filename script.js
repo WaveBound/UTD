@@ -54,8 +54,13 @@ const infoDefinitions = {
     },
     'relic_multi': {
         title: "Relic Stat Logic",
-        formula: "Sum of (Main Stats + Sub Stats + Set Bonus)",
-        desc: "Relic Stats are additive with each other but multiplicative to the Base Stats.<br>Example: 60% Body + 60% Legs + 20% Subs = 140% Total Additive Bonus.<br>Final Multiplier = (1 + 1.40)."
+        formula: "Sum of (Main Stats + Sub Stats)",
+        desc: "Relic Stats are additive with each other, but <b>Multiplicative</b> to Base Stats and Set Bonuses.<br>They are calculated in their own separate bucket."
+    },
+    'tag_logic': {
+        title: "Additive Bucket (Sets & Passives)",
+        formula: "SetBase + TagBuffs + Passive + Abilities",
+        desc: "<b>Set Bonuses</b>, <b>Unit Passives</b>, and <b>Ability Buffs</b> are all <b>Additive</b> with each other.<br>They are summed together before multiplying the base damage."
     },
     'spa_calc': {
         title: "SPA (Speed) Calculation",
@@ -209,7 +214,7 @@ const getFilteredBuilds = () => globalBuilds.filter(b => {
     return true;
 });
 
-const getValidSubCandidates = () => SUB_CANDIDATES.filter(c => !((!statConfig.applyRelicCrit && (c === 'cm' || c === 'cf')) || (!statConfig.applyRelicDot && c === 'dot') || (currentGuideMode === 'current' && c === 'cf')));
+const getValidSubCandidates = () => SUB_CANDIDATES.filter(c => !((!statConfig.applyRelicCrit && (c === 'cm' || c === 'cf')) || (!statConfig.applyRelicDot && c === 'dot')));
 
 // --- DATA CALCULATION ---
 // Optimized signature to accept pre-calculated lists
@@ -221,8 +226,15 @@ function calculateUnitBuilds(unit, effectiveStats, filteredBuilds, subCandidates
     
     effectiveStats.id = unit.id;
     if (unit.id === 'kirito' && kiritoState.realm && kiritoState.card) {
-        effectiveStats.dot = 200; effectiveStats.dotDuration = 4; effectiveStats.dotStacks = unit.stats.hitCount || 14; 
+        effectiveStats.dot = 200; 
+        effectiveStats.dotDuration = 4; 
+        effectiveStats.dotStacks = 1; // Force to 1 for DoT Calculation, preserving hitCount for Attack Rate logic
     }
+    
+    // Pass tags into effective stats so math logic sees them
+    if(unit.tags) effectiveStats.tags = unit.tags;
+
+    const isKiritoVR = (unit.id === 'kirito' && kiritoState.realm);
 
     let unitResults = [];
 
@@ -233,12 +245,12 @@ function calculateUnitBuilds(unit, effectiveStats, filteredBuilds, subCandidates
         
         filteredBuilds.forEach(build => {
             headsToProcess.forEach(hMode => {
-                let contextDmg = { level: 99, priority: 'dmg', wave: 25, isBoss: false, traitObj: trait, placement: actualPlacement, isSSS: true };
+                let contextDmg = { level: 99, priority: 'dmg', wave: 25, isBoss: false, traitObj: trait, placement: actualPlacement, isSSS: true, isVirtualRealm: isKiritoVR };
                 effectiveStats.context = contextDmg;
                 let bestDmgConfig = getBestSubConfig(build, effectiveStats, includeSubs, hMode, subCandidates);
                 let resDmg = bestDmgConfig.res;
 
-                let contextSpa = { level: 99, priority: 'spa', wave: 25, isBoss: false, traitObj: trait, placement: actualPlacement, isSSS: true };
+                let contextSpa = { level: 99, priority: 'spa', wave: 25, isBoss: false, traitObj: trait, placement: actualPlacement, isSSS: true, isVirtualRealm: isKiritoVR };
                 effectiveStats.context = contextSpa;
                 let bestSpaConfig = getBestSubConfig(build, effectiveStats, includeSubs, hMode, subCandidates);
                 let resSpa = bestSpaConfig.res;
@@ -274,7 +286,7 @@ function calculateUnitBuilds(unit, effectiveStats, filteredBuilds, subCandidates
                 }
 
                 if (unit.id === 'law') {
-                     let contextRange = { level: 99, priority: 'dmg', wave: 25, isBoss: false, traitObj: trait, placement: actualPlacement, isSSS: true };
+                     let contextRange = { level: 99, priority: 'dmg', wave: 25, isBoss: false, traitObj: trait, placement: actualPlacement, isSSS: true, isVirtualRealm: isKiritoVR };
                      effectiveStats.context = contextRange;
                      let bestRangeConfig = getBestSubConfig(build, effectiveStats, includeSubs, hMode, subCandidates, 'range');
                      let resRange = bestRangeConfig.res;
@@ -434,7 +446,10 @@ function toggleAbility(unitId, checkbox) {
     if(!unit) return;
     if (checkbox.checked) activeAbilityIds.add(unitId); else activeAbilityIds.delete(unitId);
     let currentStats = { ...unit.stats };
-    if (checkbox.checked && unit.ability) Object.assign(currentStats, unit.ability);
+    if (checkbox.checked && unit.ability) {
+        Object.assign(currentStats, unit.ability);
+        console.log(`Ability toggled for ${unitId}. currentStats after ability:`, currentStats); // Temporary log
+    }
     
     // Pass global configuration for single unit recalc
     const filteredBuilds = getFilteredBuilds();
@@ -482,12 +497,17 @@ function openComparison() {
         let bestResult = { total: -1 }, bestTraitName = "", bestBuildName = "", bestSpa = 0, bestPrio = "";
         statsObj.id = unitObj.id;
         
+        // Ensure tags are in context for comparison
+        if(unitObj.tags) statsObj.tags = unitObj.tags;
+
+        const isKiritoVR = (unitObj.id === 'kirito' && kiritoState.realm);
+
         availableTraits.forEach(trait => {
             if(trait.id === 'none') return;
             let place = Math.min(unitObj.placement, trait.limitPlace || unitObj.placement);
             filteredBuilds.forEach(build => {
-                [{ p: 'spa', ctx: { level: 99, priority: 'spa', wave: 25, isBoss: false, traitObj: trait, placement: place, isSSS: true } },
-                 { p: 'dmg', ctx: { level: 99, priority: 'dmg', wave: 25, isBoss: false, traitObj: trait, placement: place, isSSS: true } }
+                [{ p: 'spa', ctx: { level: 99, priority: 'spa', wave: 25, isBoss: false, traitObj: trait, placement: place, isSSS: true, isVirtualRealm: isKiritoVR } },
+                 { p: 'dmg', ctx: { level: 99, priority: 'dmg', wave: 25, isBoss: false, traitObj: trait, placement: place, isSSS: true, isVirtualRealm: isKiritoVR } }
                 ].forEach(({p, ctx}) => {
                     statsObj.context = ctx;
                     let cfg = getBestSubConfig(build, statsObj, includeSubs, comparisonHeadMode, subCandidates);
@@ -505,7 +525,14 @@ function openComparison() {
     selectedUnits.forEach(u => {
         let effectiveStats = { ...u.stats };
         if (activeAbilityIds.has(u.id) && u.ability) Object.assign(effectiveStats, u.ability);
-        if(u.id === 'kirito' && kiritoState.realm && kiritoState.card) { effectiveStats.dot = 200; effectiveStats.dotDuration = 4; effectiveStats.dotStacks = 14; }
+        
+        // Force stacks to 1 for Kirito Card mode in comparison too
+        if(u.id === 'kirito' && kiritoState.realm && kiritoState.card) { 
+            effectiveStats.dot = 200; 
+            effectiveStats.dotDuration = 4; 
+            effectiveStats.dotStacks = 1; 
+        }
+
         const std = findBest(u, effectiveStats, traitsList);
         if(std) comparisonData.push(std);
         const customSet = [...customTraits, ...(unitSpecificTraits[u.id] || [])];
@@ -580,6 +607,15 @@ function renderDatabase() {
             const abilityToggleHtml = unit.ability ? `<div class="toggle-wrapper"><span>Ability</span><label><input type="checkbox" class="ability-cb" ${isAbilActive ? 'checked' : ''} onchange="toggleAbility('${unit.id}', this)"><div class="mini-switch"></div></label></div>` : '<div></div>';
             const toolbarHtml = `<div class="unit-toolbar"><button class="select-btn" onclick="toggleSelection('${unit.id}')">${selectedUnitIds.has(unit.id) ? 'Selected' : 'Select'}</button>${abilityToggleHtml}</div>`;
             
+            // --- UPDATED TAGS DISPLAY ---
+            let tagsHtml = '';
+            if (unit.tags && unit.tags.length > 0) {
+                // Use the new CSS classes for proper wrapping and spacing
+                tagsHtml = `<div class="unit-tags">` + 
+                           unit.tags.map(t => `<span class="unit-tag">${t}</span>`).join('') + 
+                           `</div>`;
+            }
+
             const searchControls = `
             <div class="search-container" style="flex-direction:column; gap:8px;">
                 <div style="display:flex; gap:5px; width:100%;">
@@ -598,6 +634,8 @@ function renderDatabase() {
                         <option value="Sun God">Sun God Set</option>
                         <option value="Laughing Captain">Laughing Set</option>
                         <option value="Ex Captain">Ex Set</option>
+                        <option value="Shadow Reaper">Shadow Reaper</option>
+                        <option value="Reaper Set">Reaper Set</option>
                     </select>
                     <select onchange="filterList(this)" data-filter="head" style="flex:1; padding:0 0 0 4px; font-size:0.7rem; height:30px;">
                         <option value="all">All Heads</option>
@@ -608,7 +646,7 @@ function renderDatabase() {
                 </div>
             </div>`;
 
-            card.innerHTML = `<div class="unit-banner"><div class="placement-badge">Max Place: ${unit.placement}</div>${getUnitImgHtml(unit, 'unit-avatar')}<div class="unit-title"><h2>${unit.name}</h2><span>${unit.role} <span class="sss-tag">SSS</span></span></div></div>${toolbarHtml}${kiritoControlsHtml}${searchControls}<div class="top-builds-list" id="results-${unit.id}"></div>`;
+            card.innerHTML = `<div class="unit-banner"><div class="placement-badge">Max Place: ${unit.placement}</div>${getUnitImgHtml(unit, 'unit-avatar')}<div class="unit-title"><h2>${unit.name}</h2><span>${unit.role} <span class="sss-tag">SSS</span></span></div></div>${tagsHtml}${toolbarHtml}${kiritoControlsHtml}${searchControls}<div class="top-builds-list" id="results-${unit.id}"></div>`;
             container.appendChild(card);
             
             updateBuildListDisplay(unit.id);
@@ -670,6 +708,8 @@ function closeInfoPopup() {
 
 // --- UPDATED MATH RENDER ---
 function renderMathContent(data) {
+    if (!data || !data.lvStats || !data.critData) return '<div style="padding:20px;">Data incomplete.</div>';
+
     const pct = (n) => `${n >= 0 ? '+' : ''}${n.toFixed(1)}%`;
     const num = (n) => n.toLocaleString(undefined, {maximumFractionDigits: 1});
     const fix = (n, d=2) => n.toFixed(d);
@@ -709,7 +749,26 @@ function renderMathContent(data) {
     }
 
     const dmgAfterRelic = runningDmg * (1 + data.relicBuffs.dmg/100);
-    const finalSpaStep = runningSpa * (1 - (data.relicBuffs.spa + data.setBuffs.spa + (data.passiveSpaBuff||0))/100);
+    const finalSpaStep = runningSpa * (1 - (data.relicBuffs.spa + data.totalSetStats.spa + (data.passiveSpaBuff||0))/100);
+
+    // Calculate dynamic rows for sets/tags/passive
+    // Damage
+    const baseSetDmg = (data.totalSetStats.dmg || 0) - (data.tagBuffs.dmg || 0);
+    const tagDmg = (data.tagBuffs.dmg || 0);
+    const passiveDmg = (data.passiveBuff || 0) - (data.headBuffs.dmg || 0) - (data.abilityBuff || 0); // Remove Head & Ability from generic Passive display
+    
+    // SPA
+    const baseSetSpa = (data.totalSetStats.spa || 0) - (data.tagBuffs.spa || 0);
+    const tagSpa = (data.tagBuffs.spa || 0);
+    const passiveSpa = (data.passiveSpaBuff || 0);
+
+    // Crit Rate
+    const baseSetCf = (data.totalSetStats.cf || 0) - (data.tagBuffs.cf || 0);
+    const tagCf = (data.tagBuffs.cf || 0);
+
+    // Crit Dmg
+    const baseSetCm = (data.totalSetStats.cdmg || data.totalSetStats.cm || 0) - (data.tagBuffs.cdmg || data.tagBuffs.cm || 0);
+    const tagCm = (data.tagBuffs.cdmg || data.tagBuffs.cm || 0);
 
     // HEAD PIECE BREAKDOWN - DMG
     let headDmgHtml = '';
@@ -741,17 +800,20 @@ function renderMathContent(data) {
         const uptimePct = (data.headBuffs.uptime || 0);
         headDotRow = `
         <tr style="background:rgba(6,182,212,0.08); border-left:3px solid var(--custom);">
-            <td colspan="2" style="padding:8px;">
+            <td colspan="3" style="padding:8px;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
                     <span style="font-size:0.75rem; color:var(--custom); font-weight:900; letter-spacing:0.5px;">NINJA HEAD PASSIVE</span>
                     <button class="calc-info-btn" onclick="openInfoPopup('ninja_passive')">?</button>
                 </div>
-                <div style="font-size:0.75rem; color:#eee; display:flex; justify-content:space-between;">
+                <div style="font-size:0.75rem; color:#eee; display:flex; justify-content:space-between; margin-bottom:6px;">
                     <span style="opacity:0.8;">Buff Uptime:</span>
                     <span style="font-family:'Consolas', monospace; color:${uptimePct >= 1 ? '#4ade80' : '#ffcc00'}">${fix(uptimePct*100,1)}%</span>
                 </div>
+                <div style="display:flex; justify-content:space-between; border-top:1px solid rgba(255,255,255,0.1); padding-top:4px;">
+                    <span style="color:#fff; font-size:0.75rem; font-weight:bold;">Avg DoT Buff</span>
+                    <span style="color:var(--custom); font-size:0.85rem; font-weight:900;">+${fix(data.headBuffs.dot, 2)}%</span>
+                </div>
             </td>
-            <td class="col-val" style="color:var(--custom); vertical-align:middle; font-size:0.85rem;">+${fix(data.headBuffs.dot, 2)}%</td>
         </tr>`;
     }
 
@@ -769,7 +831,7 @@ function renderMathContent(data) {
                 <div><div style="font-size:0.65rem; color:#888; text-transform:uppercase;">Hit DPS</div><div style="color:#fff; font-weight:bold; font-size:0.9rem;">${num(data.hit)}</div><div style="font-size:0.7rem; color:#bbb; margin-top:2px;">(${num(avgHitPerUnit)} avg ÷ ${fix(data.spa,2)}s) × ${data.placement}</div></div>
                 <div><div style="font-size:0.65rem; color:#888; text-transform:uppercase;">DoT DPS</div><div style="color:${data.dot > 0 ? 'var(--accent-end)' : '#555'}; font-weight:bold; font-size:0.9rem;">${data.dot > 0 ? num(data.dot) : '-'}</div><div style="font-size:0.7rem; color:#bbb; margin-top:2px;">${data.dot > 0 ? (data.hasStackingDoT ? `Stacking: x${data.placement} units` : `Limited: x1 unit only`) : 'No DoT'}</div></div>
                 <div><div style="font-size:0.65rem; color:#888; text-transform:uppercase;">Crit Rate / Dmg</div><div style="color:var(--custom); font-weight:bold; font-size:0.9rem;">${fix(data.critData.rate, 0)}% <span style="color:#444">|</span> x${fix(data.critData.cdmg/100, 2)}</div><div style="font-size:0.7rem; color:#bbb; margin-top:2px;">Avg Mult: x${fix(data.critData.avgMult, 3)}</div></div>
-                <div><div style="font-size:0.65rem; color:#888; text-transform:uppercase;">Attack Rate</div><div style="color:var(--accent-start); font-weight:bold; font-size:0.9rem;">${fix(data.spa, 2)}s</div><div style="font-size:0.7rem; color:#bbb; margin-top:2px;">Base: ${data.baseStats.spa}s (Cap: ${data.baseStats.spaCap}s)</div></div>
+                <div><div style="font-size:0.65rem; color:#888; text-transform:uppercase;">Attack Rate</div><div style="color:var(--accent-start); font-weight:bold; font-size:0.9rem;">${fix(data.spa, 2)}s</div><div style="font-size:0.7rem; color:#bbb; margin-top:2px;">Base: ${data.baseStats.spa}s (Current Cap: ${data.spaCap}s)</div></div>
             </div>
         </div>
 
@@ -801,7 +863,15 @@ function renderMathContent(data) {
                     
                     ${headDmgHtml}
 
-                    <tr><td class="col-label">Set Bonus + Passive</td><td class="col-formula">${pct(data.setBuffs.dmg + data.passiveBuff - (data.headBuffs.dmg || 0))}</td><td class="col-val calc-highlight">${num(data.dmgVal)}</td></tr>
+                    <tr>
+                        <td class="col-label" style="padding-top:8px;">Set Bonus + Passive + Abilities <button class="calc-info-btn" onclick="openInfoPopup('tag_logic')">?</button></td>
+                        <td class="col-formula" style="padding-top:8px;"></td>
+                        <td class="col-val calc-highlight" style="padding-top:8px;">${num(data.dmgVal)}</td>
+                    </tr>
+                    <tr><td class="col-label" style="padding-left:10px; opacity:0.7;">↳ Set Base</td><td class="col-formula">${pct(baseSetDmg)}</td><td class="col-val"></td></tr>
+                    <tr><td class="col-label" style="padding-left:10px; opacity:0.7;">↳ Tag Bonuses</td><td class="col-formula">${pct(tagDmg)}</td><td class="col-val"></td></tr>
+                    ${passiveDmg > 0 ? `<tr><td class="col-label" style="padding-left:10px; opacity:0.7;">↳ Unit Passive</td><td class="col-formula">${pct(passiveDmg)}</td><td class="col-val"></td></tr>` : ''}
+                    ${(data.abilityBuff || 0) > 0 ? `<tr><td class="col-label" style="padding-left:10px; opacity:0.7; color:var(--custom);">↳ Ability Buffs</td><td class="col-formula" style="color:var(--custom);">${pct(data.abilityBuff)}</td><td class="col-val"></td></tr>` : ''}
                 </table>
             </div>
 
@@ -810,8 +880,10 @@ function renderMathContent(data) {
                 <table class="calc-table">
                     <tr><td class="col-label">Base Hit (Non-Crit)</td><td class="col-formula"></td><td class="col-val">${num(data.dmgVal)}</td></tr>
                     <tr><td class="col-label" style="color:#888; padding-left:8px;">↳ Crit Rate</td><td class="col-formula"></td><td class="col-val" style="color:#888; font-weight:normal;">${fix(data.critData.rate, 1)}%</td></tr>
+                    ${tagCf + baseSetCf > 0 ? `<tr><td class="col-label" style="color:#666; padding-left:20px; font-size:0.7rem;">+ Set/Tags</td><td class="col-formula"></td><td class="col-val" style="color:#666; font-size:0.7rem;">${pct(baseSetCf + tagCf)}</td></tr>` : ''}
+                    
                     <tr><td class="col-label" style="color:#888; padding-left:8px;">↳ CDmg Base</td><td class="col-formula"></td><td class="col-val" style="color:#888; font-weight:normal;">${fix(data.critData.baseCdmg,0)}</td></tr>
-                    <tr><td class="col-label" style="color:var(--accent-start); padding-left:8px;">↳ Relic Stat (Multi)</td><td class="col-formula" style="color:var(--accent-start); font-size:0.7rem;">x(1+%)</td><td class="col-val" style="color:var(--accent-start); font-weight:normal;">${data.critData.relicCmPct}%</td></tr>
+                    <tr><td class="col-label" style="color:var(--accent-start); padding-left:8px;">+ Relic, Set & Tag Bonuses</td><td class="col-formula"></td><td class="col-val" style="color:var(--accent-start); font-weight:normal;">+${fix(data.critData.totalCmBuff, 1)}%</td></tr>
                     <tr><td class="col-label">Total Crit Damage</td><td class="col-formula">=</td><td class="col-val calc-highlight">${fix(data.critData.cdmg, 0)}%</td></tr>
                     <tr><td class="col-label" colspan="2" style="text-align:right; padding-right:10px;">Avg Damage Per Hit</td><td class="col-val calc-result">${num(data.dmgVal * data.critData.avgMult)}</td></tr>
                 </table>
@@ -824,8 +896,22 @@ function renderMathContent(data) {
                     <tr><td class="col-label">Level Reductions</td><td class="col-formula"><span class="op">×</span>${fix(data.lvStats.spaMult, 3)}</td><td class="col-val">${fix(data.baseStats.spa * data.lvStats.spaMult, 3)}s</td></tr>
                     ${data.isSSS ? `<tr><td class="col-label">SSS Rank (-8%)</td><td class="col-formula"><span class="op">×</span>0.92</td><td class="col-val">${fix(data.lvStats.spa, 3)}s</td></tr>` : ''}
                     ${traitRowsSpa}
-                    <tr><td class="col-label">Relic, Set & Passive</td><td class="col-formula">-${fix(data.relicBuffs.spa + data.setBuffs.spa + (data.passiveSpaBuff || 0), 1)}%</td><td class="col-val">${fix(finalSpaStep, 3)}s</td></tr>
-                    <tr><td class="col-label">Cap Check (${data.baseStats.spaCap}s)</td><td class="col-formula">MAX</td><td class="col-val calc-result">${fix(data.spa, 3)}s</td></tr>
+                    
+                    <tr>
+                        <td class="col-label" style="padding-top:8px;">Relic Multiplier</td>
+                        <td class="col-formula" style="padding-top:8px;">-${fix(data.relicBuffs.spa, 1)}%</td>
+                        <td class="col-val" style="padding-top:8px;">${fix(data.spaAfterRelic, 3)}s</td>
+                    </tr>
+                    <tr>
+                        <td class="col-label" style="padding-top:8px;">Set Bonus + Passive + Abilities <button class="calc-info-btn" onclick="openInfoPopup('tag_logic')">?</button></td>
+                        <td class="col-formula" style="padding-top:8px;">-${fix(data.setAndPassiveSpa, 1)}%</td>
+                        <td class="col-val" style="padding-top:8px;">${fix(data.rawFinalSpa, 3)}s</td>
+                    </tr>
+                    <tr><td class="col-label" style="padding-left:10px; opacity:0.7;">↳ Set Base</td><td class="col-formula">-${fix(baseSetSpa, 1)}%</td><td class="col-val"></td></tr>
+                    <tr><td class="col-label" style="padding-left:10px; opacity:0.7;">↳ Tag Bonuses</td><td class="col-formula">-${fix(tagSpa, 1)}%</td><td class="col-val"></td></tr>
+                    ${passiveSpa > 0 ? `<tr><td class="col-label" style="padding-left:10px; opacity:0.7;">↳ Unit Passive</td><td class="col-formula">-${fix(passiveSpa, 1)}%</td><td class="col-val"></td></tr>` : ''}
+
+                    <tr><td class="col-label">Cap Check (${data.spaCap}s)</td><td class="col-formula">MAX</td><td class="col-val calc-result">${fix(data.spa, 3)}s</td></tr>
                 </table>
             </div>
 
@@ -850,10 +936,11 @@ function renderMathContent(data) {
                     <tr><td class="col-label" style="font-weight:bold;">Total Tick %</td><td class="col-val" style="font-weight:bold;">${fix(data.dotData.base, 2)}%</td></tr>
                     <tr><td class="col-label">Relic Mult (x${fix(data.dotData.relicMult, 2)})</td><td class="col-val" style="color:var(--accent-end);">${fix(data.dotData.finalPct, 1)}%</td></tr>
                     <tr><td class="col-label">Active Stacks</td><td class="col-val">x${data.dotData.internal}</td></tr>
-                    <tr><td class="col-label" style="color:var(--custom);">Crit Avg Mult</td><td class="col-val" style="color:var(--custom);">x${fix(data.critData.avgMult, 3)}</td></tr>
+                    <tr><td class="col-label" style="color:var(--custom);">Crit Avg Mult</td><td class="col-val" style="color:var(--custom);">x${fix(data.dotData.critMult, 3)}</td></tr>
                     <tr><td class="col-label">Total Damage (Lifetime)</td><td class="col-val">${num(data.dotData.finalTick)}</td></tr>
                     <tr><td class="col-label calc-sub">Time Basis</td><td class="col-val calc-sub">${fix(data.dotData.timeUsed, 2)}s</td></tr>
                     <tr><td class="col-label" style="color:#fff;">DoT DPS (1 Unit)</td><td class="col-val" style="color:var(--accent-end);">${num(data.singleUnitDoT)}</td></tr>
+                    ${data.placement > 1 ? `<tr><td class="col-label" style="color:#fff; border-top:1px dashed #333;">Total DoT DPS (x${data.placement})</td><td class="col-val" style="color:var(--accent-end); border-top:1px dashed #333;">${num(data.dot)}</td></tr>` : ''}
                 </table>
             </div>` : ''}
 
@@ -875,14 +962,29 @@ const toggleModal = (modalId, show = true) => {
     if (modal) modal.style.display = show ? 'flex' : 'none';
 };
 
-const showMath = (id) => { const data = cachedResults[id]; if(!data) return; const content = document.getElementById('mathContent'); content.innerHTML = renderMathContent(data); toggleModal('mathModal', true); };
+// FIX: Exposed showMath globally for onclick events
+const showMath = (id) => { 
+    const data = cachedResults[id]; 
+    if(!data) { console.error("Math data not found for ID:", id); return; }
+    const content = document.getElementById('mathContent'); 
+    try {
+        content.innerHTML = renderMathContent(data); 
+        toggleModal('mathModal', true); 
+    } catch (e) {
+        console.error("Error rendering math content:", e);
+        content.innerHTML = `<div style="padding:20px; color:#f87171;">Error rendering data: ${e.message}</div>`;
+        toggleModal('mathModal', true);
+    }
+};
+window.showMath = showMath;
+
 const closeMath = () => toggleModal('mathModal', false);
 const openPatchNotes = () => toggleModal('patchModal', true);
 const closePatchNotes = () => toggleModal('patchModal', false);
 
 function setGuideMode(mode) {
     currentGuideMode = mode;
-    if (mode === 'current') { statConfig.applyRelicCrit = false; statConfig.applyRelicDot = false; } 
+    if (mode === 'current') { statConfig.applyRelicCrit = true; statConfig.applyRelicDot = false; } 
     else { statConfig.applyRelicCrit = true; statConfig.applyRelicDot = true; }
 
     const isFixed = (mode === 'fixed');
@@ -1003,7 +1105,15 @@ function getTopBuildsForGuide(unit, trait) {
     let effectiveStats = { ...unit.stats };
     if (activeAbilityIds.has(unit.id) && unit.ability) Object.assign(effectiveStats, unit.ability);
     effectiveStats.id = unit.id;
-    if (unit.id === 'kirito' && kiritoState.realm && kiritoState.card) { effectiveStats.dot = 200; effectiveStats.dotDuration = 4; effectiveStats.dotStacks = unit.stats.hitCount || 14; }
+    
+    // Force stacks to 1 for Kirito Card mode in Guides too
+    if (unit.id === 'kirito' && kiritoState.realm && kiritoState.card) { 
+        effectiveStats.dot = 200; 
+        effectiveStats.dotDuration = 4; 
+        effectiveStats.dotStacks = 1; 
+    }
+
+    const isKiritoVR = (unit.id === 'kirito' && kiritoState.realm);
 
     let actualPlacement = Math.min(unit.placement, trait.limitPlace || unit.placement);
     const includeSubs = document.getElementById('guideSubStats')?.checked ?? true;
@@ -1015,14 +1125,14 @@ function getTopBuildsForGuide(unit, trait) {
 
     validBuilds.forEach(build => {
         if (isLaw) {
-             let ctx = { level: 99, priority: 'dmg', wave: 25, isBoss: false, traitObj: trait, placement: actualPlacement, isSSS: true };
+             let ctx = { level: 99, priority: 'dmg', wave: 25, isBoss: false, traitObj: trait, placement: actualPlacement, isSSS: true, isVirtualRealm: isKiritoVR };
              effectiveStats.context = ctx;
              let cfg = getBestSubConfig(build, effectiveStats, includeSubs, includeHead, subCandidates, 'range');
              if (!results[build.name]) results[build.name] = { dps: -1, rangeCfg: cfg };
              else results[build.name].rangeCfg = cfg;
         } else {
             ['dmg', 'spa'].forEach(p => {
-                let ctx = { level: 99, priority: p, wave: 25, isBoss: false, traitObj: trait, placement: actualPlacement, isSSS: true };
+                let ctx = { level: 99, priority: p, wave: 25, isBoss: false, traitObj: trait, placement: actualPlacement, isSSS: true, isVirtualRealm: isKiritoVR };
                 effectiveStats.context = ctx;
                 let cfg = getBestSubConfig(build, effectiveStats, includeSubs, includeHead, subCandidates);
                 if (!results[build.name]) results[build.name] = { dps: -1, dmgCfg: null, spaCfg: null };
@@ -1092,10 +1202,16 @@ function renderGuides() {
             <div class="guide-card-body">
                 <div class="build-row rank-1" style="pointer-events:none;">
                     <div class="br-header"><div style="display:flex; align-items:center; gap:8px;"><span class="br-rank">#1</span><span class="br-set">${data.set}</span></div></div>
-                    <div class="br-grid">
-                        <div class="br-col" style="flex:0.95;"><div class="br-col-title">MAIN STAT</div><div class="stat-line">${mainBadgeHtml}</div></div>
-                        <div class="br-col" style="flex:1.3; border-left:1px solid rgba(255,255,255,0.05); padding-left:18px;"><div class="br-col-title">SUB STAT</div><div class="stat-line">${subBadgeHtml}</div></div>
-                    </div>
+                                        <div class="br-grid">
+                                            <div class="br-col" style="flex:1;">
+                                                <div class="br-col-title">MAIN STAT</div>
+                                                <div class="stat-line">${mainBadgeHtml}</div>
+                                            </div>
+                                            <div class="br-col" style="flex:1; border-left:1px solid rgba(255,255,255,0.05); padding-left:10px;">
+                                                <div class="br-col-title">SUB STAT</div>
+                                                <div class="stat-line">${subBadgeHtml}</div>
+                                            </div>
+                                        </div>
                 </div>
             </div>`;
         guideGrid.appendChild(card);
@@ -1165,16 +1281,16 @@ function renderGuides() {
                         </div>
                     </div>
                     <div class="br-grid">
-                        <div class="br-col" style="flex:0.95;">
+                        <div class="br-col" style="flex:1;">
                             <div class="br-col-title">MAIN STAT</div>
                             ${mainHtml}
                         </div>
-                        <div class="br-col" style="flex:1.3; border-left:1px solid rgba(255,255,255,0.05); padding-left:18px;">
+                        <div class="br-col" style="flex:1; border-left:1px solid rgba(255,255,255,0.05); padding-left:10px;">
                             <div class="br-col-title">SUB STAT</div>
                             ${subHtml}
                         </div>
                         <div class="br-res-col" style="position:relative;">
-                            <button class="info-btn" onclick="showMath('${build.id}')" style="position:absolute; bottom:6px; left:30px; width:18px; height:18px; font-size:0.6rem; line-height:1;">?</button>
+                            <button class="info-btn" onclick="showMath('${build.id}')" style="position:absolute; bottom:7px; left:12px; width:18px; height:18px; font-size:0.6rem; line-height:1;">?</button>
                             <div class="dps-container">
                                 <span class="build-dps" style="font-size:0.9rem;">${format(build.dps)}</span>
                                 <span class="dps-label">${label}</span>

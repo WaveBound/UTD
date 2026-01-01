@@ -34,6 +34,8 @@ function combineTraits(t1, t2) {
         radiationDuration: Math.max(t1.radiationDuration || 0, t2.radiationDuration || 0),
         
         allowDotStack: t1.allowDotStack || t2.allowDotStack,
+        allowPlacementStack: t1.allowPlacementStack || t2.allowPlacementStack,
+
         relicBuff: (t1.relicBuff ? t1.relicBuff - 1 : 0) + (t2.relicBuff ? t2.relicBuff - 1 : 0) + 1,
         
         limitPlace: (t1.limitPlace && t2.limitPlace) ? Math.min(t1.limitPlace, t2.limitPlace) : (t1.limitPlace || t2.limitPlace)
@@ -196,7 +198,7 @@ const getBestSubConfig = (build, stats, includeSubs, headMode, candidates, optim
 // --- CORE CALCULATION LOGIC ---
 
 function calculateDPS(uStats, relicStats, context) {
-    const { level, priority, wave, isBoss, traitObj, placement, isSSS, headPiece } = context;
+    const { level, priority, wave, isBoss, traitObj, placement, isSSS, headPiece, isVirtualRealm } = context;
 
     // 1. Level Scaling
     let lvStats = getLevelStats(uStats.dmg, uStats.spa, level, priority);
@@ -206,30 +208,88 @@ function calculateDPS(uStats, relicStats, context) {
     }
 
     // 2. Trait & Passive Setup
-    let passivePcent = uStats.passiveDmg || 0;
+    // Added uStats.buffDmg to capture ability damage buffs
+    let passivePcent = (uStats.passiveDmg || 0) + (uStats.buffDmg || 0);
     let passiveSpaPcent = uStats.passiveSpa || 0;
     let traitDmgPct = traitObj.dmg;
     let traitSpaPct = traitObj.spa; 
     let traitCritRate = traitObj.critRate || 0;
     let traitRangePct = traitObj.range || 0;
+    let traitDotBuff = traitObj.dotBuff || 0;
 
     // --- ETERNAL SCALING LOGIC ---
     if (traitObj.isEternal) {
-        const waveCap = Math.min(wave, 25);
-        passivePcent += waveCap * 2; // +2% Dmg per wave
-        traitRangePct += waveCap * 1; // +1% Range per wave
+        const waveCap = Math.min(wave, 12);
+        passivePcent += waveCap * 5; // +5% Dmg per wave
+        traitRangePct += waveCap * 2.5; // +1% Range per wave
     }
     
     if (traitObj.bossDmg && isBoss) traitDmgPct += traitObj.bossDmg;
 
     // 3. Set Bonus Logic
     let sBonus = { ...(setBonuses[relicStats.set] || setBonuses.none) };
-    const unitElement = uStats.element || "None";
+    if (sBonus.dot === undefined) sBonus.dot = 0;
+    let tagBuffs = { dmg: 0, spa: 0, cm: 0, cf: 0, range: 0, dot: 0 };
 
+    const unitElement = uStats.element || "None";
+    const tags = uStats.tags || [];
+
+    // --- STANDARD CONDITIONAL SETS ---
     if (relicStats.set === 'ninja') {
-        if (["Dark", "Rose", "Fire"].includes(unitElement)) sBonus.dmg += 10; 
+        if (["Dark", "Rose", "Fire"].includes(unitElement)) {
+            sBonus.dmg += 10;
+            tagBuffs.dmg += 10;
+        }
     } else if (relicStats.set === 'sun_god') {
-        if (["Ice", "Light", "Water"].includes(unitElement)) sBonus.dmg += 10;
+        if (["Ice", "Light", "Water"].includes(unitElement)) {
+            sBonus.dmg += 10;
+            tagBuffs.dmg += 10;
+        }
+    }
+
+    // --- NEW TAG-BASED CONDITIONAL SETS ---
+    if (relicStats.set === 'shadow_reaper') {
+        // Base Stats already loaded from sBonus (2.5 Dmg, 10 Range, 5 CF, 5 CM)
+        if (tags.includes('Peroxide')) {
+            sBonus.spa += 10; tagBuffs.spa += 10; // -10% Cooldown -> 10% SPA Red
+            // +15% Armor Dmg ignored
+        }
+        if (tags.includes('Reaper')) {
+            sBonus.dmg += 25; tagBuffs.dmg += 25; // +30% Elemental - 5% Damage = 25% Net
+            sBonus.spa += 12.5; tagBuffs.spa += 12.5;
+        }
+        if (tags.includes('Rage')) {
+            sBonus.dmg += 15; tagBuffs.dmg += 15; // +15% Elemental
+            sBonus.spa += 8.5; tagBuffs.spa += 8.5;
+            sBonus.dot += 10; tagBuffs.dot += 10; // +10% Buff Potency
+        }
+        if (tags.includes('Hollow')) {
+            sBonus.cf = (sBonus.cf || 0) + 20; tagBuffs.cf += 20;
+            sBonus.cm = (sBonus.cm || 0) + 12.5; tagBuffs.cm += 12.5;
+            // +5% Hyper Armor Dmg ignored
+        }
+    } 
+    else if (relicStats.set === 'reaper_set') {
+        // Base Stats already loaded (7.5 SPA, 15 Range)
+        if (tags.includes('Peroxide')) {
+            sBonus.dmg += 10; tagBuffs.dmg += 10;
+            sBonus.dot += 5; tagBuffs.dot += 5; // +5% Buff Potency
+            sBonus.cm = (sBonus.cm || 0) + 8.5; tagBuffs.cm += 8.5;
+        }
+        if (tags.includes('Reaper')) {
+            sBonus.range = (sBonus.range || 0) + 15; tagBuffs.range += 15;
+            // +20% Hyper Armor, +12.5% Armor Pen ignored
+        }
+        if (tags.includes('Rage')) {
+            sBonus.cm = (sBonus.cm || 0) + 25; tagBuffs.cm += 25;
+            sBonus.cf = (sBonus.cf || 0) + 10; tagBuffs.cf += 10;
+            sBonus.range = (sBonus.range || 0) + 10; tagBuffs.range += 10;
+        }
+        if (tags.includes('Hollow')) {
+            sBonus.dmg += 12.5; tagBuffs.dmg += 12.5;
+            sBonus.spa += 7.5; tagBuffs.spa += 7.5;
+            sBonus.range = (sBonus.range || 0) + 15; tagBuffs.range += 15;
+        }
     }
 
     // 4. Relic Base Stats
@@ -248,8 +308,10 @@ function calculateDPS(uStats, relicStats, context) {
 
     // 5. CALCULATE FINAL SPA (Speed)
     const afterTraitSpa = lvStats.spa * (1 - traitSpaPct / 100);
-    let rSpaTotal = baseR_Spa + sBonus.spa + passiveSpaPcent;
-    const rawFinalSpa = afterTraitSpa * (1 - rSpaTotal / 100);
+    // Separate Relic SPA from Set/Tag SPA
+    const spaAfterRelic = afterTraitSpa * (1 - baseR_Spa / 100); // Apply Relic SPA multiplicatively
+    let setAndPassiveSpa = sBonus.spa + passiveSpaPcent; // Set/Tag/Passive SPA are additive
+    const rawFinalSpa = spaAfterRelic * (1 - setAndPassiveSpa / 100); // Apply Set/Tag/Passive SPA multiplicatively
     const cap = uStats.spaCap || 0.1;
     const finalSpa = Math.max(rawFinalSpa, cap);
 
@@ -257,7 +319,8 @@ function calculateDPS(uStats, relicStats, context) {
     const baseRange = uStats.range || 0;
     const levelRange = baseRange * lvStats.dmgMult; 
     const passiveRange = uStats.passiveRange || 0;
-    const rangeMult = 1 + (traitRangePct + baseR_Range + passiveRange) / 100;
+    const setRange = sBonus.range || 0; // Include new set range bonuses
+    const rangeMult = 1 + (traitRangePct + baseR_Range + passiveRange + setRange) / 100;
     const finalRange = levelRange * rangeMult;
 
     // 7. HEAD PIECE PASSIVES
@@ -292,9 +355,8 @@ function calculateDPS(uStats, relicStats, context) {
     const finalDmg = lvStats.dmg * traitMult * relicMult * setAndPassiveMult;
 
     // 9. CRIT CALCULATION
-    let setCm = sBonus.cm || 0; 
-    const preRelicCdmg = uStats.cdmg + setCm;
-    const finalCdmgStat = preRelicCdmg * (1 + baseR_Cm / 100);
+    let totalCmBuff = (sBonus.cm || 0) + baseR_Cm; // Combine set/tag and relic Cm bonuses
+    const finalCdmgStat = uStats.cdmg + totalCmBuff; // Add combined buffs to base
     let rCf  = baseR_Cf + (sBonus.cf || 0); 
     if (uStats.id === 'kirito') rCf = 0; 
 
@@ -322,16 +384,21 @@ function calculateDPS(uStats, relicStats, context) {
 
     // 11. DoT CALCULATION
     let dotDpsTotal = 0;
-    let totalDotBuffs = (traitObj.dotBuff || 0) + headDotBuff;
+    let totalDotBuffs = traitDotBuff + headDotBuff + sBonus.dot;
+    
+    // Crit applies to DoT ONLY if isVirtualRealm is active (Kirito exclusive)
+    const dotCritMult = isVirtualRealm ? avgCritMult : 1;
     
     let dotBreakdown = { 
         base: uStats.dot + totalDotBuffs, 
-        baseNoHead: uStats.dot + (traitObj.dotBuff || 0), 
-        relicMult: 1, finalPct: 0, critMult: avgCritMult, internal: 1, finalTick: 0, timeUsed: finalSpa 
+        baseNoHead: uStats.dot + traitDotBuff + sBonus.dot, 
+        relicMult: 1, finalPct: 0, critMult: dotCritMult, internal: 1, finalTick: 0, timeUsed: finalSpa 
     };
     
     if (uStats.dot > 0 || traitObj.hasRadiation) {
+        // Internal Stacking: How many times does it stack on a single target per unit?
         const internalStacks = (traitObj.allowDotStack) ? uStats.dotStacks : 1;
+        
         const baseDotPct = uStats.dot + totalDotBuffs;
         const relicDotMult = 1 + (baseR_Dot / 100);
         const singleTickPct = baseDotPct * relicDotMult;
@@ -340,7 +407,8 @@ function calculateDPS(uStats, relicStats, context) {
         dotBreakdown.finalPct = singleTickPct;
 
         const totalDoTPct = singleTickPct * internalStacks;
-        const totalDoTDmg = finalDmg * (totalDoTPct / 100) * avgCritMult;
+        // Apply conditional crit multiplier
+        const totalDoTDmg = finalDmg * (totalDoTPct / 100) * dotCritMult;
         
         // Time Basis
         let timeBasis = finalSpa; 
@@ -351,7 +419,10 @@ function calculateDPS(uStats, relicStats, context) {
         }
 
         const oneUnitDoTDps = totalDoTDmg / timeBasis;
-        dotDpsTotal = oneUnitDoTDps * (traitObj.allowDotStack ? placement : 1); 
+        
+        // Placement Stacking: Does the DoT scale with number of units?
+        const canStackPlacement = traitObj.allowDotStack || traitObj.allowPlacementStack;
+        dotDpsTotal = oneUnitDoTDps * (canStackPlacement ? placement : 1); 
 
         dotBreakdown.internal = internalStacks;
         dotBreakdown.finalTick = totalDoTDmg;
@@ -363,6 +434,7 @@ function calculateDPS(uStats, relicStats, context) {
         hit: hitDpsTotal,
         dot: dotDpsTotal,
         spa: finalSpa,
+        spaCap: cap, // FIX: Explicitly returning cap so the UI can read it
         range: finalRange,
         dmgVal: finalDmg,
         lvStats: lvStats,
@@ -370,6 +442,8 @@ function calculateDPS(uStats, relicStats, context) {
         traitObj: traitObj,
         relicBuffs: { dmg: baseR_Dmg, spa: baseR_Spa, dot: baseR_Dot, range: baseR_Range }, 
         setBuffs: { dmg: sBonus.dmg, spa: sBonus.spa }, 
+        totalSetStats: sBonus,
+        tagBuffs: tagBuffs,
         passiveBuff: passivePcent + headDmgBuff, 
         passiveSpaBuff: passiveSpaPcent,
         headBuffs: { 
@@ -383,16 +457,19 @@ function calculateDPS(uStats, relicStats, context) {
         },
         dotData: dotBreakdown,
         critData: { 
-            rate: finalCritRate, cdmg: finalCdmgStat, baseCdmg: uStats.cdmg, relicCmPct: baseR_Cm, setCdmg: setCm, preRelicCdmg: preRelicCdmg, avgMult: avgCritMult 
+            rate: finalCritRate, cdmg: finalCdmgStat, baseCdmg: uStats.cdmg, relicCmPct: baseR_Cm, setCm: sBonus.cm, totalCmBuff: totalCmBuff, preRelicCdmg: uStats.cdmg, avgMult: avgCritMult 
         },
         priority: priority,
         placement: placement,
         isSSS: isSSS,
         rawFinalSpa: rawFinalSpa,
+        spaAfterRelic: spaAfterRelic, // New intermediate step
+        setAndPassiveSpa: setAndPassiveSpa, // New intermediate step
         baseStats: uStats,
         level: level,
-        singleUnitDoT: dotDpsTotal / (traitObj.allowDotStack ? placement : 1), 
-        hasStackingDoT: traitObj.allowDotStack,
-        extraAttacks: extraAttacksData
+        singleUnitDoT: dotDpsTotal / (traitObj.allowDotStack || traitObj.allowPlacementStack ? placement : 1), 
+        hasStackingDoT: traitObj.allowDotStack || traitObj.allowPlacementStack,
+        extraAttacks: extraAttacksData,
+        abilityBuff: uStats.buffDmg || 0 // FIX: Exporting Ability Buff for breakdown
     };
 }

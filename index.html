@@ -28,7 +28,7 @@
         <div id="dbInjector" class="injector-panel">
             <button class="nav-btn add-btn" onclick="openCustomPairModal()">+ Add Custom Pair</button>
             
-            <label id="hypoToggle" class="nav-toggle-label" title="Current: Relic Stats for DoT/Crit Dmg are ignored (Bugged). Check to apply fixes.">
+            <label id="hypoToggle" class="nav-toggle-label" title="Current: Relic Stats for DoT% are ignored (Bugged). Check to apply fixes.">
                 <input type="checkbox" id="globalHypothetical" onchange="toggleHypothetical(this)">
                 <span id="hypoLabel">Bugged Relics</span>
             </label>
@@ -83,8 +83,8 @@
             </div>
 
             <div id="guideWarning" class="guide-warning">
-                ⚠️ CURRENT BUG: Relic Stats for <b>DoT%</b>, <b>Crit Rate%</b> and <b>Crit Dmg%</b> are currently ignored by the game. <br>
-                Only Damage% - SPA% relics are working effectively.
+                ⚠️ CURRENT BUG: Relic Stats for <b>DoT%</b> are currently ignored by the game. <br>
+                Crit Rate% and Crit Dmg% are working effectively.
             </div>
 
             <div id="guideList" class="guide-grid">
@@ -171,21 +171,58 @@
     </div>
 
     <!-- Patch Notes -->
-    <div id="patchModal" class="modal-overlay" onclick="closePatchNotes()">
+<div id="patchModal" class="modal-overlay" onclick="closePatchNotes()">
         <div class="modal-content" onclick="event.stopPropagation()">
             <div class="modal-header-fixed"><h2 style="margin:0; font-size: 1.5rem; text-transform:uppercase;">Patch Notes</h2></div>
             <div class="modal-scroll-area">
                 
                 <div class="patch-entry">
                     <div class="patch-header">
+                        <span class="patch-version">v2.5</span>
+                        <span class="patch-date">Dec 31, 2025</span>
+                    </div>
+                    <ul class="patch-list">
+                        <!-- FIX: Wrapped text in <span> so flexbox treats it as one block -->
+                        <li>
+                            <span class="patch-tag">Data</span> 
+                            <span>Updated <b>Astral trait</b> description to "DoT Stacks (All Units)" to reflect that it scales with total placement count.</span>
+                        </li>
+                        <li>
+                            <span class="patch-tag">Math</span> 
+                            <span>Confirmed Astral calculation uses full unit placement for total DoT DPS.</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="patch-entry">
+                    <div class="patch-header">
+                        <span class="patch-version">v2.4</span>
+                        <span class="patch-date">Dec 31, 2025</span>
+                    </div>
+                    <ul class="patch-list">
+                        <!-- FIX: Wrapped text in <span> -->
+                        <li>
+                            <span class="patch-tag">Hotfix</span> 
+                            <span>Enabled <b>Crit Rate%</b> and <b>Crit Dmg%</b> relic stats in the default "Bugged Relics" mode. These stats are now considered working in-game.</span>
+                        </li>
+                        <!-- FIX: Wrapped text in <span> -->
+                        <li>
+                            <span class="patch-tag">Bug</span> 
+                            <span>Relic <b>DoT%</b> stats remain disabled in the default mode as they are still bugged.</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="patch-entry">
+                    <div class="patch-header">
                         <span class="patch-version">v2.3</span>
                         <span class="patch-date">Dec 27, 2025</span>
                     </div>
                     <ul class="patch-list">
-                        <li><span class="patch-tag">UI</span> Fixed text overflow for "Crit Dmg" in build cards.</li>
-                        <li><span class="patch-tag">Optimizer</span> Added Auto-Head Piece selection. System now automatically tests "Sun God" vs "Ninja" heads for every build.</li>
-                        <li><span class="patch-tag">UI</span> Added detailed calculation breakdown for Sun God and Ninja head passives in the DPS Breakdown modal.</li>
-                        <li><span class="patch-tag">Math</span> Refined Sun God math: 7s Duration / (6 * SPA). Shows Range and Uptime scaling.</li>
+                        <li><span class="patch-tag">UI</span> <span>Fixed text overflow for "Crit Dmg" in build cards.</span></li>
+                        <li><span class="patch-tag">Optimizer</span> <span>Added Auto-Head Piece selection. System now automatically tests "Sun God" vs "Ninja" heads for every build.</span></li>
+                        <li><span class="patch-tag">UI</span> <span>Added detailed calculation breakdown for Sun God and Ninja head passives in the DPS Breakdown modal.</span></li>
+                        <li><span class="patch-tag">Math</span> <span>Refined Sun God math: 7s Duration / (6 * SPA). Shows Range and Uptime scaling.</span></li>
                     </ul>
                 </div>
 
@@ -195,9 +232,9 @@
                         <span class="patch-date">Dec 27, 2025</span>
                     </div>
                     <ul class="patch-list">
-                        <li><span class="patch-tag">Feature</span> Added Specific Head Piece Selection logic (backend support).</li>
-                        <li><span class="patch-tag">Math</span> Implemented Sun God Passive: +Range% DMG.</li>
-                        <li><span class="patch-tag">Math</span> Implemented Ninja Head Passive: +20% DoT Potency.</li>
+                        <li><span class="patch-tag">Feature</span> <span>Added Specific Head Piece Selection logic (backend support).</span></li>
+                        <li><span class="patch-tag">Math</span> <span>Implemented Sun God Passive: +Range% DMG.</span></li>
+                        <li><span class="patch-tag">Math</span> <span>Implemented Ninja Head Passive: +20% DoT Potency.</span></li>
                     </ul>
                 </div>
 

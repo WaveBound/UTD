@@ -22,7 +22,8 @@ header { text-align: center; padding-top: 20px; width: 100%; }
 h1 { font-size: 2.5rem; margin: 0; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; background: linear-gradient(to right, var(--accent-start), var(--accent-end)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
 
 /* --- STICKY TOOLBAR --- */
-.sticky-toolbar-container { position: sticky; top: 0; z-index: 100; width: 100%; background: rgba(5, 5, 5, 0.95); backdrop-filter: blur(12px); border-bottom: 1px solid var(--card-border); box-shadow: 0 4px 30px rgba(0,0,0,0.5); display: flex; flex-direction: column; align-items: center; margin-bottom: 20px; }
+/* FIX: Increased z-index to 1000 to stay above everything else */
+.sticky-toolbar-container { position: sticky; top: 0; z-index: 1000; width: 100%; background: rgba(5, 5, 5, 0.95); backdrop-filter: blur(12px); border-bottom: 1px solid var(--card-border); box-shadow: 0 4px 30px rgba(0,0,0,0.5); display: flex; flex-direction: column; align-items: center; margin-bottom: 20px; }
 .nav-bar { display: flex; gap: 10px; padding: 15px; justify-content: center; width: 100%; margin-bottom: 5px; flex-wrap: wrap; }
 .nav-btn { background: transparent; border: 1px solid transparent; color: var(--text-secondary); padding: 8px 25px; border-radius: 8px; cursor: pointer; font-weight: 700; text-transform: uppercase; font-size: 0.9rem; transition: 0.3s; }
 .nav-btn:hover { color: #fff; background: rgba(255,255,255,0.05); }
@@ -74,6 +75,27 @@ select { appearance: none; background-image: url("data:image/svg+xml;charset=US-
 .unit-title span { font-size: 0.7rem; color: var(--accent-start); text-transform: uppercase; font-weight: bold; }
 .sss-tag { color: var(--gold); font-weight: bold; border: 1px solid var(--gold); padding: 1px 4px; border-radius: 4px; font-size: 0.6rem; margin-left: 8px; vertical-align: text-top; }
 
+/* FIX: New Tag Classes */
+.unit-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 10px 15px 5px 15px;
+    background: var(--card-bg);
+}
+
+.unit-tag {
+    font-size: 0.6rem;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid #444;
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: #bbb;
+    text-transform: uppercase;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
 .unit-toolbar { background: rgba(0,0,0,0.2); border-bottom: 1px solid var(--card-border); padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
 .select-btn { background: rgba(255,255,255,0.05); border: 1px solid #444; color: #999; padding: 5px 12px; border-radius: 6px; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; cursor: pointer; transition: 0.2s; }
 .select-btn:hover { background: #222; color: #fff; border-color: #666; }
@@ -121,7 +143,25 @@ input[type="checkbox"]:checked + .mini-switch::after { transform: translateX(14p
 .build-dps { font-size: 0.95rem; font-weight: 800; color: #fff; display: block; line-height:1.1; }
 .dps-label { font-size: 0.6rem; color: #666; font-weight: 700; display: block; text-align: right;}
 .dps-container { text-align: right; }
-.info-btn { background: rgba(255,255,255,0.1); border: 1px solid #444; color: #aaa; width: 20px; height: 20px; border-radius: 50%; font-size: 0.7rem; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+
+/* FIX: Info Button Z-Index - Reduced from 100 to 10 to avoid overlap with sticky header */
+.info-btn { 
+    background: rgba(255,255,255,0.1); 
+    border: 1px solid #444; 
+    color: #aaa; 
+    width: 20px; 
+    height: 20px; 
+    border-radius: 50%; 
+    font-size: 0.7rem; 
+    cursor: pointer; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    position: absolute; 
+    bottom: 5px; 
+    left: 15px; 
+    z-index: 10; /* FIX APPLIED HERE */
+}
 .info-btn:hover { background: var(--accent-start); color: #fff; }
 
 .guide-container { width: 100%; }
@@ -134,10 +174,20 @@ input[type="checkbox"]:checked + .mini-switch::after { transform: translateX(14p
 .guide-unit-info span { font-weight: 800; font-size: 1.1rem; color: #fff; }
 .guide-dps-val { display: block; font-size: 1.2rem; font-weight: 900; color: var(--accent-start); font-family: 'Consolas', monospace; }
 .guide-card-body { padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+
+/* Specific adjustments for build guide rows */
+.guide-card .br-grid {
+    gap: 12px; /* Increase gap between main and sub stat columns for guides */
+}
+
+.guide-card .br-col {
+    gap: 5px; /* Increase vertical gap between individual stat lines for guides */
+}
+
 .guide-warning { text-align: center; background: rgba(255, 50, 50, 0.1); border: 1px solid rgba(255, 50, 50, 0.3); color: #ff8888; padding: 10px; border-radius: 8px; font-size: 0.8rem; margin-bottom: 20px; font-weight: bold; }
 
 .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 2000; display: none; align-items: center; justify-content: center; backdrop-filter: blur(8px); }
-.modal-content { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 15px; max-width: 600px; width: 95%; box-shadow: 0 0 40px rgba(0,0,0, 0.7); max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; padding: 0; }
+.modal-content { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 15px; max-width: 600px; width: 95%; box-shadow: 0 0 40px rgba(0,0,0, 0.7); max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; padding: 0; position: relative; } /* Added position relative */
 .modal-header-fixed { padding: 15px 20px; flex-shrink: 0; background: var(--card-bg); border-bottom: 1px solid #333; z-index: 5; display: flex; justify-content: space-between; align-items: center; }
 .modal-scroll-area { padding: 20px; overflow-y: auto; flex-grow: 1; scrollbar-width: thin; scrollbar-color: #444 #111; }
 .modal-footer-fixed { padding: 15px 20px; flex-shrink: 0; background: var(--card-bg); border-top: 1px solid #333; z-index: 5; }
