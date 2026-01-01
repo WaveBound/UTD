@@ -408,7 +408,7 @@ function updateBuildListDisplay(unitId) {
 
     const allBuilds = unitBuildsCache[unitId];
 
-    const filtered = allBuilds.filter(r => {
+    let filtered = allBuilds.filter(r => {
         let headSearchName = '';
         if (r.headUsed === 'sun_god') headSearchName = 'Sun God Head';
         else if (r.headUsed === 'ninja') headSearchName = 'Ninja Head';
@@ -426,6 +426,19 @@ function updateBuildListDisplay(unitId) {
     if(filtered.length === 0) {
         listContainer.innerHTML = '<div style="padding:10px; color:#666;">No matches found.</div>';
         return;
+    }
+    
+    // NEW SORTING LOGIC
+    const sortBy = card.querySelector('select[data-filter="sort"]').value;
+
+    if (sortBy === 'dps') {
+        filtered.sort((a, b) => b.dps - a.dps);
+    } else if (sortBy === 'spa') {
+        // Sort by SPA (ascending, lower is better)
+        filtered.sort((a, b) => a.spa - b.spa);
+    } else if (sortBy === 'range') {
+        // Sort by Range (descending)
+        filtered.sort((a, b) => (b.range || 0) - (a.range || 0));
     }
 
     let displaySlice = filtered.slice(0, 25);
@@ -576,15 +589,49 @@ function renderDatabase() {
     const includeHead = document.getElementById('globalHeadPiece').checked;
     const headsToProcess = includeHead ? ['sun_god', 'ninja'] : ['none'];
 
+    // --- NEW: Calculate and Sort Units by Max DPS ---
+    // Create a working copy of unitDatabase for sorting
+    let sortedUnits = [];
+    unitDatabase.forEach(unit => {
+        const isAbilActive = activeAbilityIds.has(unit.id);
+        let currentStats = { ...unit.stats };
+        if (isAbilActive && unit.ability) Object.assign(currentStats, unit.ability);
+        
+        // Pass tags into effective stats so math logic sees them
+        if(unit.tags) currentStats.tags = unit.tags;
+
+        // Force stacks to 1 for Kirito Card mode
+        if (unit.id === 'kirito' && kiritoState.realm && kiritoState.card) { 
+            currentStats.dot = 200; 
+            currentStats.dotDuration = 4; 
+            currentStats.dotStacks = 1; 
+        }
+
+        // Calculate builds to get max DPS/Range for sorting units
+        const results = calculateUnitBuilds(unit, currentStats, filteredBuilds, subCandidates, headsToProcess, includeSubs);
+        unitBuildsCache[unit.id] = results; // Cache for later use
+
+        let maxScore = 0;
+        if (results.length > 0) {
+            maxScore = unit.id === 'law' ? (results[0].range || 0) : results[0].dps;
+        }
+        sortedUnits.push({ unit: unit, maxScore: maxScore });
+    });
+
+    sortedUnits.sort((a, b) => b.maxScore - a.maxScore);
+    // --- END NEW: Calculate and Sort Units by Max DPS ---
+
+
     function processNextChunk() {
         const startTime = performance.now();
         
-        while (renderQueueIndex < unitDatabase.length) {
-            const unit = unitDatabase[renderQueueIndex];
+        // Change loop to iterate over sortedUnits
+        while (renderQueueIndex < sortedUnits.length) {
+            const unit = sortedUnits[renderQueueIndex].unit; // Get the original unit object
             renderQueueIndex++;
 
             const isAbilActive = activeAbilityIds.has(unit.id);
-            let currentStats = { ...unit.stats };
+            let currentStats = { ...unit.stats }; // These are already calculated and cached, but we need ability state for Kirito controls
             if (isAbilActive && unit.ability) Object.assign(currentStats, unit.ability);
             
             let kiritoControlsHtml = '';
@@ -594,9 +641,8 @@ function renderDatabase() {
                 kiritoControlsHtml = `<div class="unit-toolbar" style="border-bottom:none; padding-top:5px; padding-bottom:10px; flex-wrap:wrap; justify-content:flex-start; gap:15px; background:rgba(255,255,255,0.02);"><div class="toggle-wrapper"><span>Virtual Realm</span><label><input type="checkbox" ${isRealm ? 'checked' : ''} onchange="toggleKiritoMode('realm', this)"><div class="mini-switch"></div></label></div>${isRealm ? `<div class="toggle-wrapper" style="animation:fadeIn 0.3s ease;"><span style="color:${isCard ? 'var(--custom)' : '#888'}; font-weight:${isCard ? 'bold' : 'normal'};">Magician Card</span><label><input type="checkbox" ${isCard ? 'checked' : ''} onchange="toggleKiritoMode('card', this)"><div class="mini-switch" style="${isCard ? 'background:var(--custom);' : ''}"></div></label></div>` : ''}</div>`;
             }
 
-            // Call optimized calculation with passed invariants
-            const results = calculateUnitBuilds(unit, currentStats, filteredBuilds, subCandidates, headsToProcess, includeSubs);
-            unitBuildsCache[unit.id] = results;
+            // The builds for this unit are already in unitBuildsCache[unit.id] from the sorting step
+            // No need to call calculateUnitBuilds again here.
 
             const card = document.createElement('div');
             card.className = 'unit-card';
@@ -642,6 +688,11 @@ function renderDatabase() {
                         <option value="sun_god">Sun God</option>
                         <option value="ninja">Ninja</option>
                         <option value="none">No Head</option>
+                    </select>
+                    <select onchange="filterList(this)" data-filter="sort" style="flex:1; padding:0 0 0 4px; font-size:0.7rem; height:30px;">
+                        <option value="dps">Sort by DPS</option>
+                        <option value="spa">Sort by SPA</option>
+                        <option value="range">Sort by Range</option>
                     </select>
                 </div>
             </div>`;
