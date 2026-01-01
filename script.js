@@ -428,17 +428,11 @@ function updateBuildListDisplay(unitId) {
         return;
     }
     
-    // NEW SORTING LOGIC
-    const sortBy = card.querySelector('select[data-filter="sort"]').value;
-
-    if (sortBy === 'dps') {
-        filtered.sort((a, b) => b.dps - a.dps);
-    } else if (sortBy === 'spa') {
-        // Sort by SPA (ascending, lower is better)
-        filtered.sort((a, b) => a.spa - b.spa);
-    } else if (sortBy === 'range') {
-        // Sort by Range (descending)
+    // NEW SORTING LOGIC: Automatic priority based on Unit ID
+    if (unitId === 'law') {
         filtered.sort((a, b) => (b.range || 0) - (a.range || 0));
+    } else {
+        filtered.sort((a, b) => b.dps - a.dps);
     }
 
     let displaySlice = filtered.slice(0, 25);
@@ -621,6 +615,11 @@ function renderDatabase() {
     sortedUnits.sort((a, b) => b.maxScore - a.maxScore);
     // --- END NEW: Calculate and Sort Units by Max DPS ---
 
+    // Helper to get trait name from ID
+    const getTraitName = (id) => {
+        const t = traitsList.find(x => x.id === id);
+        return t ? t.name : id;
+    };
 
     function processNextChunk() {
         const startTime = performance.now();
@@ -662,6 +661,12 @@ function renderDatabase() {
                            `</div>`;
             }
 
+            // --- TRAIT GUIDE BUTTON ---
+            let traitButtonHtml = '';
+            if (unit.meta) {
+                 traitButtonHtml = `<button class="trait-guide-btn" onclick="openTraitGuide('${unit.id}')">📋 Rec. Traits</button>`;
+            }
+
             const searchControls = `
             <div class="search-container" style="flex-direction:column; gap:8px;">
                 <div style="display:flex; gap:5px; width:100%;">
@@ -689,15 +694,11 @@ function renderDatabase() {
                         <option value="ninja">Ninja</option>
                         <option value="none">No Head</option>
                     </select>
-                    <select onchange="filterList(this)" data-filter="sort" style="flex:1; padding:0 0 0 4px; font-size:0.7rem; height:30px;">
-                        <option value="dps">Sort by DPS</option>
-                        <option value="spa">Sort by SPA</option>
-                        <option value="range">Sort by Range</option>
-                    </select>
                 </div>
             </div>`;
 
-            card.innerHTML = `<div class="unit-banner"><div class="placement-badge">Max Place: ${unit.placement}</div>${getUnitImgHtml(unit, 'unit-avatar')}<div class="unit-title"><h2>${unit.name}</h2><span>${unit.role} <span class="sss-tag">SSS</span></span></div></div>${tagsHtml}${toolbarHtml}${kiritoControlsHtml}${searchControls}<div class="top-builds-list" id="results-${unit.id}"></div>`;
+            // Injecting Button into banner
+            card.innerHTML = `<div class="unit-banner"><div class="placement-badge">Max Place: ${unit.placement}</div>${getUnitImgHtml(unit, 'unit-avatar')}<div class="unit-title"><h2>${unit.name}</h2><span>${unit.role} <span class="sss-tag">SSS</span></span></div>${traitButtonHtml}</div>${tagsHtml}${toolbarHtml}${kiritoControlsHtml}${searchControls}<div class="top-builds-list" id="results-${unit.id}"></div>`;
             container.appendChild(card);
             
             updateBuildListDisplay(unit.id);
@@ -714,6 +715,41 @@ function renderDatabase() {
 
     processNextChunk();
 }
+
+// --- TRAIT GUIDE LOGIC ---
+function openTraitGuide(unitId) {
+    const unit = unitDatabase.find(u => u.id === unitId);
+    if (!unit || !unit.meta) return;
+
+    const modalContent = document.getElementById('traitGuideContent');
+    const getTraitName = (id) => {
+        if(!id) return '-';
+        const t = traitsList.find(x => x.id === id);
+        return t ? t.name : id;
+    };
+
+    let html = `
+        <div class="tg-grid">
+            <div class="tg-section">
+                <span class="tg-label">Wave 1-30</span>
+                <span class="tg-trait" style="color:var(--gold);">⚡ ${getTraitName(unit.meta.short)}</span>
+            </div>
+            <div class="tg-section">
+                <span class="tg-label">Infinite Mode</span>
+                <span class="tg-trait" style="color:var(--custom);">♾️ ${getTraitName(unit.meta.long)}</span>
+            </div>
+        </div>
+        <div class="tg-note">
+            <strong>Strategy Note:</strong><br>
+            ${unit.meta.note || "No specific strategy notes available for this unit."}
+        </div>
+    `;
+
+    modalContent.innerHTML = html;
+    toggleModal('traitGuideModal', true);
+}
+
+function closeTraitGuide() { toggleModal('traitGuideModal', false); }
 
 const filterList = (e) => { 
     const unitId = e.closest('.unit-card').id.replace('card-', '');

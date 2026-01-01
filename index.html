@@ -94,6 +94,20 @@
     </div>
 
     <!-- MODALS -->
+
+    <!-- Trait Guide Modal -->
+    <div id="traitGuideModal" class="modal-overlay" onclick="closeTraitGuide()">
+        <div class="modal-content" style="max-width: 500px;" onclick="event.stopPropagation()">
+            <div class="modal-header-fixed">
+                <h2 style="margin:0; font-size: 1.2rem; text-transform:uppercase;">Recommended Traits</h2>
+            </div>
+            <div id="traitGuideContent" class="modal-scroll-area">
+                <!-- Content injected via JS -->
+            </div>
+            <div class="modal-footer-fixed"><button class="action-btn" onclick="closeTraitGuide()">Close</button></div>
+        </div>
+    </div>
+
     <!-- Guide Config -->
     <div id="guideConfigModal" class="modal-overlay" onclick="closeGuideConfig()">
         <div class="modal-content" style="max-width: 800px;" onclick="event.stopPropagation()">
@@ -176,68 +190,26 @@
             <div class="modal-header-fixed"><h2 style="margin:0; font-size: 1.5rem; text-transform:uppercase;">Patch Notes</h2></div>
             <div class="modal-scroll-area">
                 
-                <div class="patch-entry">
+                 <div class="patch-entry">
                     <div class="patch-header">
-                        <span class="patch-version">v2.5</span>
-                        <span class="patch-date">Dec 31, 2025</span>
+                        <span class="patch-version">v2.9</span>
+                        <span class="patch-date">Jan 02, 2026</span>
                     </div>
                     <ul class="patch-list">
-                        <!-- FIX: Wrapped text in <span> so flexbox treats it as one block -->
-                        <li>
-                            <span class="patch-tag">Data</span> 
-                            <span>Updated <b>Astral trait</b> description to "DoT Stacks (All Units)" to reflect that it scales with total placement count.</span>
-                        </li>
-                        <li>
-                            <span class="patch-tag">Math</span> 
-                            <span>Confirmed Astral calculation uses full unit placement for total DoT DPS.</span>
-                        </li>
+                        <li><span class="patch-tag">UI</span> <span>Renamed "Short Mode" to <b>"Wave 1-30"</b> for clearer context on trait usage.</span></li>
                     </ul>
                 </div>
 
-                <div class="patch-entry">
+                 <div class="patch-entry">
                     <div class="patch-header">
-                        <span class="patch-version">v2.4</span>
-                        <span class="patch-date">Dec 31, 2025</span>
+                        <span class="patch-version">v2.8</span>
+                        <span class="patch-date">Jan 02, 2026</span>
                     </div>
                     <ul class="patch-list">
-                        <!-- FIX: Wrapped text in <span> -->
-                        <li>
-                            <span class="patch-tag">Hotfix</span> 
-                            <span>Enabled <b>Crit Rate%</b> and <b>Crit Dmg%</b> relic stats in the default "Bugged Relics" mode. These stats are now considered working in-game.</span>
-                        </li>
-                        <!-- FIX: Wrapped text in <span> -->
-                        <li>
-                            <span class="patch-tag">Bug</span> 
-                            <span>Relic <b>DoT%</b> stats remain disabled in the default mode as they are still bugged.</span>
-                        </li>
+                        <li><span class="patch-tag">UI</span> <span>Replaced Trait Banner with a clickable <b>"Trait Guide"</b> button.</span></li>
+                        <li><span class="patch-tag">Feature</span> <span>Added <b>Reasoning Notes</b> to suggested traits to explain why they are optimal.</span></li>
                     </ul>
                 </div>
-
-                <div class="patch-entry">
-                    <div class="patch-header">
-                        <span class="patch-version">v2.3</span>
-                        <span class="patch-date">Dec 27, 2025</span>
-                    </div>
-                    <ul class="patch-list">
-                        <li><span class="patch-tag">UI</span> <span>Fixed text overflow for "Crit Dmg" in build cards.</span></li>
-                        <li><span class="patch-tag">Optimizer</span> <span>Added Auto-Head Piece selection. System now automatically tests "Sun God" vs "Ninja" heads for every build.</span></li>
-                        <li><span class="patch-tag">UI</span> <span>Added detailed calculation breakdown for Sun God and Ninja head passives in the DPS Breakdown modal.</span></li>
-                        <li><span class="patch-tag">Math</span> <span>Refined Sun God math: 7s Duration / (6 * SPA). Shows Range and Uptime scaling.</span></li>
-                    </ul>
-                </div>
-
-                <div class="patch-entry">
-                    <div class="patch-header">
-                        <span class="patch-version">v2.2</span>
-                        <span class="patch-date">Dec 27, 2025</span>
-                    </div>
-                    <ul class="patch-list">
-                        <li><span class="patch-tag">Feature</span> <span>Added Specific Head Piece Selection logic (backend support).</span></li>
-                        <li><span class="patch-tag">Math</span> <span>Implemented Sun God Passive: +Range% DMG.</span></li>
-                        <li><span class="patch-tag">Math</span> <span>Implemented Ninja Head Passive: +20% DoT Potency.</span></li>
-                    </ul>
-                </div>
-
             </div>
             <div class="modal-footer-fixed"><button class="action-btn" onclick="closePatchNotes()">Close</button></div>
         </div>

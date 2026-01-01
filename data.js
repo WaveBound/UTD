@@ -118,23 +118,39 @@ const elementIcons = {
     "Rose": "images/elements/Rose.png"
 };
 
+// --- EDIT BELOW HERE TO CHANGE UNIT RECOMMENDATIONS ---
 const unitDatabase = [
     {
         id: "Maid", name: "Scarlet Maid (World)", role: "Dmg / Support",
         img: "images/Maid.png", 
         placement: 1, tags: [],
+        meta: { 
+            short: "Ruler", 
+            long: "Ruler", 
+            note: "Ruler is strictly best due to 1 placement count." 
+        },
         stats: { dmg: 2950, spa: 5, crit: 0, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 3.5, passiveDmg: 0, element: "Light", dotDuration: 0, range: 28 }
     },
     {
         id: "sjw", name: "SJW (Monarch)", role: "Raw Dmg",
         img: "images/Sjw.png", 
         placement: 1, tags: [],
+        meta: { 
+            short: "Ruler", 
+            long: "Ruler", 
+            note: "Ruler is strictly best due to 1 placement count." 
+        },
         stats: { dmg: 3350, spa: 5, crit: 0, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 5, passiveDmg: 15, element: "Dark", range: 35 }
     },
     {
         id: "ragna", name: "Ragna (Silverite)", role: "Burst / Hybrid",
         img: "images/Ragna.png", 
         placement: 1, tags: [],
+        meta: { 
+            short: "Ruler", 
+            long: "Ruler", 
+            note: "Ruler is strictly best due to 1 placement count." 
+        },
         stats: { dmg: 1800, spa: 9, crit: 0, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 3, passiveDmg: 72, element: "Ice", range: 35 },
         ability: { dmg: 3600, spa: 15 } 
     },
@@ -142,78 +158,143 @@ const unitDatabase = [
         id: "ace", name: "Ace", role: "Burn / DoT",
         img: "images/Ace.png",
         placement: 3, tags: [],
+        meta: { 
+            short: "Ruler", 
+            long: "Ruler/Eternal/Astral", 
+            note: "Eternal provides highest DPS Potential(similar to ruler), Ruler provides good dps to cost." 
+        },
         stats: { dmg: 1500, spa: 9, crit: 0, cdmg: 150, dot: 100, dotStacks: 1, spaCap: 6, passiveDmg: 60, element: "Fire", dotDuration: 4, range: 30 }
     },
     {
         id: "kirito", name: "Kirito", role: "Burst / Crit",
         img: "images/Kirito.png",
         placement: 3, tags: [],
+        meta: { 
+            short: "Ruler", 
+            long: "Eternal", 
+            note: "Eternal provides highest DPS Potential, Ruler provides good dps to cost." 
+        },
         stats: { dmg: 1200, spa: 7, crit: 50, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 4, hitCount: 14, reqCrits: 50, extraAttacks: 0, element: "Ice", range: 30 }
     },
     {
         id: "kenpachi", name: "Kenpachi", role: "Raw Dmg / Slow",
         img: "images/Kenpachi.png",
         placement: 1, tags: ["Peroxide", "Reaper", "Rage"],
+        meta: { 
+            short: "Ruler", 
+            long: "Ruler", 
+            note: "Ruler is strictly best due to 1 placement count." 
+        },
         stats: { dmg: 2875, spa: 10, crit: 0, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 2.0, element: "Light", range: 27 }
     },
     {
         id: "sasuke", name: "Sasuke (Chakra)", role: "Raw Dmg",
         img: "images/Sasuke.png", 
         placement: 2, tags: [],
+        meta: { 
+            short: "Ruler", 
+            long: "Eternal/Sacred", 
+            note: "Ruler for DPS, Eternal/Sacred for support." 
+        },
         stats: { dmg: 2450, spa: 6.75, crit: 0, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 4, passiveDmg: 25, element: "Dark", range: 28 }
     },
     {
         id: "mob", name: "Pyscho (100%)", role: "Raw Dmg",
         img: "images/Mob.png", 
         placement: 2, tags: [],
+        meta: { 
+            short: "Ruler", 
+            long: "Ruler", 
+            note: "Standard DPS selection." 
+        },
         stats: { dmg: 2600, spa: 6.5, crit: 0, cdmg: 150, dot: 20, dotStacks: 1, spaCap: 5.5, passiveDmg: 0, element: "Rose", dotDuration: 4, range: 35 }
     },
     {
         id: "shanks", name: "Shanks (Conqueror)", role: "Raw Dmg",
         img: "images/Shanks.png", 
         placement: 1, tags: [],
+        meta: { 
+            short: "Ruler", 
+            long: "Ruler", 
+            note: "Ruler is strictly best due to 1 placement count." 
+        },
         stats: { dmg: 2750, spa: 12, crit: 0, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 2.5, passiveDmg: 0, element: "Rose", dotDuration: 0, range: 30}
     },
     {
         id: "genos", name: "Cyborg (Fearless)", role: "Dmg / Burn",
         img: "images/Genos.png", 
         placement: 3, tags: [],
+        meta: { 
+            short: "Ruler", 
+            long: "Eternal", 
+            note: "Burn stacks require fast attacks. Eternal is generally superior for maintaining stack count." 
+        },
         stats: { dmg: 1450, spa: 5.5, crit: 0, cdmg: 150, dot: 14, dotStacks: 7, spaCap: 4, passiveDmg: 0, element: "Fire", dotDuration: 7, range: 32 }
     },
     {
         id: "law", name: "Rule (Room)", role: "Support / Dmg",
         img: "images/Law.png", 
         placement: 2, tags: [],
+        meta: { 
+            short: "Ruler/Sacred", 
+            long: "Ruler/Sacred", 
+            note: "Ruler/Sacred offer the most Spa%- / Rng%+" 
+        },
         stats: { dmg: 1300, spa: 5, crit: 0, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 2, passiveDmg: 20, passiveSpa: 10, element: "Water", dotDuration: 0, range: 31.5 }
     },
     {
         id: "akainu", name: "Admiral (Magma)", role: "Support / Dmg",
         img: "images/Akainu.png", 
         placement: 3, tags: [],
+        meta: { 
+            short: "Eternal/Sacred", 
+            long: "Eternal/Sacred", 
+            note: "Eternal/Sacred offer the the best dps + support performance." 
+        },
         stats: { dmg: 1100, spa: 5, crit: 0, cdmg: 150, dot: 60, dotStacks: 1, spaCap: 2, passiveDmg: 0, passiveSpa: 0, element: "Fire", dotDuration: 7, range: 37}
     },
     {
         id: "ichigo", name: "Ichiko (Rage)", role: "Dmg",
         img: "images/Ichigo.png", 
         placement: 1, tags: ["Peroxide", "Reaper", "Rage", "Hollow"],
+        meta: { 
+            short: "Ruler", 
+            long: "Ruler", 
+            note: "Ruler is strictly best due to 1 placement count." 
+        },
         stats: { dmg: 3000, spa: 8, crit: 15, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 4, passiveDmg: 40, passiveSpa: 0, element: "Dark", dotDuration: 0, range: 38}
     },
     {
         id: "grimjaw", name: "Grommjaw (Panther)", role: "Dmg",
         img: "images/Grimjaw.png", 
-        placement: 1, tags: ["Peroxide", "Hollow"],
+        placement: 3, tags: ["Peroxide", "Hollow"],
+        meta: { 
+            short: "Ruler", 
+            long: "Eternal", 
+            note: "Standard DPS selection." 
+        },
         stats: { dmg: 1590, spa: 9, crit: 0, cdmg: 150, dot: 8, dotStacks: 1, spaCap: 3, passiveDmg: 0, passiveSpa: 0, element: "Water", dotDuration: 4, range: 35}
     },
     {
         id: "stark", name: "Koyote (Number one)", role: "Dmg",
         img: "images/Stark.png", 
         placement: 1, tags: ["Peroxide", "Hollow"],
+        meta: { 
+            short: "Ruler", 
+            long: "Ruler", 
+            note: "Ruler is strictly best due to 1 placement count." 
+        },
         stats: { dmg: 1280, spa: 6, crit: 0, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 6, passiveDmg: 0, passiveSpa: 0, element: "Ice", dotDuration: 0, range: 42}
     },
         {
         id: "ulquiorra", name: "Ultiiorra (Oblivion)", role: "Dmg",
         img: "images/Ulqiorra.png", 
         placement: 3, tags: ["Peroxide", "Hollow"],
+        meta: { 
+            short: "Ruler", 
+            long: "Eternal", 
+            note: "Standard DPS selection." 
+        },
         stats: { dmg: 1275, spa: 5, crit: 0, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 2, passiveDmg: 0, passiveSpa: 5, element: "Dark", dotDuration: 0, range: 37},
         ability: {
             buffDmg: 35, // 20% from scaling + 15% from Max Threshold
@@ -225,6 +306,11 @@ const unitDatabase = [
         id: "harribel", name: "Tierrabel (Hydro)", role: "Dmg",
         img: "images/Harribel.png", 
         placement: 3, tags: ["Peroxide", "Hollow"],
+        meta: { 
+            short: "Ruler", 
+            long: "Eternal", 
+            note: "Standard DPS selection." 
+        },
         stats: { dmg: 1490, spa: 8.5, crit: 0, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 2, passiveDmg: 0, passiveSpa: 0, element: "Water", dotDuration: 0, range: 30},
         ability: {
             buffDmg: 35, // +35% damage
