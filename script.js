@@ -1106,6 +1106,9 @@ function getTopBuildsForGuide(unit, trait) {
     if (activeAbilityIds.has(unit.id) && unit.ability) Object.assign(effectiveStats, unit.ability);
     effectiveStats.id = unit.id;
     
+    // Pass tags into effective stats so math logic sees them
+    if(unit.tags) effectiveStats.tags = unit.tags;
+
     // Force stacks to 1 for Kirito Card mode in Guides too
     if (unit.id === 'kirito' && kiritoState.realm && kiritoState.card) { 
         effectiveStats.dot = 200; 
