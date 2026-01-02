@@ -1552,6 +1552,7 @@ function viewSubPriority(buildId) {
         if (applySubLogic(testBuild, cand, ms.legs)) conflictCount++;
 
         let effStats = { ...unit.stats };
+        effStats.id = unit.id; // Ensure ID is passed for specific logic (Kirito checks etc)
         if (activeAbilityIds.has(unit.id) && unit.ability) Object.assign(effStats, unit.ability);
         if (unit.tags) effStats.tags = unit.tags;
         if (unit.id === 'kirito' && kiritoState.realm && kiritoState.card) { 
