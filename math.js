@@ -240,6 +240,17 @@ function calculateDPS(uStats, relicStats, context) {
     const unitElement = uStats.element || "None";
     const tags = uStats.tags || [];
 
+    // --- APPLY HEAD PIECE STATS AS SET BONUS ---
+    if (headPiece === 'reaper_necklace') {
+        sBonus.spa = (sBonus.spa || 0) + 7.5;
+        sBonus.range = (sBonus.range || 0) + 15;
+    } else if (headPiece === 'shadow_reaper_necklace') {
+        sBonus.dmg = (sBonus.dmg || 0) + 2.5;
+        sBonus.range = (sBonus.range || 0) + 10;
+        sBonus.cf = (sBonus.cf || 0) + 5;
+        sBonus.cm = (sBonus.cm || 0) + 5;
+    }
+
     // --- STANDARD CONDITIONAL SETS ---
     if (relicStats.set === 'ninja') {
         if (["Dark", "Rose", "Fire"].includes(unitElement)) {
@@ -272,19 +283,6 @@ function calculateDPS(uStats, relicStats, context) {
     let baseR_Cf  = relicStats.cf; 
     let baseR_Dot = statConfig.applyRelicDot ? relicStats.dot : 0;
     let baseR_Range = relicStats.range || 0;
-
-    // --- APPLY NEW HEAD PIECE STATS ---
-    // These are treated as Relic Stats so they are affected by "Artificer" if applicable
-    // and stack additively with sub-stats
-    if (headPiece === 'reaper_necklace') {
-        baseR_Spa += 7.5; // -7.5% SPA (Positive value here reduces SPA later)
-        baseR_Range += 15; // +15% Range
-    } else if (headPiece === 'shadow_reaper_necklace') {
-        baseR_Dmg += 2.5;
-        baseR_Range += 10;
-        baseR_Cf = (baseR_Cf || 0) + 5;
-        baseR_Cm += 5;
-    }
 
     if (traitObj.relicBuff) {
         const mult = traitObj.relicBuff; 
