@@ -17,6 +17,103 @@ const SUB_NAMES = {
     dmg: "Dmg", spa: "SPA", cm: "Crit Dmg", cf: "Crit Rate", dot: "DoT", range: "Range"
 };
 
+
+// --- PATCH NOTES ARCHIVE ---
+const patchNotesData = [
+    {
+        version: "v2.9",
+        date: "Jan 02, 2026",
+        changes: [
+            { type: "ITEM", text: "Added <b>Reaper Necklace</b> (-7.5% SPA, +15% Range)." },
+            { type: "ITEM", text: "Added <b>Shadow Reaper Necklace</b> (+2.5% Dmg, +10% Range, +5% Crit Rate, +5% Crit Dmg)." },
+            { type: "UI", text: "Renamed 'Short Mode' to <b>'Wave 1-30'</b> for clearer context on trait usage." }
+        ]
+    },
+    {
+        version: "v2.8",
+        date: "Jan 02, 2026",
+        changes: [
+            { type: "UI", text: "Replaced Trait Banner with a clickable <b>'Trait Guide'</b> button." },
+            { type: "Feature", text: "Added <b>Reasoning Notes</b> to suggested traits to explain why they are optimal." }
+        ]
+    },
+    {
+        version: "v2.7",
+        date: "Dec 31, 2025",
+        changes: [
+            { type: "UNIT", text: "Added Genos Ability Toggle (+75% Passive) and Burn Multiplier (+45%)." },
+            { type: "UI", text: "Fixed CSS typo causing syntax highlighting errors." }
+        ]
+    },
+    {
+        version: "v2.5",
+        date: "Dec 31, 2025",
+        changes: [
+            { type: "Data", text: "Updated <b>Astral trait</b> description to 'DoT Stacks (All Units)' to reflect that it scales with total placement count." },
+            { type: "Math", text: "Confirmed Astral calculation uses full unit placement for total DoT DPS." }
+        ]
+    },
+    {
+        version: "v2.4",
+        date: "Dec 31, 2025",
+        changes: [
+            { type: "Hotfix", text: "Enabled <b>Crit Rate%</b> and <b>Crit Dmg%</b> relic stats in the default 'Bugged Relics' mode. These stats are now considered working in-game." },
+            { type: "Bug", text: "Relic <b>DoT%</b> stats remain disabled in the default mode as they are still bugged." }
+        ]
+    },
+    {
+        version: "v2.3",
+        date: "Dec 27, 2025",
+        changes: [
+            { type: "UI", text: "Fixed text overflow for 'Crit Dmg' in build cards." },
+            { type: "Optimizer", text: "Added Auto-Head Piece selection. System now automatically tests 'Sun God' vs 'Ninja' heads for every build." },
+            { type: "UI", text: "Added detailed calculation breakdown for Sun God and Ninja head passives in the DPS Breakdown modal." },
+            { type: "Math", text: "Refined Sun God math: 7s Duration / (6 * SPA). Shows Range and Uptime scaling." }
+        ]
+    },
+    {
+        version: "v2.2",
+        date: "Dec 27, 2025",
+        changes: [
+            { type: "Feature", text: "Added Specific Head Piece Selection logic (backend support)." },
+            { type: "Math", text: "Implemented Sun God Passive: +Range% DMG." },
+            { type: "Math", text: "Implemented Ninja Head Passive: +20% DoT Potency." }
+        ]
+    },
+    {
+        version: "v2.0",
+        date: "Dec 26, 2025",
+        changes: [
+            { type: "Feature", text: "Added 'Configure View' to Build Guides for specific setups." },
+            { type: "Feature", text: "Added new 'Add Custom Pair' Modal to easily build and assign custom trait combinations to the database." }
+        ]
+    },
+    {
+        version: "v1.8",
+        date: "Dec 26, 2025",
+        changes: [
+            { type: "Feature", text: "Added Virtual Realm / Magician Card toggles directly to Build Guides card for Kirito." },
+            { type: "Fix", text: "Fixed Virtual Realm + Magician Card stacking logic for Kirito (Now correctly uses 14 stacks)." }
+        ]
+    },
+    {
+        version: "v1.7",
+        date: "Dec 26, 2025",
+        changes: [
+            { type: "Feature", text: "Added Virtual Realm / Magician Card toggles for Kirito (DB Page)." },
+            { type: "Calculations", text: "Magician Card sets bleed to 200% over 4s." }
+        ]
+    },
+    {
+        version: "v1.6",
+        date: "Dec 26, 2025",
+        changes: [
+            { type: "New Set", text: "Added 'Sun God' Set (+10% Dmg)." },
+            { type: "Logic Update", text: "Sun God set bonus only applies to Ice, Light, and Water units." }
+        ]
+    }
+];
+
 const guideData = [
     {
         unit: "Miku",
@@ -118,7 +215,6 @@ const elementIcons = {
     "Rose": "images/elements/Rose.png"
 };
 
-// --- EDIT BELOW HERE TO CHANGE UNIT RECOMMENDATIONS ---
 const unitDatabase = [
     {
         id: "Maid", name: "Scarlet Maid (World)", role: "Dmg / Support",

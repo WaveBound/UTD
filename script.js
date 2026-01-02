@@ -228,82 +228,104 @@ function calculateUnitBuilds(unit, effectiveStats, filteredBuilds, subCandidates
     if (unit.id === 'kirito' && kiritoState.realm && kiritoState.card) {
         effectiveStats.dot = 200; 
         effectiveStats.dotDuration = 4; 
-        effectiveStats.dotStacks = 1; // Force to 1 for DoT Calculation, preserving hitCount for Attack Rate logic
+        effectiveStats.dotStacks = 1; 
     }
-    
-    // Pass tags into effective stats so math logic sees them
     if(unit.tags) effectiveStats.tags = unit.tags;
 
     const isKiritoVR = (unit.id === 'kirito' && kiritoState.realm);
-
     let unitResults = [];
+
+    // --- Optimization: Pre-Analyze Unit for DoT Eligibility ---
+    // If unit/trait has no DoT capability, strict filter DoT related stats
+    const unitHasBaseDot = (unit.stats.dot > 0) || (unit.stats.burnMultiplier > 0);
+    
+    // Create a restricted set of sub-candidates based on the unit itself
+    let unitSubCandidates = [...subCandidates];
+    if (!unitHasBaseDot && !effectiveStats.dot && !isKiritoVR) {
+        // If unit inherently has no DoT, remove 'dot' sub stat unless trait adds it later (checked inside loop)
+        unitSubCandidates = unitSubCandidates.filter(c => c !== 'dot');
+    }
 
     activeTraits.forEach(trait => {
         if (trait.id === 'none') return; 
+        
         let actualPlacement = unit.placement;
         if (trait.limitPlace) actualPlacement = Math.min(unit.placement, trait.limitPlace);
+
+        // Dynamic Filtering: If trait adds DoT, re-enable DoT check
+        const traitAddsDot = trait.dotBuff > 0 || trait.hasRadiation || trait.allowDotStack;
+        const currentCandidates = (traitAddsDot) ? subCandidates : unitSubCandidates;
         
-        filteredBuilds.forEach(build => {
-            headsToProcess.forEach(hMode => {
-                let contextDmg = { level: 99, priority: 'dmg', wave: 25, isBoss: false, traitObj: trait, placement: actualPlacement, isSSS: true, isVirtualRealm: isKiritoVR };
-                effectiveStats.context = contextDmg;
-                let bestDmgConfig = getBestSubConfig(build, effectiveStats, includeSubs, hMode, subCandidates);
-                let resDmg = bestDmgConfig.res;
+        // Filter builds: If unit+trait have no DoT, exclude DoT main stats
+        const relevantBuilds = (!unitHasBaseDot && !traitAddsDot) 
+            ? filteredBuilds.filter(b => b.bodyType !== 'dot') 
+            : filteredBuilds;
 
-                let contextSpa = { level: 99, priority: 'spa', wave: 25, isBoss: false, traitObj: trait, placement: actualPlacement, isSSS: true, isVirtualRealm: isKiritoVR };
-                effectiveStats.context = contextSpa;
-                let bestSpaConfig = getBestSubConfig(build, effectiveStats, includeSubs, hMode, subCandidates);
-                let resSpa = bestSpaConfig.res;
+        // Optimization: Collapse Head Loop
+        // Instead of calculating 4 times, we pass 'auto' (if heads enabled) to find the single best head
+        const bestHeadMode = headsToProcess.length > 1 ? 'auto' : headsToProcess[0];
 
-                let suffix = isAbilActive ? '-ABILITY' : '-BASE';
-                if (unit.id === 'kirito') { if (kiritoState.realm) suffix += '-VR'; if (kiritoState.card) suffix += '-CARD'; }
-                let subsSuffix = includeSubs ? '-SUBS' : '-NOSUBS';
-                let headSuffix = (hMode === 'sun_god') ? '-SUN' : (hMode === 'ninja' ? '-NINJA' : '-NOHEAD');
-                let safeBuildName = build.name.replace(/[^a-zA-Z0-9]/g, '');
+        relevantBuilds.forEach(build => {
+            // DMG Prio
+            let contextDmg = { level: 99, priority: 'dmg', wave: 25, isBoss: false, traitObj: trait, placement: actualPlacement, isSSS: true, isVirtualRealm: isKiritoVR };
+            effectiveStats.context = contextDmg;
+            let bestDmgConfig = getBestSubConfig(build, effectiveStats, includeSubs, bestHeadMode, currentCandidates);
+            let resDmg = bestDmgConfig.res;
 
-                if (!isNaN(resDmg.total)) {
-                    let id = `${unit.id}${suffix}-${trait.id}-${safeBuildName}-dmg${subsSuffix}${headSuffix}`;
-                    cachedResults[id] = resDmg;
+            // SPA Prio
+            let contextSpa = { level: 99, priority: 'spa', wave: 25, isBoss: false, traitObj: trait, placement: actualPlacement, isSSS: true, isVirtualRealm: isKiritoVR };
+            effectiveStats.context = contextSpa;
+            let bestSpaConfig = getBestSubConfig(build, effectiveStats, includeSubs, bestHeadMode, currentCandidates);
+            let resSpa = bestSpaConfig.res;
+
+            let suffix = isAbilActive ? '-ABILITY' : '-BASE';
+            if (unit.id === 'kirito') { if (kiritoState.realm) suffix += '-VR'; if (kiritoState.card) suffix += '-CARD'; }
+            let subsSuffix = includeSubs ? '-SUBS' : '-NOSUBS';
+            let headSuffix = (bestHeadMode === 'auto') ? '-AUTOHEAD' : '-NOHEAD';
+            let safeBuildName = build.name.replace(/[^a-zA-Z0-9]/g, '');
+
+            if (!isNaN(resDmg.total)) {
+                let id = `${unit.id}${suffix}-${trait.id}-${safeBuildName}-dmg${subsSuffix}${headSuffix}`;
+                cachedResults[id] = resDmg;
+                unitResults.push({ 
+                    id: id, setName: build.name.split('(')[0].trim(), traitName: trait.name, dps: resDmg.total, spa: resDmg.spa, prio: "dmg",
+                    mainStats: { body: build.bodyType, legs: build.legType },
+                    subStats: bestDmgConfig.assignments,
+                    headUsed: bestDmgConfig.assignments.selectedHead,
+                    isCustom: trait.isCustom 
+                });
+            }
+
+            if (!isNaN(resSpa.total) && resSpa.total > 0 && Math.abs(resSpa.total - resDmg.total) > 1) {
+                let id = `${unit.id}${suffix}-${trait.id}-${safeBuildName}-spa${subsSuffix}${headSuffix}`;
+                cachedResults[id] = resSpa;
+                unitResults.push({ 
+                    id: id, setName: build.name.split('(')[0].trim(), traitName: trait.name, dps: resSpa.total, spa: resSpa.spa, prio: "spa",
+                    mainStats: { body: build.bodyType, legs: build.legType },
+                    subStats: bestSpaConfig.assignments,
+                    headUsed: bestSpaConfig.assignments.selectedHead,
+                    isCustom: trait.isCustom 
+                });
+            }
+
+            if (unit.id === 'law') {
+                    let contextRange = { level: 99, priority: 'dmg', wave: 25, isBoss: false, traitObj: trait, placement: actualPlacement, isSSS: true, isVirtualRealm: isKiritoVR };
+                    effectiveStats.context = contextRange;
+                    let bestRangeConfig = getBestSubConfig(build, effectiveStats, includeSubs, bestHeadMode, currentCandidates, 'range');
+                    let resRange = bestRangeConfig.res;
+
+                    if (!isNaN(resRange.total)) {
+                    let id = `${unit.id}${suffix}-${trait.id}-${safeBuildName}-range${subsSuffix}${headSuffix}`;
+                    cachedResults[id] = resRange;
                     unitResults.push({ 
-                        id: id, setName: build.name.split('(')[0].trim(), traitName: trait.name, dps: resDmg.total, spa: resDmg.spa, prio: "dmg",
+                        id: id, setName: build.name.split('(')[0].trim(), traitName: trait.name, dps: resRange.total, spa: resRange.spa, range: resRange.range, prio: "range",
                         mainStats: { body: build.bodyType, legs: build.legType },
-                        subStats: bestDmgConfig.assignments,
-                        headUsed: bestDmgConfig.assignments.selectedHead,
+                        subStats: bestRangeConfig.assignments,
+                        headUsed: bestRangeConfig.assignments.selectedHead,
                         isCustom: trait.isCustom 
                     });
-                }
-
-                if (!isNaN(resSpa.total) && resSpa.total > 0 && Math.abs(resSpa.total - resDmg.total) > 1) {
-                    let id = `${unit.id}${suffix}-${trait.id}-${safeBuildName}-spa${subsSuffix}${headSuffix}`;
-                    cachedResults[id] = resSpa;
-                    unitResults.push({ 
-                        id: id, setName: build.name.split('(')[0].trim(), traitName: trait.name, dps: resSpa.total, spa: resSpa.spa, prio: "spa",
-                        mainStats: { body: build.bodyType, legs: build.legType },
-                        subStats: bestSpaConfig.assignments,
-                        headUsed: bestSpaConfig.assignments.selectedHead,
-                        isCustom: trait.isCustom 
-                    });
-                }
-
-                if (unit.id === 'law') {
-                     let contextRange = { level: 99, priority: 'dmg', wave: 25, isBoss: false, traitObj: trait, placement: actualPlacement, isSSS: true, isVirtualRealm: isKiritoVR };
-                     effectiveStats.context = contextRange;
-                     let bestRangeConfig = getBestSubConfig(build, effectiveStats, includeSubs, hMode, subCandidates, 'range');
-                     let resRange = bestRangeConfig.res;
-
-                     if (!isNaN(resRange.total)) {
-                        let id = `${unit.id}${suffix}-${trait.id}-${safeBuildName}-range${subsSuffix}${headSuffix}`;
-                        cachedResults[id] = resRange;
-                        unitResults.push({ 
-                            id: id, setName: build.name.split('(')[0].trim(), traitName: trait.name, dps: resRange.total, spa: resRange.spa, range: resRange.range, prio: "range",
-                            mainStats: { body: build.bodyType, legs: build.legType },
-                            subStats: bestRangeConfig.assignments,
-                            headUsed: bestRangeConfig.assignments.selectedHead,
-                            isCustom: trait.isCustom 
-                        });
-                     }
-                }
-            });
+                    }
+            }
         });
     });
 
@@ -444,7 +466,7 @@ function updateBuildListDisplay(unitId) {
         filtered.sort((a, b) => b.dps - a.dps);
     }
 
-    let displaySlice = filtered.slice(0, 25);
+    let displaySlice = filtered.slice(0, 10);
 
     if(unitId === 'kirito' && searchInput === '') {
         const astralBuild = filtered.find(b => b.traitName === 'Astral');
@@ -464,10 +486,8 @@ function toggleAbility(unitId, checkbox) {
     let currentStats = { ...unit.stats };
     if (checkbox.checked && unit.ability) {
         Object.assign(currentStats, unit.ability);
-        console.log(`Ability toggled for ${unitId}. currentStats after ability:`, currentStats); // Temporary log
     }
     
-    // Pass global configuration for single unit recalc
     const filteredBuilds = getFilteredBuilds();
     const subCandidates = getValidSubCandidates();
     const includeSubs = document.getElementById('globalSubStats').checked;
@@ -572,20 +592,20 @@ function closeCompare() { toggleModal('compareModal', false); }
 function renderDatabase() {
     const container = document.getElementById('dbPage');
     
-    // If this is a fresh render, clear everything
+    // Clean start (No Loading Text)
     if (renderQueueIndex === 0) {
         container.innerHTML = '';
         cachedResults = {}; 
         unitBuildsCache = {};
     }
 
-    // Cancel any existing render loop
+    // Stop existing render
     if (renderQueueId) {
         cancelAnimationFrame(renderQueueId);
         renderQueueId = null;
     }
 
-    // Pre-calculate invariants for this render pass
+    // Run logic immediately
     const filteredBuilds = getFilteredBuilds();
     const subCandidates = getValidSubCandidates();
     const includeSubs = document.getElementById('globalSubStats').checked;
@@ -667,14 +687,14 @@ function renderDatabase() {
             if (unit.tags && unit.tags.length > 0) {
                 // Use the new CSS classes for proper wrapping and spacing
                 tagsHtml = `<div class="unit-tags">` + 
-                           unit.tags.map(t => `<span class="unit-tag">${t}</span>`).join('') + 
-                           `</div>`;
+                        unit.tags.map(t => `<span class="unit-tag">${t}</span>`).join('') + 
+                        `</div>`;
             }
 
             // --- TRAIT GUIDE BUTTON ---
             let traitButtonHtml = '';
             if (unit.meta) {
-                 traitButtonHtml = `<button class="trait-guide-btn" onclick="openTraitGuide('${unit.id}')">📋 Rec. Traits</button>`;
+                traitButtonHtml = `<button class="trait-guide-btn" onclick="openTraitGuide('${unit.id}')">📋 Rec. Traits</button>`;
             }
 
             // Updated Search Controls HTML to include new Head Options

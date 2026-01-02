@@ -99,6 +99,7 @@ const checkIsBetter = (res, currentBest, optimizeFor) => {
     return res.total > currentBest.total;
 };
 
+// --- OPTIMIZED SUB CONFIG SEARCH ---
 const getBestSubConfig = (build, stats, includeSubs, headMode, candidates, optimizeFor = 'dps') => {
     let mode = headMode;
     if (mode === true) mode = 'auto';
@@ -121,6 +122,7 @@ const getBestSubConfig = (build, stats, includeSubs, headMode, candidates, optim
         const actualIncludeHead = (headType !== 'none');
         stats.context.headPiece = headType;
 
+        // Base Case: No subs, just head check
         if (!includeSubs && !actualIncludeHead) {
             let res = calculateDPS(stats, build, stats.context);
             if(checkIsBetter(res, globalBestRes, optimizeFor)) {
@@ -133,6 +135,7 @@ const getBestSubConfig = (build, stats, includeSubs, headMode, candidates, optim
         if (currentCandidates.length === 0 && actualIncludeHead) currentCandidates.push('dmg');
         if (!includeSubs && actualIncludeHead) currentCandidates = ['dmg', 'spa']; 
 
+        // 1. Pure Strategy Loop
         currentCandidates.forEach(cand => {
             let testBuild = { ...build };
             
@@ -154,9 +157,16 @@ const getBestSubConfig = (build, stats, includeSubs, headMode, candidates, optim
                 globalBestAssignments.selectedHead = headType;
             }
 
+            // 2. Hybrid Strategy Optimization (Aggressively Pruned)
+            // Only test hybrids that are statistically relevant for breakpoints (SPA/DMG, Range/DMG).
+            // Skip "value" mixing like Crit/DoT as pure stats usually win.
             if (actualIncludeHead) {
-                currentCandidates.forEach(subCand => {
-                    if (cand === subCand) return; 
+                let usefulPairs = [];
+                if (cand === 'spa') usefulPairs = ['dmg', 'range'];
+                else if (cand === 'range') usefulPairs = ['dmg', 'spa'];
+
+                usefulPairs.forEach(subCand => {
+                    if (!currentCandidates.includes(subCand)) return; 
 
                     let hybridBuild = { ...build };
 
