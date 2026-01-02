@@ -155,17 +155,6 @@ const unitDatabase = [
         ability: { dmg: 3600, spa: 15 } 
     },
     {
-        id: "ace", name: "Ace", role: "Burn / DoT",
-        img: "images/Ace.png",
-        placement: 3, tags: [],
-        meta: { 
-            short: "Ruler", 
-            long: "Ruler/Eternal/Astral", 
-            note: "Eternal provides highest DPS Potential(similar to ruler), Ruler provides good dps to cost." 
-        },
-        stats: { dmg: 1500, spa: 9, crit: 0, cdmg: 150, dot: 100, dotStacks: 1, spaCap: 6, passiveDmg: 60, element: "Fire", dotDuration: 4, range: 30 }
-    },
-    {
         id: "kirito", name: "Kirito", role: "Burst / Crit",
         img: "images/Kirito.png",
         placement: 3, tags: [],
@@ -175,6 +164,18 @@ const unitDatabase = [
             note: "Eternal provides highest DPS Potential, Ruler provides good dps to cost." 
         },
         stats: { dmg: 1200, spa: 7, crit: 50, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 4, hitCount: 14, reqCrits: 50, extraAttacks: 0, element: "Ice", range: 30 }
+    },
+    {
+        id: "genos", name: "Cyborg (Fearless)", role: "DoT / Raw",
+        img: "images/Genos.png", 
+        placement: 3, tags: [],
+        meta: { 
+            short: "Ruler", 
+            long: "Eternal/Sacred", 
+            note: "Standard DPS Selection." 
+        },
+        stats: { dmg: 1440, spa: 5.5, crit: 0, cdmg: 150, dot: 14, dotStacks: 1, spaCap: 4, passiveDmg: 0, element: "Fire", range: 32, burnMultiplier: 45 },
+        ability: { passiveDmg: 75 }
     },
     {
         id: "kenpachi", name: "Kenpachi", role: "Raw Dmg / Slow",
@@ -221,17 +222,6 @@ const unitDatabase = [
         stats: { dmg: 2750, spa: 12, crit: 0, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 2.5, passiveDmg: 0, element: "Rose", dotDuration: 0, range: 30}
     },
     {
-        id: "genos", name: "Cyborg (Fearless)", role: "Dmg / Burn",
-        img: "images/Genos.png", 
-        placement: 3, tags: [],
-        meta: { 
-            short: "Ruler", 
-            long: "Eternal", 
-            note: "Burn stacks require fast attacks. Eternal is generally superior for maintaining stack count." 
-        },
-        stats: { dmg: 1450, spa: 5.5, crit: 0, cdmg: 150, dot: 14, dotStacks: 1, spaCap: 4, passiveDmg: 0, element: "Fire", dotDuration: 7, range: 32 }
-    },
-    {
         id: "law", name: "Rule (Room)", role: "Support / Dmg",
         img: "images/Law.png", 
         placement: 2, tags: [],
@@ -273,7 +263,12 @@ const unitDatabase = [
             long: "Eternal", 
             note: "Standard DPS selection." 
         },
-        stats: { dmg: 1590, spa: 9, crit: 0, cdmg: 150, dot: 8, dotStacks: 1, spaCap: 3, passiveDmg: 0, passiveSpa: 0, element: "Water", dotDuration: 4, range: 35}
+        stats: { 
+            dmg: 1590, spa: 9, crit: 0, cdmg: 150, dot: 50, dotStacks: 1, spaCap: 3, 
+            passiveDmg: 6.67,  // Averaged
+            passiveSpa: 4.17,  
+            element: "Water", dotDuration: 4, range: 35
+        }
     },
     {
         id: "stark", name: "Koyote (Number one)", role: "Dmg",
@@ -286,7 +281,7 @@ const unitDatabase = [
         },
         stats: { dmg: 2800, spa: 6, crit: 0, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 6, passiveDmg: 0, passiveSpa: 0, element: "Ice", dotDuration: 0, range: 42}
     },
-        {
+    {
         id: "ulquiorra", name: "Ultiiorra (Oblivion)", role: "Dmg",
         img: "images/Ulqiorra.png", 
         placement: 3, tags: ["Peroxide", "Hollow"],
@@ -297,12 +292,12 @@ const unitDatabase = [
         },
         stats: { dmg: 1275, spa: 5, crit: 0, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 2, passiveDmg: 0, passiveSpa: 5, element: "Dark", dotDuration: 0, range: 37},
         ability: {
-            buffDmg: 35, // 20% from scaling + 15% from Max Threshold
-            passiveSpa: 7.5, // Base 5 + 2.5 from Max Threshold
-            crit: 10 // Base 0 + 10 from Max Threshold
+            buffDmg: 35, 
+            passiveSpa: 7.5, 
+            crit: 10 
         }
     },
-        {
+    {
         id: "harribel", name: "Tierrabel (Hydro)", role: "Dmg",
         img: "images/Harribel.png", 
         placement: 3, tags: ["Peroxide", "Hollow"],
@@ -313,10 +308,21 @@ const unitDatabase = [
         },
         stats: { dmg: 1490, spa: 8.5, crit: 0, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 2, passiveDmg: 0, passiveSpa: 0, element: "Water", dotDuration: 0, range: 30},
         ability: {
-            buffDmg: 35, // +35% damage
-            buffDuration: 80, // seconds
-            spaCap: 4, // SPA cap changes to 4s
+            buffDmg: 35, 
+            buffDuration: 80, 
+            spaCap: 4, 
             hasToggle: true
         }
-    }
+    },
+    {
+        id: "ace", name: "Ace", role: "Burn / DoT",
+        img: "images/Ace.png",
+        placement: 3, tags: [],
+        meta: { 
+            short: "Ruler", 
+            long: "Ruler/Eternal/Astral", 
+            note: "Eternal provides highest DPS Potential(similar to ruler), Ruler provides good dps to cost." 
+        },
+        stats: { dmg: 1500, spa: 9, crit: 0, cdmg: 150, dot: 100, dotStacks: 1, spaCap: 6, passiveDmg: 60, element: "Fire", dotDuration: 4, range: 30 }
+    },
 ];

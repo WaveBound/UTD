@@ -331,9 +331,16 @@ function generateBuildRowHTML(r, i) {
 
     let headHtml = '';
     if (r.headUsed && r.headUsed !== 'none') {
-        let isSun = r.headUsed === 'sun_god';
-        let headName = isSun ? 'Sun God' : 'Master Ninja';
-        let headColor = isSun ? '#38bdf8' : '#ffffff'; 
+        let headName = 'Unknown';
+        let headColor = '#ffffff';
+        
+        switch(r.headUsed) {
+            case 'sun_god': headName = 'Sun God'; headColor = '#38bdf8'; break;
+            case 'ninja': headName = 'Master Ninja'; headColor = '#ffffff'; break;
+            case 'reaper_necklace': headName = 'Reaper'; headColor = '#ef4444'; break; 
+            case 'shadow_reaper_necklace': headName = 'S. Reaper'; headColor = '#a855f7'; break; 
+        }
+
         headHtml = `<div class="stat-line"><span class="sl-label">HEAD</span> <span style="display:inline-flex; align-items:center; justify-content:center; padding:0 4px; height:18px; border-radius:4px; font-size:0.6rem; font-weight:800; text-transform:uppercase; border:1px solid ${headColor}; white-space:nowrap; background:rgba(0,0,0,0.4); color:${headColor};">${headName}</span></div>`;
     }
 
@@ -412,6 +419,8 @@ function updateBuildListDisplay(unitId) {
         let headSearchName = '';
         if (r.headUsed === 'sun_god') headSearchName = 'Sun God Head';
         else if (r.headUsed === 'ninja') headSearchName = 'Ninja Head';
+        else if (r.headUsed === 'reaper_necklace') headSearchName = 'Reaper Necklace';
+        else if (r.headUsed === 'shadow_reaper_necklace') headSearchName = 'Shadow Reaper Necklace';
         
         const searchText = (r.traitName + ' ' + r.setName + ' ' + r.prio + ' ' + headSearchName).toLowerCase();
 
@@ -463,7 +472,7 @@ function toggleAbility(unitId, checkbox) {
     const subCandidates = getValidSubCandidates();
     const includeSubs = document.getElementById('globalSubStats').checked;
     const includeHead = document.getElementById('globalHeadPiece').checked;
-    const headsToProcess = includeHead ? ['sun_god', 'ninja'] : ['none'];
+    const headsToProcess = includeHead ? ['sun_god', 'ninja', 'reaper_necklace', 'shadow_reaper_necklace'] : ['none'];
 
     const results = calculateUnitBuilds(unit, currentStats, filteredBuilds, subCandidates, headsToProcess, includeSubs);
     unitBuildsCache[unitId] = results;
@@ -581,7 +590,8 @@ function renderDatabase() {
     const subCandidates = getValidSubCandidates();
     const includeSubs = document.getElementById('globalSubStats').checked;
     const includeHead = document.getElementById('globalHeadPiece').checked;
-    const headsToProcess = includeHead ? ['sun_god', 'ninja'] : ['none'];
+    // Updated headsToProcess to include new items if includeHead is checked
+    const headsToProcess = includeHead ? ['sun_god', 'ninja', 'reaper_necklace', 'shadow_reaper_necklace'] : ['none'];
 
     // --- NEW: Calculate and Sort Units by Max DPS ---
     // Create a working copy of unitDatabase for sorting
@@ -667,6 +677,7 @@ function renderDatabase() {
                  traitButtonHtml = `<button class="trait-guide-btn" onclick="openTraitGuide('${unit.id}')">📋 Rec. Traits</button>`;
             }
 
+            // Updated Search Controls HTML to include new Head Options
             const searchControls = `
             <div class="search-container" style="flex-direction:column; gap:8px;">
                 <div style="display:flex; gap:5px; width:100%;">
@@ -692,6 +703,8 @@ function renderDatabase() {
                         <option value="all">All Heads</option>
                         <option value="sun_god">Sun God</option>
                         <option value="ninja">Ninja</option>
+                        <option value="reaper_necklace">Reaper</option>
+                        <option value="shadow_reaper_necklace">Shadow Reaper</option>
                         <option value="none">No Head</option>
                     </select>
                 </div>
@@ -842,7 +855,10 @@ function renderMathContent(data) {
     // Damage
     const baseSetDmg = (data.totalSetStats.dmg || 0) - (data.tagBuffs.dmg || 0);
     const tagDmg = (data.tagBuffs.dmg || 0);
-    const passiveDmg = (data.passiveBuff || 0) - (data.headBuffs.dmg || 0) - (data.abilityBuff || 0); // Remove Head & Ability from generic Passive display
+    
+    // Logic to separate Eternal Buff from Passive
+    const eternalDmg = data.eternalBuff || 0;
+    const passiveDmg = (data.passiveBuff || 0) - (data.headBuffs.dmg || 0) - (data.abilityBuff || 0) - eternalDmg; 
     
     // SPA
     const baseSetSpa = (data.totalSetStats.spa || 0) - (data.tagBuffs.spa || 0);
@@ -856,6 +872,9 @@ function renderMathContent(data) {
     // Crit Dmg
     const baseSetCm = (data.totalSetStats.cdmg || data.totalSetStats.cm || 0) - (data.tagBuffs.cdmg || data.tagBuffs.cm || 0);
     const tagCm = (data.tagBuffs.cdmg || data.tagBuffs.cm || 0);
+
+    // Calculate Pre-Conditional Damage for display (Set + Passive Row)
+    const preConditionalDmg = data.dmgVal / (data.conditionalData ? data.conditionalData.mult : 1);
 
     // HEAD PIECE BREAKDOWN - DMG
     let headDmgHtml = '';
@@ -952,13 +971,23 @@ function renderMathContent(data) {
 
                     <tr>
                         <td class="col-label" style="padding-top:8px;">Set Bonus + Passive + Abilities <button class="calc-info-btn" onclick="openInfoPopup('tag_logic')">?</button></td>
-                        <td class="col-formula" style="padding-top:8px;"></td>
-                        <td class="col-val calc-highlight" style="padding-top:8px;">${num(data.dmgVal)}</td>
+                        <td class="col-formula" style="padding-top:8px; color:var(--gold); font-weight:bold;">${pct(data.totalAdditivePct)}</td>
+                        <td class="col-val calc-highlight" style="padding-top:8px;">${num(preConditionalDmg)}</td>
                     </tr>
                     <tr><td class="col-label" style="padding-left:10px; opacity:0.7;">↳ Set Base</td><td class="col-formula">${pct(baseSetDmg)}</td><td class="col-val"></td></tr>
-                    <tr><td class="col-label" style="padding-left:10px; opacity:0.7;">↳ Tag Bonuses</td><td class="col-formula">${pct(tagDmg)}</td><td class="col-val"></td></tr>
+                    ${tagDmg !== 0 ? `<tr><td class="col-label" style="padding-left:10px; opacity:0.7;">↳ Tag Bonuses</td><td class="col-formula">${pct(tagDmg)}</td><td class="col-val"></td></tr>` : ''}
                     ${passiveDmg > 0 ? `<tr><td class="col-label" style="padding-left:10px; opacity:0.7;">↳ Unit Passive</td><td class="col-formula">${pct(passiveDmg)}</td><td class="col-val"></td></tr>` : ''}
+                    ${eternalDmg > 0 ? `<tr><td class="col-label" style="padding-left:10px; opacity:0.7; color:var(--accent-start);">↳ Eternal Stacks (Wave 12+)</td><td class="col-formula" style="color:var(--accent-start);">${pct(eternalDmg)}</td><td class="col-val"></td></tr>` : ''}
                     ${(data.abilityBuff || 0) > 0 ? `<tr><td class="col-label" style="padding-left:10px; opacity:0.7; color:var(--custom);">↳ Ability Buffs</td><td class="col-formula" style="color:var(--custom);">${pct(data.abilityBuff)}</td><td class="col-val"></td></tr>` : ''}
+
+                    ${data.conditionalData ? `
+                    <tr>
+                        <td class="col-label" style="padding-top:8px; color:#ff7733; font-weight:bold;">${data.conditionalData.name}</td>
+                        <td class="col-formula" style="padding-top:8px; color:#ff7733; font-weight:bold;">x${data.conditionalData.mult.toFixed(2)}</td>
+                        <td class="col-val calc-highlight" style="padding-top:8px;">${num(data.dmgVal)}</td>
+                    </tr>
+                    ` : ''}
+
                 </table>
             </div>
 
@@ -995,7 +1024,7 @@ function renderMathContent(data) {
                         <td class="col-val" style="padding-top:8px;">${fix(data.rawFinalSpa, 3)}s</td>
                     </tr>
                     <tr><td class="col-label" style="padding-left:10px; opacity:0.7;">↳ Set Base</td><td class="col-formula">-${fix(baseSetSpa, 1)}%</td><td class="col-val"></td></tr>
-                    <tr><td class="col-label" style="padding-left:10px; opacity:0.7;">↳ Tag Bonuses</td><td class="col-formula">-${fix(tagSpa, 1)}%</td><td class="col-val"></td></tr>
+                    ${tagSpa !== 0 ? `<tr><td class="col-label" style="padding-left:10px; opacity:0.7;">↳ Tag Bonuses</td><td class="col-formula">-${fix(tagSpa, 1)}%</td><td class="col-val"></td></tr>` : ''}
                     ${passiveSpa > 0 ? `<tr><td class="col-label" style="padding-left:10px; opacity:0.7;">↳ Unit Passive</td><td class="col-formula">-${fix(passiveSpa, 1)}%</td><td class="col-val"></td></tr>` : ''}
 
                     <tr><td class="col-label">Cap Check (${data.spaCap}s)</td><td class="col-formula">MAX</td><td class="col-val calc-result">${fix(data.spa, 3)}s</td></tr>
@@ -1250,7 +1279,12 @@ function getTopBuildsForGuide(unit, trait) {
         let subStructs = [];
         
         if (finalCfg.assignments.selectedHead && finalCfg.assignments.selectedHead !== 'none') {
-             let hName = finalCfg.assignments.selectedHead === 'sun_god' ? 'Sun God' : 'Master Ninja';
+             let hName = 'Unknown';
+             if(finalCfg.assignments.selectedHead === 'sun_god') hName = 'Sun God';
+             else if(finalCfg.assignments.selectedHead === 'ninja') hName = 'Master Ninja';
+             else if(finalCfg.assignments.selectedHead === 'reaper_necklace') hName = 'Reaper';
+             else if(finalCfg.assignments.selectedHead === 'shadow_reaper_necklace') hName = 'S. Reaper';
+             
              mainStructs.unshift({ label: 'HEAD', stat: hName, isHead: true });
         }
 
@@ -1337,7 +1371,11 @@ function renderGuides() {
             
             let mainHtml = build.mainStructs.map(s => {
                 if(s.isHead) {
-                     let headColor = s.stat === 'Sun God' ? '#38bdf8' : '#ffffff';
+                     let headColor = '#ffffff';
+                     if(s.stat === 'Sun God') headColor = '#38bdf8';
+                     else if(s.stat === 'Reaper') headColor = '#ef4444';
+                     else if(s.stat === 'S. Reaper') headColor = '#a855f7';
+                     
                      return `<div class="stat-line"><span class="sl-label">HEAD</span> <span style="display:inline-flex; align-items:center; justify-content:center; padding:0 4px; height:18px; border-radius:4px; font-size:0.6rem; font-weight:800; text-transform:uppercase; border:1px solid ${headColor}; white-space:nowrap; background:rgba(0,0,0,0.4); color:${headColor};">${s.stat}</span></div>`;
                 }
                 // Lookup value for Main Stats
