@@ -229,7 +229,7 @@ const unitDatabase = [
             long: "Eternal", 
             note: "Burn stacks require fast attacks. Eternal is generally superior for maintaining stack count." 
         },
-        stats: { dmg: 1450, spa: 5.5, crit: 0, cdmg: 150, dot: 14, dotStacks: 7, spaCap: 4, passiveDmg: 0, element: "Fire", dotDuration: 7, range: 32 }
+        stats: { dmg: 1450, spa: 5.5, crit: 0, cdmg: 150, dot: 14, dotStacks: 1, spaCap: 4, passiveDmg: 0, element: "Fire", dotDuration: 7, range: 32 }
     },
     {
         id: "law", name: "Rule (Room)", role: "Support / Dmg",
