@@ -158,8 +158,6 @@ const getBestSubConfig = (build, stats, includeSubs, headMode, candidates, optim
             }
 
             // 2. Hybrid Strategy Optimization (Aggressively Pruned)
-            // Only test hybrids that are statistically relevant for breakpoints (SPA/DMG, Range/DMG).
-            // Skip "value" mixing like Crit/DoT as pure stats usually win.
             if (actualIncludeHead) {
                 let usefulPairs = [];
                 if (cand === 'spa') usefulPairs = ['dmg', 'range'];
@@ -314,14 +312,25 @@ function calculateDPS(uStats, relicStats, context) {
     if (headPiece === 'sun_god') {
         headCalc.attacks = 6;
         headCalc.duration = 7;
-        headCalc.trigger = headCalc.attacks * finalSpa;
-        headCalc.uptime = (headCalc.trigger <= headCalc.duration) ? 1.0 : headCalc.duration / headCalc.trigger;
+        
+        // CORRECTION: Cycle Logic (Non-Overlapping)
+        const timeToTrigger = headCalc.attacks * finalSpa;
+        
+        headCalc.trigger = timeToTrigger;
+        headCalc.uptime = headCalc.duration / (headCalc.duration + timeToTrigger);
+        
         headDmgBuff += finalRange * headCalc.uptime;
+
     } else if (headPiece === 'ninja') {
         headCalc.attacks = 5;
         headCalc.duration = 10;
-        headCalc.trigger = headCalc.attacks * finalSpa;
-        headCalc.uptime = (headCalc.trigger <= headCalc.duration) ? 1.0 : headCalc.duration / headCalc.trigger;
+        
+        // CORRECTION: Cycle Logic
+        const timeToTrigger = headCalc.attacks * finalSpa;
+        
+        headCalc.trigger = timeToTrigger;
+        headCalc.uptime = headCalc.duration / (headCalc.duration + timeToTrigger);
+        
         headDotBuff += 20 * headCalc.uptime;
     }
 

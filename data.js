@@ -9,16 +9,12 @@ const PERFECT_SUBS = {
     dmg: 4, spa: 1.5, cm: 4.5, cf: 2.5, dot: 5, range: 2 
 };
 
-// Valid sub-stats to test
 const SUB_CANDIDATES = ['dmg', 'spa', 'cm', 'cf', 'dot', 'range'];
 
-// Display names for sub-stats
 const SUB_NAMES = {
     dmg: "Dmg", spa: "SPA", cm: "Crit Dmg", cf: "Crit Rate", dot: "DoT", range: "Range"
 };
 
-
-// --- PATCH NOTES ARCHIVE ---
 const patchNotesData = [
     {
         version: "v2.9",
@@ -26,7 +22,8 @@ const patchNotesData = [
         changes: [
             { type: "ITEM", text: "Added <b>Reaper Necklace</b> (-7.5% SPA, +15% Range)." },
             { type: "ITEM", text: "Added <b>Shadow Reaper Necklace</b> (+2.5% Dmg, +10% Range, +5% Crit Rate, +5% Crit Dmg)." },
-            { type: "UI", text: "Renamed 'Short Mode' to <b>'Wave 1-30'</b> for clearer context on trait usage." }
+            { type: "UI", text: "Renamed 'Short Mode' to <b>'Wave 1-30'</b> for clearer context on trait usage." },
+            { type: "Feature", text: "Added <b>Sub-Stat Priority</b> info box to visualize perfect stat roll comparisons." }
         ]
     },
     {
@@ -41,7 +38,7 @@ const patchNotesData = [
         version: "v2.7",
         date: "Dec 31, 2025",
         changes: [
-            { type: "UNIT", text: "Added Genos Ability Toggle (+75% Passive) and Burn Multiplier (+45%)." },
+            { type: "UNIT", text: "Added <b>Genos Ability Toggle</b> (+75% Passive) and <b>Burn Multiplier</b> (+45%)." },
             { type: "UI", text: "Fixed CSS typo causing syntax highlighting errors." }
         ]
     },
@@ -50,7 +47,7 @@ const patchNotesData = [
         date: "Dec 31, 2025",
         changes: [
             { type: "Data", text: "Updated <b>Astral trait</b> description to 'DoT Stacks (All Units)' to reflect that it scales with total placement count." },
-            { type: "Math", text: "Confirmed Astral calculation uses full unit placement for total DoT DPS." }
+            { type: "Math", text: "Confirmed <b>Astral</b> calculation uses full unit placement for total DoT DPS." }
         ]
     },
     {
@@ -65,10 +62,10 @@ const patchNotesData = [
         version: "v2.3",
         date: "Dec 27, 2025",
         changes: [
-            { type: "UI", text: "Fixed text overflow for 'Crit Dmg' in build cards." },
-            { type: "Optimizer", text: "Added Auto-Head Piece selection. System now automatically tests 'Sun God' vs 'Ninja' heads for every build." },
-            { type: "UI", text: "Added detailed calculation breakdown for Sun God and Ninja head passives in the DPS Breakdown modal." },
-            { type: "Math", text: "Refined Sun God math: 7s Duration / (6 * SPA). Shows Range and Uptime scaling." }
+            { type: "UI", text: "Fixed text overflow for <b>'Crit Dmg'</b> in build cards." },
+            { type: "Optimizer", text: "Added Auto-Head Piece selection. System now automatically tests <b>'Sun God'</b> vs <b>'Ninja'</b> heads for every build." },
+            { type: "UI", text: "Added detailed calculation breakdown for <b>Sun God</b> and <b>Ninja</b> head passives in the DPS Breakdown modal." },
+            { type: "Math", text: "Refined <b>Sun God</b> math: 7s Duration / (6 * SPA). Shows Range and Uptime scaling." }
         ]
     },
     {
@@ -76,8 +73,8 @@ const patchNotesData = [
         date: "Dec 27, 2025",
         changes: [
             { type: "Feature", text: "Added Specific Head Piece Selection logic (backend support)." },
-            { type: "Math", text: "Implemented Sun God Passive: +Range% DMG." },
-            { type: "Math", text: "Implemented Ninja Head Passive: +20% DoT Potency." }
+            { type: "Math", text: "Implemented <b>Sun God Passive</b>: +Range% DMG." },
+            { type: "Math", text: "Implemented <b>Ninja Head Passive</b>: +20% DoT Potency." }
         ]
     },
     {
@@ -92,24 +89,24 @@ const patchNotesData = [
         version: "v1.8",
         date: "Dec 26, 2025",
         changes: [
-            { type: "Feature", text: "Added Virtual Realm / Magician Card toggles directly to Build Guides card for Kirito." },
-            { type: "Fix", text: "Fixed Virtual Realm + Magician Card stacking logic for Kirito (Now correctly uses 14 stacks)." }
+            { type: "Feature", text: "Added <b>Virtual Realm</b> / <b>Magician Card</b> toggles directly to Build Guides card for <b>Kirito</b>." },
+            { type: "Fix", text: "Fixed <b>Virtual Realm</b> + <b>Magician Card</b> stacking logic for <b>Kirito</b> (Now correctly uses 14 stacks)." }
         ]
     },
     {
         version: "v1.7",
         date: "Dec 26, 2025",
         changes: [
-            { type: "Feature", text: "Added Virtual Realm / Magician Card toggles for Kirito (DB Page)." },
-            { type: "Calculations", text: "Magician Card sets bleed to 200% over 4s." }
+            { type: "Feature", text: "Added <b>Virtual Realm</b> / <b>Magician Card</b> toggles for <b>Kirito</b> (DB Page)." },
+            { type: "Calculations", text: "<b>Magician Card</b> sets bleed to 200% over 4s." }
         ]
     },
     {
         version: "v1.6",
         date: "Dec 26, 2025",
         changes: [
-            { type: "New Set", text: "Added 'Sun God' Set (+10% Dmg)." },
-            { type: "Logic Update", text: "Sun God set bonus only applies to Ice, Light, and Water units." }
+            { type: "New Set", text: "Added <b>'Sun God'</b> Set (+10% Dmg)." },
+            { type: "Logic Update", text: "<b>Sun God</b> set bonus only applies to Ice, Light, and Water units." }
         ]
     }
 ];

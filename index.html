@@ -101,9 +101,7 @@
             <div class="modal-header-fixed">
                 <h2 style="margin:0; font-size: 1.2rem; text-transform:uppercase;">Recommended Traits</h2>
             </div>
-            <div id="traitGuideContent" class="modal-scroll-area">
-                <!-- Content injected via JS -->
-            </div>
+            <div id="traitGuideContent" class="modal-scroll-area"></div>
             <div class="modal-footer-fixed"><button class="action-btn" onclick="closeTraitGuide()">Close</button></div>
         </div>
     </div>
@@ -173,6 +171,20 @@
         </div>
     </div>
 
+    <!-- Sub Stat Priority Modal (NEW) -->
+    <div id="subPriorityModal" class="modal-overlay" onclick="closeSubPriority()">
+        <div class="modal-content" style="max-width: 500px;" onclick="event.stopPropagation()">
+            <div class="modal-header-fixed">
+                <h2 style="margin:0; font-size: 1.2rem; text-transform:uppercase;">Sub-Stat Priority</h2>
+            </div>
+            <div style="background:rgba(255,255,255,0.05); padding:10px 20px; font-size:0.8rem; color:#aaa; border-bottom:1px solid #333;">
+                Comparing performance if you roll <strong>Perfect Stats</strong> of a specific type.
+            </div>
+            <div id="subPriorityContent" class="modal-scroll-area"></div>
+            <div class="modal-footer-fixed"><button class="action-btn" onclick="closeSubPriority()">Close</button></div>
+        </div>
+    </div>
+
     <!-- Compare Modal -->
     <div id="compareModal" class="modal-overlay" onclick="closeCompare()">
         <div class="modal-content" onclick="event.stopPropagation()">
@@ -188,12 +200,7 @@
     <div id="patchModal" class="modal-overlay" onclick="closePatchNotes()">
         <div class="modal-content" onclick="event.stopPropagation()">
             <div class="modal-header-fixed"><h2 style="margin:0; font-size: 1.5rem; text-transform:uppercase;">Patch Notes</h2></div>
-            
-            <!-- Dynamic Content Container -->
-            <div class="modal-scroll-area" id="patchNotesContainer">
-                <!-- Content is now injected via script.js -->
-            </div>
-
+            <div class="modal-scroll-area" id="patchNotesContainer"></div>
             <div class="modal-footer-fixed"><button class="action-btn" onclick="closePatchNotes()">Close</button></div>
         </div>
     </div>

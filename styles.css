@@ -74,53 +74,12 @@ select { appearance: none; background-image: url("data:image/svg+xml;charset=US-
 .unit-title span { font-size: 0.7rem; color: var(--accent-start); text-transform: uppercase; font-weight: bold; }
 .sss-tag { color: var(--gold); font-weight: bold; border: 1px solid var(--gold); padding: 1px 4px; border-radius: 4px; font-size: 0.6rem; margin-left: 8px; vertical-align: text-top; }
 
-.unit-tags {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    padding: 10px 15px 5px 15px;
-    background: var(--card-bg);
-}
-
-.unit-tag {
-    font-size: 0.6rem;
-    background: rgba(255,255,255,0.08);
-    border: 1px solid #444;
-    padding: 2px 6px;
-    border-radius: 4px;
-    color: #bbb;
-    text-transform: uppercase;
-    font-weight: 700;
-    letter-spacing: 0.5px;
-}
+.unit-tags { display: flex; flex-wrap: wrap; gap: 6px; padding: 10px 15px 5px 15px; background: var(--card-bg); }
+.unit-tag { font-size: 0.6rem; background: rgba(255,255,255,0.08); border: 1px solid #444; padding: 2px 6px; border-radius: 4px; color: #bbb; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px; }
 
 /* --- TRAIT GUIDE BUTTON --- */
-.trait-guide-btn {
-    position: absolute;
-    bottom: 12px;
-    right: 15px;
-    z-index: 5;
-    background: rgba(0, 0, 0, 0.4);
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    color: #ddd;
-    font-size: 0.7rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    padding: 4px 10px;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: 0.2s;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    backdrop-filter: blur(4px);
-}
-.trait-guide-btn:hover {
-    background: var(--accent-start);
-    border-color: var(--accent-start);
-    color: #fff;
-    box-shadow: 0 0 10px rgba(59, 130, 246, 0.4);
-}
+.trait-guide-btn { position: absolute; bottom: 12px; right: 15px; z-index: 5; background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(255, 255, 255, 0.15); color: #ddd; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; padding: 4px 10px; border-radius: 6px; cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 6px; backdrop-filter: blur(4px); }
+.trait-guide-btn:hover { background: var(--accent-start); border-color: var(--accent-start); color: #fff; box-shadow: 0 0 10px rgba(59, 130, 246, 0.4); }
 
 /* --- TRAIT GUIDE MODAL CONTENT --- */
 .tg-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
@@ -197,6 +156,28 @@ input[type="checkbox"]:checked + .mini-switch::after { transform: translateX(14p
     z-index: 10;
 }
 .info-btn:hover { background: var(--accent-start); color: #fff; }
+
+.sub-list-btn {
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.2);
+    color: #888;
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    line-height: 0;
+    transition: 0.2s;
+    margin-left: auto;
+}
+.sub-list-btn:hover {
+    background: var(--accent-start);
+    color: white;
+    border-color: var(--accent-start);
+}
 
 .guide-container { width: 100%; }
 .guide-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 20px; width: 100%; }
@@ -306,6 +287,15 @@ input[type="checkbox"]:checked + .mini-switch::after { transform: translateX(14p
 .patch-list { list-style: none; padding: 0; margin: 0; }
 .patch-list li { margin-bottom: 8px; font-size: 0.9rem; color: #ddd; display: flex; align-items: baseline; line-height: 1.4; }
 .patch-tag { color: var(--accent-start); font-weight: 700; font-size: 0.7rem; text-transform: uppercase; background: rgba(59, 130, 246, 0.15); padding: 2px 6px; border-radius: 4px; margin-right: 10px; flex-shrink: 0; }
+
+/* Sub Stat Priority Chart Styles */
+.prio-row { display: flex; align-items: center; margin-bottom: 12px; position: relative; padding: 4px 0; }
+.prio-label { width: 80px; font-size: 0.8rem; font-weight: 700; color: #fff; z-index: 2; text-shadow: 0 1px 2px #000; }
+.prio-bar-container { flex-grow: 1; background: rgba(255,255,255,0.05); height: 24px; border-radius: 4px; position: relative; overflow: hidden; margin-left: 10px; }
+.prio-bar { height: 100%; background: linear-gradient(90deg, var(--accent-start), var(--accent-end)); border-radius: 4px; transition: width 0.5s ease; opacity: 0.8; }
+.prio-bar.best { background: var(--success); opacity: 1; }
+.prio-val { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); font-size: 0.75rem; font-weight: 800; color: #fff; z-index: 2; text-shadow: 0 1px 2px #000; }
+.prio-diff { position: absolute; left: 8px; top: 50%; transform: translateY(-50%); font-size: 0.7rem; font-weight: 700; color: rgba(255,255,255,0.7); z-index: 2; }
 
 @media (max-width: 600px) {
     .page { padding: 0 10px 20px 10px; }

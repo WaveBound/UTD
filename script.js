@@ -69,13 +69,13 @@ const infoDefinitions = {
     },
     'sungod_passive': {
         title: "Sun God Head Passive",
-        formula: "Buff Value = Current Range Stat",
-        desc: "The Sun God Head grants a temporary Damage % Buff equal to your total Range.<br><br><b>Trigger:</b> Every 6 Attacks.<br><b>Duration:</b> 7 Seconds.<br><b>Uptime:</b> 7 / (6 * SPA).<br><br>If Uptime > 100%, the buff is permanent. If less, we average the damage bonus over time."
+        formula: "Cycle = Duration (7s) + (6 * SPA)",
+        desc: "The Sun God Head grants a temporary Damage % Buff equal to your total Range.<br><br><b>Trigger:</b> Every 6 Attacks.<br><b>Duration:</b> 7 Seconds.<br><br>Because the buff must expire before the counter restarts, 100% uptime is impossible."
     },
     'ninja_passive': {
         title: "Ninja Head Passive",
-        formula: "+20% DoT Potency",
-        desc: "The Master Ninja Head grants +20% Damage over Time (DoT) effectiveness.<br><br><b>Trigger:</b> Every 5 Attacks.<br><b>Duration:</b> 10 Seconds.<br><b>Uptime:</b> 10 / (5 * SPA).<br><br>Most fast units maintain 100% uptime easily."
+        formula: "Cycle = Duration (10s) + (5 * SPA)",
+        desc: "The Master Ninja Head grants +20% Damage over Time (DoT) effectiveness.<br><br>Because the buff must expire before the counter restarts, 100% uptime is impossible."
     },
     'crit_avg': {
         title: "Crit Averaging",
@@ -217,7 +217,6 @@ const getFilteredBuilds = () => globalBuilds.filter(b => {
 const getValidSubCandidates = () => SUB_CANDIDATES.filter(c => !((!statConfig.applyRelicCrit && (c === 'cm' || c === 'cf')) || (!statConfig.applyRelicDot && c === 'dot')));
 
 // --- DATA CALCULATION ---
-// Optimized signature to accept pre-calculated lists
 function calculateUnitBuilds(unit, effectiveStats, filteredBuilds, subCandidates, headsToProcess, includeSubs) {
     cachedResults = cachedResults || {};
     const specificTraits = unitSpecificTraits[unit.id] || [];
@@ -235,14 +234,10 @@ function calculateUnitBuilds(unit, effectiveStats, filteredBuilds, subCandidates
     const isKiritoVR = (unit.id === 'kirito' && kiritoState.realm);
     let unitResults = [];
 
-    // --- Optimization: Pre-Analyze Unit for DoT Eligibility ---
-    // If unit/trait has no DoT capability, strict filter DoT related stats
     const unitHasBaseDot = (unit.stats.dot > 0) || (unit.stats.burnMultiplier > 0);
     
-    // Create a restricted set of sub-candidates based on the unit itself
     let unitSubCandidates = [...subCandidates];
     if (!unitHasBaseDot && !effectiveStats.dot && !isKiritoVR) {
-        // If unit inherently has no DoT, remove 'dot' sub stat unless trait adds it later (checked inside loop)
         unitSubCandidates = unitSubCandidates.filter(c => c !== 'dot');
     }
 
@@ -252,17 +247,13 @@ function calculateUnitBuilds(unit, effectiveStats, filteredBuilds, subCandidates
         let actualPlacement = unit.placement;
         if (trait.limitPlace) actualPlacement = Math.min(unit.placement, trait.limitPlace);
 
-        // Dynamic Filtering: If trait adds DoT, re-enable DoT check
         const traitAddsDot = trait.dotBuff > 0 || trait.hasRadiation || trait.allowDotStack;
         const currentCandidates = (traitAddsDot) ? subCandidates : unitSubCandidates;
         
-        // Filter builds: If unit+trait have no DoT, exclude DoT main stats
         const relevantBuilds = (!unitHasBaseDot && !traitAddsDot) 
             ? filteredBuilds.filter(b => b.bodyType !== 'dot') 
             : filteredBuilds;
 
-        // Optimization: Collapse Head Loop
-        // Instead of calculating 4 times, we pass 'auto' (if heads enabled) to find the single best head
         const bestHeadMode = headsToProcess.length > 1 ? 'auto' : headsToProcess[0];
 
         relevantBuilds.forEach(build => {
@@ -404,7 +395,10 @@ function generateBuildRowHTML(r, i) {
                     <div class="stat-line"><span class="sl-label">LEGS</span> ${mainLegsBadge}</div>
                 </div>
                 <div class="br-col" style="flex:1.1; border-left:1px solid rgba(255,255,255,0.05); padding-left:18px;">
-                    <div class="br-col-title">SUB STAT</div>
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <div class="br-col-title">SUB STAT</div>
+                        <button class="sub-list-btn" title="View Sub-Stat Priority" onclick="viewSubPriority('${r.id}')">≡</button>
+                    </div>
                     ${subInnerHtml}
                 </div>
                 <div class="br-res-col" style="position:relative;">
@@ -459,7 +453,6 @@ function updateBuildListDisplay(unitId) {
         return;
     }
     
-    // NEW SORTING LOGIC: Automatic priority based on Unit ID
     if (unitId === 'law') {
         filtered.sort((a, b) => (b.range || 0) - (a.range || 0));
     } else {
@@ -527,13 +520,12 @@ function openComparison() {
     const includeHead = document.getElementById('globalHeadPiece').checked;
     const comparisonHeadMode = includeHead ? 'auto' : 'none';
     const subCandidates = getValidSubCandidates();
-    const filteredBuilds = getFilteredBuilds(); // Optimization
+    const filteredBuilds = getFilteredBuilds();
 
     const findBest = (unitObj, statsObj, availableTraits) => {
         let bestResult = { total: -1 }, bestTraitName = "", bestBuildName = "", bestSpa = 0, bestPrio = "";
         statsObj.id = unitObj.id;
         
-        // Ensure tags are in context for comparison
         if(unitObj.tags) statsObj.tags = unitObj.tags;
 
         const isKiritoVR = (unitObj.id === 'kirito' && kiritoState.realm);
@@ -562,7 +554,6 @@ function openComparison() {
         let effectiveStats = { ...u.stats };
         if (activeAbilityIds.has(u.id) && u.ability) Object.assign(effectiveStats, u.ability);
         
-        // Force stacks to 1 for Kirito Card mode in comparison too
         if(u.id === 'kirito' && kiritoState.realm && kiritoState.card) { 
             effectiveStats.dot = 200; 
             effectiveStats.dotDuration = 4; 
@@ -592,48 +583,39 @@ function closeCompare() { toggleModal('compareModal', false); }
 function renderDatabase() {
     const container = document.getElementById('dbPage');
     
-    // Clean start (No Loading Text)
     if (renderQueueIndex === 0) {
         container.innerHTML = '';
         cachedResults = {}; 
         unitBuildsCache = {};
     }
 
-    // Stop existing render
     if (renderQueueId) {
         cancelAnimationFrame(renderQueueId);
         renderQueueId = null;
     }
 
-    // Run logic immediately
     const filteredBuilds = getFilteredBuilds();
     const subCandidates = getValidSubCandidates();
     const includeSubs = document.getElementById('globalSubStats').checked;
     const includeHead = document.getElementById('globalHeadPiece').checked;
-    // Updated headsToProcess to include new items if includeHead is checked
     const headsToProcess = includeHead ? ['sun_god', 'ninja', 'reaper_necklace', 'shadow_reaper_necklace'] : ['none'];
 
-    // --- NEW: Calculate and Sort Units by Max DPS ---
-    // Create a working copy of unitDatabase for sorting
     let sortedUnits = [];
     unitDatabase.forEach(unit => {
         const isAbilActive = activeAbilityIds.has(unit.id);
         let currentStats = { ...unit.stats };
         if (isAbilActive && unit.ability) Object.assign(currentStats, unit.ability);
         
-        // Pass tags into effective stats so math logic sees them
         if(unit.tags) currentStats.tags = unit.tags;
 
-        // Force stacks to 1 for Kirito Card mode
         if (unit.id === 'kirito' && kiritoState.realm && kiritoState.card) { 
             currentStats.dot = 200; 
             currentStats.dotDuration = 4; 
             currentStats.dotStacks = 1; 
         }
 
-        // Calculate builds to get max DPS/Range for sorting units
         const results = calculateUnitBuilds(unit, currentStats, filteredBuilds, subCandidates, headsToProcess, includeSubs);
-        unitBuildsCache[unit.id] = results; // Cache for later use
+        unitBuildsCache[unit.id] = results;
 
         let maxScore = 0;
         if (results.length > 0) {
@@ -643,9 +625,7 @@ function renderDatabase() {
     });
 
     sortedUnits.sort((a, b) => b.maxScore - a.maxScore);
-    // --- END NEW: Calculate and Sort Units by Max DPS ---
 
-    // Helper to get trait name from ID
     const getTraitName = (id) => {
         const t = traitsList.find(x => x.id === id);
         return t ? t.name : id;
@@ -654,13 +634,12 @@ function renderDatabase() {
     function processNextChunk() {
         const startTime = performance.now();
         
-        // Change loop to iterate over sortedUnits
         while (renderQueueIndex < sortedUnits.length) {
-            const unit = sortedUnits[renderQueueIndex].unit; // Get the original unit object
+            const unit = sortedUnits[renderQueueIndex].unit;
             renderQueueIndex++;
 
             const isAbilActive = activeAbilityIds.has(unit.id);
-            let currentStats = { ...unit.stats }; // These are already calculated and cached, but we need ability state for Kirito controls
+            let currentStats = { ...unit.stats };
             if (isAbilActive && unit.ability) Object.assign(currentStats, unit.ability);
             
             let kiritoControlsHtml = '';
@@ -669,9 +648,6 @@ function renderDatabase() {
                 const isCard = kiritoState.card;
                 kiritoControlsHtml = `<div class="unit-toolbar" style="border-bottom:none; padding-top:5px; padding-bottom:10px; flex-wrap:wrap; justify-content:flex-start; gap:15px; background:rgba(255,255,255,0.02);"><div class="toggle-wrapper"><span>Virtual Realm</span><label><input type="checkbox" ${isRealm ? 'checked' : ''} onchange="toggleKiritoMode('realm', this)"><div class="mini-switch"></div></label></div>${isRealm ? `<div class="toggle-wrapper" style="animation:fadeIn 0.3s ease;"><span style="color:${isCard ? 'var(--custom)' : '#888'}; font-weight:${isCard ? 'bold' : 'normal'};">Magician Card</span><label><input type="checkbox" ${isCard ? 'checked' : ''} onchange="toggleKiritoMode('card', this)"><div class="mini-switch" style="${isCard ? 'background:var(--custom);' : ''}"></div></label></div>` : ''}</div>`;
             }
-
-            // The builds for this unit are already in unitBuildsCache[unit.id] from the sorting step
-            // No need to call calculateUnitBuilds again here.
 
             const card = document.createElement('div');
             card.className = 'unit-card';
@@ -682,22 +658,18 @@ function renderDatabase() {
             const abilityToggleHtml = unit.ability ? `<div class="toggle-wrapper"><span>Ability</span><label><input type="checkbox" class="ability-cb" ${isAbilActive ? 'checked' : ''} onchange="toggleAbility('${unit.id}', this)"><div class="mini-switch"></div></label></div>` : '<div></div>';
             const toolbarHtml = `<div class="unit-toolbar"><button class="select-btn" onclick="toggleSelection('${unit.id}')">${selectedUnitIds.has(unit.id) ? 'Selected' : 'Select'}</button>${abilityToggleHtml}</div>`;
             
-            // --- UPDATED TAGS DISPLAY ---
             let tagsHtml = '';
             if (unit.tags && unit.tags.length > 0) {
-                // Use the new CSS classes for proper wrapping and spacing
                 tagsHtml = `<div class="unit-tags">` + 
                         unit.tags.map(t => `<span class="unit-tag">${t}</span>`).join('') + 
                         `</div>`;
             }
 
-            // --- TRAIT GUIDE BUTTON ---
             let traitButtonHtml = '';
             if (unit.meta) {
                 traitButtonHtml = `<button class="trait-guide-btn" onclick="openTraitGuide('${unit.id}')">📋 Rec. Traits</button>`;
             }
 
-            // Updated Search Controls HTML to include new Head Options
             const searchControls = `
             <div class="search-container" style="flex-direction:column; gap:8px;">
                 <div style="display:flex; gap:5px; width:100%;">
@@ -730,13 +702,11 @@ function renderDatabase() {
                 </div>
             </div>`;
 
-            // Injecting Button into banner
             card.innerHTML = `<div class="unit-banner"><div class="placement-badge">Max Place: ${unit.placement}</div>${getUnitImgHtml(unit, 'unit-avatar')}<div class="unit-title"><h2>${unit.name}</h2><span>${unit.role} <span class="sss-tag">SSS</span></span></div>${traitButtonHtml}</div>${tagsHtml}${toolbarHtml}${kiritoControlsHtml}${searchControls}<div class="top-builds-list" id="results-${unit.id}"></div>`;
             container.appendChild(card);
             
             updateBuildListDisplay(unit.id);
 
-            // Yield to main thread if we've been working for >10ms
             if (performance.now() - startTime > 10) {
                 renderQueueId = requestAnimationFrame(processNextChunk);
                 return;
@@ -796,13 +766,11 @@ function openInfoPopup(key) {
     const data = infoDefinitions[key];
     if(!data) return;
     
-    // Create popup if it doesn't exist inside the math modal context
     let overlay = document.getElementById('mathInfoPopup');
     if(!overlay) {
         overlay = document.createElement('div');
         overlay.id = 'mathInfoPopup';
         overlay.className = 'info-popup-overlay';
-        // Inject inside the math modal so it layers correctly
         document.getElementById('mathModal').querySelector('.modal-content').appendChild(overlay);
     }
     
@@ -848,7 +816,6 @@ function renderMathContent(data) {
             const tDmg = t.dmg || 0;
             const nextDmg = runningDmg * (1 + tDmg/100);
             
-            // Add the question mark to the first trait row only for clarity
             let labelHtml = `↳ ${t.name}`;
             if (i === 0) labelHtml += ` <button class="calc-info-btn" onclick="openInfoPopup('trait_logic')">?</button>`;
 
@@ -871,32 +838,24 @@ function renderMathContent(data) {
     const dmgAfterRelic = runningDmg * (1 + data.relicBuffs.dmg/100);
     const finalSpaStep = runningSpa * (1 - (data.relicBuffs.spa + data.totalSetStats.spa + (data.passiveSpaBuff||0))/100);
 
-    // Calculate dynamic rows for sets/tags/passive
-    // Damage
     const baseSetDmg = (data.totalSetStats.dmg || 0) - (data.tagBuffs.dmg || 0);
     const tagDmg = (data.tagBuffs.dmg || 0);
     
-    // Logic to separate Eternal Buff from Passive
     const eternalDmg = data.eternalBuff || 0;
     const passiveDmg = (data.passiveBuff || 0) - (data.headBuffs.dmg || 0) - (data.abilityBuff || 0) - eternalDmg; 
     
-    // SPA
     const baseSetSpa = (data.totalSetStats.spa || 0) - (data.tagBuffs.spa || 0);
     const tagSpa = (data.tagBuffs.spa || 0);
     const passiveSpa = (data.passiveSpaBuff || 0);
 
-    // Crit Rate
     const baseSetCf = (data.totalSetStats.cf || 0) - (data.tagBuffs.cf || 0);
     const tagCf = (data.tagBuffs.cf || 0);
 
-    // Crit Dmg
     const baseSetCm = (data.totalSetStats.cdmg || data.totalSetStats.cm || 0) - (data.tagBuffs.cdmg || data.tagBuffs.cm || 0);
     const tagCm = (data.tagBuffs.cdmg || data.tagBuffs.cm || 0);
 
-    // Calculate Pre-Conditional Damage for display (Set + Passive Row)
     const preConditionalDmg = data.dmgVal / (data.conditionalData ? data.conditionalData.mult : 1);
 
-    // HEAD PIECE BREAKDOWN - DMG
     let headDmgHtml = '';
     if (data.headBuffs && data.headBuffs.type === 'sun_god') {
         const uptimePct = (data.headBuffs.uptime || 0);
@@ -920,7 +879,6 @@ function renderMathContent(data) {
         </tr>`;
     }
 
-    // HEAD PIECE BREAKDOWN - DOT
     let headDotRow = '';
     if (data.headBuffs && data.headBuffs.type === 'ninja') {
         const uptimePct = (data.headBuffs.uptime || 0);
@@ -1098,7 +1056,6 @@ const toggleModal = (modalId, show = true) => {
     if (modal) modal.style.display = show ? 'flex' : 'none';
 };
 
-// FIX: Exposed showMath globally for onclick events
 const showMath = (id) => { 
     const data = cachedResults[id]; 
     if(!data) { console.error("Math data not found for ID:", id); return; }
@@ -1117,6 +1074,27 @@ window.showMath = showMath;
 const closeMath = () => toggleModal('mathModal', false);
 const openPatchNotes = () => toggleModal('patchModal', true);
 const closePatchNotes = () => toggleModal('patchModal', false);
+
+function renderPatchNotes() {
+    const container = document.getElementById('patchNotesContainer');
+    if (!container || typeof patchNotesData === 'undefined') return;
+
+    container.innerHTML = patchNotesData.map(patch => {
+        const changesHtml = patch.changes.map(c => 
+            `<li><span class="patch-tag">${c.type}</span> <span>${c.text}</span></li>`
+        ).join('');
+
+        return `
+            <div class="patch-entry">
+                <div class="patch-header">
+                    <span class="patch-version">${patch.version}</span>
+                    <span class="patch-date">${patch.date}</span>
+                </div>
+                <ul class="patch-list">${changesHtml}</ul>
+            </div>
+        `;
+    }).join('');
+}
 
 function setGuideMode(mode) {
     currentGuideMode = mode;
@@ -1242,10 +1220,8 @@ function getTopBuildsForGuide(unit, trait) {
     if (activeAbilityIds.has(unit.id) && unit.ability) Object.assign(effectiveStats, unit.ability);
     effectiveStats.id = unit.id;
     
-    // Pass tags into effective stats so math logic sees them
     if(unit.tags) effectiveStats.tags = unit.tags;
 
-    // Force stacks to 1 for Kirito Card mode in Guides too
     if (unit.id === 'kirito' && kiritoState.realm && kiritoState.card) { 
         effectiveStats.dot = 200; 
         effectiveStats.dotDuration = 4; 
@@ -1289,7 +1265,6 @@ function getTopBuildsForGuide(unit, trait) {
             prio = data.dmgCfg.res.total >= data.spaCfg.res.total ? 'dmg' : 'spa';
         }
         
-        // Generate Unique ID for Guide Result and Cache it for Modal
         let buildId = `guide-${unit.id}-${trait.id}-${name.replace(/[^a-zA-Z0-9]/g,'')}-${prio}`;
         cachedResults[buildId] = finalCfg.res;
 
@@ -1340,7 +1315,6 @@ function renderGuides() {
         const imgHtml = row.img ? `<img src="${row.img}">` : '';
         const mainBadgeHtml = formatStatBadge(data.main); const subBadgeHtml = formatStatBadge(data.sub);
         
-        // GENERIC GUIDE LAYOUT
         card.innerHTML = `
             <div class="guide-card-header"><div class="guide-unit-info">${imgHtml}<div><span style="display:block; line-height:1;">${row.unit}</span><span class="guide-trait-tag">${data.trait}</span></div></div></div>
             <div class="guide-card-body">
@@ -1398,7 +1372,6 @@ function renderGuides() {
                      
                      return `<div class="stat-line"><span class="sl-label">HEAD</span> <span style="display:inline-flex; align-items:center; justify-content:center; padding:0 4px; height:18px; border-radius:4px; font-size:0.6rem; font-weight:800; text-transform:uppercase; border:1px solid ${headColor}; white-space:nowrap; background:rgba(0,0,0,0.4); color:${headColor};">${s.stat}</span></div>`;
                 }
-                // Lookup value for Main Stats
                 let val = null;
                 if(s.label === 'BODY' && MAIN_STAT_VALS.body[s.stat]) val = MAIN_STAT_VALS.body[s.stat];
                 if(s.label === 'LEGS' && MAIN_STAT_VALS.legs[s.stat]) val = MAIN_STAT_VALS.legs[s.stat];
@@ -1407,7 +1380,6 @@ function renderGuides() {
             }).join('');
             
             let subHtml = build.subStructs.map(s => {
-                // Fixed UI for Guides
                 return `<div class="stat-line"><span class="sl-label">${s.label}</span>${formatStatBadge(s.stat, 6)}</div>`;
             }).join('');
             if(!subHtml) subHtml = '<span style="font-size:0.65rem; color:#555;">None</span>';
@@ -1416,7 +1388,6 @@ function renderGuides() {
             let prioColor = build.prio === 'dmg' ? '#ff5555' : (build.prio === 'range' ? '#4caf50' : 'var(--custom)');
             let label = build.prio === 'range' ? 'RANGE' : 'DPS';
             
-            // CALCULATED GUIDE LAYOUT
             return `
                 <div class="build-row ${rankClass}">
                     <div class="br-header">
@@ -1478,4 +1449,175 @@ function switchPage(pid) {
 
 const format = (n) => n >= 1e9 ? (n/1e9).toFixed(2) + 'B' : n >= 1e6 ? (n/1e6).toFixed(2) + 'M' : n >= 1e3 ? (n/1e3).toFixed(1) + 'k' : n.toLocaleString(undefined, {maximumFractionDigits:0});
 
-window.onload = () => { populateGuideDropdowns(); setGuideMode('current'); }
+// --- SUB STAT PRIORITY LOGIC ---
+
+function viewSubPriority(buildId) {
+    const resultData = cachedResults[buildId];
+    if (!resultData) { console.error("Build data not found"); return; }
+
+    const unit = unitDatabase.find(u => u.id === resultData.baseStats.id);
+    const trait = resultData.traitObj;
+    
+    // 1. Define Helper to Replicate Optimizer Logic Exactly
+    // This adds the primary stat x6 and all other stats x1 (background stats)
+    // It also handles the "Main Stat Conflict" (e.g. Can't have Dmg sub on Dmg main)
+    const applySubLogic = (b, target, mainStat) => {
+        let prim = target;
+        let conflict = false;
+        
+        // Conflict Check: If Target == Main Stat
+        if (prim === mainStat) {
+            // Optimizer Fallback Logic: Swap to Range or Dmg
+            prim = (mainStat === 'range') ? 'dmg' : 'range';
+            conflict = true;
+        }
+        
+        // Apply Stats
+        for (let k in PERFECT_SUBS) {
+            if (k === mainStat) continue; // Cannot roll main stat line
+            let mult = (k === prim) ? 6 : 1;
+            b[k] = (b[k] || 0) + (PERFECT_SUBS[k] * mult);
+        }
+        return conflict;
+    };
+
+    let comparisonList = [];
+    const candidates = ['spa', 'dmg', 'range', 'cm', 'cf', 'dot'];
+    
+    const context = {
+        level: resultData.level,
+        priority: resultData.priority,
+        wave: 25,
+        isBoss: false,
+        traitObj: trait,
+        placement: resultData.placement,
+        isSSS: resultData.isSSS,
+        headPiece: resultData.headBuffs ? resultData.headBuffs.type : 'none',
+        isVirtualRealm: resultData.baseStats.id === 'kirito' && kiritoState.realm
+    };
+
+    const unitCache = unitBuildsCache[unit.id] || [];
+    const specificBuildEntry = unitCache.find(x => x.id === buildId);
+    
+    if(!specificBuildEntry) {
+         console.error("Could not find build config in cache");
+         document.getElementById('subPriorityContent').innerHTML = "Error loading build configuration.";
+         toggleModal('subPriorityModal', true);
+         return;
+    }
+
+    const ms = specificBuildEntry.mainStats;
+    const setName = specificBuildEntry.setName;
+    
+    // Map Set Name back to ID
+    const setEntry = SETS.find(s => s.name === setName) || SETS[2];
+    
+    // Base Stats from Set Bonus are handled by calculateDPS via setID
+    // We only need to populate the Item Main Stats here
+    let baseDmg = 0, baseSpa = 0, baseCm = 0, baseCf = 0, baseRange = 0, baseDot = 0;
+
+    const addMain = (type) => {
+        if(type === 'dmg') baseDmg += 60;
+        if(type === 'dot') baseDot += 75;
+        if(type === 'cm') baseCm += 120;
+        if(type === 'spa') baseSpa += 22.5;
+        if(type === 'cf') baseCf += 37.5;
+        if(type === 'range') baseRange += 30;
+    }
+    addMain(ms.body);
+    addMain(ms.legs);
+
+    candidates.forEach(cand => {
+        if (cand === 'dot' && !statConfig.applyRelicDot) return;
+        if ((cand === 'cm' || cand === 'cf') && !statConfig.applyRelicCrit) return;
+
+        let testBuild = {
+            set: setEntry.id, // Calculates set bonus
+            dmg: baseDmg, spa: baseSpa, cm: baseCm, cf: baseCf, range: baseRange, dot: baseDot
+        };
+
+        // Apply Sub Stats to all 3 pieces (or 2 if no head)
+        let conflictCount = 0;
+
+        // 1. Head
+        if (context.headPiece !== 'none') {
+            // Specific heads (Sun God) usually allow all subs, passing null as mainStat
+            if (applySubLogic(testBuild, cand, null)) conflictCount++;
+        }
+
+        // 2. Body
+        if (applySubLogic(testBuild, cand, ms.body)) conflictCount++;
+
+        // 3. Legs
+        if (applySubLogic(testBuild, cand, ms.legs)) conflictCount++;
+
+        let effStats = { ...unit.stats };
+        if (activeAbilityIds.has(unit.id) && unit.ability) Object.assign(effStats, unit.ability);
+        if (unit.tags) effStats.tags = unit.tags;
+        if (unit.id === 'kirito' && kiritoState.realm && kiritoState.card) { 
+            effStats.dot = 200; effStats.dotDuration = 4; effStats.dotStacks = 1; 
+        }
+
+        let res = calculateDPS(effStats, testBuild, context);
+        
+        let score = res.total;
+        if (context.priority === 'range' || unit.id === 'law') score = res.range;
+        if (context.priority === 'spa') score = res.total;
+        
+        comparisonList.push({ type: cand, val: score, conflicts: conflictCount });
+    });
+
+    comparisonList.sort((a, b) => b.val - a.val);
+
+    const maxVal = comparisonList[0].val;
+
+    let html = '';
+    const getLabel = (k) => SUB_NAMES[k] || k.toUpperCase();
+    
+    // Header Logic
+    const pieceCount = context.headPiece === 'none' ? 2 : 3;
+    const subHeaderText = `Comparing <b>${pieceCount} Perfect Pieces</b> (Full Build Simulation)`;
+    const descEl = document.querySelector('#subPriorityModal .modal-content > div:nth-child(2)');
+    if(descEl) descEl.innerHTML = subHeaderText;
+
+    comparisonList.forEach((item, index) => {
+        const percent = (item.val / maxVal) * 100;
+        const diff = index === 0 ? 'BEST' : '-' + (100 - percent).toFixed(1) + '%';
+        const isBest = index === 0;
+        const colorClass = isBest ? 'best' : '';
+        const fmtVal = unit.id === 'law' ? item.val.toFixed(1) : format(item.val);
+        const label = unit.id === 'law' ? 'Range' : 'DPS';
+        
+        // Conflict Warning
+        let labelText = getLabel(item.type);
+        if (item.conflicts > 0) {
+            labelText += ` <span style="color:#ffcc00; cursor:help;" title="Conflict: Main Stat matches Sub Stat on ${item.conflicts} piece(s). Fallback stat used.">⚠️</span>`;
+        }
+
+        html += `
+        <div class="prio-row">
+            <div class="prio-label">${labelText}</div>
+            <div class="prio-bar-container">
+                <div class="prio-bar ${colorClass}" style="width:${percent}%"></div>
+                <div class="prio-diff">${diff}</div>
+                <div class="prio-val">${fmtVal} <span style="font-size:0.6rem; opacity:0.7;">${label}</span></div>
+            </div>
+        </div>`;
+    });
+
+    // Add footer about conflicts
+    html += `<div style="margin-top:15px; font-size:0.7rem; color:#666; text-align:center;">
+        ⚠️ = Main Stat conflict (e.g. Dmg Body). Simulator auto-selects fallback (Range).
+    </div>`;
+
+    document.getElementById('subPriorityContent').innerHTML = html;
+    toggleModal('subPriorityModal', true);
+}
+
+function closeSubPriority() {
+    const modal = document.getElementById('subPriorityModal');
+    if (modal) modal.style.display = 'none';
+}
+
+
+window.onload = () => { populateGuideDropdowns(); setGuideMode('current'); renderPatchNotes(); }
