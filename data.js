@@ -284,7 +284,7 @@ const unitDatabase = [
             long: "Ruler", 
             note: "Ruler is strictly best due to 1 placement count." 
         },
-        stats: { dmg: 1280, spa: 6, crit: 0, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 6, passiveDmg: 0, passiveSpa: 0, element: "Ice", dotDuration: 0, range: 42}
+        stats: { dmg: 2800, spa: 6, crit: 0, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 6, passiveDmg: 0, passiveSpa: 0, element: "Ice", dotDuration: 0, range: 42}
     },
         {
         id: "ulquiorra", name: "Ultiiorra (Oblivion)", role: "Dmg",
