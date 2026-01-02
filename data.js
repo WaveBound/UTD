@@ -233,7 +233,7 @@ const unitDatabase = [
             long: "Ruler", 
             note: "Ruler is strictly best due to 1 placement count." 
         },
-        stats: { dmg: 3350, spa: 5, crit: 0, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 5, passiveDmg: 15, element: "Dark", range: 35 }
+        stats: { dmg: 3350, spa: 5, crit: 0, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 5, passiveDmg: 25, element: "Dark", range: 35 }
     },
     {
         id: "ragna", name: "Ragna (Silverite)", role: "Burst / Hybrid",
