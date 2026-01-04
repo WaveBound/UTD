@@ -390,7 +390,9 @@ function calculateDPS(uStats, relicStats, context) {
     };
     
     if (uStats.dot > 0 || traitObj.hasRadiation) {
-        const internalStacks = (traitObj.allowDotStack) ? uStats.dotStacks : 1;
+        // STRICT LOGIC: Multi-hit stacking (internalStacks > 1) is exclusive to Astral Kirito in Virtual Realm
+        // We prioritizing uStats.hitCount (14) over uStats.dotStacks (which might be 1 via Magician Card)
+        const internalStacks = (traitObj.allowDotStack && uStats.id === 'kirito' && isVirtualRealm) ? (uStats.hitCount || uStats.dotStacks || 1) : 1;
         
         const baseDotPct = uStats.dot + totalDotBuffs;
         const relicDotMult = 1 + (baseR_Dot / 100);
