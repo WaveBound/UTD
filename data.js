@@ -345,7 +345,7 @@ const unitDatabase = [
             long: "Ruler", 
             note: "Ruler is strictly best due to 1 placement count." 
         },
-        stats: { dmg: 3000, spa: 8, crit: 15, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 4, passiveDmg: 40, passiveSpa: 0, element: "Dark", dotDuration: 0, range: 38}
+        stats: { dmg: 3000, spa: 8, crit: 15, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 4, passiveDmg: 50, passiveSpa: 0, element: "Dark", dotDuration: 0, range: 38}
     },
     {
         id: "grimjaw", name: "Grommjaw (Panther)", role: "Dmg",
@@ -385,8 +385,8 @@ const unitDatabase = [
         },
         stats: { dmg: 1275, spa: 5, crit: 0, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 2, passiveDmg: 0, passiveSpa: 5, element: "Dark", dotDuration: 0, range: 37},
         ability: {
-            buffDmg: 35, 
-            passiveSpa: 7.5, 
+            buffDmg: 65, 
+            passiveSpa: 2.5, 
             crit: 10 
         }
     },
