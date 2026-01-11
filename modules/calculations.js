@@ -17,50 +17,6 @@ function calculateUnitBuilds(unit, effectiveStats, filteredBuilds, subCandidates
     }
     if(unit.tags) effectiveStats.tags = unit.tags;
 
-    // --- WASM INTEGRATION ---
-    if (window.WasmService && window.WasmService.isReady()) {
-        const wasmResults = window.WasmService.calculateBuildsWasm(
-            effectiveStats, 
-            activeTraits, 
-            filteredBuilds, 
-            subCandidates, 
-            headsToProcess, 
-            includeSubs
-        );
-        
-        if (wasmResults) {
-            // Cache the results for the UI to use (e.g. detailed math modal)
-            wasmResults.forEach(r => {
-                // We need to reconstruct the "raw result" object that the UI expects for `cachedResults`
-                // Rust returns a simplified OptimizationResult. 
-                // However, the UI uses cachedResults[id] to show the "Math Breakdown".
-                // Since Wasm doesn't return the full breakdown (to save bandwidth), 
-                // we might need to re-calculate ONLY the specific build when the user clicks "?".
-                // 
-                // Current UI: `showMath(id)` looks up `cachedResults[id]`.
-                // Strategy: We can lazily calculate the full breakdown in JS when requested, 
-                // OR we can store a "lite" version here.
-                
-                // For now, we store what we have. If showMath fails, we might need a fallback there.
-                // But the primary goal is fast listing.
-                cachedResults[r.id] = {
-                    total: r.dps,
-                    spa: r.spa,
-                    range: r.range,
-                    // Mocking other fields to prevent UI crash if it reads them
-                    hit: 0, dot: 0, 
-                    // To enable full math breakdown, we would need to run the specific calc in JS
-                    // This is acceptable: List generation is fast (Rust), Breakdown is on-demand (JS).
-                    isWasmDerived: true,
-                    // Store enough data to reconstruct context if needed
-                    context: { /* would need to reconstruct */ }
-                };
-            });
-            return wasmResults;
-        }
-    }
-    // ------------------------
-
     const isKiritoVR = (unit.id === 'kirito' && kiritoState.realm);
     let unitResults = [];
 
