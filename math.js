@@ -85,7 +85,7 @@ const getBestSubConfig = (build, stats, includeSubs, headMode, candidates, optim
     }
     
     let globalBestRes = { total: -1, range: -1 };
-    let globalBestAssignments = {}; // Will now store objects: { type, val }
+    let globalBestAssignments = {}; 
     let globalBestHead = 'none';
 
     // Helper: Apply stats and RETURN the values used
@@ -94,11 +94,22 @@ const getBestSubConfig = (build, stats, includeSubs, headMode, candidates, optim
         let sWeight = ratio.s; 
         
         // COLLISION CHECK (Max 6 rolls if Pure)
+        // If the Primary Stat matches Main Stat, shift weight to Secondary
         if (pStat === mainStat) {
             sWeight = Math.min(6, sWeight + pWeight);
             pWeight = 0;
-        } else if (sStat === mainStat) {
+        } 
+        // If the Secondary Stat matches Main Stat, shift weight to Primary
+        else if (sStat === mainStat) {
             pWeight = Math.min(6, pWeight + sWeight);
+            sWeight = 0;
+        }
+
+        // Edge Case: If it was a Pure Strategy (e.g., Dmg/Dmg) and matches Main Stat,
+        // both weights become 0 (or shift back and forth). 
+        // If pStat == sStat == mainStat, we cannot roll this stat at all.
+        if (pStat === mainStat && sStat === mainStat) {
+            pWeight = 0;
             sWeight = 0;
         }
 
@@ -115,7 +126,7 @@ const getBestSubConfig = (build, stats, includeSubs, headMode, candidates, optim
             b[sStat] = (b[sStat] || 0) + sVal;
         }
 
-        // 2. FILL BASE STATS (The Fix)
+        // 2. FILL BASE STATS
         // Ensure other valid sub-stats exist at "Base Level 1" (1x Value)
         candidates.forEach(cand => {
             // Skip if this is the Main Stat (Collision)
@@ -126,7 +137,6 @@ const getBestSubConfig = (build, stats, includeSubs, headMode, candidates, optim
             if (cand === sStat && sWeight > 0) return;
 
             // Add Base Value (1 roll worth of stats)
-            // Note: 'candidates' is already filtered by bugged/fixed logic in calculations.js
             const baseVal = PERFECT_SUBS[cand];
             b[cand] = (b[cand] || 0) + baseVal;
         });
@@ -138,8 +148,6 @@ const getBestSubConfig = (build, stats, includeSubs, headMode, candidates, optim
         let arr = [];
         if (res.pVal > 0) arr.push({ type: res.pStat, val: res.pVal });
         if (res.sVal > 0) arr.push({ type: res.sStat, val: res.sVal });
-        // Note: We only display the prioritized stats in the "Assignment" list for UI clarity,
-        // but the math calculation in 'b' now includes the base stats.
         return arr;
     };
 
@@ -168,8 +176,8 @@ const getBestSubConfig = (build, stats, includeSubs, headMode, candidates, optim
 
         // Ratios summing to 7
         const ratios = [
-            { p: 4, s: 3 }, // e.g. 16% Dmg / 7.5% Crit
-            { p: 3, s: 4 }, // e.g. 12% Dmg / 10% Crit
+            { p: 4, s: 3 }, 
+            { p: 3, s: 4 }, 
             { p: 5, s: 2 }, 
             { p: 2, s: 5 }
         ];
@@ -188,16 +196,19 @@ const getBestSubConfig = (build, stats, includeSubs, headMode, candidates, optim
             let currentAssignments = {};
 
             if (actualIncludeHead) {
+                // Heads don't have main stats, pass null
                 const res = applyContextualStats(testBuild, 'head', null, strat.p, strat.s, strat.ratio);
                 currentAssignments.head = formatAssignment(res);
             }
 
             if (includeSubs) {
+                // Pass build.bodyType as the mainStat to block
                 const res = applyContextualStats(testBuild, 'body', build.bodyType, strat.p, strat.s, strat.ratio);
                 currentAssignments.body = formatAssignment(res);
             }
 
             if (includeSubs) {
+                // Pass build.legType as the mainStat to block
                 const res = applyContextualStats(testBuild, 'legs', build.legType, strat.p, strat.s, strat.ratio);
                 currentAssignments.legs = formatAssignment(res);
             }
@@ -216,6 +227,7 @@ const getBestSubConfig = (build, stats, includeSubs, headMode, candidates, optim
     globalBestAssignments.selectedHead = globalBestHead;
     return { res: globalBestRes, desc: "", assignments: globalBestAssignments };
 };
+
 
 // --- CORE CALCULATION LOGIC ---
 
