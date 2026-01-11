@@ -93,39 +93,68 @@ function openCalc(unitId) {
     const updateBody = () => {
         const main = document.getElementById('calcBodyMain').value;
         const card = document.querySelectorAll('#calcModal .gear-card')[1];
+        // Pass the main stat as the 'blockStatType'
         updateCardSubs(card, main);
     };
 
     const updateLegs = () => {
         const main = document.getElementById('calcLegsMain').value;
         const card = document.querySelectorAll('#calcModal .gear-card')[2];
+        // Pass the main stat as the 'blockStatType'
         updateCardSubs(card, main);
     };
 
     const updateHead = () => {
         const card = document.querySelectorAll('#calcModal .gear-card')[0];
+        // Heads don't have main stats, so pass null
         updateCardSubs(card, null);
     };
 
-    const updateHeadSelection = () => {
-        updateHead();
-        updateHeadStarVisibility();
-    };
+    // ... (Previous code) ...
 
-    document.getElementById('calcBodyMain').onchange = updateBody;
-    document.getElementById('calcLegsMain').onchange = updateLegs;
-    document.getElementById('calcHead').onchange = updateHeadSelection;
-
-    updateHead();
-    updateBody();
-    updateLegs();
-
-    closeInfoPopup();
+// UPDATED: Update card sub-stats with blocking logic
+function updateCardSubs(card, blockStatType) {
+    const inputs = card.querySelectorAll('input.sub-val-input');
     
-    updateHeadStarVisibility();
-    updateBodyStarVisibility();
-    updateLegsStarVisibility();
-    toggleModal('calcModal', true);
+    // Determine which card this is and get appropriate star multiplier
+    const allCards = document.querySelectorAll('#calcModal .gear-card');
+    let cardIndex = -1;
+    for (let i = 0; i < allCards.length; i++) {
+        if (allCards[i] === card) {
+            cardIndex = i;
+            break;
+        }
+    }
+    
+    // Get star multiplier only if the selector is visible
+    const headStarsSelect = document.getElementById('calcHeadStars');
+    const bodyStarsSelect = document.getElementById('calcBodyStars');
+    const legsStarsSelect = document.getElementById('calcLegsStars');
+    
+    let starMult = 1;
+    if (cardIndex === 0) starMult = (headStarsSelect.style.display !== 'none') ? parseFloat(headStarsSelect.value) : 1;      
+    else if (cardIndex === 1) starMult = (bodyStarsSelect.style.display !== 'none') ? parseFloat(bodyStarsSelect.value) : 1;  
+    else if (cardIndex === 2) starMult = (legsStarsSelect.style.display !== 'none') ? parseFloat(legsStarsSelect.value) : 1;  
+
+    inputs.forEach(input => {
+        const statType = input.dataset.stat;
+        
+        // CHECK: If this input's stat type matches the blocked Main Stat
+        if (statType === blockStatType) {
+            input.value = 0;
+            input.style.opacity = '0.3';
+            input.parentElement.style.opacity = '0.5';
+            input.parentElement.classList.add('disabled'); // Add class to prevent manual editing
+            input.disabled = true; // Disable HTML interaction
+        } else {
+            // Only auto-fill if not previously manually edited (simplified logic: just reset for now)
+            input.value = parseFloat((PERFECT_SUBS[statType] * starMult).toFixed(3));
+            input.style.opacity = '1';
+            input.parentElement.style.opacity = '1';
+            input.parentElement.classList.remove('disabled');
+            input.disabled = false;
+        }
+    });
 }
 
 // Update calculator UI with star multipliers
@@ -337,4 +366,5 @@ function runCustomCalc() {
         console.error(error);
         alert("Calculation Error: " + error.message);
     }
+}
 }

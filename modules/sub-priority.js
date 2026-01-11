@@ -33,18 +33,26 @@ function viewSubPriority(buildId) {
     const setName = resultData.setName;
     const setEntry = SETS.find(s => s.name === setName) || SETS[2];
 
-    // Helper: Apply Perfect Sub Stats Logic
+    // UPDATED Helper: Apply Perfect Sub Stats Logic with Collision Handling
     const applySubLogic = (b, target, mainStat) => {
         let actual = target;
         let isFallback = false;
         
+        // If the target sub-stat matches the Main Stat, we must pick a fallback
         if (actual === mainStat) {
+            // If main stat is Range, fallback to Damage. Otherwise, fallback to Range.
+            // This ensures we always have a high-value stat filling the slot.
             actual = (mainStat === 'range') ? 'dmg' : 'range';
             isFallback = true;
         }
         
+        // Add Perfect Sub Rolls (6 rolls)
+        // Note: Logic allows mixing stats, but for priority view we assume "Pure" rolling on the target
         for (let k in PERFECT_SUBS) {
-            if (k === mainStat) continue; 
+            if (k === mainStat) continue; // Skip main stat base roll
+            
+            // If this is the chosen stat (actual), apply 6 rolls
+            // Otherwise apply 1 base roll (simulating the other 3 lines)
             let mult = (k === actual) ? 6 : 1;
             b[k] = (b[k] || 0) + (PERFECT_SUBS[k] * mult);
         }

@@ -1,8 +1,3 @@
-// ============================================================================
-// MODALS.JS - Modal Management & Info Popups
-// ============================================================================
-
-// Toggle modal visibility
 const toggleModal = (modalId, show = true) => {
     const modal = document.getElementById(modalId);
     if (modal) {
@@ -64,32 +59,44 @@ function closeInfoPopup() {
 
 // HELPER: Reconstruct full calculation data from cached "Lite" data
 function reconstructMathData(liteData) {
-    // 1. Identify Unit from ID string (e.g., "law-BASE-...")
+    // 1. Identify Unit from ID string
     const unit = unitDatabase.find(u => liteData.id.startsWith(u.id));
     if (!unit) return null;
 
     // 2. Identify active states from ID string
-    const isAbility = liteData.id.includes('-ABILITY');
-    const isVR = liteData.id.includes('-VR');
-    const isCard = liteData.id.includes('-CARD');
+    const isAbility = liteData.id.includes('ABILITY');
+    const isVR = liteData.id.includes('VR');
+    const isCard = liteData.id.includes('CARD');
+    
+    // 3. Identify Calculation Mode from ID
+    const isBuggedMode = liteData.id.includes('-b-');
+    const isFixedMode = liteData.id.includes('-f-');
 
-    // 3. Setup Unit Stats
+    // 4. Setup Unit Stats
     let effectiveStats = { ...unit.stats };
     effectiveStats.id = unit.id;
     if (unit.tags) effectiveStats.tags = unit.tags;
     
+    // Apply Ability Stats
     if (isAbility && unit.ability) Object.assign(effectiveStats, unit.ability);
+    
+    // Apply Kirito VR/Card Stats
     if (unit.id === 'kirito' && isVR && isCard) {
         effectiveStats.dot = 200; effectiveStats.dotDuration = 4; effectiveStats.dotStacks = 1;
     }
+    
+    // Apply Bambietta Element
+    if (unit.id === 'bambietta') {
+        Object.assign(effectiveStats, BAMBIETTA_MODES["Dark"]);
+    }
 
-    // 4. Identify Trait from Name
+    // 5. Identify Trait from Name
     let trait = traitsList.find(t => t.name === liteData.traitName) || 
                 customTraits.find(t => t.name === liteData.traitName) ||
                 (unitSpecificTraits[unit.id] || []).find(t => t.name === liteData.traitName);
     if (!trait) trait = traitsList.find(t => t.id === 'ruler');
 
-    // 5. Reconstruct Relic Stats (Set + Main + Subs)
+    // 6. Reconstruct Relic Stats (Set + Main + Subs)
     const setEntry = SETS.find(s => s.name === liteData.setName) || SETS[2];
     
     let totalStats = {
@@ -106,7 +113,20 @@ function reconstructMathData(liteData) {
             totalStats[liteData.mainStats.legs] += MAIN_STAT_VALS.legs[liteData.mainStats.legs];
     }
 
-    // Add Sub Stats
+    // --- TEMPORARY STATE SYNC FOR BASE FILL ---
+    // UPDATED: Explicit logic to ensure Crit is TRUE for Bugged Mode
+    let applyDot = statConfig.applyRelicDot;
+    let applyCrit = statConfig.applyRelicCrit;
+
+    if (isBuggedMode) {
+        applyDot = false;
+        applyCrit = true; // Fix: Explicitly enable Crit for bugged mode
+    } else if (isFixedMode) {
+        applyDot = true;
+        applyCrit = true;
+    }
+
+    // Add Explicit Upgraded Sub Stats (Stored in DB)
     if (liteData.subStats) {
         ['head', 'body', 'legs'].forEach(slot => {
             if (liteData.subStats[slot]) {
@@ -117,9 +137,45 @@ function reconstructMathData(liteData) {
         });
     }
 
-    // 6. Setup Context
+    // --- FIX: INJECT BASE SUB-STATS ---
+    const candidates = ['dmg', 'spa', 'range', 'cm', 'cf', 'dot'];
+    const validCandidates = candidates.filter(c => {
+         if (!applyDot && c === 'dot') return false;
+         if (!applyCrit && (c === 'cm' || c === 'cf')) return false;
+         return true;
+    });
+
+    const addBaseFills = (slot, mainStatType) => {
+        // Identify stats that were already upgraded/added for this slot
+        const existingTypes = new Set();
+        if (liteData.subStats && liteData.subStats[slot]) {
+             liteData.subStats[slot].forEach(s => existingTypes.add(s.type));
+        }
+
+        validCandidates.forEach(cand => {
+             // Collision check: Don't add if it's the main stat
+             if (cand === mainStatType) return;
+             
+             // Don't add if it was already part of the upgrade strategy
+             if (existingTypes.has(cand)) return;
+
+             // Add 1x Base Roll (Perfect Sub Value)
+             totalStats[cand] = (totalStats[cand] || 0) + PERFECT_SUBS[cand];
+        });
+    };
+
+    // Apply Base Fills to all pieces
+    if (liteData.headUsed && liteData.headUsed !== 'none') {
+        addBaseFills('head', null); // Heads have no main stat
+    }
+    if (liteData.mainStats) {
+        addBaseFills('body', liteData.mainStats.body);
+        addBaseFills('legs', liteData.mainStats.legs);
+    }
+    // -----------------------------------------------------
+
+    // 7. Setup Context
     const isSpaPrio = liteData.prio === 'spa';
-    const isRangePrio = liteData.prio === 'range';
     
     // Determine points logic (Law uses 99/0 for Range, others use standard)
     let dmgPts = 99, spaPts = 0;
@@ -137,22 +193,19 @@ function reconstructMathData(liteData) {
         isVirtualRealm: (unit.id === 'kirito' && isVR)
     };
 
-    // 7. Run Calculation with Global Toggle Sync
-    // We check the actual checkbox state because the user can only click cards valid for the current view.
-    const checkbox = document.getElementById('globalHypothetical');
-    const isFixedMode = checkbox ? checkbox.checked : false;
-
-    // Save previous state to prevent side effects
+    // 8. Run Calculation with STATE OVERRIDE
     const previousDotState = statConfig.applyRelicDot;
+    const previousCritState = statConfig.applyRelicCrit;
     
-    // Apply state from UI toggle
-    statConfig.applyRelicDot = isFixedMode;
+    statConfig.applyRelicDot = applyDot;
+    statConfig.applyRelicCrit = applyCrit;
 
     // Calculate
     const result = calculateDPS(effectiveStats, totalStats, context);
 
     // Restore state
     statConfig.applyRelicDot = previousDotState;
+    statConfig.applyRelicCrit = previousCritState;
 
     return result;
 }
