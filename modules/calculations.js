@@ -3,10 +3,22 @@
 // ============================================================================
 
 // Main calculation function for unit builds
-function calculateUnitBuilds(unit, effectiveStats, filteredBuilds, subCandidates, headsToProcess, includeSubs) {
+// UPDATED: Added specificTraitsOnly parameter to allow partial calculations (Hybrid Static/Dynamic)
+function calculateUnitBuilds(unit, effectiveStats, filteredBuilds, subCandidates, headsToProcess, includeSubs, specificTraitsOnly = null) {
     cachedResults = cachedResults || {};
-    const specificTraits = unitSpecificTraits[unit.id] || [];
-    const activeTraits = [...traitsList, ...customTraits, ...specificTraits];
+    
+    // Determine which traits to calculate
+    let activeTraits = [];
+    
+    if (specificTraitsOnly && Array.isArray(specificTraitsOnly)) {
+        // Optimization: Only calculate specific traits (e.g., Custom Traits)
+        activeTraits = specificTraitsOnly;
+    } else {
+        // Standard: Calculate ALL traits (Standard + Custom)
+        const specificTraits = unitSpecificTraits[unit.id] || [];
+        activeTraits = [...traitsList, ...customTraits, ...specificTraits];
+    }
+
     const isAbilActive = activeAbilityIds.has(unit.id); 
     
     effectiveStats.id = unit.id;

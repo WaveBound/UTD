@@ -2,33 +2,77 @@
 // UI-HELPERS.JS - UI Interaction & Toggle Functions
 // ============================================================================
 
-// Reset and trigger database re-render
+// Reset and trigger database re-render (Used for deep logic changes like Bambietta element)
 const resetAndRender = () => { 
     renderQueueIndex = 0; 
     renderDatabase(); 
 };
 
 // Generic checkbox toggle with callback
-function toggleCheckbox(checkbox, callback, isHypothetical = false) {
+function toggleCheckbox(checkbox, callback) {
     checkbox.parentNode.classList.toggle('is-checked', checkbox.checked);
-    if (isHypothetical) setGuideMode(checkbox.checked ? 'fixed' : 'current');
-    else callback();
+    if(callback) callback(checkbox);
 }
 
-// Toggle sub-stats checkbox
-const toggleSubStats = (cb) => toggleCheckbox(cb, resetAndRender);
+// Helper to update body class based on checkbox state
+const updateBodyClass = (className, isChecked) => {
+    if (isChecked) document.body.classList.add(className);
+    else document.body.classList.remove(className);
+};
 
-// Toggle head piece checkbox
-const toggleHeadPiece = (cb) => toggleCheckbox(cb, resetAndRender);
+// Toggle sub-stats (INSTANT CSS) - Used by both DB and Guide toggles
+const toggleSubStats = (cb) => toggleCheckbox(cb, (el) => {
+    // Sync the other checkbox (DB <-> Guide)
+    const otherId = el.id === 'globalSubStats' ? 'guideSubStats' : 'globalSubStats';
+    const otherCb = document.getElementById(otherId);
+    if(otherCb) {
+        otherCb.checked = el.checked;
+        otherCb.parentNode.classList.toggle('is-checked', el.checked);
+    }
+    updateBodyClass('show-subs', el.checked);
+});
 
-// Toggle hypothetical/bugged relics checkbox
-const toggleHypothetical = (cb) => toggleCheckbox(cb, null, true);
+// Toggle head piece (INSTANT CSS) - Used by both DB and Guide toggles
+const toggleHeadPiece = (cb) => toggleCheckbox(cb, (el) => {
+    // Sync the other checkbox (DB <-> Guide)
+    const otherId = el.id === 'globalHeadPiece' ? 'guideHeadPiece' : 'globalHeadPiece';
+    const otherCb = document.getElementById(otherId);
+    if(otherCb) {
+        otherCb.checked = el.checked;
+        otherCb.parentNode.classList.toggle('is-checked', el.checked);
+    }
+    updateBodyClass('show-head', el.checked);
+});
 
-// Toggle guide sub-stats
-const toggleGuideSubStats = (cb) => toggleCheckbox(cb, renderGuides);
+// Toggle hypothetical/bugged relics checkbox (INSTANT CSS)
+const toggleHypothetical = (checkbox) => {
+    const isChecked = checkbox.checked;
+    
+    // Update visual state of the specific clicked toggle
+    checkbox.parentNode.classList.toggle('is-checked', isChecked);
+    
+    // Sync the other toggle (Header vs Guide Toolbar)
+    const otherId = checkbox.id === 'globalHypothetical' ? 'guideHypoToggle' : 'globalHypothetical';
+    const otherCheckbox = document.getElementById(otherId);
+    if(otherCheckbox) {
+        otherCheckbox.checked = isChecked;
+        otherCheckbox.parentNode.classList.toggle('is-checked', isChecked);
+    }
 
-// Toggle guide head piece
-const toggleGuideHeadPiece = (cb) => toggleCheckbox(cb, renderGuides);
+    // Apply class to body to flip visibility via CSS
+    updateBodyClass('show-fixed-relics', isChecked);
+
+    // Update Label Text
+    const labelText = isChecked ? "Fixed Relics" : "Bugged Relics";
+    const lbl1 = document.getElementById('hypoLabel');
+    const lbl2 = document.getElementById('guideHypoLabel');
+    if(lbl1) lbl1.innerText = labelText;
+    if(lbl2) lbl2.innerText = labelText;
+};
+
+// Map old names to new unified functions for compatibility
+const toggleGuideSubStats = toggleSubStats;
+const toggleGuideHeadPiece = toggleHeadPiece;
 
 // Toggle Kirito mode (Realm/Card)
 function toggleKiritoMode(mode, checkbox) {
@@ -39,16 +83,21 @@ function toggleKiritoMode(mode, checkbox) {
         kiritoState.card = checkbox.checked;
     }
     
+    // 1. ALWAYS recalculate the math cache so the new data exists
+    renderQueueIndex = 0;
+    renderDatabase();
+    
+    // 2. If viewing Guides, update the Guides UI explicitly
     if (document.getElementById('guidesPage').classList.contains('active')) {
         renderGuides();
-    } else {
-        resetAndRender();
     }
 }
 
 // Calculate Helpers
 const getFilteredBuilds = () => globalBuilds.filter(b => {
-    if (currentGuideMode === 'current' && (!statConfig.applyRelicCrit && (b.cf > 0 || b.cm > 0)) || (!statConfig.applyRelicDot && b.dot > 0)) return false;
+    if (!statConfig.applyRelicCrit && (b.cf > 0 || b.cm > 0)) return false;
+    if (!statConfig.applyRelicDot && b.dot > 0) return false;
+    
     if (!statConfig.applyRelicDmg && b.dmg > 10 || !statConfig.applyRelicSpa && b.spa > 10) return false;
     return true;
 });
@@ -60,7 +109,11 @@ const getValidSubCandidates = () => SUB_CANDIDATES.filter(c =>
 // Set Bambietta Element
 function setBambiettaElement(element, selectEl) {
     bambiettaState.element = element;
-    resetAndRender();
+    renderQueueIndex = 0;
+    renderDatabase();
+    if (document.getElementById('guidesPage').classList.contains('active')) {
+        renderGuides();
+    }
 }
 
 // Toggle unit selection
@@ -81,9 +134,27 @@ function toggleSelection(id) {
 
 // Select/Deselect all units
 const selectAllUnits = () => { 
-    const alreadyAll = selectedUnitIds.size === unitDatabase.length; 
-    alreadyAll ? selectedUnitIds.clear() : unitDatabase.forEach(u => selectedUnitIds.add(u.id)); 
-    resetAndRender(); 
+    const shouldSelectAll = selectedUnitIds.size < unitDatabase.length;
+    if (shouldSelectAll) {
+        unitDatabase.forEach(u => selectedUnitIds.add(u.id));
+    } else {
+        selectedUnitIds.clear();
+    }
+    unitDatabase.forEach(u => {
+        const card = document.getElementById('card-' + u.id);
+        if (card) {
+            const btn = card.querySelector('.select-btn');
+            if (shouldSelectAll) {
+                card.classList.add('is-selected');
+                if (btn) btn.innerText = "Selected";
+            } else {
+                card.classList.remove('is-selected');
+                if (btn) btn.innerText = "Select";
+            }
+        }
+    });
+    document.getElementById('selectAllBtn').innerText = shouldSelectAll ? "Deselect All" : "Select All";
+    updateCompareBtn(); 
 };
 
 // Update compare button visibility
@@ -96,28 +167,18 @@ const updateCompareBtn = () => {
     document.getElementById('selectAllBtn').innerText = (count === unitDatabase.length && count > 0) ? "Deselect All" : "Select All";
 };
 
-// Toggle ability for a unit
+// Toggle ability for a unit (INSTANT CSS SWITCH)
 function toggleAbility(unitId, checkbox) {
-    const unit = unitDatabase.find(u => u.id === unitId);
-    if(!unit) return;
-    
-    if (checkbox.checked) activeAbilityIds.add(unitId);
-    else activeAbilityIds.delete(unitId);
-    
-    let currentStats = { ...unit.stats };
-    if (checkbox.checked && unit.ability) {
-        Object.assign(currentStats, unit.ability);
+    const card = document.getElementById('card-' + unitId);
+    if (!card) return;
+    checkbox.parentNode.classList.toggle('is-checked', checkbox.checked);
+    if (checkbox.checked) {
+        card.classList.add('use-ability');
+        activeAbilityIds.add(unitId);
+    } else {
+        card.classList.remove('use-ability');
+        activeAbilityIds.delete(unitId);
     }
-    
-    const filteredBuilds = getFilteredBuilds();
-    const subCandidates = getValidSubCandidates();
-    const includeSubs = document.getElementById('globalSubStats').checked;
-    const includeHead = document.getElementById('globalHeadPiece').checked;
-    const headsToProcess = includeHead ? ['sun_god', 'ninja', 'reaper_necklace', 'shadow_reaper_necklace'] : ['none'];
-
-    const results = calculateUnitBuilds(unit, currentStats, filteredBuilds, subCandidates, headsToProcess, includeSubs);
-    unitBuildsCache[unitId] = results;
-    updateBuildListDisplay(unitId);
 }
 
 // Switch between pages

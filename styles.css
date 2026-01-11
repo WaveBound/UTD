@@ -1,3 +1,5 @@
+/* --- START OF FILE styles.css --- */
+
 :root {
     --bg-color: #050505;
     --card-bg: #0f1014;
@@ -588,3 +590,64 @@ html.no-scroll, body.no-scroll {
     .calc-global-controls { width: 100%; display: grid; grid-template-columns: 1fr 1fr; }
     .c-control-group:nth-child(3), .c-control-group:nth-child(4) { grid-column: 1 / -1; }
 }
+
+/* --- INSTANT TOGGLE MODES --- */
+
+/* 1. Global Default: Hide all build lists by default */
+.build-list-container { 
+    display: none !important; 
+    width: 100%; 
+}
+.guide-card {
+    display: none !important;
+}
+
+/* 2. SPECIFIC VISIBILITY LOGIC
+   Condition: Card State (Ability/Base) + Body State (Fixed/Bugged) + Body State (Config 0-3)
+*/
+
+/* --- DB TAB: BASE + BUGGED RELICS --- */
+/* Cfg 0: No Head, No Subs */
+body:not(.show-fixed-relics):not(.show-head):not(.show-subs) .unit-card:not(.use-ability) .mode-base.mode-bugged.cfg-0 { display: block !important; }
+/* Cfg 1: Subs Only */
+body:not(.show-fixed-relics):not(.show-head).show-subs       .unit-card:not(.use-ability) .mode-base.mode-bugged.cfg-1 { display: block !important; }
+/* Cfg 2: Head Only */
+body:not(.show-fixed-relics).show-head:not(.show-subs)       .unit-card:not(.use-ability) .mode-base.mode-bugged.cfg-2 { display: block !important; }
+/* Cfg 3: Head + Subs */
+body:not(.show-fixed-relics).show-head.show-subs             .unit-card:not(.use-ability) .mode-base.mode-bugged.cfg-3 { display: block !important; }
+
+/* --- DB TAB: BASE + FIXED RELICS --- */
+body.show-fixed-relics:not(.show-head):not(.show-subs)       .unit-card:not(.use-ability) .mode-base.mode-fixed.cfg-0  { display: block !important; }
+body.show-fixed-relics:not(.show-head).show-subs             .unit-card:not(.use-ability) .mode-base.mode-fixed.cfg-1  { display: block !important; }
+body.show-fixed-relics.show-head:not(.show-subs)             .unit-card:not(.use-ability) .mode-base.mode-fixed.cfg-2  { display: block !important; }
+body.show-fixed-relics.show-head.show-subs                   .unit-card:not(.use-ability) .mode-base.mode-fixed.cfg-3  { display: block !important; }
+
+/* --- DB TAB: ABILITY + BUGGED RELICS --- */
+body:not(.show-fixed-relics):not(.show-head):not(.show-subs) .unit-card.use-ability       .mode-abil.mode-bugged.cfg-0 { display: block !important; }
+body:not(.show-fixed-relics):not(.show-head).show-subs       .unit-card.use-ability       .mode-abil.mode-bugged.cfg-1 { display: block !important; }
+body:not(.show-fixed-relics).show-head:not(.show-subs)       .unit-card.use-ability       .mode-abil.mode-bugged.cfg-2 { display: block !important; }
+body:not(.show-fixed-relics).show-head.show-subs             .unit-card.use-ability       .mode-abil.mode-bugged.cfg-3 { display: block !important; }
+
+/* --- DB TAB: ABILITY + FIXED RELICS --- */
+body.show-fixed-relics:not(.show-head):not(.show-subs)       .unit-card.use-ability       .mode-abil.mode-fixed.cfg-0  { display: block !important; }
+body.show-fixed-relics:not(.show-head).show-subs             .unit-card.use-ability       .mode-abil.mode-fixed.cfg-1  { display: block !important; }
+body.show-fixed-relics.show-head:not(.show-subs)             .unit-card.use-ability       .mode-abil.mode-fixed.cfg-2  { display: block !important; }
+body.show-fixed-relics.show-head.show-subs                   .unit-card.use-ability       .mode-abil.mode-fixed.cfg-3  { display: block !important; }
+
+/* --- GUIDES TAB VISIBILITY --- */
+/* Note: Guides don't check for Ability usage on the card, only Body State */
+
+/* Group 1: Bugged (Not Fixed) */
+body:not(.show-fixed-relics):not(.show-head):not(.show-subs) .guide-card.mode-bugged.cfg-0 { display: flex !important; }
+body:not(.show-fixed-relics):not(.show-head).show-subs       .guide-card.mode-bugged.cfg-1 { display: flex !important; }
+body:not(.show-fixed-relics).show-head:not(.show-subs)       .guide-card.mode-bugged.cfg-2 { display: flex !important; }
+body:not(.show-fixed-relics).show-head.show-subs             .guide-card.mode-bugged.cfg-3 { display: flex !important; }
+
+/* Group 2: Fixed */
+body.show-fixed-relics:not(.show-head):not(.show-subs)       .guide-card.mode-fixed.cfg-0 { display: flex !important; }
+body.show-fixed-relics:not(.show-head).show-subs             .guide-card.mode-fixed.cfg-1 { display: flex !important; }
+body.show-fixed-relics.show-head:not(.show-subs)             .guide-card.mode-fixed.cfg-2 { display: flex !important; }
+body.show-fixed-relics.show-head.show-subs                   .guide-card.mode-fixed.cfg-3 { display: flex !important; }
+
+/* WARNING VISIBILITY */
+body.show-fixed-relics .guide-warning { display: none !important; }

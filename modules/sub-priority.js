@@ -1,3 +1,7 @@
+// ============================================================================
+// SUB-PRIORITY.JS - Sub Stat Analysis Logic
+// ============================================================================
+
 function viewSubPriority(buildId) {
     const resultData = cachedResults[buildId];
     if (!resultData) { 
@@ -5,9 +9,30 @@ function viewSubPriority(buildId) {
         return; 
     }
 
-    const unit = unitDatabase.find(u => u.id === resultData.baseStats.id);
-    const trait = resultData.traitObj;
+    // --- RECONSTRUCTION LOGIC FOR STATIC DB ---
+    // 1. Identify Unit
+    let unit = unitDatabase.find(u => buildId.startsWith(u.id));
+    if (!unit) { console.error("Unit not found for ID string:", buildId); return; }
+
+    // 2. Identify Active States
+    const isAbility = buildId.includes('-ABILITY');
+    const isVR = buildId.includes('-VR');
+    const isCard = buildId.includes('-CARD');
+
+    // 3. Identify Trait
+    // Use traitName from data or fallback to parsing if name missing (unlikely)
+    let trait = traitsList.find(t => t.name === resultData.traitName) || 
+                customTraits.find(t => t.name === resultData.traitName) ||
+                (unitSpecificTraits[unit.id] || []).find(t => t.name === resultData.traitName);
     
+    if (!trait) trait = traitsList.find(t => t.id === 'ruler');
+
+    // 4. Identify Set & Main Stats
+    // If mainStats missing (super lite), guess based on Set Name, but static DB should have it.
+    let ms = resultData.mainStats || { body: 'dmg', legs: 'dmg' };
+    const setName = resultData.setName;
+    const setEntry = SETS.find(s => s.name === setName) || SETS[2];
+
     // Helper: Apply Perfect Sub Stats Logic
     const applySubLogic = (b, target, mainStat) => {
         let actual = target;
@@ -30,30 +55,23 @@ function viewSubPriority(buildId) {
     let comparisonList = [];
     const candidates = ['spa', 'dmg', 'range', 'cm', 'cf', 'dot'];
     
+    // Determine context points
+    const isSpaPrio = resultData.prio === 'spa';
+    const dmgPts = isSpaPrio ? 0 : 99;
+    const spaPts = isSpaPrio ? 99 : 0;
+
     const context = {
-        dmgPoints: resultData.dmgPoints,
-        spaPoints: resultData.spaPoints,
+        dmgPoints: dmgPts,
+        spaPoints: spaPts,
         wave: 25,
         isBoss: false,
         traitObj: trait,
-        placement: resultData.placement,
-        isSSS: resultData.isSSS,
-        headPiece: resultData.headBuffs ? resultData.headBuffs.type : 'none',
-        isVirtualRealm: resultData.baseStats.id === 'kirito' && kiritoState.realm
+        placement: Math.min(unit.placement, trait.limitPlace || unit.placement),
+        isSSS: true,
+        headPiece: resultData.headUsed || 'none',
+        isVirtualRealm: unit.id === 'kirito' && isVR
     };
 
-    const unitCache = unitBuildsCache[unit.id] || [];
-    const specificBuildEntry = unitCache.find(x => x.id === buildId);
-    
-    if(!specificBuildEntry) { 
-        console.error("Could not find build config in cache"); 
-        return; 
-    }
-
-    const ms = specificBuildEntry.mainStats;
-    const setName = specificBuildEntry.setName;
-    const setEntry = SETS.find(s => s.name === setName) || SETS[2];
-    
     // Calculate Base Main Stats
     let baseDmg = 0, baseSpa = 0, baseCm = 0, baseCf = 0, baseRange = 0, baseDot = 0;
     const addMain = (type) => {
@@ -69,9 +87,10 @@ function viewSubPriority(buildId) {
 
     let effStats = { ...unit.stats };
     effStats.id = unit.id;
-    if (activeAbilityIds.has(unit.id) && unit.ability) Object.assign(effStats, unit.ability);
     if (unit.tags) effStats.tags = unit.tags;
-    if (unit.id === 'kirito' && kiritoState.realm && kiritoState.card) { 
+    
+    if (isAbility && unit.ability) Object.assign(effStats, unit.ability);
+    if (unit.id === 'kirito' && isVR && isCard) { 
         effStats.dot = 200; 
         effStats.dotDuration = 4; 
         effStats.dotStacks = 1; 
@@ -84,7 +103,6 @@ function viewSubPriority(buildId) {
     };
     
     const LV1_MULT = 0.5;
-    const lv1Desc = [];
 
     const addLv1Stat = (statKey, pieceName, mainStatConflict) => {
         if(statKey === mainStatConflict) return;

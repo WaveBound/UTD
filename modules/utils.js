@@ -103,16 +103,32 @@ function getUnitImgHtml(unit, imgClass = '', iconSizeClass = '') {
     return `<div class="unit-img-wrapper"><img src="${unit.img}" class="${imgClass}"><img src="${elIcon}" class="element-icon ${iconSizeClass}"></div>`;
 }
 
-// Global scroll lock helper
+// Global scroll lock helper with Position Preservation
+// Prevents the page from jumping to top when modal opens
+let savedScrollPosition = 0;
+
 function updateBodyScroll() {
     const visibleModals = Array.from(document.querySelectorAll('.modal-overlay')).some(m => m.style.display === 'flex');
     const visiblePopups = document.getElementById('mathInfoPopup');
+    const body = document.body;
 
     if (visibleModals || visiblePopups) {
-        document.body.classList.add('no-scroll');
-        document.documentElement.classList.add('no-scroll');
+        if (!body.classList.contains('no-scroll')) {
+            // Locking: Save position and fix body
+            savedScrollPosition = window.scrollY;
+            body.style.top = `-${savedScrollPosition}px`;
+            body.style.position = 'fixed';
+            body.style.width = '100%'; // Prevent collapse
+            body.classList.add('no-scroll');
+        }
     } else {
-        document.body.classList.remove('no-scroll');
-        document.documentElement.classList.remove('no-scroll');
+        if (body.classList.contains('no-scroll')) {
+            // Unlocking: Remove fixed, restore scroll
+            body.style.position = '';
+            body.style.top = '';
+            body.style.width = '';
+            body.classList.remove('no-scroll');
+            window.scrollTo(0, savedScrollPosition);
+        }
     }
 }

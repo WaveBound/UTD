@@ -60,18 +60,6 @@ function getLevelStats(baseDmg, baseSpa, dmgPoints, spaPoints) {
 
 // --- OPTIMIZATION HELPERS ---
 
-const applySubPiece = (testBuild, cand, mainStatType) => {
-    let primaryTarget = cand;
-    if (primaryTarget === mainStatType) {
-        primaryTarget = (mainStatType === 'range') ? 'dmg' : 'range';
-    }
-    for (let k in PERFECT_SUBS) {
-        if (k === mainStatType) continue;
-        let multiplier = (k === primaryTarget) ? 6 : 1;
-        testBuild[k] = (testBuild[k] || 0) + (PERFECT_SUBS[k] * multiplier);
-    }
-};
-
 const checkIsBetter = (res, currentBest, optimizeFor) => {
     if (optimizeFor === 'range') {
         if (res.range > currentBest.range) return true;
