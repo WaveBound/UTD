@@ -8,6 +8,20 @@ const resetAndRender = () => {
     renderDatabase(); 
 };
 
+function filterList(element) {
+    // 1. Find the parent unit card component
+    const card = element.closest('.unit-card');
+    if (!card) return;
+
+    // 2. Extract the Unit ID from the card's HTML ID (e.g., "card-miku" -> "miku")
+    const unitId = card.id.replace('card-', '');
+
+    // 3. Trigger the display update function located in rendering.js
+    if (typeof updateBuildListDisplay === 'function') {
+        updateBuildListDisplay(unitId);
+    }
+}
+
 // Generic checkbox toggle with callback
 function toggleCheckbox(checkbox, callback) {
     checkbox.parentNode.classList.toggle('is-checked', checkbox.checked);
