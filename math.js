@@ -105,6 +105,7 @@ const getBestSubConfig = (build, stats, includeSubs, headMode, candidates, optim
         let pVal = 0;
         let sVal = 0;
 
+        // 1. Apply Upgraded Stats
         if (pWeight > 0) {
             pVal = PERFECT_SUBS[pStat] * pWeight;
             b[pStat] = (b[pStat] || 0) + pVal;
@@ -114,6 +115,22 @@ const getBestSubConfig = (build, stats, includeSubs, headMode, candidates, optim
             b[sStat] = (b[sStat] || 0) + sVal;
         }
 
+        // 2. FILL BASE STATS (The Fix)
+        // Ensure other valid sub-stats exist at "Base Level 1" (1x Value)
+        candidates.forEach(cand => {
+            // Skip if this is the Main Stat (Collision)
+            if (cand === mainStat) return;
+            // Skip if this is the Primary Upgrade Target (Already added above)
+            if (cand === pStat && pWeight > 0) return;
+            // Skip if this is the Secondary Upgrade Target (Already added above)
+            if (cand === sStat && sWeight > 0) return;
+
+            // Add Base Value (1 roll worth of stats)
+            // Note: 'candidates' is already filtered by bugged/fixed logic in calculations.js
+            const baseVal = PERFECT_SUBS[cand];
+            b[cand] = (b[cand] || 0) + baseVal;
+        });
+
         return { pStat, pVal, sStat, sVal };
     };
 
@@ -121,6 +138,8 @@ const getBestSubConfig = (build, stats, includeSubs, headMode, candidates, optim
         let arr = [];
         if (res.pVal > 0) arr.push({ type: res.pStat, val: res.pVal });
         if (res.sVal > 0) arr.push({ type: res.sStat, val: res.sVal });
+        // Note: We only display the prioritized stats in the "Assignment" list for UI clarity,
+        // but the math calculation in 'b' now includes the base stats.
         return arr;
     };
 
