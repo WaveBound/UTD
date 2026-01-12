@@ -2,117 +2,9 @@
 // CALCULATOR.JS - Custom Calculator Modal Logic
 // ============================================================================
 
-// Open custom calculator modal
-function openCalc(unitId) {
-    currentCalcUnitId = unitId;
-    const unit = unitDatabase.find(u => u.id === unitId);
-    if (!unit) return;
+// --- HELPER FUNCTIONS (Defined globally so openCalc can use them) ---
 
-    // Populate header info
-    document.getElementById('calcUnitImg').src = unit.img;
-    document.getElementById('calcUnitName').innerText = unit.name;
-    document.getElementById('calcUnitRole').innerText = unit.role + (unit.stats.element ? ` • ${unit.stats.element}` : '');
-    
-    // Populate dropdowns
-    const traitSelect = document.getElementById('calcTrait');
-    traitSelect.innerHTML = '';
-    const allTraits = [...traitsList, ...customTraits, ...(unitSpecificTraits[unitId] || [])];
-    const uniqueTraits = allTraits.filter((t, index, self) => 
-        index === self.findIndex((x) => x.id === t.id) && t.id !== 'none'
-    );
-    uniqueTraits.forEach(t => {
-        traitSelect.add(new Option(t.name, t.id));
-    });
-
-    const setSelect = document.getElementById('calcSet');
-    if (setSelect.options.length === 0) { 
-        SETS.forEach(s => {
-            setSelect.add(new Option(s.name, s.id));
-        });
-    }
-
-    // Star level toggle logic - individual selectors for each piece
-    const headSelect = document.getElementById('calcHead');
-    const bodySelect = document.getElementById('calcBodyMain');
-    const legsSelect = document.getElementById('calcLegsMain');
-    
-    const headStarsSelect = document.getElementById('calcHeadStars');
-    const bodyStarsSelect = document.getElementById('calcBodyStars');
-    const legsStarsSelect = document.getElementById('calcLegsStars');
-
-    // Update star visibility based on head piece selection
-    const updateHeadStarVisibility = () => {
-        const headVal = headSelect.value;
-        const showStars = (headVal === 'reaper_necklace' || headVal === 'shadow_reaper_necklace');
-        headStarsSelect.style.display = showStars ? 'block' : 'none';
-        if (!showStars) headStarsSelect.value = '1.05';
-        updateCalcUI();
-    };
-
-    // Update star visibility based on relic set selection
-    const updateBodyStarVisibility = () => {
-        const setVal = setSelect.value;
-        const showStars = (setVal === 'shadow_reaper' || setVal === 'reaper_set');
-        bodyStarsSelect.style.display = showStars ? 'block' : 'none';
-        if (!showStars) bodyStarsSelect.value = '1.05';
-        updateCalcUI();
-    };
-
-    // Update star visibility based on relic set selection (same as body)
-    const updateLegsStarVisibility = () => {
-        const setVal = setSelect.value;
-        const showStars = (setVal === 'shadow_reaper' || setVal === 'reaper_set');
-        legsStarsSelect.style.display = showStars ? 'block' : 'none';
-        if (!showStars) legsStarsSelect.value = '1.05';
-        updateCalcUI();
-    };
-
-    headSelect.onchange = updateHeadStarVisibility;
-    setSelect.onchange = () => {
-        updateBodyStarVisibility();
-        updateLegsStarVisibility();
-    };
-    headStarsSelect.onchange = updateCalcUI;
-    bodyStarsSelect.onchange = updateCalcUI;
-    legsStarsSelect.onchange = updateCalcUI;
-
-    // Reset inputs
-    document.getElementById('calcDmgPoints').value = 0;
-    document.getElementById('calcSpaPoints').value = 0;
-    
-    // Auto-select meta trait
-    if (unit.meta && unit.meta.long) {
-        traitSelect.value = unit.meta.long;
-    } else if (unit.meta && unit.meta.short) {
-        traitSelect.value = unit.meta.short;
-    }
-
-    document.getElementById('calcResultArea').style.display = 'none';
-
-    // Setup calculator autofill functions (moved inside openCalc to access visibility functions)
-    const updateBody = () => {
-        const main = document.getElementById('calcBodyMain').value;
-        const card = document.querySelectorAll('#calcModal .gear-card')[1];
-        // Pass the main stat as the 'blockStatType'
-        updateCardSubs(card, main);
-    };
-
-    const updateLegs = () => {
-        const main = document.getElementById('calcLegsMain').value;
-        const card = document.querySelectorAll('#calcModal .gear-card')[2];
-        // Pass the main stat as the 'blockStatType'
-        updateCardSubs(card, main);
-    };
-
-    const updateHead = () => {
-        const card = document.querySelectorAll('#calcModal .gear-card')[0];
-        // Heads don't have main stats, so pass null
-        updateCardSubs(card, null);
-    };
-
-    // ... (Previous code) ...
-
-// UPDATED: Update card sub-stats with blocking logic
+// Update card sub-stats with blocking logic
 function updateCardSubs(card, blockStatType) {
     const inputs = card.querySelectorAll('input.sub-val-input');
     
@@ -219,45 +111,119 @@ function updateCalcUI() {
     updateSelect('calcLegsMain', MAIN_STAT_VALS.legs, legsStarMult);
 }
 
-// Update card sub-stats with blocking logic
-function updateCardSubs(card, blockStatType) {
-    const inputs = card.querySelectorAll('input.sub-val-input');
+// --- MAIN FUNCTIONS ---
+
+// Open custom calculator modal
+function openCalc(unitId) {
+    currentCalcUnitId = unitId;
+    const unit = unitDatabase.find(u => u.id === unitId);
+    if (!unit) return;
+
+    // Populate header info
+    document.getElementById('calcUnitImg').src = unit.img;
+    document.getElementById('calcUnitName').innerText = unit.name;
+    document.getElementById('calcUnitRole').innerText = unit.role + (unit.stats.element ? ` • ${unit.stats.element}` : '');
     
-    // Determine which card this is and get appropriate star multiplier
-    const allCards = document.querySelectorAll('#calcModal .gear-card');
-    let cardIndex = -1;
-    for (let i = 0; i < allCards.length; i++) {
-        if (allCards[i] === card) {
-            cardIndex = i;
-            break;
-        }
+    // Populate dropdowns
+    const traitSelect = document.getElementById('calcTrait');
+    traitSelect.innerHTML = '';
+    const allTraits = [...traitsList, ...customTraits, ...(unitSpecificTraits[unitId] || [])];
+    const uniqueTraits = allTraits.filter((t, index, self) => 
+        index === self.findIndex((x) => x.id === t.id) && t.id !== 'none'
+    );
+    uniqueTraits.forEach(t => {
+        traitSelect.add(new Option(t.name, t.id));
+    });
+
+    const setSelect = document.getElementById('calcSet');
+    if (setSelect.options.length === 0) { 
+        SETS.forEach(s => {
+            setSelect.add(new Option(s.name, s.id));
+        });
     }
+
+    // Star level toggle logic - individual selectors for each piece
+    const headSelect = document.getElementById('calcHead');
     
-    // Get star multiplier only if the selector is visible
     const headStarsSelect = document.getElementById('calcHeadStars');
     const bodyStarsSelect = document.getElementById('calcBodyStars');
     const legsStarsSelect = document.getElementById('calcLegsStars');
-    
-    let starMult = 1;
-    if (cardIndex === 0) starMult = (headStarsSelect.style.display !== 'none') ? parseFloat(headStarsSelect.value) : 1;      // Head piece
-    else if (cardIndex === 1) starMult = (bodyStarsSelect.style.display !== 'none') ? parseFloat(bodyStarsSelect.value) : 1;  // Body piece
-    else if (cardIndex === 2) starMult = (legsStarsSelect.style.display !== 'none') ? parseFloat(legsStarsSelect.value) : 1;  // Legs piece
 
-    inputs.forEach(input => {
-        const statType = input.dataset.stat;
-        
-        if (statType === blockStatType) {
-            input.value = 0;
-            input.style.opacity = '0.3';
-            input.parentElement.style.opacity = '0.5';
-            input.parentElement.classList.add('disabled');
-        } else {
-            input.value = parseFloat((PERFECT_SUBS[statType] * starMult).toFixed(3));
-            input.style.opacity = '1';
-            input.parentElement.style.opacity = '1';
-            input.parentElement.classList.remove('disabled');
-        }
-    });
+    // Update star visibility based on head piece selection
+    const updateHeadStarVisibility = () => {
+        const headVal = headSelect.value;
+        const showStars = (headVal === 'reaper_necklace' || headVal === 'shadow_reaper_necklace');
+        headStarsSelect.style.display = showStars ? 'block' : 'none';
+        if (!showStars) headStarsSelect.value = '1.05';
+        updateCalcUI();
+    };
+
+    // Update star visibility based on relic set selection
+    const updateBodyStarVisibility = () => {
+        const setVal = setSelect.value;
+        const showStars = (setVal === 'shadow_reaper' || setVal === 'reaper_set');
+        bodyStarsSelect.style.display = showStars ? 'block' : 'none';
+        if (!showStars) bodyStarsSelect.value = '1.05';
+        updateCalcUI();
+    };
+
+    // Update star visibility based on relic set selection (same as body)
+    const updateLegsStarVisibility = () => {
+        const setVal = setSelect.value;
+        const showStars = (setVal === 'shadow_reaper' || setVal === 'reaper_set');
+        legsStarsSelect.style.display = showStars ? 'block' : 'none';
+        if (!showStars) legsStarsSelect.value = '1.05';
+        updateCalcUI();
+    };
+
+    headSelect.onchange = updateHeadStarVisibility;
+    setSelect.onchange = () => {
+        updateBodyStarVisibility();
+        updateLegsStarVisibility();
+    };
+    headStarsSelect.onchange = updateCalcUI;
+    bodyStarsSelect.onchange = updateCalcUI;
+    legsStarsSelect.onchange = updateCalcUI;
+
+    // Reset inputs
+    document.getElementById('calcDmgPoints').value = 0;
+    document.getElementById('calcSpaPoints').value = 0;
+    
+    // Auto-select meta trait
+    if (unit.meta && unit.meta.long) {
+        traitSelect.value = unit.meta.long;
+    } else if (unit.meta && unit.meta.short) {
+        traitSelect.value = unit.meta.short;
+    }
+
+    document.getElementById('calcResultArea').style.display = 'none';
+
+    // Set Up Listeners for Auto-fill based on Main Stat changes
+    const calcBodyMain = document.getElementById('calcBodyMain');
+    const calcLegsMain = document.getElementById('calcLegsMain');
+
+    calcBodyMain.onchange = () => {
+        const main = calcBodyMain.value;
+        const card = document.querySelectorAll('#calcModal .gear-card')[1];
+        updateCardSubs(card, main);
+        updateCalcUI(); // Ensure star scaling applies
+    };
+
+    calcLegsMain.onchange = () => {
+        const main = calcLegsMain.value;
+        const card = document.querySelectorAll('#calcModal .gear-card')[2];
+        updateCardSubs(card, main);
+        updateCalcUI();
+    };
+    
+    // Initial UI Update
+    updateHeadStarVisibility();
+    updateBodyStarVisibility();
+    updateLegsStarVisibility();
+    updateCalcUI();
+
+    // FINALLY: Show the Modal
+    toggleModal('calcModal', true);
 }
 
 const closeCalc = () => {
@@ -366,5 +332,4 @@ function runCustomCalc() {
         console.error(error);
         alert("Calculation Error: " + error.message);
     }
-}
 }
