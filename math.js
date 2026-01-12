@@ -335,7 +335,10 @@ function calculateDPS(uStats, relicStats, context) {
 
     // 6. CALCULATE FINAL RANGE
     const baseRange = uStats.range || 0;
-    const levelRange = baseRange * lvStats.dmgMult; 
+    // UPDATED: Range does NOT scale with DMG Points (lvStats.dmgMult). 
+    // It only scales with SSS (1.2x) if active.
+    const levelRange = baseRange * (isSSS ? 1.2 : 1); 
+    
     const passiveRange = uStats.passiveRange || 0;
     const setRange = sBonus.range || 0; 
     const rangeMult = 1 + (traitRangePct + baseR_Range + passiveRange + setRange) / 100;
