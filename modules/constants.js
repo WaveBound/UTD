@@ -24,7 +24,7 @@ const STAT_INFO = {
     dmg:   { label: 'Dmg',       color: '#ff8888', border: 'rgba(255,50,50,0.3)' },
     spa:   { label: 'SPA',       color: '#88ccff', border: 'rgba(50,150,255,0.3)' },
     cdmg:  { label: 'CDmg',      color: '#d8b4fe', border: '#a855f7', special: '<span class="stat-cdmg-text" style="letter-spacing:-0.5px;">CDmg</span>' },
-    crit:  { label: 'Crit',      color: '#ffd700', border: 'rgba(255, 215, 0, 0.3)' },
+    crit:  { label: 'CRate',      color: '#ffd700', border: 'rgba(255, 215, 0, 0.3)' },
     dot:   { label: 'DoT',       color: '#4ade80', border: 'rgba(74, 222, 128, 0.3)' },
     range: { label: 'Range',     color: '#ffa500', border: 'rgba(255, 140, 0, 0.3)' }
 };
