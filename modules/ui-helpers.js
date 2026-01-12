@@ -231,3 +231,32 @@ const toggleDeepDive = (btn) => {
         arrow.textContent = '▶';
     }
 };
+
+// Toggle Header visibility
+function toggleHeader() {
+    document.body.classList.toggle('header-collapsed');
+}
+
+// Sticky detection observer with Fixed Positioning Swap
+document.addEventListener('DOMContentLoaded', () => {
+    const sentinel = document.getElementById('sticky-sentinel');
+    const toolbar = document.getElementById('headerToolbarSection');
+
+    if (sentinel && toolbar) {
+        const observer = new IntersectionObserver(([entry]) => {
+            // If sentinel scrolls out of view (scrolling down)
+            if (!entry.isIntersecting && entry.boundingClientRect.top < 0) {
+                // Switch toolbar to fixed
+                toolbar.classList.add('is-sticky');
+            } else {
+                // Back at the top
+                toolbar.classList.remove('is-sticky');
+
+                // Optional: remove collapsed header state
+                document.body.classList.remove('header-collapsed');
+            }
+        }, { threshold: [1] });
+
+        observer.observe(sentinel);
+    }
+});

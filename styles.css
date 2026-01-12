@@ -20,11 +20,142 @@
 * { box-sizing: border-box; }
 body { font-family: 'Segoe UI', Roboto, sans-serif; background-color: var(--bg-color); color: var(--text-primary); margin: 0; padding: 0; min-height: 100vh; display: flex; flex-direction: column; align-items: center; }
 
-header { text-align: center; padding-top: 20px; width: 100%; }
+header { text-align: center; width: 100%; }
+#headerContent { padding-top: 20px; }
+
+/* --- COLLAPSIBLE HEADER SECTIONS --- */
+.header-wrapper {
+    display: grid;
+    grid-template-rows: 1fr;
+    transition: grid-template-rows 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    width: 100%;
+}
+/* Title no longer collapses */
+.header-inner {
+    overflow: hidden;
+    min-height: 0;
+}
+
+#sticky-sentinel {
+    width: 100%;
+    height: 1px;
+    visibility: hidden;
+    pointer-events: none;
+    margin-bottom: -1px; /* Offset the height so it doesn't add space */
+}
+
+/* --- HEADER TOGGLE STRIP --- */
+.header-toggle-strip {
+    width: 100%;
+    background: transparent;
+    border-top: 1px solid rgba(255,255,255,0.05);
+    cursor: pointer;
+    text-align: center;
+    padding: 0;
+    z-index: 1100;
+    
+    /* Animation Props */
+    transition: max-height 0.3s ease, opacity 0.3s ease, padding 0.3s ease;
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    
+    /* Ensure it is technically "there" for transition but hidden */
+    display: block; 
+}
+
+
+/* Add/Modify these in your styles.css */
+
+/* PERFORMANCE OPTIMIZATION: Content Visibility */
+/* This prevents the browser from rendering off-screen card contents */
+.unit-card {
+    content-visibility: auto; 
+    contain-intrinsic-size: 500px;
+    
+    /* Change 'backwards' to 'both' to ensure it stays invisible before the delay starts */
+    animation: fadeIn 0.4s ease both; 
+    
+    /* Hardware acceleration for the animation */
+    will-change: transform, opacity;
+}
+
+@keyframes fadeIn { 
+    from { 
+        opacity: 0; 
+        transform: translateY(15px); /* Add a slight slide-up for better effect */
+    } 
+    to { 
+        opacity: 1; 
+        transform: translateY(0); 
+    } 
+}
+
+/* Visible ONLY when sticky */
+.sticky-toolbar-container.is-sticky .header-toggle-strip {
+    max-height: 30px;
+    opacity: 1;
+    padding: 2px 0;
+}
+
+body.header-collapsed .header-toggle-btn {
+    transform: rotate(180deg);
+}
+
+.header-toggle-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: 0.3s;
+    line-height: 1;
+    padding: 0;
+}
+.header-toggle-strip:hover .header-toggle-btn {
+    color: var(--accent-start);
+}
+
 h1 { font-size: 2.5rem; margin: 0; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; background: linear-gradient(to right, var(--accent-start), var(--accent-end)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
 
 /* --- STICKY TOOLBAR --- */
-.sticky-toolbar-container { position: sticky; top: 0; z-index: 1000; width: 100%; background: rgba(5, 5, 5, 0.95); backdrop-filter: blur(12px); border-bottom: 1px solid var(--card-border); box-shadow: 0 4px 30px rgba(0,0,0,0.5); display: flex; flex-direction: column; align-items: center; margin-bottom: 20px; }
+.sticky-toolbar-container { 
+    position: sticky; 
+    top: 0; 
+    z-index: 1000; 
+    width: 100%; 
+    background: rgba(5, 5, 5, 0.95); 
+    border-bottom: 1px solid var(--card-border); 
+    box-shadow: 0 4px 30px rgba(0,0,0,0.5); 
+    display: flex; 
+    flex-direction: column; 
+    align-items: center; 
+}
+
+/* --- ANIMATED STICKY TOOLBAR CONTENTS --- */
+.sticky-toolbar-container .nav-bar,
+.sticky-toolbar-container .injector-panel {
+    transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease, padding 0.3s ease, margin 0.3s ease;
+    max-height: 500px; /* Arbitrary large value for transition */
+    overflow: hidden;
+    opacity: 1;
+}
+
+body.header-collapsed .sticky-toolbar-container .nav-bar,
+body.header-collapsed .sticky-toolbar-container .injector-panel {
+    display: flex !important; /* Keep flex but animate props */
+    max-height: 0;
+    opacity: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    margin-top: 0;
+    margin-bottom: 0;
+    border: none;
+}
+
+/* PERFORMANCE OPTIMIZATION: Only apply blur when NOT collapsing/animating if possible, or keep simple */
+/* Removed backdrop-filter to reduce lag during large layout shifts */
+/* .sticky-toolbar-container { backdrop-filter: blur(12px); } */
 .nav-bar { display: flex; gap: 10px; padding: 15px; justify-content: center; width: 100%; margin-bottom: 5px; flex-wrap: wrap; }
 .nav-btn { background: transparent; border: 1px solid transparent; color: var(--text-secondary); padding: 8px 25px; border-radius: 8px; cursor: pointer; font-weight: 700; text-transform: uppercase; font-size: 0.9rem; transition: 0.3s; }
 .nav-btn:hover { color: #fff; background: rgba(255,255,255,0.05); }
@@ -50,7 +181,7 @@ h1 { font-size: 2.5rem; margin: 0; font-weight: 900; text-transform: uppercase; 
 }
 .add-btn:hover { background: linear-gradient(135deg, var(--accent-start), var(--accent-end)); }
 
-.page { display: none; width: 100%; max-width: 1300px; padding: 0 15px 20px 15px; animation: fadeIn 0.4s ease; }
+.page { display: none; width: 100%; max-width: 1300px; padding: 20px 15px 20px 15px; animation: fadeIn 0.4s ease; }
 .page.active { display: grid; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
@@ -61,8 +192,59 @@ select { appearance: none; background-image: url("data:image/svg+xml;charset=US-
 /* --- DATABASE LAYOUT --- */
 .db-grid { grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 20px; width: 100%; }
 
-.unit-card { background: var(--card-bg); border: 2px solid var(--card-border); border-radius: 16px; overflow: hidden; position: relative; transition: all 0.2s; display: flex; flex-direction: column; height: 500px; }
-.unit-card:hover { border-color: var(--accent-start); }
+/* NEW: Integrated "Stat Column" Style */
+.mp-container {
+    position: absolute;
+    top: 0;
+    right: -5px;
+    height: 100%; /* Spans full height of the banner for better integration */
+    
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-end;
+    
+    padding: 0 20px;
+    background: linear-gradient(to left, rgba(0,0,0,0.8), transparent); /* Fades in smoothly */
+    z-index: 5;
+}
+
+.mp-label {
+    font-size: 0.6rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    
+    /* "What it was" -> Neutral Silver/White */
+    color: #e2e8f0; 
+    opacity: 0.8;
+    margin-bottom: 4px;
+}
+
+.mp-val {
+    /* Reduced Size */
+    font-size: 1.3rem; 
+    font-weight: 900;
+    
+    /* Number is now Blue */
+    color: var(--accent-start); 
+    
+    line-height: 1;
+    font-family: 'Segoe UI', sans-serif;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.5); /* Subtle depth */
+}
+
+/* Variant: Range (Law) */
+.mp-container.is-range .mp-val {
+    color: #4ade80; /* Green Number for Range */
+}
+
+.unit-card { background: var(--card-bg); border: 2px solid var(--card-border); border-radius: 16px; overflow: hidden; position: relative; transition: all 0.2s; display: flex; flex-direction: column; box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
+.unit-card:hover { border-color: var(--accent-start); transform: translateY(-3px); }
+
+.unit-card { height: 500px; }
+.unit-card.static-guide-card { height: 205px; }
+.unit-card.calc-guide-card { height: auto; }
 .unit-card.is-selected { border-color: #4c1d95; box-shadow: 0 0 20px rgba(76, 29, 149, 0.5); }
 
 .unit-banner { height: 90px; flex-shrink: 0; background: var(--banner-gradient); display: flex; align-items: center; padding: 0 20px; border-bottom: 1px solid var(--card-border); position: relative; gap: 15px; }
@@ -183,8 +365,7 @@ input[type="checkbox"]:checked + .mini-switch::after { transform: translateX(14p
 
 .guide-container { width: 100%; }
 .guide-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 20px; width: 100%; }
-.guide-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
-.guide-card:hover { border-color: var(--accent-start); transform: translateY(-3px); }
+/* .guide-card styles merged with .unit-card above */
 .guide-card-header { background: linear-gradient(to right, rgba(46, 16, 101, 0.6), rgba(0,0,0,0.2)); padding: 12px 15px; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center; }
 .guide-unit-info { display: flex; align-items: center; gap: 10px; }
 .guide-unit-info img:not(.element-icon) { width: 45px; height: 45px; border-radius: 50%; border: 2px solid #fff; }
@@ -583,7 +764,9 @@ html.no-scroll, body.no-scroll {
 
 /* Mobile Adjustments */
 @media (max-width: 700px) {
-    .page { padding: 0 8px 20px 8px; }
+    .page { 
+        padding: 0 8px 220px 8px; /* Added bottom padding for fixed toolbar */
+    }
     .db-grid { grid-template-columns: 1fr; }
     .guide-grid { grid-template-columns: 1fr; }
     .calc-unit-header { flex-direction: column; align-items: flex-start; }
@@ -598,7 +781,8 @@ html.no-scroll, body.no-scroll {
     display: none !important; 
     width: 100%; 
 }
-.guide-card {
+/* Hide Unit Cards that are used as Guides (variants) by default */
+.unit-card.mode-bugged, .unit-card.mode-fixed {
     display: none !important;
 }
 
@@ -638,16 +822,16 @@ body.show-fixed-relics.show-head.show-subs                   .unit-card.use-abil
 /* Note: Guides don't check for Ability usage on the card, only Body State */
 
 /* Group 1: Bugged (Not Fixed) */
-body:not(.show-fixed-relics):not(.show-head):not(.show-subs) .guide-card.mode-bugged.cfg-0 { display: flex !important; }
-body:not(.show-fixed-relics):not(.show-head).show-subs       .guide-card.mode-bugged.cfg-1 { display: flex !important; }
-body:not(.show-fixed-relics).show-head:not(.show-subs)       .guide-card.mode-bugged.cfg-2 { display: flex !important; }
-body:not(.show-fixed-relics).show-head.show-subs             .guide-card.mode-bugged.cfg-3 { display: flex !important; }
+body:not(.show-fixed-relics):not(.show-head):not(.show-subs) .unit-card.mode-bugged.cfg-0 { display: flex !important; }
+body:not(.show-fixed-relics):not(.show-head).show-subs       .unit-card.mode-bugged.cfg-1 { display: flex !important; }
+body:not(.show-fixed-relics).show-head:not(.show-subs)       .unit-card.mode-bugged.cfg-2 { display: flex !important; }
+body:not(.show-fixed-relics).show-head.show-subs             .unit-card.mode-bugged.cfg-3 { display: flex !important; }
 
 /* Group 2: Fixed */
-body.show-fixed-relics:not(.show-head):not(.show-subs)       .guide-card.mode-fixed.cfg-0 { display: flex !important; }
-body.show-fixed-relics:not(.show-head).show-subs             .guide-card.mode-fixed.cfg-1 { display: flex !important; }
-body.show-fixed-relics.show-head:not(.show-subs)             .guide-card.mode-fixed.cfg-2 { display: flex !important; }
-body.show-fixed-relics.show-head.show-subs                   .guide-card.mode-fixed.cfg-3 { display: flex !important; }
+body.show-fixed-relics:not(.show-head):not(.show-subs)       .unit-card.mode-fixed.cfg-0 { display: flex !important; }
+body.show-fixed-relics:not(.show-head).show-subs             .unit-card.mode-fixed.cfg-1 { display: flex !important; }
+body.show-fixed-relics.show-head:not(.show-subs)             .unit-card.mode-fixed.cfg-2 { display: flex !important; }
+body.show-fixed-relics.show-head.show-subs                   .unit-card.mode-fixed.cfg-3 { display: flex !important; }
 
 /* WARNING VISIBILITY */
 body.show-fixed-relics .guide-warning { display: none !important; }

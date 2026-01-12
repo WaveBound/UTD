@@ -8,12 +8,20 @@
 </head>
 <body>
 
-    <header>
-        <h1>Meta Optimizer</h1>
-    </header>
+    <!-- 1. HEADER TITLE SECTION (Scrolls away) -->
+    <div id="headerTitleSection" class="header-wrapper">
+        <div class="header-inner">
+            <header id="mainHeader">
+                <div id="headerContent">
+                    <h1>Meta Optimizer</h1>
+                </div>
+            </header>
+        </div>
+    </div>
 
-    <!-- STICKY TOOLBAR -->
-    <div class="sticky-toolbar-container">
+    <!-- 2. TOOLBAR SECTION (Sticky) -->
+    <div id="sticky-sentinel"></div>
+    <div id="headerToolbarSection" class="sticky-toolbar-container">
         
         <!-- Navigation -->
         <div class="nav-bar">
@@ -67,6 +75,11 @@
                 <input type="checkbox" id="guideSubStats" onchange="toggleGuideSubStats(this)" checked>
                 <span>+ Sub Stats</span>
             </label>
+        </div>
+
+        <!-- HEADER TOGGLE STRIP -->
+        <div class="header-toggle-strip" onclick="toggleHeader()" title="Toggle Header">
+            <button id="headerToggleBtn" class="header-toggle-btn">▲</button>
         </div>
     </div>
 

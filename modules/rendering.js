@@ -2,6 +2,73 @@
 // RENDERING.JS - HTML Generation & Display Functions
 // ============================================================================
 
+// --- SHARED HELPER FUNCTIONS ---
+
+function getKiritoControlsHtml(unit) {
+    if (unit.id !== 'kirito') return '';
+    const isRealm = kiritoState.realm;
+    const isCard = kiritoState.card;
+    return `<div class="unit-toolbar" style="border-bottom:none; padding-top:5px; padding-bottom:10px; flex-wrap:wrap; justify-content:flex-start; gap:15px; background:rgba(255,255,255,0.02);"><div class="toggle-wrapper"><span>Virtual Realm</span><label><input type="checkbox" ${isRealm ? 'checked' : ''} onchange="toggleKiritoMode('realm', this)"><div class="mini-switch"></div></label></div>${isRealm ? `<div class="toggle-wrapper" style="animation:fadeIn 0.3s ease;"><span style="color:${isCard ? 'var(--custom)' : '#888'}; font-weight:${isCard ? 'bold' : 'normal'};">Magician Card</span><label><input type="checkbox" ${isCard ? 'checked' : ''} onchange="toggleKiritoMode('card', this)"><div class="mini-switch" style="${isCard ? 'background:var(--custom);' : ''}"></div></label></div>` : ''}</div>`;
+}
+
+function getBambiettaControlsHtml(unit) {
+    if (unit.id !== 'bambietta') return '';
+    const currentEl = bambiettaState.element;
+    const options = Object.keys(BAMBIETTA_MODES).map(k => 
+        `<option value="${k}" ${currentEl === k ? 'selected' : ''}>${k} (${BAMBIETTA_MODES[k].desc})</option>`
+    ).join('');
+    return `
+    <div class="unit-toolbar" style="border-bottom:none; padding-top:5px; padding-bottom:10px; background:rgba(255,255,255,0.02);">
+        <div style="display:flex; align-items:center; gap:10px;">
+            <span style="font-size:0.75rem; font-weight:bold; text-transform:uppercase; color:#aaa;">Element:</span>
+            <select onchange="setBambiettaElement(this.value, this)" style="width:auto; padding:4px; font-size:0.75rem;">
+                ${options}
+            </select>
+        </div>
+    </div>`;
+}
+
+// --- HELPER: Shared Card Generator ---
+function createBaseUnitCard(unit, options = {}) {
+    const {
+        id = '',
+        additionalClasses = '',
+        bannerContent = '', 
+        tagsContent = '',   
+        topControls = '',   
+        bottomControls = '', 
+        mainContent = ''    
+    } = options;
+
+    const card = document.createElement('div');
+    card.className = `unit-card ${additionalClasses}`;
+    if (id) card.id = id;
+
+    // Banner
+    const banner = `<div class="unit-banner">${bannerContent}</div>`;
+    
+    // Tags
+    let tags = '';
+    if (tagsContent) {
+        tags = `<div class="unit-tags" style="background:rgba(255,255,255,0.02); border-bottom:1px solid var(--card-border); padding:8px 15px;">${tagsContent}</div>`;
+    } else if (unit.tags && unit.tags.length > 0) {
+        tags = `<div class="unit-tags">` + unit.tags.map(t => `<span class="unit-tag">${t}</span>`).join('') + `</div>`;
+    }
+
+    // Unit Specific (Kirito/Bambietta)
+    const unitSpecificControls = getKiritoControlsHtml(unit) + getBambiettaControlsHtml(unit);
+
+    card.innerHTML = `
+        ${banner}
+        ${tags}
+        ${topControls}
+        ${unitSpecificControls}
+        ${bottomControls}
+        ${mainContent}
+    `;
+    return card;
+}
+
 // --- PART 1: DETAILED LIST RENDERING (DATABASE TAB) ---
 
 // Generate HTML for a single build row
@@ -163,7 +230,7 @@ function updateBuildListDisplay(unitId) {
     });
 }
 
-// Render database with async chunking
+// --- OPTIMIZED RENDER FUNCTION ---
 function renderDatabase() {
     const container = document.getElementById('dbPage');
     
@@ -179,10 +246,6 @@ function renderDatabase() {
     }
 
     // --- CONFIGURATION DEFINITIONS ---
-    // 0: Head=F, Subs=F
-    // 1: Head=F, Subs=T
-    // 2: Head=T, Subs=F
-    // 3: Head=T, Subs=T
     const CONFIGS = [
         { head: false, subs: false },
         { head: false, subs: true },
@@ -192,20 +255,18 @@ function renderDatabase() {
 
     let sortedUnits = [];
     
+    // --- STEP 1: PRE-CALCULATION PHASE (Heavy Math) ---
+    // We do all math upfront so the rendering phase is purely HTML generation
     unitDatabase.forEach(unit => {
-        // Initialize cache structure: [Base/Abil] -> [Bugged/Fixed] -> Array of 4 Config Results
         unitBuildsCache[unit.id] = { 
             base: { bugged: [], fixed: [] }, 
             abil: { bugged: [], fixed: [] } 
         };
 
-        // Helper to calculate or load data
-        // Returns an ARRAY of 4 Result Arrays (one for each config)
         const performCalcSet = (mode, useAbility) => {
             const originalRelicDot = statConfig.applyRelicDot;
             const originalRelicCrit = statConfig.applyRelicCrit;
             
-            // Set Relic Config for the Mode
             if (mode === 'bugged') {
                 statConfig.applyRelicDot = false; 
             } else {
@@ -213,7 +274,6 @@ function renderDatabase() {
                 statConfig.applyRelicCrit = true;
             }
 
-            // Common Data prep
             const currentSubCandidates = getValidSubCandidates();
             const currentFilteredBuilds = getFilteredBuilds();
             let currentStats = { ...unit.stats };
@@ -228,23 +288,19 @@ function renderDatabase() {
                 if (bMode) Object.assign(currentStats, bMode);
             }
 
-            // Determine DB Key
             let dbKey = unit.id;
             if (unit.id === 'kirito' && kiritoState.card) dbKey = 'kirito_card';
             if (useAbility && unit.ability) dbKey += '_abil';
 
             const resultSet = [];
 
-            // LOOP THROUGH THE 4 CONFIGURATIONS
             for (let i = 0; i < 4; i++) {
                 const cfg = CONFIGS[i];
                 const headsToProcess = cfg.head ? ['sun_god', 'ninja', 'reaper_necklace', 'shadow_reaper_necklace'] : ['none'];
                 const includeSubs = cfg.subs;
 
                 let staticList = null;
-                // Check if Static DB exists and matches logic
                 if (window.STATIC_BUILD_DB && window.STATIC_BUILD_DB[dbKey]) {
-                    // Static DB structure: { bugged: [ [Cfg0], [Cfg1]... ], fixed: ... }
                     const dbList = (mode === 'fixed') ? window.STATIC_BUILD_DB[dbKey].fixed : window.STATIC_BUILD_DB[dbKey].bugged;
                     if(dbList && dbList[i]) staticList = dbList[i];
                 }
@@ -252,10 +308,9 @@ function renderDatabase() {
                 let calculatedResults = [];
                 if (staticList) {
                     calculatedResults = [...staticList];
-                    staticList.forEach(r => cachedResults[r.id] = r); // Cache for 'math' modal
+                    staticList.forEach(r => cachedResults[r.id] = r); 
                 }
 
-                // Determine dynamic traits
                 let traitsForCalc = null; 
                 if (staticList) {
                      const globalCustoms = typeof customTraits !== 'undefined' ? customTraits : [];
@@ -263,7 +318,6 @@ function renderDatabase() {
                      traitsForCalc = [...globalCustoms, ...unitCustoms];
                 }
 
-                // Run Calculation (if needed)
                 if (traitsForCalc === null || traitsForCalc.length > 0) {
                     const dynamicResults = calculateUnitBuilds(unit, currentStats, currentFilteredBuilds, currentSubCandidates, headsToProcess, includeSubs, traitsForCalc);
                     calculatedResults = [...calculatedResults, ...dynamicResults];
@@ -272,26 +326,21 @@ function renderDatabase() {
                 resultSet.push(calculatedResults);
             }
             
-            // Restore Global State
             statConfig.applyRelicDot = originalRelicDot;
             statConfig.applyRelicCrit = originalRelicCrit;
 
             return resultSet;
         };
 
-        // --- 1. CALCULATE BASE STATS (Returns Array of 4 Configs) ---
         unitBuildsCache[unit.id].base.bugged = performCalcSet('bugged', false);
         unitBuildsCache[unit.id].base.fixed = performCalcSet('fixed', false);
 
-        // --- 2. CALCULATE ABILITY STATS (If Unit has Ability) ---
         if (unit.ability) {
             unitBuildsCache[unit.id].abil.bugged = performCalcSet('bugged', true);
             unitBuildsCache[unit.id].abil.fixed = performCalcSet('fixed', true);
         }
 
-        // Sorting Score: Use Fixed Relics + Config 3 (Head+Subs) as reference
         let maxScore = 0;
-        // Default to Full Config (Index 3) for sorting
         const refList = unitBuildsCache[unit.id].base.fixed[3]; 
         if (refList && refList.length > 0) {
             maxScore = unit.id === 'law' ? (refList[0].range || 0) : refList[0].dps;
@@ -301,141 +350,94 @@ function renderDatabase() {
 
     sortedUnits.sort((a, b) => b.maxScore - a.maxScore);
 
+    // --- STEP 2: BATCH DOM INSERTION (The Performance Fix) ---
     function processNextChunk() {
         const startTime = performance.now();
+        const fragment = document.createDocumentFragment();
         
+        let itemsAdded = 0;
+        
+        // This index resets every chunk so the next batch also cascades nicely
+        let staggerIndex = 0; 
+
         while (renderQueueIndex < sortedUnits.length) {
             const unit = sortedUnits[renderQueueIndex].unit;
             renderQueueIndex++;
 
-            let kiritoControlsHtml = '';
-            if (unit.id === 'kirito') {
-                const isRealm = kiritoState.realm;
-                const isCard = kiritoState.card;
-                kiritoControlsHtml = `<div class="unit-toolbar" style="border-bottom:none; padding-top:5px; padding-bottom:10px; flex-wrap:wrap; justify-content:flex-start; gap:15px; background:rgba(255,255,255,0.02);"><div class="toggle-wrapper"><span>Virtual Realm</span><label><input type="checkbox" ${isRealm ? 'checked' : ''} onchange="toggleKiritoMode('realm', this)"><div class="mini-switch"></div></label></div>${isRealm ? `<div class="toggle-wrapper" style="animation:fadeIn 0.3s ease;"><span style="color:${isCard ? 'var(--custom)' : '#888'}; font-weight:${isCard ? 'bold' : 'normal'};">Magician Card</span><label><input type="checkbox" ${isCard ? 'checked' : ''} onchange="toggleKiritoMode('card', this)"><div class="mini-switch" style="${isCard ? 'background:var(--custom);' : ''}"></div></label></div>` : ''}</div>`;
-            }
-
-            let bambiettaControlsHtml = '';
-            if (unit.id === 'bambietta') {
-                const currentEl = bambiettaState.element;
-                const options = Object.keys(BAMBIETTA_MODES).map(k => 
-                    `<option value="${k}" ${currentEl === k ? 'selected' : ''}>${k} (${BAMBIETTA_MODES[k].desc})</option>`
-                ).join('');
-                bambiettaControlsHtml = `
-                <div class="unit-toolbar" style="border-bottom:none; padding-top:5px; padding-bottom:10px; background:rgba(255,255,255,0.02);">
-                    <div style="display:flex; align-items:center; gap:10px;">
-                        <span style="font-size:0.75rem; font-weight:bold; text-transform:uppercase; color:#aaa;">Element:</span>
-                        <select onchange="setBambiettaElement(this.value, this)" style="width:auto; padding:4px; font-size:0.75rem;">
-                            ${options}
-                        </select>
-                    </div>
-                </div>`;
-            }
-
-            const card = document.createElement('div');
-            card.className = 'unit-card';
-            if (activeAbilityIds.has(unit.id)) card.classList.add('use-ability'); 
-            card.id = 'card-' + unit.id;
-            card.style.animation = "fadeIn 0.3s ease";
+            // ... (Banner, Toolbar, Controls generation code stays the same) ...
+            // [COPY THE HTML GENERATION PART FROM PREVIOUS RESPONSE HERE]
             
-            if(selectedUnitIds.has(unit.id)) card.classList.add('is-selected');
+            // --- RE-INSERTING THE HTML GENERATION FOR CLARITY ---
+            let traitButtonHtml = unit.meta ? `<button class="trait-guide-btn" onclick="openTraitGuide('${unit.id}')">📋 Rec. Traits</button>` : '';
+            const bannerContent = `<div class="placement-badge">Max Place: ${unit.placement}</div>${getUnitImgHtml(unit, 'unit-avatar')}<div class="unit-title"><h2>${unit.name}</h2><span>${unit.role} <span class="sss-tag">SSS</span></span></div>${traitButtonHtml}`;
+            
             const abilityToggleHtml = unit.ability ? `<div class="toggle-wrapper"><span>Ability</span><label><input type="checkbox" class="ability-cb" ${activeAbilityIds.has(unit.id) ? 'checked' : ''} onchange="toggleAbility('${unit.id}', this)"><div class="mini-switch"></div></label></div>` : '<div></div>';
             
-            const toolbarHtml = `
-            <div class="unit-toolbar">
-                <div style="display:flex; gap:10px;">
-                    <button class="select-btn" onclick="toggleSelection('${unit.id}')">${selectedUnitIds.has(unit.id) ? 'Selected' : 'Select'}</button>
-                    <button class="calc-btn" onclick="openCalc('${unit.id}')">🖩 Custom Relics</button>
-                </div>
-                ${abilityToggleHtml}
-            </div>`;
-            
-            let tagsHtml = '';
-            if (unit.tags && unit.tags.length > 0) {
-                tagsHtml = `<div class="unit-tags">` + 
-                        unit.tags.map(t => `<span class="unit-tag">${t}</span>`).join('') + 
-                        `</div>`;
-            }
+            const topControls = `<div class="unit-toolbar"><div style="display:flex; gap:10px;"><button class="select-btn" onclick="toggleSelection('${unit.id}')">${selectedUnitIds.has(unit.id) ? 'Selected' : 'Select'}</button><button class="calc-btn" onclick="openCalc('${unit.id}')">🖩 Custom Relics</button></div>${abilityToggleHtml}</div>`;
 
-            let traitButtonHtml = '';
-            if (unit.meta) {
-                traitButtonHtml = `<button class="trait-guide-btn" onclick="openTraitGuide('${unit.id}')">📋 Rec. Traits</button>`;
-            }
+            const bottomControls = `<div class="search-container" style="flex-direction:column; gap:8px;"><div style="display:flex; gap:5px; width:100%;"><input type="text" placeholder="Search..." style="flex-grow:1; padding:6px; border-radius:5px; border:1px solid #333; background:#111; color:#fff; font-size:0.8rem;" onkeyup="filterList(this)"><select onchange="filterList(this)" data-filter="prio" style="width:75px; padding:0 0 0 4px; font-size:0.7rem; height:30px;"><option value="all">All Prio</option><option value="dmg">Dmg</option><option value="spa">SPA</option><option value="range">Range</option></select></div><div style="display:flex; gap:5px; width:100%;"><select onchange="filterList(this)" data-filter="set" style="flex:1; padding:0 0 0 4px; font-size:0.7rem; height:30px;"><option value="all">All Sets</option><option value="Master Ninja">Ninja Set</option><option value="Sun God">Sun God Set</option><option value="Laughing Captain">Laughing Set</option><option value="Ex Captain">Ex Set</option><option value="Shadow Reaper">Shadow Reaper</option><option value="Reaper Set">Reaper Set</option></select><select onchange="filterList(this)" data-filter="head" style="flex:1; padding:0 0 0 4px; font-size:0.7rem; height:30px;"><option value="all">All Heads</option><option value="sun_god">Sun God</option><option value="ninja">Ninja</option><option value="reaper_necklace">Reaper</option><option value="shadow_reaper_necklace">Shadow Reaper</option><option value="none">No Head</option></select></div></div>`;
 
-            const searchControls = `
-            <div class="search-container" style="flex-direction:column; gap:8px;">
-                <div style="display:flex; gap:5px; width:100%;">
-                    <input type="text" placeholder="Search traits..." style="flex-grow:1; padding:6px; border-radius:5px; border:1px solid #333; background:#111; color:#fff; font-size:0.8rem;" onkeyup="filterList(this)">
-                    <select onchange="filterList(this)" data-filter="prio" style="width:75px; padding:0 0 0 4px; font-size:0.7rem; height:30px;">
-                        <option value="all">All Prio</option>
-                        <option value="dmg">Dmg</option>
-                        <option value="spa">SPA</option>
-                        <option value="range">Range</option>
-                    </select>
-                </div>
-                <div style="display:flex; gap:5px; width:100%;">
-                    <select onchange="filterList(this)" data-filter="set" style="flex:1; padding:0 0 0 4px; font-size:0.7rem; height:30px;">
-                        <option value="all">All Sets</option>
-                        <option value="Master Ninja">Ninja Set</option>
-                        <option value="Sun God">Sun God Set</option>
-                        <option value="Laughing Captain">Laughing Set</option>
-                        <option value="Ex Captain">Ex Set</option>
-                        <option value="Shadow Reaper">Shadow Reaper</option>
-                        <option value="Reaper Set">Reaper Set</option>
-                    </select>
-                    <select onchange="filterList(this)" data-filter="head" style="flex:1; padding:0 0 0 4px; font-size:0.7rem; height:30px;">
-                        <option value="all">All Heads</option>
-                        <option value="sun_god">Sun God</option>
-                        <option value="ninja">Ninja</option>
-                        <option value="reaper_necklace">Reaper</option>
-                        <option value="shadow_reaper_necklace">Shadow Reaper</option>
-                        <option value="none">No Head</option>
-                    </select>
-                </div>
-            </div>`;
-
-            // --- GENERATE ALL 16 RESULT CONTAINERS ---
-            // Naming convention: results-[base/abil]-[bugged/fixed]-[cfg0-3]-[unitId]
-            // CSS Classes: mode-[bugged/fixed] mode-[base/abil] cfg-[0-3]
-            let resultsHtml = '';
-            
-            // Base vs Abil
+            let mainContent = '';
             ['base', 'abil'].forEach(type => {
-                // Bugged vs Fixed
                 ['bugged', 'fixed'].forEach(mode => {
-                    // Configs 0-3
                     for(let cfg=0; cfg<4; cfg++) {
-                        resultsHtml += `<div class="top-builds-list build-list-container mode-${type} mode-${mode} cfg-${cfg}" id="results-${type}-${mode}-${cfg}-${unit.id}"></div>`;
+                        mainContent += `<div class="top-builds-list build-list-container mode-${type} mode-${mode} cfg-${cfg}" id="results-${type}-${mode}-${cfg}-${unit.id}"></div>`;
                     }
                 });
             });
 
-            card.innerHTML = `
-                <div class="unit-banner"><div class="placement-badge">Max Place: ${unit.placement}</div>${getUnitImgHtml(unit, 'unit-avatar')}<div class="unit-title"><h2>${unit.name}</h2><span>${unit.role} <span class="sss-tag">SSS</span></span></div>${traitButtonHtml}</div>
-                ${tagsHtml}
-                ${toolbarHtml}
-                ${kiritoControlsHtml}
-                ${bambiettaControlsHtml}
-                ${searchControls}
-                ${resultsHtml}
-            `;
-            container.appendChild(card);
-            
-            updateBuildListDisplay(unit.id);
+            let classes = '';
+            if (activeAbilityIds.has(unit.id)) classes += ' use-ability'; 
+            if (selectedUnitIds.has(unit.id)) classes += ' is-selected';
 
-            if (performance.now() - startTime > 10) {
-                renderQueueId = requestAnimationFrame(processNextChunk);
-                return;
+            const card = createBaseUnitCard(unit, {
+                id: 'card-' + unit.id,
+                additionalClasses: classes,
+                bannerContent: bannerContent,
+                topControls: topControls,
+                bottomControls: bottomControls,
+                mainContent: mainContent
+            });
+
+            // --- THE ANIMATION TRICK ---
+            // We set the delay inline. The CSS handles the wait.
+            // 30ms * 0 = 0ms
+            // 30ms * 1 = 30ms
+            // ...
+            card.style.animationDelay = `${staggerIndex * 50}ms`; 
+            staggerIndex++; 
+
+            fragment.appendChild(card);
+            itemsAdded++;
+            
+            // Hydrate logic deferred until after append
+            
+            // Budget check: 12ms
+            if (performance.now() - startTime > 12) {
+                break;
             }
         }
-        renderQueueId = null;
-        updateCompareBtn();
         
-        // Ensure UI toggles match DOM state immediately after render
-        const showHead = document.getElementById('globalHeadPiece').checked;
-        const showSubs = document.getElementById('globalSubStats').checked;
-        if(showHead) document.body.classList.add('show-head');
-        if(showSubs) document.body.classList.add('show-subs');
+        if (itemsAdded > 0) {
+            container.appendChild(fragment);
+            
+            // Hydrate Data
+            const startIdx = renderQueueIndex - itemsAdded;
+            for(let i=startIdx; i < renderQueueIndex; i++) {
+                updateBuildListDisplay(sortedUnits[i].unit.id);
+            }
+        }
+
+        if (renderQueueIndex < sortedUnits.length) {
+            renderQueueId = requestAnimationFrame(processNextChunk);
+        } else {
+            renderQueueId = null;
+            updateCompareBtn();
+            const showHead = document.getElementById('globalHeadPiece').checked;
+            const showSubs = document.getElementById('globalSubStats').checked;
+            if(showHead) document.body.classList.add('show-head');
+            if(showSubs) document.body.classList.add('show-subs');
+        }
     }
 
     processNextChunk();
@@ -558,6 +560,52 @@ function processGuideTop3(rawBuilds, unit, traitFilterId) {
     return filtered.slice(0, 3);
 }
 
+// Unified Guide Card Creator
+function createGuideCard(unitObj, builds, modeClass) {
+    // --- CALCULATED CARD LOGIC ---
+    const bestBuild = builds[0];
+    
+    // Values
+    let displayValStr = format(bestBuild.dps);
+    let maxLabel = 'Max Potential';
+    let typeClass = 'is-dps';
+
+    if (unitObj.id === 'law') {
+        const val = bestBuild.range !== undefined ? bestBuild.range : bestBuild.dps;
+        displayValStr = val.toFixed(1); 
+        maxLabel = 'Max Range';
+        typeClass = 'is-range';
+    }
+
+    // NEW: Clean Banner HTML (No Icons)
+    const bannerContent = `
+        <div class="mp-container ${typeClass}">
+            <span class="mp-label">${maxLabel}</span>
+            <span class="mp-val">${displayValStr}</span>
+        </div>
+        ${getUnitImgHtml(unitObj, 'unit-avatar')}
+        <div class="unit-title">
+            <h2>${unitObj.name}</h2>
+            <span>${unitObj.role} <span class="sss-tag">SSS</span></span>
+        </div>`;
+
+    const tagsContent = `
+            <span class="guide-trait-tag" style="font-size:0.75rem;">Best: ${bestBuild.traitName}</span>
+    `;
+
+    const mainContent = `<div class="top-builds-list" style="padding:10px;">` + 
+            builds.map((build, index) => generateBuildRowHTML(build, index)).join('') + 
+            `</div>`;
+
+    return createBaseUnitCard(unitObj, {
+        additionalClasses: `calc-guide-card ${modeClass}`,
+        bannerContent: bannerContent,
+        tagsContent: tagsContent,
+        mainContent: mainContent
+    });
+}
+
+
 function renderGuides() {
     const guideGrid = document.getElementById('guideList');
     if (!guideGrid) return;
@@ -577,21 +625,7 @@ function renderGuides() {
     document.getElementById('dispGuideUnit').innerText = uName; 
     document.getElementById('dispGuideTrait').innerText = tName;
 
-    // 1. RENDER STATIC GUIDES (Miku, Supports, etc.)
-    // Only show these if "All Units" is selected
-    // Note: We add ALL config classes (cfg-0..3) so these static manual guides act as fallbacks 
-    // and remain visible regardless of the specific Head/Sub toggle state.
-    if (filterUnitId === 'all') {
-        const staticGuides = guideData.filter(g => !g.isCalculated);
-        staticGuides.forEach(g => {
-            // Render Bugged (Current) Version - visible in all configs
-            guideGrid.appendChild(createStaticCard(g, 'current', 'mode-bugged cfg-0 cfg-1 cfg-2 cfg-3'));
-            // Render Fixed Version - visible in all configs
-            guideGrid.appendChild(createStaticCard(g, 'fixed', 'mode-fixed cfg-0 cfg-1 cfg-2 cfg-3'));
-        });
-    }
-
-    // 2. RENDER CALCULATED UNITS (From Database Cache)
+    // RENDER CALCULATED UNITS (From Database Cache)
     let unitsToProcess = (filterUnitId === 'all') 
         ? unitDatabase 
         : unitDatabase.filter(u => u.id === filterUnitId);
@@ -605,14 +639,14 @@ function renderGuides() {
             const buggedBuilds = getGuideBuildsFromCache(unit, 'bugged', cfg);
             const topBugged = processGuideTop3(buggedBuilds, unit, filterTraitId);
             if (topBugged.length) {
-                guideGrid.appendChild(createCalculatedCard(unit, topBugged, `mode-bugged ${cfgClass}`));
+                guideGrid.appendChild(createGuideCard(unit, topBugged, `mode-bugged ${cfgClass}`));
             }
 
             // Render Fixed
             const fixedBuilds = getGuideBuildsFromCache(unit, 'fixed', cfg);
             const topFixed = processGuideTop3(fixedBuilds, unit, filterTraitId);
             if (topFixed.length) {
-                guideGrid.appendChild(createCalculatedCard(unit, topFixed, `mode-fixed ${cfgClass}`));
+                guideGrid.appendChild(createGuideCard(unit, topFixed, `mode-fixed ${cfgClass}`));
             }
         }
     });
@@ -620,151 +654,4 @@ function renderGuides() {
     if (guideGrid.children.length === 0) {
         guideGrid.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:40px; color:#666;">No guides found. Database may still be calculating.</div>`;
     }
-}
-
-// Helper: Static Card for Miku/Supports
-function createStaticCard(data, key, modeClass) {
-    const info = data[key];
-    const card = document.createElement('div'); 
-    card.className = `guide-card ${modeClass}`;
-    
-    const imgHtml = data.img ? `<img src="${data.img}">` : '';
-    const mainBadge = formatStatBadge(info.main); 
-    const subBadge = formatStatBadge(info.sub);
-    
-    card.innerHTML = `
-        <div class="guide-card-header">
-            <div class="guide-unit-info">${imgHtml}<div><span style="display:block; line-height:1;">${data.unit}</span><span class="guide-trait-tag">${info.trait}</span></div></div>
-        </div>
-        <div class="guide-card-body">
-            <div class="build-row rank-1" style="pointer-events:none;">
-                <div class="br-header"><div style="display:flex; align-items:center; gap:8px;"><span class="br-rank">#1</span><span class="br-set">${info.set}</span></div></div>
-                <div class="br-grid">
-                    <div class="br-col" style="flex:1;">
-                        <div class="br-col-title">MAIN STAT</div>
-                        <div class="stat-line">${mainBadge}</div>
-                    </div>
-                    <div class="br-col" style="flex:1; border-left:1px solid rgba(255,255,255,0.05); padding-left:10px;">
-                        <div class="br-col-title">SUB STAT</div>
-                        <div class="stat-line">${subBadge}</div>
-                    </div>
-                </div>
-            </div>
-        </div>`;
-    return card;
-}
-
-// Helper: Calculated Card for DB Units
-function createCalculatedCard(unit, builds, modeClass) {
-    const cardDiv = document.createElement('div');
-    cardDiv.className = `guide-card ${modeClass}`;
-    
-    const bestBuild = builds[0];
-    
-    // Display Value
-    let displayValStr = format(bestBuild.dps);
-    let maxLabel = 'MAX POTENTIAL';
-    if (unit.id === 'law') {
-        const val = bestBuild.range !== undefined ? bestBuild.range : bestBuild.dps;
-        displayValStr = val.toFixed(1); 
-        maxLabel = 'MAX RANGE';
-    }
-
-    // Special Unit Controls (Kirito/Realm toggles inside guide view)
-    let extraControls = '';
-    if (unit.id === 'kirito') {
-        const isRealm = kiritoState.realm; 
-        const isCard = kiritoState.card;
-        extraControls = `<div class="unit-toolbar" style="border-bottom:none; padding:5px 15px 10px; flex-wrap:wrap; justify-content:flex-start; gap:15px; background:rgba(255,255,255,0.02);"><div class="toggle-wrapper"><span>Virtual Realm</span><label><input type="checkbox" ${isRealm ? 'checked' : ''} onchange="toggleKiritoMode('realm', this)"><div class="mini-switch"></div></label></div>${isRealm ? `<div class="toggle-wrapper" style="animation:fadeIn 0.3s ease;"><span style="color:${isCard ? 'var(--custom)' : '#888'}; font-weight:${isCard ? 'bold' : 'normal'};">Magician Card</span><label><input type="checkbox" ${isCard ? 'checked' : ''} onchange="toggleKiritoMode('card', this)"><div class="mini-switch" style="${isCard ? 'background:var(--custom);' : ''}"></div></label></div>` : ''}</div>`;
-    }
-
-    const rowsHtml = builds.map((build, index) => {
-        const rankClass = index === 0 ? 'rank-1' : (index === 1 ? 'rank-2' : 'rank-3');
-        const isCustom = build.isCustom ? 'is-custom' : '';
-        
-        let prioLabel = build.prio === 'dmg' ? 'DMG STAT' : (build.prio === 'range' ? 'RANGE STAT' : 'SPA STAT');
-        let prioColor = build.prio === 'dmg' ? '#ff5555' : (build.prio === 'range' ? '#4caf50' : 'var(--custom)');
-        
-        let rowVal = format(build.dps);
-        let rowLabel = 'DPS';
-        if(build.prio === 'range') {
-            const rVal = build.range !== undefined ? build.range : build.dps;
-            rowVal = rVal.toFixed(1);
-            rowLabel = 'RANGE';
-        }
-
-        let headHtml = '';
-        if (build.headUsed && build.headUsed !== 'none') {
-            let hName='Unknown', hColor='#fff';
-            if(build.headUsed === 'sun_god') { hName='Sun God'; hColor='#38bdf8'; }
-            else if(build.headUsed === 'ninja') { hName='Master Ninja'; hColor='#fff'; }
-            else if(build.headUsed === 'reaper_necklace') { hName='Reaper'; hColor='#ef4444'; }
-            else if(build.headUsed === 'shadow_reaper_necklace') { hName='S. Reaper'; hColor='#a855f7'; }
-            headHtml = `<div class="stat-line"><span class="sl-label">HEAD</span> <span style="display:inline-flex; align-items:center; justify-content:center; padding:0 4px; height:18px; border-radius:4px; font-size:0.6rem; font-weight:800; text-transform:uppercase; border:1px solid ${hColor}; white-space:nowrap; background:rgba(0,0,0,0.4); color:${hColor};">${hName}</span></div>`;
-        }
-
-        let mainHtml = headHtml;
-        if(build.mainStats) {
-            mainHtml += `<div class="stat-line"><span class="sl-label">BODY</span>${getBadgeHtml(build.mainStats.body, MAIN_STAT_VALS.body[build.mainStats.body])}</div>`;
-            mainHtml += `<div class="stat-line"><span class="sl-label">LEGS</span>${getBadgeHtml(build.mainStats.legs, MAIN_STAT_VALS.legs[build.mainStats.legs])}</div>`;
-        }
-
-        let subHtml = '';
-        if (build.subStats) {
-            if(build.subStats.head) subHtml += `<div class="stat-line"><span class="sl-label">HEAD</span>${getRichBadgeHtml(build.subStats.head)}</div>`;
-            if(build.subStats.body) subHtml += `<div class="stat-line"><span class="sl-label">BODY</span>${getRichBadgeHtml(build.subStats.body)}</div>`;
-            if(build.subStats.legs) subHtml += `<div class="stat-line"><span class="sl-label">LEGS</span>${getRichBadgeHtml(build.subStats.legs)}</div>`;
-        }
-        if(!subHtml) subHtml = '<span style="font-size:0.65rem; color:#555;">None</span>';
-
-        return `
-            <div class="build-row ${rankClass} ${isCustom}">
-                <div class="br-header">
-                    <div style="display:flex; align-items:center; gap:8px;">
-                        <span class="br-rank">#${index+1}</span>
-                        <span class="br-set">${build.setName}</span>
-                    </div>
-                    <span class="prio-badge" style="color:${prioColor}; border-color:${prioColor};">${prioLabel}</span>
-                </div>
-                <div class="br-grid">
-                    <div class="br-col" style="flex:1;">
-                        <div class="br-col-title">MAIN STAT</div>
-                        ${mainHtml}
-                    </div>
-                    <div class="br-col" style="flex:1; border-left:1px solid rgba(255,255,255,0.05); padding-left:10px;">
-                        <div style="display:flex; justify-content:space-between; align-items:center;">
-                            <div class="br-col-title">SUB STAT</div>
-                            <button class="sub-list-btn" title="View Sub-Stat Priority" onclick="viewSubPriority('${build.id}')">≡</button>
-                        </div>
-                        ${subHtml}
-                    </div>
-                    <div class="br-res-col" style="position:relative;">
-                        <button class="info-btn" onclick="showMath('${build.id}')" style="position:absolute; bottom:7px; left:12px; width:18px; height:18px; font-size:0.6rem; line-height:1;">?</button>
-                        <div class="dps-container">
-                            <span class="build-dps" style="font-size:0.9rem;">${rowVal}</span>
-                            <span class="dps-label">${rowLabel}</span>
-                        </div>
-                    </div>
-                </div>
-            </div>`;
-    }).join('');
-
-    cardDiv.innerHTML = `
-        <div class="guide-card-header">
-            <div class="guide-unit-info">
-                ${getUnitImgHtml(unit, '', 'small')}
-                <div>
-                    <span style="display:block; line-height:1;">${unit.name}</span>
-                    <span class="guide-trait-tag">${bestBuild.traitName}</span>
-                </div>
-            </div>
-            <div class="guide-dps-box">
-                <span class="guide-dps-val">${displayValStr}</span>
-                <span style="font-size:0.6rem; color:#666; font-weight:bold; letter-spacing:1px;">${maxLabel}</span>
-            </div>
-        </div>
-        ${extraControls}
-        <div class="guide-card-body">${rowsHtml}</div>`;
-    
-    return cardDiv;
 }
