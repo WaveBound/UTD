@@ -92,7 +92,7 @@ function calculateBuildEfficiency(build, unitCost, unitMaxPlacement, unitId) {
     
     if (actualTotalCost === 0) return 0;
 
-    return (build.dps / actualTotalCost) * 10;
+    return (build.dps / actualTotalCost);
 }
 
 function generateBuildRowHTML(r, i, unitConfig = {}) {
