@@ -252,8 +252,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Back at the top
                 toolbar.classList.remove('is-sticky');
 
-                // Optional: remove collapsed header state
-                document.body.classList.remove('header-collapsed');
+                // FIX: Comment out or remove this line so it stays closed if user closed it
+                // document.body.classList.remove('header-collapsed'); 
             }
         }, { threshold: [1] });
 
