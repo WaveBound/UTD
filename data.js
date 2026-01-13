@@ -26,6 +26,14 @@ const SUB_NAMES = {
 
 const patchNotesData = [
     {
+        version: "v3.5",
+        date: "Jan 13, 2026",
+        changes: [
+            { type: "Feature", text: "<b>Value Score:</b> Added a 'Value' metric to all builds. This displays <b>DPS per Cost</b> (Efficiency), helping to identify the most economic builds." },
+            { type: "Fix", text: "<b>Bambietta Logic:</b> Fixed the Element Selector. Switching elements now instantly recalculates stats and updates the build list correctly." }
+        ]
+    },
+    {
         version: "v3.4",
         date: "Jan 12, 2026",
         changes: [

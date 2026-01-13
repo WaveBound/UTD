@@ -68,20 +68,15 @@ function createBaseUnitCard(unit, options = {}) {
 
 // --- PART 1: DETAILED LIST RENDERING (DATABASE TAB) ---
 
-// HELPER: Centralized Efficiency Calculation
-// Ensures Row HTML and Sort Logic use identical math
 function calculateBuildEfficiency(build, unitCost, unitMaxPlacement, unitId) {
     let traitLimit = null;
     
-    // 1. Fast Ruler Check
     if (build.traitName && build.traitName.includes('Ruler')) {
         traitLimit = 1;
     } else {
-        // 2. Deep Lookup
         const foundTrait = traitsList.find(t => t.name === build.traitName) || 
                            customTraits.find(t => t.name === build.traitName) ||
                            (unitSpecificTraits[unitId] || []).find(t => t.name === build.traitName);
-        
         if (foundTrait && foundTrait.limitPlace) {
             traitLimit = foundTrait.limitPlace;
         }
@@ -91,7 +86,6 @@ function calculateBuildEfficiency(build, unitCost, unitMaxPlacement, unitId) {
     const actualTotalCost = unitCost * actualPlacement;
     
     if (actualTotalCost === 0) return 0;
-
     return (build.dps / actualTotalCost);
 }
 
@@ -104,12 +98,9 @@ function generateBuildRowHTML(r, i, unitConfig = {}) {
     let rankClass = i < 3 ? `rank-${i+1}` : 'rank-other';
     if(r.isCustom) rankClass += ' is-custom';
     
-    // --- Calculate Value Score using Centralized Helper ---
-    // Returns raw ratio (e.g. 0.261)
     const rawScore = calculateBuildEfficiency(r, baseUnitCost, maxPlacement, unitId);
     const valScore = rawScore.toFixed(3);
 
-    // --- Badge Logic ---
     let prioLabel = 'DMG STAT';
     let prioColor = '#ff5555';
     if (r.prio === 'spa') { prioLabel = 'SPA STAT'; prioColor = 'var(--custom)'; }
@@ -146,7 +137,6 @@ function generateBuildRowHTML(r, i, unitConfig = {}) {
         subInnerHtml = '<span style="font-size:0.65rem; color:#555;">None</span>';
     }
 
-    // --- Right Column Display Logic ---
     let displayVal = format(r.dps);
     let displayLabel = "DPS";
     
@@ -183,21 +173,16 @@ function generateBuildRowHTML(r, i, unitConfig = {}) {
                     </div>
                     ${subInnerHtml}
                 </div>
-                
-                <!-- CENTERED RIGHT COLUMN (Uses CSS class .br-res-col for layout) -->
                 <div class="br-res-col">
                     <button class="info-btn" onclick="showMath('${r.id}')">?</button>
-                    
                     <div class="val-score-line">
                         ${valScore} <span class="val-label">Val</span>
                     </div>
-
                     <div class="dps-container">
                         <span class="build-dps">${displayVal}</span>
                         <span class="dps-label">${displayLabel}</span>
                     </div>
                 </div>
-
             </div>
         </div>
     `;
@@ -208,12 +193,10 @@ function updateBuildListDisplay(unitId) {
     const card = document.getElementById('card-' + unitId);
     if (!card) return;
     
-    // Get Unit Data
     const unitObj = unitDatabase.find(u => u.id === unitId);
     const unitCost = unitObj ? unitObj.totalCost : 50000;
     const unitPlace = unitObj ? unitObj.placement : 1;
 
-    // Read Input Values
     const searchInput = card.querySelector('.search-container input').value.toLowerCase();
     const prioSelect = card.querySelector('select[data-filter="prio"]').value;
     const setSelect = card.querySelector('select[data-filter="set"]').value;
@@ -240,16 +223,13 @@ function updateBuildListDisplay(unitId) {
 
         if(filtered.length === 0) return '<div style="padding:10px; color:#666;">No matches found.</div>';
         
-        // Sorting Logic
         if (sortSelect === 'value') {
-            // Sort by Value (Efficiency) using the Shared Helper
             filtered.sort((a, b) => {
                 const effA = calculateBuildEfficiency(a, unitCost, unitPlace, unitId);
                 const effB = calculateBuildEfficiency(b, unitCost, unitPlace, unitId);
                 return effB - effA;
             });
         } else {
-            // Default Sort (DPS)
             if (unitId === 'law' && prioSelect === 'range') {
                 filtered.sort((a, b) => (b.range || 0) - (a.range || 0));
             } else {
@@ -266,18 +246,16 @@ function updateBuildListDisplay(unitId) {
             }
         }
 
-        // Pass config to generator
         const rowConfig = {
             totalCost: unitCost,
             placement: unitPlace,
             sortMode: sortSelect,
-            unitId: unitId // Passed for specific trait lookup
+            unitId: unitId
         };
 
         return displaySlice.map((r, i) => generateBuildRowHTML(r, i, rowConfig)).join('');
     };
 
-    // Update all 16 containers
     const modes = ['bugged', 'fixed'];
     const types = ['base', 'abil'];
     
@@ -291,6 +269,116 @@ function updateBuildListDisplay(unitId) {
             }
         });
     });
+}
+
+// --- CORE LOGIC: UNIT CACHE PROCESSOR ---
+// Calculates builds for a single unit. Uses Static DB if available/valid, else uses Dynamic Math.
+function processUnitCache(unit) {
+    unitBuildsCache[unit.id] = { 
+        base: { bugged: [], fixed: [] }, 
+        abil: { bugged: [], fixed: [] } 
+    };
+
+    const CONFIGS = [
+        { head: false, subs: false }, { head: false, subs: true },
+        { head: true,  subs: false }, { head: true,  subs: true }
+    ];
+
+    const performCalcSet = (mode, useAbility) => {
+        const originalRelicDot = statConfig.applyRelicDot;
+        const originalRelicCrit = statConfig.applyRelicCrit;
+        
+        if (mode === 'bugged') {
+            statConfig.applyRelicDot = false; 
+        } else {
+            statConfig.applyRelicDot = true;
+            statConfig.applyRelicCrit = true;
+        }
+
+        const currentSubCandidates = getValidSubCandidates();
+        const currentFilteredBuilds = getFilteredBuilds();
+        
+        // --- UNIT STAT SETUP ---
+        let currentStats = { ...unit.stats };
+        if (useAbility && unit.ability) Object.assign(currentStats, unit.ability);
+        if (unit.tags) currentStats.tags = unit.tags;
+        
+        // Kirito Logic
+        if (unit.id === 'kirito' && kiritoState.realm && kiritoState.card) { 
+            currentStats.dot = 200; currentStats.dotDuration = 4; currentStats.dotStacks = 1; 
+        }
+        
+        // Bambietta Logic (Dynamic Element Injection)
+        if (unit.id === 'bambietta') {
+            const bMode = BAMBIETTA_MODES[bambiettaState.element];
+            if (bMode) Object.assign(currentStats, bMode);
+        }
+
+        // --- DB KEY GENERATION ---
+        let dbKey = unit.id;
+        if (unit.id === 'kirito' && kiritoState.card) dbKey = 'kirito_card';
+        if (useAbility && unit.ability) dbKey += '_abil';
+
+        const resultSet = [];
+
+        for (let i = 0; i < 4; i++) {
+            const cfg = CONFIGS[i];
+            const headsToProcess = cfg.head ? ['sun_god', 'ninja', 'reaper_necklace', 'shadow_reaper_necklace'] : ['none'];
+            const includeSubs = cfg.subs;
+
+            let staticList = null;
+
+            // CHECK STATIC DB
+            // We use Static DB if:
+            // 1. It exists
+            // 2. Unit is NOT Bambietta OR (Unit is Bambietta AND element is "Dark" (Default))
+            // This allows Bambietta to load fast on start, but calculate live when you switch elements.
+            const isDefaultBambi = (unit.id === 'bambietta' && bambiettaState.element === 'Dark');
+            const canUseStatic = (unit.id !== 'bambietta') || isDefaultBambi;
+
+            if (canUseStatic && window.STATIC_BUILD_DB && window.STATIC_BUILD_DB[dbKey]) {
+                const dbList = (mode === 'fixed') ? window.STATIC_BUILD_DB[dbKey].fixed : window.STATIC_BUILD_DB[dbKey].bugged;
+                if(dbList && dbList[i]) staticList = dbList[i];
+            }
+
+            let calculatedResults = [];
+            
+            // OPTION A: Use Static Data
+            if (staticList) {
+                calculatedResults = [...staticList];
+                staticList.forEach(r => cachedResults[r.id] = r); 
+            }
+
+            // OPTION B: Calculate Dynamically (Fallback or Bambietta Custom Element)
+            let traitsForCalc = null; 
+            if (staticList) {
+                 const globalCustoms = typeof customTraits !== 'undefined' ? customTraits : [];
+                 const unitCustoms = unitSpecificTraits[unit.id] || [];
+                 traitsForCalc = [...globalCustoms, ...unitCustoms];
+            }
+
+            if (traitsForCalc === null || traitsForCalc.length > 0) {
+                const dynamicResults = calculateUnitBuilds(unit, currentStats, currentFilteredBuilds, currentSubCandidates, headsToProcess, includeSubs, traitsForCalc);
+                calculatedResults = [...calculatedResults, ...dynamicResults];
+            }
+            
+            resultSet.push(calculatedResults);
+        }
+        
+        // Restore Globals
+        statConfig.applyRelicDot = originalRelicDot;
+        statConfig.applyRelicCrit = originalRelicCrit;
+
+        return resultSet;
+    };
+
+    unitBuildsCache[unit.id].base.bugged = performCalcSet('bugged', false);
+    unitBuildsCache[unit.id].base.fixed = performCalcSet('fixed', false);
+
+    if (unit.ability) {
+        unitBuildsCache[unit.id].abil.bugged = performCalcSet('bugged', true);
+        unitBuildsCache[unit.id].abil.fixed = performCalcSet('fixed', true);
+    }
 }
 
 // --- OPTIMIZED RENDER FUNCTION ---
@@ -308,98 +396,12 @@ function renderDatabase() {
         renderQueueId = null;
     }
 
-    const CONFIGS = [
-        { head: false, subs: false },
-        { head: false, subs: true },
-        { head: true,  subs: false },
-        { head: true,  subs: true }
-    ];
-
     let sortedUnits = [];
     
-    // --- STEP 1: PRE-CALCULATION PHASE ---
+    // --- STEP 1: PROCESS ALL UNITS ---
     unitDatabase.forEach(unit => {
-        unitBuildsCache[unit.id] = { 
-            base: { bugged: [], fixed: [] }, 
-            abil: { bugged: [], fixed: [] } 
-        };
-
-        const performCalcSet = (mode, useAbility) => {
-            const originalRelicDot = statConfig.applyRelicDot;
-            const originalRelicCrit = statConfig.applyRelicCrit;
-            
-            if (mode === 'bugged') {
-                statConfig.applyRelicDot = false; 
-            } else {
-                statConfig.applyRelicDot = true;
-                statConfig.applyRelicCrit = true;
-            }
-
-            const currentSubCandidates = getValidSubCandidates();
-            const currentFilteredBuilds = getFilteredBuilds();
-            let currentStats = { ...unit.stats };
-            if (useAbility && unit.ability) Object.assign(currentStats, unit.ability);
-            if(unit.tags) currentStats.tags = unit.tags;
-            
-            if (unit.id === 'kirito' && kiritoState.realm && kiritoState.card) { 
-                currentStats.dot = 200; currentStats.dotDuration = 4; currentStats.dotStacks = 1; 
-            }
-            if (unit.id === 'bambietta') {
-                const bMode = BAMBIETTA_MODES[bambiettaState.element];
-                if (bMode) Object.assign(currentStats, bMode);
-            }
-
-            let dbKey = unit.id;
-            if (unit.id === 'kirito' && kiritoState.card) dbKey = 'kirito_card';
-            if (useAbility && unit.ability) dbKey += '_abil';
-
-            const resultSet = [];
-
-            for (let i = 0; i < 4; i++) {
-                const cfg = CONFIGS[i];
-                const headsToProcess = cfg.head ? ['sun_god', 'ninja', 'reaper_necklace', 'shadow_reaper_necklace'] : ['none'];
-                const includeSubs = cfg.subs;
-
-                let staticList = null;
-                if (window.STATIC_BUILD_DB && window.STATIC_BUILD_DB[dbKey]) {
-                    const dbList = (mode === 'fixed') ? window.STATIC_BUILD_DB[dbKey].fixed : window.STATIC_BUILD_DB[dbKey].bugged;
-                    if(dbList && dbList[i]) staticList = dbList[i];
-                }
-
-                let calculatedResults = [];
-                if (staticList) {
-                    calculatedResults = [...staticList];
-                    staticList.forEach(r => cachedResults[r.id] = r); 
-                }
-
-                let traitsForCalc = null; 
-                if (staticList) {
-                     const globalCustoms = typeof customTraits !== 'undefined' ? customTraits : [];
-                     const unitCustoms = unitSpecificTraits[unit.id] || [];
-                     traitsForCalc = [...globalCustoms, ...unitCustoms];
-                }
-
-                if (traitsForCalc === null || traitsForCalc.length > 0) {
-                    const dynamicResults = calculateUnitBuilds(unit, currentStats, currentFilteredBuilds, currentSubCandidates, headsToProcess, includeSubs, traitsForCalc);
-                    calculatedResults = [...calculatedResults, ...dynamicResults];
-                }
-                
-                resultSet.push(calculatedResults);
-            }
-            
-            statConfig.applyRelicDot = originalRelicDot;
-            statConfig.applyRelicCrit = originalRelicCrit;
-
-            return resultSet;
-        };
-
-        unitBuildsCache[unit.id].base.bugged = performCalcSet('bugged', false);
-        unitBuildsCache[unit.id].base.fixed = performCalcSet('fixed', false);
-
-        if (unit.ability) {
-            unitBuildsCache[unit.id].abil.bugged = performCalcSet('bugged', true);
-            unitBuildsCache[unit.id].abil.fixed = performCalcSet('fixed', true);
-        }
+        // Use the new centralized helper
+        processUnitCache(unit);
 
         let maxScore = 0;
         const refList = unitBuildsCache[unit.id].base.fixed[3]; 
@@ -430,7 +432,6 @@ function renderDatabase() {
             
             const topControls = `<div class="unit-toolbar"><div style="display:flex; gap:10px;"><button class="select-btn" onclick="toggleSelection('${unit.id}')">${selectedUnitIds.has(unit.id) ? 'Selected' : 'Select'}</button><button class="calc-btn" onclick="openCalc('${unit.id}')">🖩 Custom Relics</button></div>${abilityToggleHtml}</div>`;
 
-            // NEW: Injected Sort Dropdown
             const bottomControls = `
                 <div class="search-container" style="flex-direction:column; gap:8px;">
                     <div style="display:flex; gap:5px; width:100%;">
@@ -663,7 +664,6 @@ function createGuideCard(unitObj, builds, modeClass) {
             <span class="guide-trait-tag" style="font-size:0.75rem;">Best: ${bestBuild.traitName}</span>
     `;
 
-    // Config passed to prevent errors in shared function
     const guideRowConfig = {
         totalCost: unitObj.totalCost || 50000,
         placement: unitObj.placement || 1,
@@ -706,6 +706,9 @@ function renderGuides() {
         : unitDatabase.filter(u => u.id === filterUnitId);
 
     unitsToProcess.forEach(unit => {
+        // Ensure cache exists for guide units too
+        if (!unitBuildsCache[unit.id]) processUnitCache(unit);
+
         for(let cfg = 0; cfg < 4; cfg++) {
             const cfgClass = `cfg-${cfg}`;
 

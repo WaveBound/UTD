@@ -2,7 +2,7 @@
 // UI-HELPERS.JS - UI Interaction & Toggle Functions
 // ============================================================================
 
-// Reset and trigger database re-render (Used for deep logic changes like Bambietta element)
+// Reset and trigger database re-render (Used for deep logic changes like Kirito Realm)
 const resetAndRender = () => { 
     renderQueueIndex = 0; 
     renderDatabase(); 
@@ -88,8 +88,9 @@ const toggleHypothetical = (checkbox) => {
 const toggleGuideSubStats = toggleSubStats;
 const toggleGuideHeadPiece = toggleHeadPiece;
 
-// Toggle Kirito mode (Realm/Card)
+// Toggle Kirito mode (Realm/Card) - OPTIMIZED to prevent full page reload
 function toggleKiritoMode(mode, checkbox) {
+    // 1. Update State
     if (mode === 'realm') {
         kiritoState.realm = checkbox.checked;
         if (!checkbox.checked) kiritoState.card = false; 
@@ -97,11 +98,36 @@ function toggleKiritoMode(mode, checkbox) {
         kiritoState.card = checkbox.checked;
     }
     
-    // 1. ALWAYS recalculate the math cache so the new data exists
-    renderQueueIndex = 0;
-    renderDatabase();
+    // 2. Identify Kirito Unit
+    const unit = unitDatabase.find(u => u.id === 'kirito');
+    if (!unit) return;
+
+    // 3. Recalculate Cache ONLY for Kirito
+    if (typeof processUnitCache === 'function') {
+        processUnitCache(unit);
+    } else {
+        console.error("processUnitCache not found, full reload triggered.");
+        resetAndRender();
+        return;
+    }
+
+    // 4. Update DOM: Toolbar controls (Syncs switches if Realm turns off Card)
+    const card = document.getElementById('card-kirito');
+    if (card && typeof getKiritoControlsHtml === 'function') {
+        // Find the specific toolbar containing the Kirito toggles and replace it
+        const toolbars = card.querySelectorAll('.unit-toolbar');
+        toolbars.forEach(tb => {
+            if (tb.innerText.includes('Virtual Realm')) {
+                // Generate fresh HTML based on new state and replace just this section
+                tb.outerHTML = getKiritoControlsHtml(unit);
+            }
+        });
+    }
+
+    // 5. Update DOM: Build List (The numbers/stats)
+    updateBuildListDisplay('kirito');
     
-    // 2. If viewing Guides, update the Guides UI explicitly
+    // 6. If viewing Guides, update the Guides UI explicitly
     if (document.getElementById('guidesPage').classList.contains('active')) {
         renderGuides();
     }
@@ -120,11 +146,30 @@ const getValidSubCandidates = () => SUB_CANDIDATES.filter(c =>
     !((!statConfig.applyRelicCrit && (c === 'cm' || c === 'cf')) || (!statConfig.applyRelicDot && c === 'dot'))
 );
 
-// Set Bambietta Element
+// Set Bambietta Element (OPTIMIZED for Single Unit Update)
 function setBambiettaElement(element, selectEl) {
+    // 1. Update State
     bambiettaState.element = element;
-    renderQueueIndex = 0;
-    renderDatabase();
+    
+    // 2. Find Bambietta
+    const unit = unitDatabase.find(u => u.id === 'bambietta');
+    if (!unit) return;
+
+    // 3. Recalculate Cache ONLY for Bambietta
+    // We utilize the global helper from rendering.js
+    if (typeof processUnitCache === 'function') {
+        processUnitCache(unit);
+    } else {
+        console.error("processUnitCache not found, full reload triggered.");
+        resetAndRender();
+        return;
+    }
+
+    // 4. Update ONLY Bambietta's DOM
+    // This refreshes the build lists inside the card without creating a new card
+    updateBuildListDisplay(unit.id);
+    
+    // 5. If Guides page is active, refresh guides (fast enough)
     if (document.getElementById('guidesPage').classList.contains('active')) {
         renderGuides();
     }
@@ -251,9 +296,6 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 // Back at the top
                 toolbar.classList.remove('is-sticky');
-
-                // FIX: Comment out or remove this line so it stays closed if user closed it
-                // document.body.classList.remove('header-collapsed'); 
             }
         }, { threshold: [1] });
 
