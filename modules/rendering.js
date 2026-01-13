@@ -44,10 +44,8 @@ function createBaseUnitCard(unit, options = {}) {
     card.className = `unit-card ${additionalClasses}`;
     if (id) card.id = id;
 
-    // Banner
     const banner = `<div class="unit-banner">${bannerContent}</div>`;
     
-    // Tags
     let tags = '';
     if (tagsContent) {
         tags = `<div class="unit-tags" style="background:rgba(255,255,255,0.02); border-bottom:1px solid var(--card-border); padding:8px 15px;">${tagsContent}</div>`;
@@ -55,7 +53,6 @@ function createBaseUnitCard(unit, options = {}) {
         tags = `<div class="unit-tags">` + unit.tags.map(t => `<span class="unit-tag">${t}</span>`).join('') + `</div>`;
     }
 
-    // Unit Specific (Kirito/Bambietta)
     const unitSpecificControls = getKiritoControlsHtml(unit) + getBambiettaControlsHtml(unit);
 
     card.innerHTML = `
@@ -71,11 +68,48 @@ function createBaseUnitCard(unit, options = {}) {
 
 // --- PART 1: DETAILED LIST RENDERING (DATABASE TAB) ---
 
-// Generate HTML for a single build row
-function generateBuildRowHTML(r, i) {
+// HELPER: Centralized Efficiency Calculation
+// Ensures Row HTML and Sort Logic use identical math
+function calculateBuildEfficiency(build, unitCost, unitMaxPlacement, unitId) {
+    let traitLimit = null;
+    
+    // 1. Fast Ruler Check
+    if (build.traitName && build.traitName.includes('Ruler')) {
+        traitLimit = 1;
+    } else {
+        // 2. Deep Lookup
+        const foundTrait = traitsList.find(t => t.name === build.traitName) || 
+                           customTraits.find(t => t.name === build.traitName) ||
+                           (unitSpecificTraits[unitId] || []).find(t => t.name === build.traitName);
+        
+        if (foundTrait && foundTrait.limitPlace) {
+            traitLimit = foundTrait.limitPlace;
+        }
+    }
+
+    const actualPlacement = traitLimit ? Math.min(unitMaxPlacement, traitLimit) : unitMaxPlacement;
+    const actualTotalCost = unitCost * actualPlacement;
+    
+    if (actualTotalCost === 0) return 0;
+
+    return (build.dps / actualTotalCost) * 10;
+}
+
+function generateBuildRowHTML(r, i, unitConfig = {}) {
+    const baseUnitCost = unitConfig.totalCost || 50000;
+    const maxPlacement = unitConfig.placement || 1;
+    const sortMode = unitConfig.sortMode || 'dps';
+    const unitId = unitConfig.unitId || '';
+
     let rankClass = i < 3 ? `rank-${i+1}` : 'rank-other';
     if(r.isCustom) rankClass += ' is-custom';
     
+    // --- Calculate Value Score using Centralized Helper ---
+    // Returns raw ratio (e.g. 0.261)
+    const rawScore = calculateBuildEfficiency(r, baseUnitCost, maxPlacement, unitId);
+    const valScore = rawScore.toFixed(3);
+
+    // --- Badge Logic ---
     let prioLabel = 'DMG STAT';
     let prioColor = '#ff5555';
     if (r.prio === 'spa') { prioLabel = 'SPA STAT'; prioColor = 'var(--custom)'; }
@@ -93,7 +127,7 @@ function generateBuildRowHTML(r, i) {
         let headColor = '#ffffff';
         switch(r.headUsed) {
             case 'sun_god': headName = 'Sun God'; headColor = '#38bdf8'; break;
-            case 'ninja': headName = 'Master Ninja'; headColor = '#ffffff'; break;
+            case 'ninja': headName = 'Ninja'; headColor = '#ffffff'; break;
             case 'reaper_necklace': headName = 'Reaper'; headColor = '#ef4444'; break; 
             case 'shadow_reaper_necklace': headName = 'S. Reaper'; headColor = '#a855f7'; break; 
         }
@@ -112,17 +146,20 @@ function generateBuildRowHTML(r, i) {
         subInnerHtml = '<span style="font-size:0.65rem; color:#555;">None</span>';
     }
 
+    // --- Right Column Display Logic ---
     let displayVal = format(r.dps);
     let displayLabel = "DPS";
     
     if (r.prio === 'range') {
         const val = (r.range !== undefined) ? r.range : r.dps;
         displayVal = val.toFixed(1);
-        displayLabel = "RANGE";
+        displayLabel = "RNG";
     }
 
+    const valueSortClass = sortMode === 'value' ? 'is-value-sort' : '';
+
     return `
-        <div class="build-row ${rankClass}">
+        <div class="build-row ${rankClass} ${valueSortClass}">
             <div class="br-header">
                 <div style="display:flex; align-items:center; gap:8px; min-width:0;">
                     <span class="br-rank">#${i+1}</span>
@@ -139,20 +176,28 @@ function generateBuildRowHTML(r, i) {
                     <div class="stat-line"><span class="sl-label">BODY</span> ${mainBodyBadge}</div>
                     <div class="stat-line"><span class="sl-label">LEGS</span> ${mainLegsBadge}</div>
                 </div>
-                <div class="br-col" style="flex:1.25; border-left:1px solid rgba(255,255,255,0.05); padding-left:18px;">
+                <div class="br-col" style="flex:1.25; border-left:1px solid rgba(255,255,255,0.05); padding-left:12px;">
                     <div style="display:flex; justify-content:space-between; align-items:center;">
                         <div class="br-col-title">SUB STAT</div>
                         <button class="sub-list-btn" title="View Sub-Stat Priority" onclick="viewSubPriority('${r.id}')">≡</button>
                     </div>
                     ${subInnerHtml}
                 </div>
-                <div class="br-res-col" style="position:relative;">
-                    <button class="info-btn" onclick="showMath('${r.id}')" style="position:absolute; bottom:5px; left:15px; width:18px; height:18px; font-size:0.6rem; line-height:1;">?</button>
+                
+                <!-- CENTERED RIGHT COLUMN (Uses CSS class .br-res-col for layout) -->
+                <div class="br-res-col">
+                    <button class="info-btn" onclick="showMath('${r.id}')">?</button>
+                    
+                    <div class="val-score-line">
+                        ${valScore} <span class="val-label">Val</span>
+                    </div>
+
                     <div class="dps-container">
                         <span class="build-dps">${displayVal}</span>
                         <span class="dps-label">${displayLabel}</span>
                     </div>
                 </div>
+
             </div>
         </div>
     `;
@@ -163,10 +208,17 @@ function updateBuildListDisplay(unitId) {
     const card = document.getElementById('card-' + unitId);
     if (!card) return;
     
+    // Get Unit Data
+    const unitObj = unitDatabase.find(u => u.id === unitId);
+    const unitCost = unitObj ? unitObj.totalCost : 50000;
+    const unitPlace = unitObj ? unitObj.placement : 1;
+
+    // Read Input Values
     const searchInput = card.querySelector('.search-container input').value.toLowerCase();
     const prioSelect = card.querySelector('select[data-filter="prio"]').value;
     const setSelect = card.querySelector('select[data-filter="set"]').value;
     const headSelect = card.querySelector('select[data-filter="head"]').value;
+    const sortSelect = card.querySelector('select[data-filter="sort"]').value; 
 
     const renderList = (builds) => {
         if(!builds || builds.length === 0) return '<div style="padding:10px; color:#666;">No valid builds found.</div>';
@@ -179,21 +231,30 @@ function updateBuildListDisplay(unitId) {
             else if (r.headUsed === 'shadow_reaper_necklace') headSearchName = 'Shadow Reaper Necklace';
             
             const searchText = (r.traitName + ' ' + r.setName + ' ' + r.prio + ' ' + headSearchName).toLowerCase();
-
             const textMatch = searchText.includes(searchInput);
             const prioMatch = prioSelect === 'all' || r.prio === prioSelect;
             const setMatch = setSelect === 'all' || r.setName === setSelect;
             const headMatch = headSelect === 'all' || (r.headUsed || 'none') === headSelect;
-
             return textMatch && prioMatch && setMatch && headMatch;
         });
 
         if(filtered.length === 0) return '<div style="padding:10px; color:#666;">No matches found.</div>';
         
-        if (unitId === 'law') {
-            filtered.sort((a, b) => (b.range || 0) - (a.range || 0));
+        // Sorting Logic
+        if (sortSelect === 'value') {
+            // Sort by Value (Efficiency) using the Shared Helper
+            filtered.sort((a, b) => {
+                const effA = calculateBuildEfficiency(a, unitCost, unitPlace, unitId);
+                const effB = calculateBuildEfficiency(b, unitCost, unitPlace, unitId);
+                return effB - effA;
+            });
         } else {
-            filtered.sort((a, b) => b.dps - a.dps);
+            // Default Sort (DPS)
+            if (unitId === 'law' && prioSelect === 'range') {
+                filtered.sort((a, b) => (b.range || 0) - (a.range || 0));
+            } else {
+                filtered.sort((a, b) => b.dps - a.dps);
+            }
         }
 
         let displaySlice = filtered.slice(0, 10);
@@ -205,25 +266,27 @@ function updateBuildListDisplay(unitId) {
             }
         }
 
-        return displaySlice.map((r, i) => generateBuildRowHTML(r, i)).join('');
+        // Pass config to generator
+        const rowConfig = {
+            totalCost: unitCost,
+            placement: unitPlace,
+            sortMode: sortSelect,
+            unitId: unitId // Passed for specific trait lookup
+        };
+
+        return displaySlice.map((r, i) => generateBuildRowHTML(r, i, rowConfig)).join('');
     };
 
-    // We now have 4 configs (0..3) for each of the 4 combinations of (Base/Abil) and (Bugged/Fixed)
-    // Total 16 containers to update per card
+    // Update all 16 containers
     const modes = ['bugged', 'fixed'];
     const types = ['base', 'abil'];
     
     types.forEach(type => {
         modes.forEach(mode => {
-            // Loop Configs 0 to 3
             for(let cfg=0; cfg<4; cfg++) {
                 const containerId = `results-${type}-${mode}-${cfg}-${unitId}`;
                 const container = document.getElementById(containerId);
-                
-                // Get the specific data array
-                // unitBuildsCache[id][type][mode] is now an ARRAY of 4 arrays
                 const buildData = unitBuildsCache[unitId]?.[type]?.[mode]?.[cfg] || [];
-                
                 if(container) container.innerHTML = renderList(buildData);
             }
         });
@@ -245,7 +308,6 @@ function renderDatabase() {
         renderQueueId = null;
     }
 
-    // --- CONFIGURATION DEFINITIONS ---
     const CONFIGS = [
         { head: false, subs: false },
         { head: false, subs: true },
@@ -255,8 +317,7 @@ function renderDatabase() {
 
     let sortedUnits = [];
     
-    // --- STEP 1: PRE-CALCULATION PHASE (Heavy Math) ---
-    // We do all math upfront so the rendering phase is purely HTML generation
+    // --- STEP 1: PRE-CALCULATION PHASE ---
     unitDatabase.forEach(unit => {
         unitBuildsCache[unit.id] = { 
             base: { bugged: [], fixed: [] }, 
@@ -350,24 +411,18 @@ function renderDatabase() {
 
     sortedUnits.sort((a, b) => b.maxScore - a.maxScore);
 
-    // --- STEP 2: BATCH DOM INSERTION (The Performance Fix) ---
+    // --- STEP 2: BATCH DOM INSERTION ---
     function processNextChunk() {
         const startTime = performance.now();
         const fragment = document.createDocumentFragment();
         
         let itemsAdded = 0;
-        
-        // This index resets every chunk so the next batch also cascades nicely
         let staggerIndex = 0; 
 
         while (renderQueueIndex < sortedUnits.length) {
             const unit = sortedUnits[renderQueueIndex].unit;
             renderQueueIndex++;
 
-            // ... (Banner, Toolbar, Controls generation code stays the same) ...
-            // [COPY THE HTML GENERATION PART FROM PREVIOUS RESPONSE HERE]
-            
-            // --- RE-INSERTING THE HTML GENERATION FOR CLARITY ---
             let traitButtonHtml = unit.meta ? `<button class="trait-guide-btn" onclick="openTraitGuide('${unit.id}')">📋 Rec. Traits</button>` : '';
             const bannerContent = `<div class="placement-badge">Max Place: ${unit.placement}</div>${getUnitImgHtml(unit, 'unit-avatar')}<div class="unit-title"><h2>${unit.name}</h2><span>${unit.role} <span class="sss-tag">SSS</span></span></div>${traitButtonHtml}`;
             
@@ -375,7 +430,44 @@ function renderDatabase() {
             
             const topControls = `<div class="unit-toolbar"><div style="display:flex; gap:10px;"><button class="select-btn" onclick="toggleSelection('${unit.id}')">${selectedUnitIds.has(unit.id) ? 'Selected' : 'Select'}</button><button class="calc-btn" onclick="openCalc('${unit.id}')">🖩 Custom Relics</button></div>${abilityToggleHtml}</div>`;
 
-            const bottomControls = `<div class="search-container" style="flex-direction:column; gap:8px;"><div style="display:flex; gap:5px; width:100%;"><input type="text" placeholder="Search..." style="flex-grow:1; padding:6px; border-radius:5px; border:1px solid #333; background:#111; color:#fff; font-size:0.8rem;" onkeyup="filterList(this)"><select onchange="filterList(this)" data-filter="prio" style="width:75px; padding:0 0 0 4px; font-size:0.7rem; height:30px;"><option value="all">All Prio</option><option value="dmg">Dmg</option><option value="spa">SPA</option><option value="range">Range</option></select></div><div style="display:flex; gap:5px; width:100%;"><select onchange="filterList(this)" data-filter="set" style="flex:1; padding:0 0 0 4px; font-size:0.7rem; height:30px;"><option value="all">All Sets</option><option value="Master Ninja">Ninja Set</option><option value="Sun God">Sun God Set</option><option value="Laughing Captain">Laughing Set</option><option value="Ex Captain">Ex Set</option><option value="Shadow Reaper">Shadow Reaper</option><option value="Reaper Set">Reaper Set</option></select><select onchange="filterList(this)" data-filter="head" style="flex:1; padding:0 0 0 4px; font-size:0.7rem; height:30px;"><option value="all">All Heads</option><option value="sun_god">Sun God</option><option value="ninja">Ninja</option><option value="reaper_necklace">Reaper</option><option value="shadow_reaper_necklace">Shadow Reaper</option><option value="none">No Head</option></select></div></div>`;
+            // NEW: Injected Sort Dropdown
+            const bottomControls = `
+                <div class="search-container" style="flex-direction:column; gap:8px;">
+                    <div style="display:flex; gap:5px; width:100%;">
+                        <input type="text" placeholder="Search..." style="flex-grow:1; padding:6px; border-radius:5px; border:1px solid #333; background:#111; color:#fff; font-size:0.8rem;" onkeyup="filterList(this)">
+                        
+                        <select onchange="filterList(this)" data-filter="sort" style="width:215px; padding:0 0 0 4px; font-size:0.7rem; height:30px; color:var(--success); font-weight:bold; border-color:rgba(16,185,129,0.3);">
+                            <option value="dps">Sort: DPS</option>
+                            <option value="value">Sort: Value</option>
+                        </select>
+                        
+                        <select onchange="filterList(this)" data-filter="prio" style="width:160px; padding:0 0 0 4px; font-size:0.7rem; height:30px;">
+                            <option value="all">All Prio</option>
+                            <option value="dmg">Dmg</option>
+                            <option value="spa">SPA</option>
+                            <option value="range">Range</option>
+                        </select>
+                    </div>
+                    <div style="display:flex; gap:5px; width:100%;">
+                        <select onchange="filterList(this)" data-filter="set" style="flex:1; padding:0 0 0 4px; font-size:0.7rem; height:30px;">
+                            <option value="all">All Sets</option>
+                            <option value="Master Ninja">Ninja Set</option>
+                            <option value="Sun God">Sun God Set</option>
+                            <option value="Laughing Captain">Laughing Set</option>
+                            <option value="Ex Captain">Ex Set</option>
+                            <option value="Shadow Reaper">Shadow Reaper</option>
+                            <option value="Reaper Set">Reaper Set</option>
+                        </select>
+                        <select onchange="filterList(this)" data-filter="head" style="flex:1; padding:0 0 0 4px; font-size:0.7rem; height:30px;">
+                            <option value="all">All Heads</option>
+                            <option value="sun_god">Sun God</option>
+                            <option value="ninja">Ninja</option>
+                            <option value="reaper_necklace">Reaper</option>
+                            <option value="shadow_reaper_necklace">Shadow Reaper</option>
+                            <option value="none">No Head</option>
+                        </select>
+                    </div>
+                </div>`;
 
             let mainContent = '';
             ['base', 'abil'].forEach(type => {
@@ -399,20 +491,12 @@ function renderDatabase() {
                 mainContent: mainContent
             });
 
-            // --- THE ANIMATION TRICK ---
-            // We set the delay inline. The CSS handles the wait.
-            // 30ms * 0 = 0ms
-            // 30ms * 1 = 30ms
-            // ...
             card.style.animationDelay = `${staggerIndex * 50}ms`; 
             staggerIndex++; 
 
             fragment.appendChild(card);
             itemsAdded++;
             
-            // Hydrate logic deferred until after append
-            
-            // Budget check: 12ms
             if (performance.now() - startTime > 12) {
                 break;
             }
@@ -420,8 +504,6 @@ function renderDatabase() {
         
         if (itemsAdded > 0) {
             container.appendChild(fragment);
-            
-            // Hydrate Data
             const startIdx = renderQueueIndex - itemsAdded;
             for(let i=startIdx; i < renderQueueIndex; i++) {
                 updateBuildListDisplay(sortedUnits[i].unit.id);
@@ -450,11 +532,9 @@ function setGuideMode(mode) {
     const isFixed = (mode === 'fixed');
     const labelText = isFixed ? "Fixed Relics" : "Bugged Relics";
     
-    // Update both toggle labels (one on DB bar, one on Guides bar)
     if(document.getElementById('hypoLabel')) document.getElementById('hypoLabel').innerText = labelText;
     if(document.getElementById('guideHypoLabel')) document.getElementById('guideHypoLabel').innerText = labelText;
     
-    // Toggle warning visibility
     const warning = document.getElementById('guideWarning');
     if(warning) warning.style.display = (mode === 'current') ? 'block' : 'none';
 }
@@ -514,19 +594,15 @@ const applyGuideConfig = () => {
     closeGuideConfig();
 };
 
-// Updated: Now accepts specific config index (0-3)
 function getGuideBuildsFromCache(unit, mode, configIndex) {
     if (!unitBuildsCache || !unitBuildsCache[unit.id]) return [];
     
-    // Prioritize Ability builds if available (Standard for Guides)
     const hasAbility = unit.ability !== undefined;
-    
     let source = unitBuildsCache[unit.id].base;
     if (hasAbility && unitBuildsCache[unit.id].abil && unitBuildsCache[unit.id].abil[mode]) {
         source = unitBuildsCache[unit.id].abil;
     }
 
-    // Return specific config array (0=NoStats, 1=Subs, 2=Head, 3=Both)
     if (source && source[mode] && source[mode][configIndex]) {
         return source[mode][configIndex];
     }
@@ -539,7 +615,6 @@ function processGuideTop3(rawBuilds, unit, traitFilterId) {
 
     let filtered = [...rawBuilds];
 
-    // 1. Filter by Trait Config
     if (traitFilterId && traitFilterId !== 'auto') {
         let targetName = "";
         const tObj = traitsList.find(t => t.id === traitFilterId) || 
@@ -549,23 +624,19 @@ function processGuideTop3(rawBuilds, unit, traitFilterId) {
         if (targetName) filtered = filtered.filter(b => b.traitName === targetName);
     }
 
-    // 2. Sort (Range for Law, DPS for others)
     if (unit.id === 'law') {
         filtered.sort((a, b) => (b.range || 0) - (a.range || 0));
     } else {
         filtered.sort((a, b) => b.dps - a.dps);
     }
 
-    // 3. Slice Top 3
     return filtered.slice(0, 3);
 }
 
 // Unified Guide Card Creator
 function createGuideCard(unitObj, builds, modeClass) {
-    // --- CALCULATED CARD LOGIC ---
     const bestBuild = builds[0];
     
-    // Values
     let displayValStr = format(bestBuild.dps);
     let maxLabel = 'Max Potential';
     let typeClass = 'is-dps';
@@ -577,7 +648,6 @@ function createGuideCard(unitObj, builds, modeClass) {
         typeClass = 'is-range';
     }
 
-    // NEW: Clean Banner HTML (No Icons)
     const bannerContent = `
         <div class="mp-container ${typeClass}">
             <span class="mp-label">${maxLabel}</span>
@@ -593,8 +663,16 @@ function createGuideCard(unitObj, builds, modeClass) {
             <span class="guide-trait-tag" style="font-size:0.75rem;">Best: ${bestBuild.traitName}</span>
     `;
 
+    // Config passed to prevent errors in shared function
+    const guideRowConfig = {
+        totalCost: unitObj.totalCost || 50000,
+        placement: unitObj.placement || 1,
+        sortMode: 'dps',
+        unitId: unitObj.id
+    };
+
     const mainContent = `<div class="top-builds-list" style="padding:10px;">` + 
-            builds.map((build, index) => generateBuildRowHTML(build, index)).join('') + 
+            builds.map((build, index) => generateBuildRowHTML(build, index, guideRowConfig)).join('') + 
             `</div>`;
 
     return createBaseUnitCard(unitObj, {
@@ -605,7 +683,6 @@ function createGuideCard(unitObj, builds, modeClass) {
     });
 }
 
-
 function renderGuides() {
     const guideGrid = document.getElementById('guideList');
     if (!guideGrid) return;
@@ -615,7 +692,6 @@ function renderGuides() {
     const filterUnitId = document.getElementById('guideUnitSelect').value;
     const filterTraitId = document.getElementById('guideTraitSelect').value;
 
-    // Update Header Text
     const uName = filterUnitId === 'all' ? 'All Units' : unitDatabase.find(u => u.id === filterUnitId)?.name || 'Unknown';
     let tName = 'Auto Trait';
     if(filterTraitId !== 'auto') { 
@@ -625,24 +701,20 @@ function renderGuides() {
     document.getElementById('dispGuideUnit').innerText = uName; 
     document.getElementById('dispGuideTrait').innerText = tName;
 
-    // RENDER CALCULATED UNITS (From Database Cache)
     let unitsToProcess = (filterUnitId === 'all') 
         ? unitDatabase 
         : unitDatabase.filter(u => u.id === filterUnitId);
 
     unitsToProcess.forEach(unit => {
-        // Loop through all 4 configs: 0 (None), 1 (Subs), 2 (Head), 3 (Both)
         for(let cfg = 0; cfg < 4; cfg++) {
             const cfgClass = `cfg-${cfg}`;
 
-            // Render Bugged (Current)
             const buggedBuilds = getGuideBuildsFromCache(unit, 'bugged', cfg);
             const topBugged = processGuideTop3(buggedBuilds, unit, filterTraitId);
             if (topBugged.length) {
                 guideGrid.appendChild(createGuideCard(unit, topBugged, `mode-bugged ${cfgClass}`));
             }
 
-            // Render Fixed
             const fixedBuilds = getGuideBuildsFromCache(unit, 'fixed', cfg);
             const topFixed = processGuideTop3(fixedBuilds, unit, filterTraitId);
             if (topFixed.length) {

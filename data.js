@@ -191,6 +191,8 @@ const unitDatabase = [
     {
         id: "Maid", name: "Scarlet Maid (World)", role: "Dmg / Support",
         img: "images/Maid.png", 
+        // ADDED totalCost (Upgrade Cost + Deployment)
+        totalCost: 76000,
         placement: 1, tags: [],
         meta: { short: "Ruler", long: "Ruler", note: "Ruler is strictly best due to 1 placement count." },
         stats: { dmg: 2950, spa: 5, crit: 0, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 3.5, passiveDmg: 0, element: "Light", dotDuration: 0, range: 28 }
@@ -198,6 +200,7 @@ const unitDatabase = [
     {
         id: "sjw", name: "SJW (Monarch)", role: "Raw Dmg",
         img: "images/Sjw.png", 
+        totalCost: 93000,
         placement: 1, tags: [],
         meta: { short: "Ruler", long: "Ruler", note: "Ruler is strictly best due to 1 placement count." },
         stats: { dmg: 3350, spa: 5, crit: 0, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 5, passiveDmg: 25, element: "Dark", range: 35 }
@@ -205,6 +208,7 @@ const unitDatabase = [
     {
         id: "ragna", name: "Ragna (Silverite)", role: "Burst / Hybrid",
         img: "images/Ragna.png", 
+        totalCost: 72000,
         placement: 1, tags: [],
         meta: { short: "Ruler", long: "Ruler", note: "Ruler is strictly best due to 1 placement count." },
         stats: { dmg: 1800, spa: 9, crit: 0, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 3, passiveDmg: 12, element: "Ice", range: 35 },
@@ -213,6 +217,7 @@ const unitDatabase = [
     {
         id: "kirito", name: "Kirito", role: "Burst / Crit",
         img: "images/Kirito.png",
+        totalCost: 30400,
         placement: 3, tags: [],
         meta: { short: "Ruler", long: "Eternal", note: "Eternal provides highest DPS Potential, Ruler provides good dps to cost." },
         stats: { dmg: 1200, spa: 7, crit: 50, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 4, hitCount: 14, reqCrits: 50, extraAttacks: 0, element: "Ice", range: 30 }
@@ -220,6 +225,7 @@ const unitDatabase = [
     {
         id: "genos", name: "Cyborg (Fearless)", role: "DoT / Raw",
         img: "images/Genos.png", 
+        totalCost: 26900,
         placement: 3, tags: [],
         meta: { short: "Ruler", long: "Eternal/Sacred", note: "Standard DPS Selection." },
         stats: { dmg: 1440, spa: 5.5, crit: 0, cdmg: 150, dot: 14, dotStacks: 1, spaCap: 4, passiveDmg: 0, element: "Fire", range: 32, burnMultiplier: 45 },
@@ -228,6 +234,7 @@ const unitDatabase = [
     {
         id: "kenpachi", name: "Kenpachi", role: "Raw Dmg / Slow",
         img: "images/Kenpachi.png",
+        totalCost: 60000,
         placement: 1, tags: ["Peroxide", "Reaper", "Rage"],
         meta: { short: "Ruler", long: "Ruler", note: "Ruler is strictly best due to 1 placement count." },
         stats: { dmg: 2875, spa: 10, crit: 0, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 2.0, element: "Light", range: 27 }
@@ -235,6 +242,7 @@ const unitDatabase = [
     {
         id: "sasuke", name: "Sasuke (Chakra)", role: "Raw Dmg",
         img: "images/Sasuke.png", 
+        totalCost: 40000,
         placement: 2, tags: [],
         meta: { short: "Ruler", long: "Eternal/Sacred", note: "Ruler for DPS, Eternal/Sacred for support." },
         stats: { dmg: 2450, spa: 6.75, crit: 0, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 4, passiveDmg: 25, element: "Dark", range: 28 }
@@ -242,6 +250,7 @@ const unitDatabase = [
     {
         id: "mob", name: "Pyscho (100%)", role: "Raw Dmg",
         img: "images/Mob.png", 
+        totalCost: 56000,
         placement: 2, tags: [],
         meta: { short: "Ruler", long: "Ruler", note: "Standard DPS selection." },
         stats: { dmg: 2600, spa: 6.5, crit: 0, cdmg: 150, dot: 20, dotStacks: 1, spaCap: 5.5, passiveDmg: 0, element: "Rose", dotDuration: 4, range: 35 }
@@ -249,6 +258,7 @@ const unitDatabase = [
     {
         id: "shanks", name: "Shanks (Conqueror)", role: "Raw Dmg",
         img: "images/Shanks.png", 
+        totalCost: 64000,
         placement: 1, tags: [],
         meta: { short: "Ruler", long: "Ruler", note: "Ruler is strictly best due to 1 placement count." },
         stats: { dmg: 2750, spa: 12, crit: 0, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 2.5, passiveDmg: 0, element: "Rose", dotDuration: 0, range: 30}
@@ -256,6 +266,7 @@ const unitDatabase = [
     {
         id: "law", name: "Rule (Room)", role: "Support / Dmg",
         img: "images/Law.png", 
+        totalCost: 84000,
         placement: 2, tags: [],
         meta: { short: "Ruler/Sacred", long: "Ruler/Sacred", note: "Ruler/Sacred offer the most Spa%- / Rng%+" },
         stats: { dmg: 1300, spa: 5, crit: 0, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 2, passiveDmg: 20, passiveSpa: 10, element: "Water", dotDuration: 0, range: 31.5 }
@@ -263,6 +274,7 @@ const unitDatabase = [
     {
         id: "akainu", name: "Admiral (Magma)", role: "Support / Dmg",
         img: "images/Akainu.png", 
+        totalCost: 108000,
         placement: 3, tags: [],
         meta: { short: "Eternal/Sacred", long: "Eternal/Sacred", note: "Eternal/Sacred offer the the best dps + support performance." },
         stats: { dmg: 1100, spa: 5, crit: 0, cdmg: 150, dot: 60, dotStacks: 1, spaCap: 2, passiveDmg: 0, passiveSpa: 0, element: "Fire", dotDuration: 7, range: 37}
@@ -270,6 +282,7 @@ const unitDatabase = [
     {
         id: "ichigo", name: "Ichiko (Rage)", role: "Dmg",
         img: "images/Ichigo.png", 
+        totalCost: 108000,
         placement: 1, tags: ["Peroxide", "Reaper", "Rage", "Hollow"],
         meta: { short: "Ruler", long: "Ruler", note: "Ruler is strictly best due to 1 placement count." },
         stats: { dmg: 3000, spa: 8, crit: 15, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 7, passiveDmg: 50, passiveSpa: 0, element: "Dark", dotDuration: 0, range: 38}
@@ -277,6 +290,7 @@ const unitDatabase = [
     {
         id: "grimjaw", name: "Grommjaw (Panther)", role: "Dmg",
         img: "images/Grimjaw.png", 
+        totalCost: 40000,
         placement: 3, tags: ["Peroxide", "Hollow"],
         meta: { short: "Ruler", long: "Eternal", note: "Standard DPS selection." },
         stats: { dmg: 1590, spa: 9, crit: 0, cdmg: 150, dot: 50, dotStacks: 1, spaCap: 3, passiveDmg: 6.67, passiveSpa: 4.17, element: "Water", dotDuration: 10, range: 35 }
@@ -284,6 +298,7 @@ const unitDatabase = [
     {
         id: "stark", name: "Koyote (Number one)", role: "Dmg",
         img: "images/Stark.png", 
+        totalCost: 44000,
         placement: 1, tags: ["Peroxide", "Hollow"],
         meta: { short: "Ruler", long: "Ruler", note: "Ruler is strictly best due to 1 placement count." },
         stats: { dmg: 2800, spa: 6, crit: 0, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 6, passiveDmg: 0, passiveSpa: 0, element: "Ice", dotDuration: 0, range: 42}
@@ -291,6 +306,7 @@ const unitDatabase = [
     {
         id: "ulquiorra", name: "Ultiiorra (Oblivion)", role: "Dmg",
         img: "images/Ulqiorra.png", 
+        totalCost: 31760,
         placement: 3, tags: ["Peroxide", "Hollow"],
         meta: { short: "Ruler", long: "Eternal", note: "Standard DPS selection." },
         stats: { dmg: 1275, spa: 5, crit: 0, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 2, passiveDmg: 0, passiveSpa: 5, element: "Dark", dotDuration: 0, range: 37},
@@ -299,6 +315,7 @@ const unitDatabase = [
     {
         id: "harribel", name: "Tierrabel (Hydro)", role: "Dmg",
         img: "images/Harribel.png", 
+        totalCost: 30964,
         placement: 3, tags: ["Peroxide", "Hollow"],
         meta: { short: "Ruler", long: "Eternal", note: "Standard DPS selection." },
         stats: { dmg: 1490, spa: 8.5, crit: 0, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 2, passiveDmg: 0, passiveSpa: 0, element: "Water", dotDuration: 0, range: 30},
@@ -307,6 +324,7 @@ const unitDatabase = [
     {
         id: "ace", name: "Ace", role: "Dmg / Burn(DoT)",
         img: "images/Ace.png",
+        totalCost: 39000,
         placement: 3, tags: [],
         meta: { short: "Ruler", long: "Ruler/Eternal/Astral", note: "Eternal provides highest DPS Potential, Ruler provides good dps to cost." },
         stats: { dmg: 1500, spa: 9, crit: 0, cdmg: 150, dot: 100, dotStacks: 1, spaCap: 4, passiveDmg: 60, element: "Fire", dotDuration: 4, range: 30 }
@@ -314,6 +332,7 @@ const unitDatabase = [
     {
         id: "Jingliu", name: "Jingliu", role: "Dmg",
         img: "images/Jingliu.png",
+        totalCost: 33725,
         placement: 3, tags: [],
         meta: { short: "Ruler", long: "Eternal/Sacred", note: "Eternal provides highest DPS Potential, Ruler provides good dps to cost." },
         stats: { dmg: 1700, spa: 6, crit: 50, cdmg: 200, dot: 0, dotStacks: 1, spaCap: 3, passiveDmg: 35, element: "Ice", dotDuration: 0, range: 40 }
@@ -321,6 +340,7 @@ const unitDatabase = [
     {
         id: "megumin", name: "Megumin", role: "Dmg / Burn(Dot)",
         img: "images/Megumin.png",
+        totalCost: 136000,
         placement: 1, tags: [],
         meta: { short: "Ruler", long: "Ruler", note: "Ruler is strictly best due to 1 placement count." },
         stats: { dmg: 7530, spa: 14, crit: 0, cdmg: 150, dot: 50, dotStacks: 1, spaCap: 4, passiveDmg: 0, element: "Fire", dotDuration: 10, range: 50 },
@@ -329,6 +349,7 @@ const unitDatabase = [
     {
         id: "bambietta", name: "Bambietta", role: "Dmg / (Support/Dot)",
         img: "images/Bambietta.png",
+        totalCost: 40000,
         placement: 3, tags: [],
         meta: { short: "Ruler", long: "Eternal/Astral", note: "Eternal provides highest DPS Potential, Ruler provides good dps to cost." },
         stats: { dmg: 1250, spa: 6.5, crit: 0, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 2, passiveDmg: 0, element: "Dark", dotDuration: 0, range: 38, hasElementSelect: true }
@@ -336,6 +357,7 @@ const unitDatabase = [
     {
         id: "esdeath", name: "Esdeath", role: "Dmg / Support",
         img: "images/Esdeath.png",
+        totalCost: 92000,
         placement: 1, tags: [],
         meta: { short: "Ruler", long: "Ruler", note: "Passive avg 37.5% Dmg (Cycles 0-75%). Ruler is strictly best due to 1 placement count." },
         stats: { dmg: 1975, spa: 7.5, crit: 0, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 3, passiveDmg: 37.5, element: "Ice", dotDuration: 0, range: 50 }
