@@ -30,7 +30,7 @@ const patchNotesData = [
         date: "Jan 13, 2026",
         changes: [
             { type: "Ui", text: "<b>Mobile:</b> Added a mobile menu toggle button and improved responsive layout." },
-            { type: "Feature", text: "<b>Value Score:</b> Added a 'Value' metric to all builds. This displays <b>DPS per Cost</b> (Efficiency), helping to identify the most economic builds." },
+            { type: "Feature", text: "<b>Efficiency Score:</b> Added an 'Efficiency' metric to all builds. This displays <b>DPS per Cost</b> (Efficiency), helping to identify the most economic builds." },
             { type: "Fix", text: "<b>Bambietta Logic:</b> Fixed the Element Selector. Switching elements now instantly recalculates stats and updates the build list correctly." }
         ]
     },

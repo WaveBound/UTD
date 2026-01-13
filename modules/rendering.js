@@ -1,3 +1,5 @@
+// --- START OF FILE rendering.js ---
+
 // ============================================================================
 // RENDERING.JS - HTML Generation & Display Functions
 // ============================================================================
@@ -99,7 +101,7 @@ function generateBuildRowHTML(r, i, unitConfig = {}) {
     if(r.isCustom) rankClass += ' is-custom';
     
     const rawScore = calculateBuildEfficiency(r, baseUnitCost, maxPlacement, unitId);
-    const valScore = rawScore.toFixed(3);
+    const effScore = rawScore.toFixed(3);
 
     let prioLabel = 'DMG STAT';
     let prioColor = '#ff5555';
@@ -146,10 +148,11 @@ function generateBuildRowHTML(r, i, unitConfig = {}) {
         displayLabel = "RNG";
     }
 
-    const valueSortClass = sortMode === 'value' ? 'is-value-sort' : '';
+    // UPDATED: CSS Class for efficiency sort
+    const effSortClass = sortMode === 'efficiency' ? 'is-efficiency-sort' : '';
 
     return `
-        <div class="build-row ${rankClass} ${valueSortClass}">
+        <div class="build-row ${rankClass} ${effSortClass}">
             <div class="br-header">
                 <div style="display:flex; align-items:center; gap:8px; min-width:0;">
                     <span class="br-rank">#${i+1}</span>
@@ -175,8 +178,8 @@ function generateBuildRowHTML(r, i, unitConfig = {}) {
                 </div>
                 <div class="br-res-col">
                     <button class="info-btn" onclick="showMath('${r.id}')">?</button>
-                    <div class="val-score-line">
-                        ${valScore} <span class="val-label">Val</span>
+                    <div class="eff-score-line">
+                        ${effScore} <span class="eff-label">Eff</span>
                     </div>
                     <div class="dps-container">
                         <span class="build-dps">${displayVal}</span>
@@ -223,7 +226,8 @@ function updateBuildListDisplay(unitId) {
 
         if(filtered.length === 0) return '<div style="padding:10px; color:#666;">No matches found.</div>';
         
-        if (sortSelect === 'value') {
+        // UPDATED: Check for 'efficiency' instead of 'value'
+        if (sortSelect === 'efficiency') {
             filtered.sort((a, b) => {
                 const effA = calculateBuildEfficiency(a, unitCost, unitPlace, unitId);
                 const effB = calculateBuildEfficiency(b, unitCost, unitPlace, unitId);
@@ -432,17 +436,18 @@ function renderDatabase() {
             
             const topControls = `<div class="unit-toolbar"><div style="display:flex; gap:10px;"><button class="select-btn" onclick="toggleSelection('${unit.id}')">${selectedUnitIds.has(unit.id) ? 'Selected' : 'Select'}</button><button class="calc-btn" onclick="openCalc('${unit.id}')">🖩 Custom Relics</button></div>${abilityToggleHtml}</div>`;
 
+            // UPDATED: 'Sort: Efficiency' instead of 'Sort: Value'
             const bottomControls = `
                 <div class="search-container" style="flex-direction:column; gap:8px;">
                     <div style="display:flex; gap:5px; width:100%;">
                         <input type="text" placeholder="Search..." style="flex-grow:1; padding:6px; border-radius:5px; border:1px solid #333; background:#111; color:#fff; font-size:0.8rem;" onkeyup="filterList(this)">
                         
-                        <select onchange="filterList(this)" data-filter="sort" style="width:215px; padding:0 0 0 4px; font-size:0.7rem; height:30px; color:var(--success); font-weight:bold; border-color:rgba(16,185,129,0.3);">
+                        <select onchange="filterList(this)" data-filter="sort" style="width:235px; padding:0 0 0 4px; font-size:0.7rem; height:30px; color:var(--success); font-weight:bold; border-color:rgba(16,185,129,0.3);">
                             <option value="dps">Sort: DPS</option>
-                            <option value="value">Sort: Value</option>
+                            <option value="efficiency">Sort: Efficiency</option>
                         </select>
                         
-                        <select onchange="filterList(this)" data-filter="prio" style="width:160px; padding:0 0 0 4px; font-size:0.7rem; height:30px;">
+                        <select onchange="filterList(this)" data-filter="prio" style="width:140px; padding:0 0 0 4px; font-size:0.7rem; height:30px;">
                             <option value="all">All Prio</option>
                             <option value="dmg">Dmg</option>
                             <option value="spa">SPA</option>

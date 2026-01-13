@@ -80,7 +80,8 @@ header { text-align: center; width: 100%; }
     } 
 }
 
-.val-score {
+/* RENAMED FROM .val-score to .eff-score */
+.eff-score {
     display: block;
     font-size: 1.1rem;
     font-weight: 900;
@@ -90,7 +91,8 @@ header { text-align: center; width: 100%; }
     text-shadow: 0 0 10px rgba(16, 185, 129, 0.3);
 }
 
-.is-value-mode .build-dps {
+/* RENAMED FROM .is-value-mode to .is-efficiency-mode */
+.is-efficiency-mode .build-dps {
     font-size: 0.75rem;
     color: #aaa;
     font-weight: normal;
@@ -326,7 +328,8 @@ input[type="checkbox"]:checked + .mini-switch::after { transform: translateX(14p
     text-align: right;
 }
 
-.val-score-line {
+/* RENAMED FROM .val-score-line to .eff-score-line */
+.eff-score-line {
     display: flex;
     align-items: baseline; 
     justify-content: flex-end;
@@ -339,7 +342,8 @@ input[type="checkbox"]:checked + .mini-switch::after { transform: translateX(14p
     letter-spacing: -0.3px;
 }
 
-.val-label {
+/* RENAMED FROM .val-label to .eff-label */
+.eff-label {
     font-family: 'Segoe UI', sans-serif;
     font-size: 0.5rem;
     color: var(--success);
