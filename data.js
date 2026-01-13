@@ -315,7 +315,7 @@ const unitDatabase = [
         id: "Jingliu", name: "Jingliu", role: "Dmg",
         img: "images/Jingliu.png",
         placement: 3, tags: [],
-        meta: { short: "Ruler", long: "Ruler/Eternal/Astral", note: "Eternal provides highest DPS Potential, Ruler provides good dps to cost." },
+        meta: { short: "Ruler", long: "Eternal/Sacred", note: "Eternal provides highest DPS Potential, Ruler provides good dps to cost." },
         stats: { dmg: 1700, spa: 6, crit: 50, cdmg: 200, dot: 0, dotStacks: 1, spaCap: 3, passiveDmg: 35, element: "Ice", dotDuration: 0, range: 40 }
     },
     {
@@ -330,7 +330,7 @@ const unitDatabase = [
         id: "bambietta", name: "Bambietta", role: "Dmg / (Support/Dot)",
         img: "images/Bambietta.png",
         placement: 3, tags: [],
-        meta: { short: "Ruler", long: "Ruler/Eternal/Astral", note: "Eternal provides highest DPS Potential, Ruler provides good dps to cost." },
+        meta: { short: "Ruler", long: "Eternal/Astral", note: "Eternal provides highest DPS Potential, Ruler provides good dps to cost." },
         stats: { dmg: 1250, spa: 6.5, crit: 0, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 2, passiveDmg: 0, element: "Dark", dotDuration: 0, range: 38, hasElementSelect: true }
     },
     {

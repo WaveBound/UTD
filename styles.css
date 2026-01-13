@@ -21,7 +21,7 @@
 body { font-family: 'Segoe UI', Roboto, sans-serif; background-color: var(--bg-color); color: var(--text-primary); margin: 0; padding: 0; min-height: 100vh; display: flex; flex-direction: column; align-items: center; }
 
 header { text-align: center; width: 100%; }
-#headerContent { padding-top: 20px; }
+#headerContent { padding-top: 20px; padding-bottom: 10px; } 
 
 /* --- COLLAPSIBLE HEADER SECTIONS --- */
 .header-wrapper {
@@ -60,6 +60,9 @@ header { text-align: center; width: 100%; }
     opacity: 0;
     overflow: hidden;
     
+    /* FIX: Prevent clicking when invisible */
+    pointer-events: none; 
+    
     /* Ensure it is technically "there" for transition but hidden */
     display: block; 
 }
@@ -96,6 +99,9 @@ header { text-align: center; width: 100%; }
     max-height: 30px;
     opacity: 1;
     padding: 2px 0;
+    
+    /* FIX: Enable clicking only when sticky/visible */
+    pointer-events: auto;
 }
 
 body.header-collapsed .header-toggle-btn {
@@ -764,9 +770,14 @@ html.no-scroll, body.no-scroll {
 
 /* Mobile Adjustments */
 @media (max-width: 700px) {
-    .page { 
-        padding: 0 8px 220px 8px; /* Added bottom padding for fixed toolbar */
-    }
+.page { 
+    display: none; 
+    width: 100%; 
+    max-width: 1300px; 
+    padding: 0 15px 20px 15px; 
+    animation: fadeIn 0.4s ease; 
+    margin-top: 10px; 
+}
     .db-grid { grid-template-columns: 1fr; }
     .guide-grid { grid-template-columns: 1fr; }
     .calc-unit-header { flex-direction: column; align-items: flex-start; }
