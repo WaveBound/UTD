@@ -331,7 +331,7 @@ const unitDatabase = [
         img: "images/Bambietta.png",
         placement: 3, tags: [],
         meta: { short: "Ruler", long: "Ruler/Eternal/Astral", note: "Eternal provides highest DPS Potential, Ruler provides good dps to cost." },
-        stats: { dmg: 1250, spa: 14, crit: 0, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 4, passiveDmg: 0, element: "Dark", dotDuration: 0, range: 50, hasElementSelect: true }
+        stats: { dmg: 1250, spa: 6.5, crit: 0, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 2, passiveDmg: 0, element: "Dark", dotDuration: 0, range: 38, hasElementSelect: true }
     },
     {
         id: "esdeath", name: "Esdeath", role: "Dmg / Support",
