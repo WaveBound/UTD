@@ -2,13 +2,13 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Universal TD Optimizer</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
-    <!-- 1. HEADER TITLE SECTION (Scrolls away) -->
+    <!-- 1. HEADER TITLE SECTION -->
     <div id="headerTitleSection" class="header-wrapper">
         <div class="header-inner">
             <header id="mainHeader">
@@ -19,36 +19,46 @@
         </div>
     </div>
 
-    <!-- 2. TOOLBAR SECTION (Sticky) -->
+    <!-- 2. TOOLBAR SECTION (Desktop: Sticky Top | Mobile: Bottom Sheet) -->
     <div id="sticky-sentinel"></div>
     <div id="headerToolbarSection" class="sticky-toolbar-container">
         
+        <!-- Mobile Drag Handle -->
+        <div class="mobile-menu-handle" onclick="toggleMobileMenu()"></div>
+
         <!-- Navigation -->
         <div class="nav-bar">
-            <button class="nav-btn active" onclick="switchPage('db')">Unit Database</button>
-            <button class="nav-btn" onclick="switchPage('guides')">Build Guides</button>
+            <button class="nav-btn active" onclick="switchPage('db'); toggleMobileMenuIfOpen()">Unit Database</button>
+            <button class="nav-btn" onclick="switchPage('guides'); toggleMobileMenuIfOpen()">Build Guides</button>
             <button id="selectAllBtn" class="nav-btn" onclick="selectAllUnits()">Select All</button>
-            <button id="compareBtn" class="nav-btn" onclick="openComparison()">Compare (<span id="compareCount">0</span>)</button>
-            <button class="nav-btn" onclick="openPatchNotes()">Patch Notes</button>
+            
+            <!-- COMPARE BUTTON: Closes mobile menu when clicked -->
+            <button id="compareBtn" class="nav-btn" onclick="openComparison(); toggleMobileMenuIfOpen()">Compare (<span id="compareCount">0</span>)</button>
+            
+            <!-- PATCH NOTES: Closes mobile menu when clicked -->
+            <button class="nav-btn" onclick="openPatchNotes(); toggleMobileMenuIfOpen()">Patch Notes</button>
         </div>
 
         <!-- 1. DATABASE TOOLBAR -->
         <div id="dbInjector" class="injector-panel">
-            <button class="nav-btn add-btn" onclick="openCustomPairModal()">+ Add Custom Pair</button>
+            <button class="nav-btn add-btn" onclick="openCustomPairModal(); toggleMobileMenuIfOpen()">+ Add Custom Pair</button>
             
             <label id="hypoToggle" class="nav-toggle-label" title="Current: Relic Stats for DoT% are ignored (Bugged). Check to apply fixes.">
                 <input type="checkbox" id="globalHypothetical" onchange="toggleHypothetical(this)">
                 <span id="hypoLabel">Bugged Relics</span>
+                <div class="mobile-switch-visual"></div>
             </label>
 
             <label id="headPieceToggle" class="nav-toggle-label is-checked" title="Auto-equips the best Unique Head Piece">
                 <input type="checkbox" id="globalHeadPiece" onchange="toggleHeadPiece(this)" checked>
                 <span>+ Head Relic</span>
+                <div class="mobile-switch-visual"></div>
             </label>
 
             <label id="subStatsToggle" class="nav-toggle-label is-checked" title="Adds Perfect Sub-Stats to Calculations">
                 <input type="checkbox" id="globalSubStats" onchange="toggleSubStats(this)" checked>
                 <span>+ Sub Stats</span>
+                <div class="mobile-switch-visual"></div>
             </label>
         </div>
 
@@ -57,31 +67,40 @@
             <select id="guideUnitSelect" style="display:none;"><option value="all">All Units</option></select>
             <select id="guideTraitSelect" style="display:none;"><option value="auto">Auto</option></select>
 
-            <button class="nav-btn" style="border:1px solid var(--accent-start); color:var(--accent-start); margin-right:15px;" onclick="openGuideConfig()">
+            <!-- CONFIGURE VIEW BUTTON: Now uses a class for better mobile responsiveness -->
+            <button class="nav-btn config-view-btn" onclick="openGuideConfig(); toggleMobileMenuIfOpen()">
             Configure View
             </button>
 
             <label id="guideHypoToggleWrapper" class="nav-toggle-label">
                 <input type="checkbox" id="guideHypoToggle" onchange="toggleHypothetical(this)">
                 <span id="guideHypoLabel">Bugged Relics</span>
+                <div class="mobile-switch-visual"></div>
             </label>
 
-            <label class="nav-toggle-label is-checked" title="Auto-equips the best Unique Head Piece">
+            <label class="nav-toggle-label is-checked">
                 <input type="checkbox" id="guideHeadPiece" onchange="toggleGuideHeadPiece(this)" checked>
                 <span>+ Head Relic</span>
+                <div class="mobile-switch-visual"></div>
             </label>
 
             <label class="nav-toggle-label is-checked">
                 <input type="checkbox" id="guideSubStats" onchange="toggleGuideSubStats(this)" checked>
                 <span>+ Sub Stats</span>
+                <div class="mobile-switch-visual"></div>
             </label>
         </div>
 
-        <!-- HEADER TOGGLE STRIP -->
+        <!-- HEADER TOGGLE STRIP (Desktop Only) -->
         <div class="header-toggle-strip" onclick="toggleHeader()" title="Toggle Header">
             <button id="headerToggleBtn" class="header-toggle-btn">▲</button>
         </div>
     </div>
+
+    <!-- Mobile Floating Action Button -->
+    <button id="mobileMenuFab" class="mobile-fab" onclick="toggleMobileMenu()">
+        <span>☰</span>
+    </button>
 
     <!-- DATABASE PAGE -->
     <div id="dbPage" class="page active db-grid">
@@ -278,5 +297,49 @@
     <script src="modules/math-render.js"></script>
     <script src="modules/sub-priority.js"></script>
     <script src="modules/init.js"></script>
+
+    <!-- INLINE SCRIPT FOR MOBILE MENU -->
+    <script>
+        function toggleMobileMenu() {
+            const toolbar = document.getElementById('headerToolbarSection');
+            const fab = document.getElementById('mobileMenuFab');
+            const isOpen = toolbar.classList.contains('is-mobile-open');
+
+            if (isOpen) {
+                // CLOSING
+                toolbar.classList.remove('is-mobile-open');
+                document.body.classList.remove('menu-open'); // <--- ADD THIS LINE
+                fab.innerHTML = '<span>☰</span>';
+                document.body.style.overflow = '';
+                document.removeEventListener('click', closeMenuOnClickOutside);
+            } else {
+                // OPENING
+                toolbar.classList.add('is-mobile-open');
+                document.body.classList.add('menu-open');    // <--- ADD THIS LINE
+                fab.innerHTML = '<span>✕</span>';
+                document.body.style.overflow = 'hidden';
+                setTimeout(() => {
+                    document.addEventListener('click', closeMenuOnClickOutside);
+                }, 100);
+            }
+        }
+
+        function toggleMobileMenuIfOpen() {
+            if (window.innerWidth <= 768) {
+                const toolbar = document.getElementById('headerToolbarSection');
+                if (toolbar.classList.contains('is-mobile-open')) {
+                    toggleMobileMenu();
+                }
+            }
+        }
+
+        function closeMenuOnClickOutside(e) {
+            const toolbar = document.getElementById('headerToolbarSection');
+            const fab = document.getElementById('mobileMenuFab');
+            if (!toolbar.contains(e.target) && !fab.contains(e.target)) {
+                toggleMobileMenu();
+            }
+        }
+    </script>
 </body>
 </html>

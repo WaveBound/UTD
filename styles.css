@@ -57,22 +57,17 @@ header { text-align: center; width: 100%; }
 }
 
 /* PERFORMANCE OPTIMIZATION: Content Visibility */
-/* This prevents the browser from rendering off-screen card contents */
 .unit-card {
     content-visibility: auto; 
     contain-intrinsic-size: 500px;
-    
-    /* Change 'backwards' to 'both' to ensure it stays invisible before the delay starts */
     animation: fadeIn 0.4s ease both; 
-    
-    /* Hardware acceleration for the animation */
     will-change: transform, opacity;
 }
 
 @keyframes fadeIn { 
     from { 
         opacity: 0; 
-        transform: translateY(15px); /* Add a slight slide-up for better effect */
+        transform: translateY(15px); 
     } 
     to { 
         opacity: 1; 
@@ -80,18 +75,16 @@ header { text-align: center; width: 100%; }
     } 
 }
 
-/* The new Value Score Number (Fallback class) */
 .val-score {
     display: block;
     font-size: 1.1rem;
     font-weight: 900;
-    color: var(--success); /* Green */
+    color: var(--success); 
     line-height: 1;
     margin-bottom: 2px;
     text-shadow: 0 0 10px rgba(16, 185, 129, 0.3);
 }
 
-/* When in Value Mode, make the DPS number smaller/subtle */
 .is-value-mode .build-dps {
     font-size: 0.75rem;
     color: #aaa;
@@ -136,14 +129,14 @@ h1 { font-size: 2.5rem; margin: 0; font-weight: 900; text-transform: uppercase; 
 .sticky-toolbar-container .nav-bar,
 .sticky-toolbar-container .injector-panel {
     transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease, padding 0.3s ease, margin 0.3s ease;
-    max-height: 500px; /* Arbitrary large value for transition */
+    max-height: 500px;
     overflow: hidden;
     opacity: 1;
 }
 
 body.header-collapsed .sticky-toolbar-container .nav-bar,
 body.header-collapsed .sticky-toolbar-container .injector-panel {
-    display: flex !important; /* Keep flex but animate props */
+    display: flex !important;
     max-height: 0;
     opacity: 0;
     padding-top: 0;
@@ -157,6 +150,17 @@ body.header-collapsed .sticky-toolbar-container .injector-panel {
 .nav-btn { background: transparent; border: 1px solid transparent; color: var(--text-secondary); padding: 8px 25px; border-radius: 8px; cursor: pointer; font-weight: 700; text-transform: uppercase; font-size: 0.9rem; transition: 0.3s; }
 .nav-btn:hover { color: #fff; background: rgba(255,255,255,0.05); }
 .nav-btn.active { background: linear-gradient(135deg, var(--accent-start), var(--accent-end)); color: white; box-shadow: 0 0 15px rgba(59, 130, 246, 0.3); }
+
+/* --- NEW CONFIG BUTTON STYLE --- */
+.config-view-btn {
+    border: 1px solid var(--accent-start);
+    color: var(--accent-start);
+    margin-right: 15px;
+}
+.config-view-btn:hover {
+    background: var(--accent-start);
+    color: white;
+}
 
 .nav-toggle-label { display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.05); border: 1px solid #333; padding: 6px 15px; border-radius: 6px; cursor: pointer; color: #888; font-weight: 700; text-transform: uppercase; font-size: 0.75rem; user-select: none; transition: 0.3s; margin-left: 10px; }
 .nav-toggle-label input { display: none; }
@@ -189,20 +193,17 @@ select { appearance: none; background-image: url("data:image/svg+xml;charset=US-
 /* --- DATABASE LAYOUT --- */
 .db-grid { grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 20px; width: 100%; }
 
-/* NEW: Integrated "Stat Column" Style */
 .mp-container {
     position: absolute;
     top: 0;
     right: -5px;
-    height: 100%; /* Spans full height of the banner for better integration */
-    
+    height: 100%;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: flex-end;
-    
     padding: 0 20px;
-    background: linear-gradient(to left, rgba(0,0,0,0.8), transparent); /* Fades in smoothly */
+    background: linear-gradient(to left, rgba(0,0,0,0.8), transparent);
     z-index: 5;
 }
 
@@ -211,29 +212,22 @@ select { appearance: none; background-image: url("data:image/svg+xml;charset=US-
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 1px;
-    
-    /* "What it was" -> Neutral Silver/White */
     color: #e2e8f0; 
     opacity: 0.8;
     margin-bottom: 4px;
 }
 
 .mp-val {
-    /* Reduced Size */
     font-size: 1.3rem; 
     font-weight: 900;
-    
-    /* Number is now Blue */
     color: var(--accent-start); 
-    
     line-height: 1;
     font-family: 'Segoe UI', sans-serif;
-    text-shadow: 0 2px 10px rgba(0,0,0,0.5); /* Subtle depth */
+    text-shadow: 0 2px 10px rgba(0,0,0,0.5);
 }
 
-/* Variant: Range (Law) */
 .mp-container.is-range .mp-val {
-    color: #4ade80; /* Green Number for Range */
+    color: #4ade80; 
 }
 
 .unit-card { background: var(--card-bg); border: 2px solid var(--card-border); border-radius: 16px; overflow: hidden; position: relative; transition: all 0.2s; display: flex; flex-direction: column; box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
@@ -314,8 +308,6 @@ input[type="checkbox"]:checked + .mini-switch::after { transform: translateX(14p
 .stat-line { display: flex; align-items: center; gap: 4px; overflow: hidden; white-space: nowrap; }
 .sl-label { background: #1f2937; border: 1px solid #333; color: #9e9e9e; font-size: 0.55rem; font-weight: 1000; padding: 1px 2px; border-radius: 3px; min-width: 30px; text-align: center; flex-shrink: 0; }
 
-
-/* UPDATED: Right Column Container */
 .br-res-col {
     position: relative;
     display: flex;
@@ -323,18 +315,13 @@ input[type="checkbox"]:checked + .mini-switch::after { transform: translateX(14p
     justify-content: center;
     align-items: flex-end;
     gap: 0;
-    
-    /* Padding: Top 2px | Right 2px | Bottom 20px (Space for Button) | Left 10px */
     padding: 2px 2px 20px 5px; 
-    
     border-left: 1px solid rgba(255,255,255,0.05);
-    min-width: auto; /* Changed from 95px to auto to fit content tighter */     
+    min-width: auto;     
     text-align: right;
 }
 
-/* --- VALUE SCORE ROW (Green) --- */
 .val-score-line {
-    /* REMOVED Consolas */
     display: flex;
     align-items: baseline; 
     justify-content: flex-end;
@@ -342,8 +329,6 @@ input[type="checkbox"]:checked + .mini-switch::after { transform: translateX(14p
     line-height: 1;
     margin-bottom: 3px;
     color: var(--success); 
-    
-    /* Number Size: Adjusted for sans-serif */
     font-size: 0.95rem; 
     font-weight: 900;
     letter-spacing: -0.3px;
@@ -351,10 +336,7 @@ input[type="checkbox"]:checked + .mini-switch::after { transform: translateX(14p
 
 .val-label {
     font-family: 'Segoe UI', sans-serif;
-    
-    /* Label Size: Reduced */
     font-size: 0.5rem;
-    
     color: var(--success);
     opacity: 0.8;
     text-transform: uppercase;
@@ -362,15 +344,10 @@ input[type="checkbox"]:checked + .mini-switch::after { transform: translateX(14p
     letter-spacing: 0.5px;
 }
 
-/* --- DPS / STAT ROW (White) --- */
 .build-dps {
-    /* REMOVED Consolas */
-    
-    /* Adjusted Size */
     font-size: 1.0rem; 
-    
     font-weight: 800;
-    color: #ffffff !important; /* Bright White */
+    color: #ffffff !important; 
     letter-spacing: -0.3px;
     line-height: 1;
 }
@@ -378,7 +355,7 @@ input[type="checkbox"]:checked + .mini-switch::after { transform: translateX(14p
 .dps-label {
     font-family: 'Segoe UI', sans-serif;
     font-size: 0.55rem;
-    color: #94a3b8; /* Lighter Slate */
+    color: #94a3b8; 
     font-weight: 700;
     text-transform: uppercase;
     display: block;
@@ -386,22 +363,17 @@ input[type="checkbox"]:checked + .mini-switch::after { transform: translateX(14p
     letter-spacing: 0.5px;
 }
 
-/* --- INFO BUTTON (High Visibility) --- */
 .info-btn { 
     position: absolute; 
     bottom: 3px; 
     right: 3px; 
-    
     width: 16px; 
     height: 16px; 
     font-size: 0.65rem; 
     border-radius: 50%; 
-    
-    /* Made Lighter & clearer */
     background: rgba(255,255,255,0.08); 
     border: 1px solid #555; 
-    color: #aaa; /* Light Gray Text */
-    
+    color: #aaa; 
     cursor: pointer; 
     display: flex; 
     align-items: center; 
@@ -446,7 +418,6 @@ input[type="checkbox"]:checked + .mini-switch::after { transform: translateX(14p
 
 .guide-container { width: 100%; }
 .guide-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 20px; width: 100%; }
-/* .guide-card styles merged with .unit-card above */
 .guide-card-header { background: linear-gradient(to right, rgba(46, 16, 101, 0.6), rgba(0,0,0,0.2)); padding: 12px 15px; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center; }
 .guide-unit-info { display: flex; align-items: center; gap: 10px; }
 .guide-unit-info img:not(.element-icon) { width: 45px; height: 45px; border-radius: 50%; border: 2px solid #fff; }
@@ -461,16 +432,16 @@ input[type="checkbox"]:checked + .mini-switch::after { transform: translateX(14p
 
 .modal-overlay { 
     position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-    background: rgba(0,0,0,0.9); z-index: 2500; /* Increased Z-Index */
+    background: rgba(0,0,0,0.9); z-index: 2500; 
     display: none; align-items: center; justify-content: center; 
-    backdrop-filter: blur(8px); cursor: pointer; /* Clickable cue */
+    backdrop-filter: blur(8px); cursor: pointer; 
 }
 .modal-content { 
     background: var(--card-bg); border: 1px solid var(--card-border); 
     border-radius: 15px; max-width: 600px; width: 95%; 
     box-shadow: 0 0 40px rgba(0,0,0, 0.7); max-height: 90vh; 
     display: flex; flex-direction: column; overflow: hidden; padding: 0; 
-    position: relative; cursor: default; /* Reset cursor inside */
+    position: relative; cursor: default; 
 } 
 
 .modal-header-fixed { padding: 15px 20px; flex-shrink: 0; background: var(--card-bg); border-bottom: 1px solid #333; z-index: 5; display: flex; justify-content: space-between; align-items: center; }
@@ -537,30 +508,22 @@ input[type="checkbox"]:checked + .mini-switch::after { transform: translateX(14p
 
 /* --- INFO POPUP STYLING (Fixed Positioning & Syntax) --- */
 .info-popup-overlay {
-    position: fixed; /* Fixed so it floats over everything correctly */
-    top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0,0,0,0.85); /* Darker backdrop */
-    z-index: 99999; /* Highest priority */
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.85); z-index: 99999; 
     display: none; align-items: center; justify-content: center;
     backdrop-filter: blur(4px); animation: fadeIn 0.2s ease;
 }
 
 .info-popup-content {
-    background: #08080a; /* Deep dark bg */
-    border: 1px solid #333; 
-    border-radius: 12px;
-    width: 90%; max-width: 420px; 
-    padding: 25px;
+    background: #08080a; border: 1px solid #333; border-radius: 12px;
+    width: 90%; max-width: 420px; padding: 25px;
     box-shadow: 0 20px 50px rgba(0,0,0,0.95);
-    position: relative; 
-    animation: slideUp 0.25s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+    position: relative; animation: slideUp 0.25s cubic-bezier(0.18, 0.89, 0.32, 1.28);
 }
 
 .ip-close { 
-    position: absolute; top: 15px; right: 15px; 
-    background: transparent; border: none; 
-    color: #666; font-size: 1.5rem; line-height: 1;
-    cursor: pointer; transition: 0.2s;
+    position: absolute; top: 15px; right: 15px; background: transparent; border: none; 
+    color: #666; font-size: 1.5rem; line-height: 1; cursor: pointer; transition: 0.2s;
 }
 .ip-close:hover { color: #fff; transform: scale(1.1); }
 
@@ -573,23 +536,15 @@ input[type="checkbox"]:checked + .mini-switch::after { transform: translateX(14p
 
 .ip-body { font-size: 0.9rem; color: #bbb; line-height: 1.6; }
 
-/* Formula Box Styling */
 .ip-formula { 
-    background: #000; 
-    padding: 15px; 
-    border-radius: 8px; 
-    border: 1px solid #222;
-    font-family: 'JetBrains Mono', 'Consolas', monospace; 
-    color: #888; /* Default operator color */
-    margin-top: 15px; 
-    font-size: 0.8rem;
-    box-shadow: inset 0 2px 5px rgba(0,0,0,0.5);
+    background: #000; padding: 15px; border-radius: 8px; border: 1px solid #222;
+    font-family: 'JetBrains Mono', 'Consolas', monospace; color: #888; 
+    margin-top: 15px; font-size: 0.8rem; box-shadow: inset 0 2px 5px rgba(0,0,0,0.5);
 }
 
-/* Syntax Highlighting Classes */
-.ip-var { color: #d8b4fe; font-weight: bold; } /* Purple for Variables */
-.ip-num { color: #f59e0b; } /* Orange/Gold for Numbers */
-.ip-hl  { color: #38bdf8; } /* Blue for functions/modifiers */
+.ip-var { color: #d8b4fe; font-weight: bold; } 
+.ip-num { color: #f59e0b; } 
+.ip-hl  { color: #38bdf8; } 
 
 #patchModal .modal-content { max-width: 600px; }
 .patch-entry { background: rgba(255,255,255,0.03); border-radius: 8px; padding: 15px; margin-bottom: 15px; border-left: 3px solid var(--accent-start); }
@@ -600,7 +555,6 @@ input[type="checkbox"]:checked + .mini-switch::after { transform: translateX(14p
 .patch-list li { margin-bottom: 8px; font-size: 0.9rem; color: #ddd; display: flex; align-items: baseline; line-height: 1.4; }
 .patch-tag { color: var(--accent-start); font-weight: 700; font-size: 0.7rem; text-transform: uppercase; background: rgba(59, 130, 246, 0.15); padding: 2px 6px; border-radius: 4px; margin-right: 10px; flex-shrink: 0; }
 
-/* Sub Stat Priority Chart Styles */
 .prio-row { display: flex; align-items: center; margin-bottom: 12px; position: relative; padding: 4px 0; }
 .prio-label { width: 80px; font-size: 0.8rem; font-weight: 700; color: #fff; z-index: 2; text-shadow: 0 1px 2px #000; }
 .prio-bar-container { flex-grow: 1; background: rgba(255,255,255,0.05); height: 24px; border-radius: 4px; position: relative; overflow: hidden; margin-left: 10px; }
@@ -609,201 +563,76 @@ input[type="checkbox"]:checked + .mini-switch::after { transform: translateX(14p
 .prio-val { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); font-size: 0.75rem; font-weight: 800; color: #fff; z-index: 2; text-shadow: 0 1px 2px #000; }
 .prio-diff { position: absolute; left: 8px; top: 50%; transform: translateY(-50%); font-size: 0.7rem; font-weight: 700; color: rgba(255,255,255,0.7); z-index: 2; }
 
-/* REMOVE SPINNER ARROWS */
 input[type=number]::-webkit-inner-spin-button, 
 input[type=number]::-webkit-outer-spin-button { 
     -webkit-appearance: none; 
     margin: 0; 
 }
-input[type=number] {
-    -moz-appearance: textfield;
-}
+input[type=number] { -moz-appearance: textfield; }
 
-/* Add Calculator Button Style */
 .calc-btn {
-    background: rgba(6, 182, 212, 0.1);
-    border: 1px solid rgba(6, 182, 212, 0.3);
-    color: var(--custom);
-    padding: 5px 12px;
-    border-radius: 6px;
-    font-size: 0.75rem;
-    font-weight: 800;
-    text-transform: uppercase;
-    cursor: pointer;
-    transition: 0.2s;
-    display: flex;
-    align-items: center;
-    gap: 5px;
+    background: rgba(6, 182, 212, 0.1); border: 1px solid rgba(6, 182, 212, 0.3);
+    color: var(--custom); padding: 5px 12px; border-radius: 6px;
+    font-size: 0.75rem; font-weight: 800; text-transform: uppercase;
+    cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 5px;
 }
-.calc-btn:hover {
-    background: var(--custom);
-    color: #000;
-    box-shadow: 0 0 10px rgba(6, 182, 212, 0.3);
-}
+.calc-btn:hover { background: var(--custom); color: #000; box-shadow: 0 0 10px rgba(6, 182, 212, 0.3); }
 
-/* --- NEW CALCULATOR UI STYLES --- */
-#calcModal .modal-content {
-    background: #050505; /* Deep dark background */
-    max-width: 900px;
-}
-
-/* Top Panel: Unit Info & Global Settings */
+/* --- CALCULATOR UI STYLES --- */
+#calcModal .modal-content { background: #050505; max-width: 900px; }
 .calc-unit-header {
-    display: flex;
-    gap: 15px;
-    padding: 15px;
+    display: flex; gap: 15px; padding: 15px;
     background: linear-gradient(to right, rgba(46, 16, 101, 0.4), rgba(0,0,0,0));
-    border-bottom: 1px solid rgba(255,255,255,0.1);
-    align-items: center;
+    border-bottom: 1px solid rgba(255,255,255,0.1); align-items: center;
 }
 
 .calc-avatar {
-    width: 60px; height: 60px;
-    border-radius: 50%;
-    border: 2px solid #fff;
-    background: #222;
-    object-fit: cover;
-    box-shadow: 0 0 15px rgba(0,0,0,0.5);
+    width: 60px; height: 60px; border-radius: 50%; border: 2px solid #fff;
+    background: #222; object-fit: cover; box-shadow: 0 0 15px rgba(0,0,0,0.5);
 }
 
-.calc-unit-details {
-    flex-grow: 1;
-}
+.calc-unit-details { flex-grow: 1; }
+.calc-unit-name { font-size: 1.2rem; font-weight: 900; color: #fff; margin: 0; text-transform: uppercase; line-height: 1; }
+.calc-unit-role { font-size: 0.75rem; color: var(--accent-start); font-weight: bold; text-transform: uppercase; }
 
-.calc-unit-name {
-    font-size: 1.2rem;
-    font-weight: 900;
-    color: #fff;
-    margin: 0;
-    text-transform: uppercase;
-    line-height: 1;
-}
-
-.calc-unit-role {
-    font-size: 0.75rem;
-    color: var(--accent-start);
-    font-weight: bold;
-    text-transform: uppercase;
-}
-
-/* Global inputs in the header (Points, Set, Trait) */
-.calc-global-controls {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-}
-
-.c-control-group {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-
-.c-control-group label {
-    font-size: 0.6rem;
-    color: #888;
-    font-weight: 800;
-    text-transform: uppercase;
-}
+.calc-global-controls { display: flex; gap: 10px; flex-wrap: wrap; }
+.c-control-group { display: flex; flex-direction: column; gap: 4px; }
+.c-control-group label { font-size: 0.6rem; color: #888; font-weight: 800; text-transform: uppercase; }
 
 .c-input {
-    background: #000;
-    border: 1px solid #333;
-    color: #fff;
-    padding: 6px 10px;
-    border-radius: 6px;
-    font-family: 'Consolas', monospace;
-    font-size: 0.85rem;
-    min-width: 60px;
+    background: #000; border: 1px solid #333; color: #fff;
+    padding: 6px 10px; border-radius: 6px;
+    font-family: 'Consolas', monospace; font-size: 0.85rem; min-width: 60px;
 }
 .c-input:focus { border-color: var(--accent-start); outline: none; }
 select.c-input { cursor: pointer; }
 
-/* GEAR GRID LAYOUT */
-.gear-grid-container {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    gap: 15px;
-    padding: 20px;
-}
-
+.gear-grid-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 15px; padding: 20px; }
 .gear-card {
-    background: #0f1014;
-    border: 1px solid #222;
-    border-radius: 12px;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    transition: 0.2s;
+    background: #0f1014; border: 1px solid #222; border-radius: 12px;
+    overflow: hidden; display: flex; flex-direction: column; transition: 0.2s;
 }
 .gear-card:hover { border-color: #444; }
 
-.gear-header {
-    background: rgba(255,255,255,0.03);
-    padding: 10px 12px;
-    border-bottom: 1px solid #222;
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-}
+.gear-header { background: rgba(255,255,255,0.03); padding: 10px 12px; border-bottom: 1px solid #222; display: flex; flex-direction: column; gap: 5px; }
+.gear-title { font-size: 0.7rem; font-weight: 800; color: var(--gold); text-transform: uppercase; letter-spacing: 1px; }
 
-.gear-title {
-    font-size: 0.7rem;
-    font-weight: 800;
-    color: var(--gold);
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-
-/* Main Stat Selector Override */
 .gear-main-select {
-    width: 100%;
-    background: #000;
-    border: 1px solid #333;
-    color: #fff;
-    padding: 8px;
-    font-size: 0.8rem;
-    border-radius: 6px;
-    font-weight: bold;
+    width: 100%; background: #000; border: 1px solid #333;
+    color: #fff; padding: 8px; font-size: 0.8rem; border-radius: 6px; font-weight: bold;
 }
 
-/* Sub Stat Grid inside Card */
-.gear-subs {
-    padding: 12px;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px 12px;
-    background: #08080a;
-}
+.gear-subs { padding: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px 12px; background: #08080a; }
 
 .sub-input-group {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    background: rgba(255,255,255,0.02);
-    border: 1px solid #222;
-    border-radius: 4px;
-    padding: 2px 6px;
-    transition: 0.2s;
+    display: flex; align-items: center; gap: 8px;
+    background: rgba(255,255,255,0.02); border: 1px solid #222;
+    border-radius: 4px; padding: 2px 6px; transition: 0.2s;
 }
-.sub-input-group:focus-within {
-    border-color: #555;
-    background: #000;
-}
-.sub-input-group.disabled {
-    opacity: 0.5;
-    pointer-events: none;
-}
+.sub-input-group:focus-within { border-color: #555; background: #000; }
+.sub-input-group.disabled { opacity: 0.5; pointer-events: none; }
 
-.sub-label {
-    font-size: 0.65rem;
-    font-weight: 800;
-    text-transform: uppercase;
-    width: 35px; /* Fixed width for alignment */
-    flex-shrink: 0;
-}
-
-/* Color Coding for Sub Labels */
+.sub-label { font-size: 0.65rem; font-weight: 800; text-transform: uppercase; width: 35px; flex-shrink: 0; }
 .sub-dmg { color: #ff8888; }
 .sub-spa { color: #88ccff; }
 .sub-range { color: #ffa500; }
@@ -812,112 +641,187 @@ select.c-input { cursor: pointer; }
 .sub-dot { color: #4ade80; }
 
 .sub-val-input {
-    width: 100%;
-    background: transparent;
-    border: none;
-    color: #fff;
-    text-align: right;
-    font-family: 'Consolas', monospace;
-    font-size: 0.9rem;
-    padding: 4px 0;
+    width: 100%; background: transparent; border: none;
+    color: #fff; text-align: right;
+    font-family: 'Consolas', monospace; font-size: 0.9rem; padding: 4px 0;
 }
 .sub-val-input:focus { outline: none; }
 .sub-val-input::placeholder { color: #333; }
 
-/* Calculate Button Bar */
 .calc-footer-bar {
-    padding: 15px 20px;
-    background: #0f1014;
-    border-top: 1px solid #222;
-    display: flex;
-    justify-content: flex-end;
-    gap: 10px;
-    flex-shrink: 0; /* Ensure it stays visible */
-    z-index: 10;
+    padding: 15px 20px; background: #0f1014; border-top: 1px solid #222;
+    display: flex; justify-content: flex-end; gap: 10px; flex-shrink: 0; z-index: 10;
 }
 
-/* --- PREVENT SCROLLING --- */
-/* Lock scroll on both html and body to catch all browser behaviors */
-html.no-scroll, body.no-scroll {
-    overflow: hidden !important;
-    height: 100% !important; /* Prevents momentum scrolling on some mobile devices */
-}
+html.no-scroll, body.no-scroll { overflow: hidden !important; height: 100% !important; }
 
-/* Mobile Adjustments */
-@media (max-width: 700px) {
-.page { 
-    display: none; 
-    width: 100%; 
-    max-width: 1300px; 
-    padding: 0 15px 20px 15px; 
-    animation: fadeIn 0.4s ease; 
-    margin-top: 10px; 
-}
-    .db-grid { grid-template-columns: 1fr; }
-    .guide-grid { grid-template-columns: 1fr; }
-    .calc-unit-header { flex-direction: column; align-items: flex-start; }
-    .calc-global-controls { width: 100%; display: grid; grid-template-columns: 1fr 1fr; }
-    .c-control-group:nth-child(3), .c-control-group:nth-child(4) { grid-column: 1 / -1; }
-}
+/* --- DESKTOP INSTANT TOGGLE MODES --- */
+.build-list-container { display: none !important; width: 100%; }
+.unit-card.mode-bugged, .unit-card.mode-fixed { display: none !important; }
 
-/* --- INSTANT TOGGLE MODES --- */
-
-/* 1. Global Default: Hide all build lists by default */
-.build-list-container { 
-    display: none !important; 
-    width: 100%; 
-}
-/* Hide Unit Cards that are used as Guides (variants) by default */
-.unit-card.mode-bugged, .unit-card.mode-fixed {
-    display: none !important;
-}
-
-/* 2. SPECIFIC VISIBILITY LOGIC
-   Condition: Card State (Ability/Base) + Body State (Fixed/Bugged) + Body State (Config 0-3)
-*/
-
-/* --- DB TAB: BASE + BUGGED RELICS --- */
-/* Cfg 0: No Head, No Subs */
+/* Logic Group 1: BASE + BUGGED */
 body:not(.show-fixed-relics):not(.show-head):not(.show-subs) .unit-card:not(.use-ability) .mode-base.mode-bugged.cfg-0 { display: block !important; }
-/* Cfg 1: Subs Only */
 body:not(.show-fixed-relics):not(.show-head).show-subs       .unit-card:not(.use-ability) .mode-base.mode-bugged.cfg-1 { display: block !important; }
-/* Cfg 2: Head Only */
 body:not(.show-fixed-relics).show-head:not(.show-subs)       .unit-card:not(.use-ability) .mode-base.mode-bugged.cfg-2 { display: block !important; }
-/* Cfg 3: Head + Subs */
 body:not(.show-fixed-relics).show-head.show-subs             .unit-card:not(.use-ability) .mode-base.mode-bugged.cfg-3 { display: block !important; }
 
-/* --- DB TAB: BASE + FIXED RELICS --- */
+/* Logic Group 2: BASE + FIXED */
 body.show-fixed-relics:not(.show-head):not(.show-subs)       .unit-card:not(.use-ability) .mode-base.mode-fixed.cfg-0  { display: block !important; }
 body.show-fixed-relics:not(.show-head).show-subs             .unit-card:not(.use-ability) .mode-base.mode-fixed.cfg-1  { display: block !important; }
 body.show-fixed-relics.show-head:not(.show-subs)             .unit-card:not(.use-ability) .mode-base.mode-fixed.cfg-2  { display: block !important; }
 body.show-fixed-relics.show-head.show-subs                   .unit-card:not(.use-ability) .mode-base.mode-fixed.cfg-3  { display: block !important; }
 
-/* --- DB TAB: ABILITY + BUGGED RELICS --- */
+/* Logic Group 3: ABILITY + BUGGED */
 body:not(.show-fixed-relics):not(.show-head):not(.show-subs) .unit-card.use-ability       .mode-abil.mode-bugged.cfg-0 { display: block !important; }
 body:not(.show-fixed-relics):not(.show-head).show-subs       .unit-card.use-ability       .mode-abil.mode-bugged.cfg-1 { display: block !important; }
 body:not(.show-fixed-relics).show-head:not(.show-subs)       .unit-card.use-ability       .mode-abil.mode-bugged.cfg-2 { display: block !important; }
 body:not(.show-fixed-relics).show-head.show-subs             .unit-card.use-ability       .mode-abil.mode-bugged.cfg-3 { display: block !important; }
 
-/* --- DB TAB: ABILITY + FIXED RELICS --- */
+/* Logic Group 4: ABILITY + FIXED */
 body.show-fixed-relics:not(.show-head):not(.show-subs)       .unit-card.use-ability       .mode-abil.mode-fixed.cfg-0  { display: block !important; }
 body.show-fixed-relics:not(.show-head).show-subs             .unit-card.use-ability       .mode-abil.mode-fixed.cfg-1  { display: block !important; }
 body.show-fixed-relics.show-head:not(.show-subs)             .unit-card.use-ability       .mode-abil.mode-fixed.cfg-2  { display: block !important; }
 body.show-fixed-relics.show-head.show-subs                   .unit-card.use-ability       .mode-abil.mode-fixed.cfg-3  { display: block !important; }
 
-/* --- GUIDES TAB VISIBILITY --- */
-/* Note: Guides don't check for Ability usage on the card, only Body State */
-
-/* Group 1: Bugged (Not Fixed) */
+/* GUIDES Logic */
 body:not(.show-fixed-relics):not(.show-head):not(.show-subs) .unit-card.mode-bugged.cfg-0 { display: flex !important; }
 body:not(.show-fixed-relics):not(.show-head).show-subs       .unit-card.mode-bugged.cfg-1 { display: flex !important; }
 body:not(.show-fixed-relics).show-head:not(.show-subs)       .unit-card.mode-bugged.cfg-2 { display: flex !important; }
 body:not(.show-fixed-relics).show-head.show-subs             .unit-card.mode-bugged.cfg-3 { display: flex !important; }
 
-/* Group 2: Fixed */
 body.show-fixed-relics:not(.show-head):not(.show-subs)       .unit-card.mode-fixed.cfg-0 { display: flex !important; }
 body.show-fixed-relics:not(.show-head).show-subs             .unit-card.mode-fixed.cfg-1 { display: flex !important; }
 body.show-fixed-relics.show-head:not(.show-subs)             .unit-card.mode-fixed.cfg-2 { display: flex !important; }
 body.show-fixed-relics.show-head.show-subs                   .unit-card.mode-fixed.cfg-3 { display: flex !important; }
 
-/* WARNING VISIBILITY */
 body.show-fixed-relics .guide-warning { display: none !important; }
+
+/* --- MOBILE & BOTTOM SHEET LOGIC --- */
+
+/* 1. Mobile FAB (Bottom Right) */
+.mobile-fab {
+    display: none; /* Hidden on Desktop */
+    position: fixed;
+    bottom: 25px;
+    right: 25px;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent-start), var(--accent-end));
+    color: white;
+    border: none;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+    z-index: 9990;
+    cursor: pointer;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.mobile-fab:active { transform: scale(0.9); }
+
+/* Mobile Menu Backdrop Blur */
+body.menu-open::after {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6); /* Darkens the background */
+    backdrop-filter: blur(3px);      /* Blurs the background */
+    -webkit-backdrop-filter: blur(3px); /* Safari support */
+    z-index: 9980;                   /* Below FAB (9990) and Menu (10000) */
+    opacity: 0;
+    animation: fadeInOverlay 0.3s forwards;
+    pointer-events: none;            /* Allows clicks to pass through (handled by JS) */
+}
+
+@keyframes fadeInOverlay {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* 2. Drag Handle (Visible inside sheet) */
+.mobile-menu-handle {
+    display: none;
+    width: 100%;
+    height: 25px;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    margin-bottom: 10px;
+}
+.mobile-menu-handle::after {
+    content: ''; width: 40px; height: 5px; background: #444; border-radius: 10px;
+}
+
+/* 3. Mobile Specific Overrides */
+@media (max-width: 768px) {
+    .page { padding: 0 15px 100px 15px; margin-top: 10px; } /* Added bottom padding so FAB doesn't cover content */
+    
+    .db-grid { grid-template-columns: 1fr; }
+    .guide-grid { grid-template-columns: 1fr; }
+    .calc-unit-header { flex-direction: column; align-items: flex-start; }
+    .calc-global-controls { width: 100%; display: grid; grid-template-columns: 1fr 1fr; }
+    .c-control-group:nth-child(3), .c-control-group:nth-child(4) { grid-column: 1 / -1; }
+
+    /* Hide Desktop Toggle Strip */
+    .header-toggle-strip { display: none !important; }
+    
+    /* Show Mobile Elements */
+    .mobile-fab { display: flex; }
+    .mobile-menu-handle { display: flex; }
+
+    /* Fix for Config Button Layout Shift */
+    .config-view-btn {
+        width: 100%;
+        margin-right: 0;
+        margin-bottom: 10px;
+        text-align: center;
+    }
+
+    /* Transform Toolbar to Bottom Sheet */
+    .sticky-toolbar-container {
+        position: fixed; top: auto; bottom: 0; left: 0;
+        width: 100%; height: auto; max-height: 85vh;
+        background: rgba(15, 16, 20, 0.98);
+        backdrop-filter: blur(15px);
+        border-top: 1px solid var(--accent-start);
+        border-bottom: none;
+        border-radius: 20px 20px 0 0;
+        box-shadow: 0 -10px 40px rgba(0,0,0,0.8);
+        padding: 10px 20px 30px 20px;
+        z-index: 10000;
+        transform: translateY(120%);
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        flex-direction: column; align-items: stretch; overflow-y: auto;
+    }
+    
+    .sticky-toolbar-container.is-mobile-open { transform: translateY(0); }
+
+    /* Reflow Navigation Buttons */
+    .nav-bar { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 0; width: 100%; margin-bottom: 20px; }
+    .nav-btn { width: 100%; text-align: center; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid #333; }
+
+    /* Reflow Injector Panel */
+    .injector-panel { flex-direction: column; align-items: stretch; gap: 12px; padding: 0; background: transparent; border: none; width: 100%; }
+    .injector-panel select { width: 100%; max-width: none; padding: 12px; font-size: 1rem; }
+    .add-btn { margin-right: 0; margin-bottom: 10px; text-align: center; }
+
+    /* Mobile Toggles Row Style */
+    .nav-toggle-label {
+        display: flex; justify-content: space-between; padding: 15px; margin: 0;
+        background: rgba(0,0,0,0.4); border: 1px solid #333; font-size: 0.9rem;
+    }
+    .mobile-switch-visual {
+        position: relative; width: 40px; height: 20px; background: #333; border-radius: 20px; transition: 0.3s;
+    }
+    .mobile-switch-visual::after {
+        content: ''; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; background: #fff; border-radius: 50%; transition: 0.3s;
+    }
+    input[type="checkbox"]:checked ~ .mobile-switch-visual { background: var(--success); }
+    input[type="checkbox"]:checked ~ .mobile-switch-visual::after { transform: translateX(20px); }
+
+    #sticky-sentinel { display: none; }
+}

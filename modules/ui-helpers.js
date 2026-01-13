@@ -302,3 +302,39 @@ document.addEventListener('DOMContentLoaded', () => {
         observer.observe(sentinel);
     }
 });
+
+// Toggle Mobile Menu
+function toggleMobileMenu() {
+    const toolbar = document.getElementById('headerToolbarSection');
+    const fab = document.getElementById('mobileMenuFab');
+    const isOpen = toolbar.classList.contains('is-mobile-open');
+
+    if (isOpen) {
+        toolbar.classList.remove('is-mobile-open');
+        fab.innerHTML = '<span>☰</span>'; // Hamburger icon
+        document.body.style.overflow = ''; // Restore scrolling
+        
+        // Optional: Remove click-outside listener
+        document.removeEventListener('click', closeMenuOnClickOutside);
+    } else {
+        toolbar.classList.add('is-mobile-open');
+        fab.innerHTML = '<span>✕</span>'; // Close icon
+        document.body.style.overflow = 'hidden'; // Lock background scrolling
+        
+        // Add listener to close when clicking background (delayed to prevent immediate close)
+        setTimeout(() => {
+            document.addEventListener('click', closeMenuOnClickOutside);
+        }, 100);
+    }
+}
+
+// Helper to close menu when clicking outside the sheet
+function closeMenuOnClickOutside(e) {
+    const toolbar = document.getElementById('headerToolbarSection');
+    const fab = document.getElementById('mobileMenuFab');
+    
+    // If click is NOT inside the toolbar AND NOT on the FAB
+    if (!toolbar.contains(e.target) && !fab.contains(e.target)) {
+        toggleMobileMenu(); // Close it
+    }
+}
