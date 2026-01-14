@@ -69,7 +69,7 @@
 .br-set { color: #fff; font-weight: 700; font-size: 0.8rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
 .br-sep { color: #444; font-size: 0.8rem; font-weight: bold; margin: 0 5px; }
 
-.br-grid { display: flex; padding: 8px 10px; gap: 8px; }
+.br-grid { display: flex; padding: 8px 10px; gap: 0px; }
 
 .br-col { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
 .br-col.main { flex: 0.85; }
