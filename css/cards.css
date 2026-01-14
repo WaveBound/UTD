@@ -69,36 +69,15 @@
 .br-set { color: #fff; font-weight: 700; font-size: 0.8rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
 .br-sep { color: #444; font-size: 0.8rem; font-weight: bold; margin: 0 5px; }
 
-.br-grid { display: flex; padding: 8px 10px; gap: 8px; }
+.br-grid { display: flex; padding: 8px 10px; gap: 0px; }
 
 .br-col { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
 .br-col.main { flex: 0.85; }
-.br-col.sub { 
-    flex: 1.25; 
-    /* Remove the physical border */
-    border-left: none; 
-    padding-left: 12px; 
-    position: relative; 
-    /* Allow badges to bleed out of this container if needed */
-    overflow: visible; 
-}
-
-/* 2. Add the divider back as a decorative overlay */
-.br-col.sub::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 2px;
-    bottom: 2px;
-    width: 1px;
-    background: rgba(255,255,255,0.05);
-    z-index: 0; /* Keep the line behind the text */
-}
-
+.br-col.sub { flex: 1.25; border-left: 1px solid rgba(255,255,255,0.05); padding-left: 12px; position: relative; }
 .br-col-header { display: flex; justify-content: space-between; align-items: center; }
 
 /* Fix for sub-priority button alignment */
-.sub-list-btn { position: absolute; top: -3px; right: 0; }
+.sub-list-btn { position: absolute; top: -3px; right: 10px; }
 
 .br-col-title { font-size: 0.55rem; color: #666; font-weight: 800; text-transform: uppercase; margin-bottom: 5px; }
 .br-res-col { position: relative; display: flex; flex-direction: column; justify-content: center; align-items: flex-end; gap: 0; padding: 2px 2px 20px 5px; border-left: 1px solid rgba(255,255,255,0.05); min-width: auto; text-align: right; }
@@ -196,9 +175,10 @@
 .gear-grid-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 15px; padding: 20px; }
 .gear-card { background: #0f1014; border: 1px solid #222; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; transition: 0.2s; }
 .gear-card:hover { border-color: #444; }
-.gear-header { background: rgba(255,255,255,0.03); padding: 10px 12px; border-bottom: 1px solid #222; display: flex; flex-direction: column; gap: 5px; }
-.gear-title { font-size: 0.7rem; font-weight: 800; color: var(--gold); text-transform: uppercase; letter-spacing: 1px; }
-.gear-controls { display: flex; gap: 8px; align-items: flex-end; flex: 1; }
+.gear-header { background: rgba(255,255,255,0.03); padding: 10px 12px; border-bottom: 1px solid #222; display: flex; flex-direction: column; gap: 5px; align-items: flex-start; }
+.gear-title { font-size: 0.7rem; font-weight: 800; color: var(--gold); text-transform: uppercase; letter-spacing: 1px; width: 100%; text-align: left; }
+.gear-controls { display: flex; gap: 8px; align-items: center; flex: 1; width: 100%; }
+.gear-header > div { width: 100%; justify-content: flex-start !important; }
 .gear-main-select { width: 100%; background: #000; border: 1px solid #333; color: #fff; padding: 8px; font-size: 0.8rem; border-radius: 6px; font-weight: bold; flex: 1; }
 .gear-stars-select { color: var(--gold); font-weight: bold; width: 65px; display: none; }
 .gear-subs { padding: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px 12px; background: #08080a; }

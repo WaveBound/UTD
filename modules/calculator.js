@@ -205,6 +205,10 @@ function openCalc(unitId) {
         updateCardSubs(card, main);
         updateCalcUI();
     };
+
+    // Initial locking
+    updateCardSubs(document.querySelectorAll('#calcModal .gear-card')[1], calcBodyMain.value);
+    updateCardSubs(document.querySelectorAll('#calcModal .gear-card')[2], calcLegsMain.value);
     
     updateHeadStarVisibility();
     updateBodyStarVisibility();
