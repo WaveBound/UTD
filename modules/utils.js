@@ -1,8 +1,3 @@
-// ============================================================================
-// UTILS.JS - Utility & Formatting Functions
-// ============================================================================
-
-// Format large numbers for display
 const format = (n) => 
     n >= 1e9 ? (n/1e9).toFixed(2) + 'B' : 
     n >= 1e6 ? (n/1e6).toFixed(2) + 'M' : 
@@ -23,6 +18,7 @@ function getStatType(key) {
 }
 
 // Generate HTML badge for a single stat
+// UPDATED: Added onclick to open specific stat popup, added cursor:pointer
 function getBadgeHtml(statKeyOrName, value = null) {
     if (!statKeyOrName) return '<span style="font-size:0.65rem; color:#444;">-</span>';
     
@@ -36,10 +32,11 @@ function getBadgeHtml(statKeyOrName, value = null) {
         valueHtml = ` <span style="font-size:0.9em; opacity:1; margin-left:3px; font-weight:800;">${fmtVal}%</span>`;
     }
 
-    return `<span class="stat-badge" style="color:${info.color}; border-color:${info.border};">${innerContent}${valueHtml}</span>`;
+    return `<span class="stat-badge" style="color:${info.color}; border-color:${info.border}; cursor:pointer;" onclick="event.stopPropagation(); openInfoPopup('stat_${type}')">${innerContent}${valueHtml}</span>`;
 }
 
 // NEW: Render badge from explicit value array [{type:'dmg', val:12}, ...]
+// UPDATED: Added onclick to individual stat parts, added cursor:pointer
 function getRichBadgeHtml(statsArray) {
     if (!statsArray || statsArray.length === 0) return '<span style="font-size:0.65rem; color:#555;">None</span>';
     
@@ -60,7 +57,8 @@ function getRichBadgeHtml(statsArray) {
         const info = STAT_INFO[type];
         const valStr = stat.val.toFixed(1) + '%';
         
-        return `<span style="color:${info.color}; font-size:0.55rem; font-weight:700;">${info.label} <span style="font-weight:800; color:#fff; font-size:0.9em;">${valStr}</span></span>`;
+        // Add onclick to individual parts
+        return `<span style="color:${info.color}; font-size:0.55rem; font-weight:700; cursor:pointer;" onclick="event.stopPropagation(); openInfoPopup('stat_${type}')">${info.label} <span style="font-weight:800; color:#fff; font-size:0.9em;">${valStr}</span></span>`;
     });
 
     // 2. Apply dynamic border color

@@ -8,24 +8,54 @@ const NAME_TO_CODE = {
     "Dmg": "dmg", "Damage": "dmg",
     "SPA": "spa",
     "Crit Dmg": "cm", "Crit Damage": "cm",
-    "Crit Rate": "cf", "Crit": "cf", // Added "Crit" mapping
+    "Crit Rate": "cf", "Crit": "cf", 
     "DoT": "dot", "Buff Potency": "dot",
     "Range": "range"
 };
 
 // Styling Configuration for Stats
-// UPDATED: Abbreviated labels for Crit Rate and Crit Dmg to fit UI
 const STAT_INFO = {
     dmg:   { label: 'Dmg',       color: '#ff8888', border: 'rgba(255,50,50,0.3)' },
     spa:   { label: 'SPA',       color: '#88ccff', border: 'rgba(50,150,255,0.3)' },
     cdmg:  { label: 'CDmg',      color: '#d8b4fe', border: '#a855f7', special: '<span class="stat-cdmg-text" style="letter-spacing:-0.5px;">CDmg</span>' },
-    crit:  { label: 'CRate',      color: '#ffd700', border: 'rgba(255, 215, 0, 0.3)' },
+    crit:  { label: 'Crit',      color: '#ffd700', border: 'rgba(255, 215, 0, 0.3)' },
     dot:   { label: 'DoT',       color: '#4ade80', border: 'rgba(74, 222, 128, 0.3)' },
     range: { label: 'Range',     color: '#ffa500', border: 'rgba(255, 140, 0, 0.3)' }
 };
 
 // Info Definitions for Popups
+// UPDATED: Added definitions for individual stats
 const infoDefinitions = {
+    'stat_dmg': {
+        title: "Damage (Dmg)",
+        formula: `<span class="ip-var">Damage</span>`,
+        desc: "Increases the base damage dealt per hit."
+    },
+    'stat_spa': {
+        title: "Seconds Per Attack (SPA)",
+        formula: `<span class="ip-var">Seconds Per Attack</span>`,
+        desc: "Reduces the time between attacks. Lower is better/faster."
+    },
+    'stat_cdmg': {
+        title: "Critical Damage (CDmg)",
+        formula: `<span class="ip-var">Critical Damage</span>`,
+        desc: "The multiplier applied to damage when a Critical Hit occurs."
+    },
+    'stat_crit': {
+        title: "Critical Rate (Crit)",
+        formula: `<span class="ip-var">Critical Rate</span>`,
+        desc: "The percentage chance to land a Critical Hit."
+    },
+    'stat_dot': {
+        title: "Damage Over Time (DoT)",
+        formula: `<span class="ip-var">Damage Over Time</span>`,
+        desc: "Increases damage dealt by status effects (Burn, Bleed, etc) or Buff Potency for supports."
+    },
+    'stat_range': {
+        title: "Range (Rng)",
+        formula: `<span class="ip-var">Range</span>`,
+        desc: "Increases the radius of the unit's attack."
+    },
     'level_scale': {
         title: "Level Scaling Formula",
         formula: `

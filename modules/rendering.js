@@ -179,7 +179,8 @@ function generateBuildRowHTML(r, i, unitConfig = {}) {
                 </div>
                 <div class="br-res-col">
                     <button class="info-btn" onclick="showMath('${r.id}')">?</button>
-                    <div class="eff-score-line" title="DPS per Yen Spent (Click for info)" style="cursor:help;" onclick="event.stopPropagation(); openInfoPopup('efficiency')">
+                    <!-- UPDATED: Removed title attribute, kept onclick for popup -->
+                    <div class="eff-score-line" style="cursor:help;" onclick="event.stopPropagation(); openInfoPopup('efficiency')">
                         ${effScore} <span class="eff-label">Eff</span>
                     </div>
                     <div class="dps-container">
