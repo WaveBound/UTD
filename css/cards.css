@@ -73,7 +73,28 @@
 
 .br-col { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
 .br-col.main { flex: 0.85; }
-.br-col.sub { flex: 1.25; border-left: 1px solid rgba(255,255,255,0.05); padding-left: 12px; position: relative; }
+.br-col.sub { 
+    flex: 1.25; 
+    /* Remove the physical border */
+    border-left: none; 
+    padding-left: 12px; 
+    position: relative; 
+    /* Allow badges to bleed out of this container if needed */
+    overflow: visible; 
+}
+
+/* 2. Add the divider back as a decorative overlay */
+.br-col.sub::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 2px;
+    bottom: 2px;
+    width: 1px;
+    background: rgba(255,255,255,0.05);
+    z-index: 0; /* Keep the line behind the text */
+}
+
 .br-col-header { display: flex; justify-content: space-between; align-items: center; }
 
 /* Fix for sub-priority button alignment */
