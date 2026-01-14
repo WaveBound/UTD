@@ -1,8 +1,18 @@
+// --- START OF FILE rendering.js ---
+
 function getKiritoControlsHtml(unit) {
     if (unit.id !== 'kirito') return '';
     const isRealm = kiritoState.realm;
     const isCard = kiritoState.card;
-    return `<div class="unit-toolbar" style="border-bottom:none; padding-top:5px; padding-bottom:10px; flex-wrap:wrap; justify-content:flex-start; gap:15px; background:rgba(255,255,255,0.02);"><div class="toggle-wrapper"><span>Virtual Realm</span><label><input type="checkbox" ${isRealm ? 'checked' : ''} onchange="toggleKiritoMode('realm', this)"><div class="mini-switch"></div></label></div>${isRealm ? `<div class="toggle-wrapper" style="animation:fadeIn 0.3s ease;"><span style="color:${isCard ? 'var(--custom)' : '#888'}; font-weight:${isCard ? 'bold' : 'normal'};">Magician Card</span><label><input type="checkbox" ${isCard ? 'checked' : ''} onchange="toggleKiritoMode('card', this)"><div class="mini-switch" style="${isCard ? 'background:var(--custom);' : ''}"></div></label></div>` : ''}</div>`;
+    
+    // Classes for text and dynamic switch background
+    const labelClass = isCard ? 'color-custom font-bold' : 'color-gray';
+    const switchClass = isCard ? 'bg-custom' : '';
+
+    return `<div class="unit-toolbar custom-toolbar kirito-toolbar">
+        <div class="toggle-wrapper"><span>Virtual Realm</span><label><input type="checkbox" ${isRealm ? 'checked' : ''} onchange="toggleKiritoMode('realm', this)"><div class="mini-switch"></div></label></div>
+        ${isRealm ? `<div class="toggle-wrapper animate-fade"><span class="${labelClass}">Magician Card</span><label><input type="checkbox" ${isCard ? 'checked' : ''} onchange="toggleKiritoMode('card', this)"><div class="mini-switch ${switchClass}"></div></label></div>` : ''}
+    </div>`;
 }
 
 function getBambiettaControlsHtml(unit) {
@@ -11,18 +21,18 @@ function getBambiettaControlsHtml(unit) {
     const options = Object.keys(BAMBIETTA_MODES).map(k => 
         `<option value="${k}" ${currentEl === k ? 'selected' : ''}>${k} (${BAMBIETTA_MODES[k].desc})</option>`
     ).join('');
+    
     return `
-    <div class="unit-toolbar" style="border-bottom:none; padding-top:5px; padding-bottom:10px; background:rgba(255,255,255,0.02);">
-        <div style="display:flex; align-items:center; gap:10px;">
-            <span style="font-size:0.75rem; font-weight:bold; text-transform:uppercase; color:#aaa;">Element:</span>
-            <select onchange="setBambiettaElement(this.value, this)" style="width:auto; padding:4px; font-size:0.75rem;">
+    <div class="unit-toolbar custom-toolbar">
+        <div class="bambi-wrapper">
+            <span class="bambi-label">Element:</span>
+            <select onchange="setBambiettaElement(this.value, this)" class="bambi-select">
                 ${options}
             </select>
         </div>
     </div>`;
 }
 
-// --- HELPER: Shared Card Generator ---
 function createBaseUnitCard(unit, options = {}) {
     const {
         id = '',
@@ -42,7 +52,7 @@ function createBaseUnitCard(unit, options = {}) {
     
     let tags = '';
     if (tagsContent) {
-        tags = `<div class="unit-tags" style="background:rgba(255,255,255,0.02); border-bottom:1px solid var(--card-border); padding:8px 15px;">${tagsContent}</div>`;
+        tags = `<div class="unit-tags custom-tags">${tagsContent}</div>`;
     } else if (unit.tags && unit.tags.length > 0) {
         tags = `<div class="unit-tags">` + unit.tags.map(t => `<span class="unit-tag">${t}</span>`).join('') + `</div>`;
     }
@@ -59,8 +69,6 @@ function createBaseUnitCard(unit, options = {}) {
     `;
     return card;
 }
-
-// --- PART 1: DETAILED LIST RENDERING (DATABASE TAB) ---
 
 function calculateBuildEfficiency(build, unitCost, unitMaxPlacement, unitId) {
     let traitLimit = null;
@@ -96,9 +104,10 @@ function generateBuildRowHTML(r, i, unitConfig = {}) {
     const effScore = rawScore.toFixed(3);
 
     let prioLabel = 'DMG STAT';
-    let prioColor = '#ff5555';
-    if (r.prio === 'spa') { prioLabel = 'SPA STAT'; prioColor = 'var(--custom)'; }
-    if (r.prio === 'range') { prioLabel = 'RANGE STAT'; prioColor = '#4caf50'; }
+    let prioClass = 'prio-dmg';
+    
+    if (r.prio === 'spa') { prioLabel = 'SPA STAT'; prioClass = 'prio-spa'; }
+    if (r.prio === 'range') { prioLabel = 'RANGE STAT'; prioClass = 'prio-range'; }
 
     const bodyVal = MAIN_STAT_VALS.body[r.mainStats.body];
     const legsVal = MAIN_STAT_VALS.legs[r.mainStats.legs];
@@ -109,14 +118,27 @@ function generateBuildRowHTML(r, i, unitConfig = {}) {
     let headHtml = '';
     if (r.headUsed && r.headUsed !== 'none') {
         let headName = 'Unknown';
-        let headColor = '#ffffff';
+        let borderClass = 'border-unknown';
+        let textClass = 'text-unknown';
+        
         switch(r.headUsed) {
-            case 'sun_god': headName = 'Sun God'; headColor = '#38bdf8'; break;
-            case 'ninja': headName = 'Ninja'; headColor = '#ffffff'; break;
-            case 'reaper_necklace': headName = 'Reaper'; headColor = '#ef4444'; break; 
-            case 'shadow_reaper_necklace': headName = 'S. Reaper'; headColor = '#a855f7'; break; 
+            case 'sun_god': 
+                headName = 'Sun God'; borderClass = 'border-sungod'; textClass = 'text-sungod'; break;
+            case 'ninja': 
+                headName = 'Ninja'; borderClass = 'border-ninja'; textClass = 'text-ninja'; break;
+            case 'reaper_necklace': 
+                headName = 'Reaper'; borderClass = 'border-reaper'; textClass = 'text-reaper'; break; 
+            case 'shadow_reaper_necklace': 
+                headName = 'S. Reaper'; borderClass = 'border-sreaper'; textClass = 'text-sreaper'; break; 
         }
-        headHtml = `<div class="stat-line"><span class="sl-label">HEAD</span> <span style="display:inline-flex; align-items:center; justify-content:center; padding:0 4px; height:18px; border-radius:4px; font-size:0.6rem; font-weight:800; text-transform:uppercase; border:1px solid ${headColor}; white-space:nowrap; background:rgba(0,0,0,0.4); color:${headColor};">${headName}</span></div>`;
+        
+        headHtml = `
+        <div class="stat-line">
+            <span class="sl-label">HEAD</span> 
+            <div class="badge-base ${borderClass}">
+                <span class="${textClass}">${headName}</span>
+            </div>
+        </div>`;
     }
 
     let subInnerHtml = '';
@@ -128,10 +150,9 @@ function generateBuildRowHTML(r, i, unitConfig = {}) {
         if (s.body) subInnerHtml += `<div class="stat-line"><span class="sl-label">BODY</span> ${getRichBadgeHtml(s.body)}</div>`;
         if (s.legs) subInnerHtml += `<div class="stat-line"><span class="sl-label">LEGS</span> ${getRichBadgeHtml(s.legs)}</div>`;
     } else {
-        subInnerHtml = '<span style="font-size:0.65rem; color:#555;">None</span>';
+        subInnerHtml = '<span class="badge-empty">None</span>';
     }
 
-    // Determine what main number to show based on sort mode
     let displayVal = format(r.dps);
     let displayLabel = "DPS";
     
@@ -140,8 +161,6 @@ function generateBuildRowHTML(r, i, unitConfig = {}) {
         displayVal = val.toFixed(1);
         displayLabel = "RNG";
     } else if (sortMode === 'damage') {
-        // DAMAGE SORT (Modified):
-        // Shows DPS value, but the List is sorted by preference for Dmg/Dmg builds.
         displayVal = format(r.dps);
         displayLabel = "DPS"; 
     } else if (r.prio === 'range' && sortMode === 'dps') {
@@ -149,29 +168,28 @@ function generateBuildRowHTML(r, i, unitConfig = {}) {
         displayLabel = "DPS";
     }
 
-    // CSS Class for efficiency sort styling
     const effSortClass = sortMode === 'efficiency' ? 'is-efficiency-sort' : '';
 
     return `
         <div class="build-row ${rankClass} ${effSortClass}">
             <div class="br-header">
-                <div style="display:flex; align-items:center; gap:8px; min-width:0;">
+                <div class="br-header-info">
                     <span class="br-rank">#${i+1}</span>
                     <span class="br-set">${r.setName}</span>
                     <span class="br-sep">/</span>
                     <span class="br-trait">${r.traitName}</span>
                 </div>
-                <span class="prio-badge" style="color:${prioColor}; border-color:${prioColor};">${prioLabel}</span>
+                <span class="prio-badge ${prioClass}">${prioLabel}</span>
             </div>
             <div class="br-grid">
-                <div class="br-col" style="flex:0.85;">
+                <div class="br-col main">
                     <div class="br-col-title">MAIN STAT</div>
                     ${headHtml}
                     <div class="stat-line"><span class="sl-label">BODY</span> ${mainBodyBadge}</div>
                     <div class="stat-line"><span class="sl-label">LEGS</span> ${mainLegsBadge}</div>
                 </div>
-                <div class="br-col" style="flex:1.25; border-left:1px solid rgba(255,255,255,0.05); padding-left:12px;">
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                <div class="br-col sub">
+                    <div class="br-col-header">
                         <div class="br-col-title">SUB STAT</div>
                         <button class="sub-list-btn" title="View Sub-Stat Priority" onclick="viewSubPriority('${r.id}')">≡</button>
                     </div>
@@ -179,8 +197,7 @@ function generateBuildRowHTML(r, i, unitConfig = {}) {
                 </div>
                 <div class="br-res-col">
                     <button class="info-btn" onclick="showMath('${r.id}')">?</button>
-                    <!-- UPDATED: Removed title attribute, kept onclick for popup -->
-                    <div class="eff-score-line" style="cursor:help;" onclick="event.stopPropagation(); openInfoPopup('efficiency')">
+                    <div class="eff-score-line" onclick="event.stopPropagation(); openInfoPopup('efficiency')">
                         ${effScore} <span class="eff-label">Eff</span>
                     </div>
                     <div class="dps-container">
@@ -193,7 +210,6 @@ function generateBuildRowHTML(r, i, unitConfig = {}) {
     `;
 }
 
-// Update the visible build list based on filters
 function updateBuildListDisplay(unitId) {
     const card = document.getElementById('card-' + unitId);
     if (!card) return;
@@ -209,7 +225,7 @@ function updateBuildListDisplay(unitId) {
     const sortSelect = card.querySelector('select[data-filter="sort"]').value; 
 
     const renderList = (builds) => {
-        if(!builds || builds.length === 0) return '<div style="padding:10px; color:#666;">No valid builds found.</div>';
+        if(!builds || builds.length === 0) return '<div class="msg-empty">No valid builds found.</div>';
 
         let filtered = builds.filter(r => {
             let headSearchName = '';
@@ -226,9 +242,8 @@ function updateBuildListDisplay(unitId) {
             return textMatch && prioMatch && setMatch && headMatch;
         });
 
-        if(filtered.length === 0) return '<div style="padding:10px; color:#666;">No matches found.</div>';
+        if(filtered.length === 0) return '<div class="msg-empty">No matches found.</div>';
         
-        // Sorting Logic
         if (sortSelect === 'efficiency') {
             filtered.sort((a, b) => {
                 const effA = calculateBuildEfficiency(a, unitCost, unitPlace, unitId);
@@ -236,27 +251,18 @@ function updateBuildListDisplay(unitId) {
                 return effB - effA;
             });
         } else if (sortSelect === 'range') {
-            // Sort by Range (High to Low)
             filtered.sort((a, b) => (b.range || 0) - (a.range || 0));
         } else if (sortSelect === 'damage') {
-            // WEIGHTED DAMAGE SORT
-            // Sort by DPS, but heavily weight builds that use Damage Body & Damage Legs.
-            // This floats "Pure Damage" builds to the top while still showing DPS.
             filtered.sort((a, b) => {
                 let scoreA = a.dps;
                 let scoreB = b.dps;
-
                 const isDmgA = a.mainStats.body === 'dmg' && a.mainStats.legs === 'dmg';
                 const isDmgB = b.mainStats.body === 'dmg' && b.mainStats.legs === 'dmg';
-                
-                // 20% bias forces Dmg/Dmg builds to the top unless the alternative is massively better
                 if (isDmgA) scoreA *= 1.2; 
                 if (isDmgB) scoreB *= 1.2;
-
                 return scoreB - scoreA;
             });
         } else {
-            // STANDARD DPS SORTING (Pure)
             filtered.sort((a, b) => b.dps - a.dps);
         }
 
@@ -294,8 +300,6 @@ function updateBuildListDisplay(unitId) {
     });
 }
 
-// --- CORE LOGIC: UNIT CACHE PROCESSOR ---
-// Calculates builds for a single unit. Uses Static DB if available/valid, else uses Dynamic Math.
 function processUnitCache(unit) {
     unitBuildsCache[unit.id] = { 
         base: { bugged: [], fixed: [] }, 
@@ -321,23 +325,19 @@ function processUnitCache(unit) {
         const currentSubCandidates = getValidSubCandidates();
         const currentFilteredBuilds = getFilteredBuilds();
         
-        // --- UNIT STAT SETUP ---
         let currentStats = { ...unit.stats };
         if (useAbility && unit.ability) Object.assign(currentStats, unit.ability);
         if (unit.tags) currentStats.tags = unit.tags;
         
-        // Kirito Logic
         if (unit.id === 'kirito' && kiritoState.realm && kiritoState.card) { 
             currentStats.dot = 200; currentStats.dotDuration = 4; currentStats.dotStacks = 1; 
         }
         
-        // Bambietta Logic (Dynamic Element Injection)
         if (unit.id === 'bambietta') {
             const bMode = BAMBIETTA_MODES[bambiettaState.element];
             if (bMode) Object.assign(currentStats, bMode);
         }
 
-        // --- DB KEY GENERATION ---
         let dbKey = unit.id;
         if (unit.id === 'kirito' && kiritoState.card) dbKey = 'kirito_card';
         if (useAbility && unit.ability) dbKey += '_abil';
@@ -351,11 +351,6 @@ function processUnitCache(unit) {
 
             let staticList = null;
 
-            // CHECK STATIC DB
-            // We use Static DB if:
-            // 1. It exists
-            // 2. Unit is NOT Bambietta OR (Unit is Bambietta AND element is "Dark" (Default))
-            // This allows Bambietta to load fast on start, but calculate live when you switch elements.
             const isDefaultBambi = (unit.id === 'bambietta' && bambiettaState.element === 'Dark');
             const canUseStatic = (unit.id !== 'bambietta') || isDefaultBambi;
 
@@ -366,13 +361,11 @@ function processUnitCache(unit) {
 
             let calculatedResults = [];
             
-            // OPTION A: Use Static Data
             if (staticList) {
                 calculatedResults = [...staticList];
                 staticList.forEach(r => cachedResults[r.id] = r); 
             }
 
-            // OPTION B: Calculate Dynamically (Fallback or Bambietta Custom Element)
             let traitsForCalc = null; 
             if (staticList) {
                  const globalCustoms = typeof customTraits !== 'undefined' ? customTraits : [];
@@ -388,7 +381,6 @@ function processUnitCache(unit) {
             resultSet.push(calculatedResults);
         }
         
-        // Restore Globals
         statConfig.applyRelicDot = originalRelicDot;
         statConfig.applyRelicCrit = originalRelicCrit;
 
@@ -404,7 +396,6 @@ function processUnitCache(unit) {
     }
 }
 
-// --- OPTIMIZED RENDER FUNCTION ---
 function renderDatabase() {
     const container = document.getElementById('dbPage');
     
@@ -421,9 +412,7 @@ function renderDatabase() {
 
     let sortedUnits = [];
     
-    // --- STEP 1: PROCESS ALL UNITS ---
     unitDatabase.forEach(unit => {
-        // Use the new centralized helper
         processUnitCache(unit);
 
         let maxScore = 0;
@@ -436,7 +425,6 @@ function renderDatabase() {
 
     sortedUnits.sort((a, b) => b.maxScore - a.maxScore);
 
-    // --- STEP 2: BATCH DOM INSERTION ---
     function processNextChunk() {
         const startTime = performance.now();
         const fragment = document.createDocumentFragment();
@@ -453,37 +441,36 @@ function renderDatabase() {
             
             const abilityToggleHtml = unit.ability ? `<div class="toggle-wrapper"><span>Ability</span><label><input type="checkbox" class="ability-cb" ${activeAbilityIds.has(unit.id) ? 'checked' : ''} onchange="toggleAbility('${unit.id}', this)"><div class="mini-switch"></div></label></div>` : '<div></div>';
             
-            const topControls = `<div class="unit-toolbar"><div style="display:flex; gap:10px;"><button class="select-btn" onclick="toggleSelection('${unit.id}')">${selectedUnitIds.has(unit.id) ? 'Selected' : 'Select'}</button><button class="calc-btn" onclick="openCalc('${unit.id}')">🖩 Custom Relics</button></div>${abilityToggleHtml}</div>`;
+            const topControls = `<div class="unit-toolbar"><div class="flex gap-md"><button class="select-btn" onclick="toggleSelection('${unit.id}')">${selectedUnitIds.has(unit.id) ? 'Selected' : 'Select'}</button><button class="calc-btn" onclick="openCalc('${unit.id}')">🖩 Custom Relics</button></div>${abilityToggleHtml}</div>`;
 
-            // PRE-SELECT LOGIC FOR SORT DROPDOWN
             let defaultSort = 'dps';
             if (unit.id === 'sjw' || unit.id === 'esdeath') {
-                defaultSort = 'damage'; // Use our new Weighted Damage Sort
+                defaultSort = 'damage';
             } else if (unit.id === 'law') {
                 defaultSort = 'range';
             }
 
             const bottomControls = `
-                <div class="search-container" style="flex-direction:column; gap:8px;">
-                    <div style="display:flex; gap:5px; width:100%;">
-                        <input type="text" placeholder="Search..." style="flex-grow:1; padding:6px; border-radius:5px; border:1px solid #333; background:#111; color:#fff; font-size:0.8rem;" onkeyup="filterList(this)">
+                <div class="search-container">
+                    <div class="search-row">
+                        <input type="text" placeholder="Search..." class="search-input" onkeyup="filterList(this)">
                         
-                        <select onchange="filterList(this)" data-filter="sort" style="width:235px; padding:0 0 0 4px; font-size:0.7rem; height:30px; color:var(--success); font-weight:bold; border-color:rgba(16,185,129,0.3);">
+                        <select onchange="filterList(this)" data-filter="sort" class="search-select sort-select">
                             <option value="dps" ${defaultSort === 'dps' ? 'selected' : ''}>Sort: DPS</option>
                             <option value="damage" ${defaultSort === 'damage' ? 'selected' : ''}>Sort: Damage</option>
                             <option value="range" ${defaultSort === 'range' ? 'selected' : ''}>Sort: Range</option>
                             <option value="efficiency" ${defaultSort === 'efficiency' ? 'selected' : ''}>Sort: Efficiency</option>
                         </select>
                         
-                        <select onchange="filterList(this)" data-filter="prio" style="width:140px; padding:0 0 0 4px; font-size:0.7rem; height:30px;">
+                        <select onchange="filterList(this)" data-filter="prio" class="search-select prio-select">
                             <option value="all">All Prio</option>
                             <option value="dmg">Dmg</option>
                             <option value="spa">SPA</option>
                             <option value="range">Range</option>
                         </select>
                     </div>
-                    <div style="display:flex; gap:5px; width:100%;">
-                        <select onchange="filterList(this)" data-filter="set" style="flex:1; padding:0 0 0 4px; font-size:0.7rem; height:30px;">
+                    <div class="search-row">
+                        <select onchange="filterList(this)" data-filter="set" class="search-select">
                             <option value="all">All Sets</option>
                             <option value="Master Ninja">Ninja Set</option>
                             <option value="Sun God">Sun God Set</option>
@@ -492,7 +479,7 @@ function renderDatabase() {
                             <option value="Shadow Reaper">Shadow Reaper</option>
                             <option value="Reaper Set">Reaper Set</option>
                         </select>
-                        <select onchange="filterList(this)" data-filter="head" style="flex:1; padding:0 0 0 4px; font-size:0.7rem; height:30px;">
+                        <select onchange="filterList(this)" data-filter="head" class="search-select">
                             <option value="all">All Heads</option>
                             <option value="sun_god">Sun God</option>
                             <option value="ninja">Ninja</option>
@@ -525,7 +512,8 @@ function renderDatabase() {
                 mainContent: mainContent
             });
 
-            card.style.animationDelay = `${staggerIndex * 50}ms`; 
+            // Keep dynamic style for staggered animation, updated to use variable
+            card.style.setProperty('--stagger-delay', `${staggerIndex * 50}ms`); 
             staggerIndex++; 
 
             fragment.appendChild(card);
@@ -559,8 +547,6 @@ function renderDatabase() {
     processNextChunk();
 }
 
-// --- PART 2: GUIDE RENDERING (GUIDES TAB) ---
-
 function setGuideMode(mode) {
     currentGuideMode = mode;
     const isFixed = (mode === 'fixed');
@@ -570,7 +556,10 @@ function setGuideMode(mode) {
     if(document.getElementById('guideHypoLabel')) document.getElementById('guideHypoLabel').innerText = labelText;
     
     const warning = document.getElementById('guideWarning');
-    if(warning) warning.style.display = (mode === 'current') ? 'block' : 'none';
+    if(warning) {
+        if(mode === 'current') warning.classList.remove('hidden');
+        else warning.classList.add('hidden');
+    }
 }
 
 function populateGuideDropdowns() {
@@ -599,7 +588,7 @@ function renderGuideConfigUI() {
     const unitGrid = document.getElementById('guideConfigUnitGrid');
     const traitList = document.getElementById('guideConfigTraitList');
     
-    let unitsHtml = `<div class="config-item ${tempGuideUnit === 'all' ? 'selected' : ''}" onclick="selectGuideUnit('all')"><div style="width:50px; height:50px; border-radius:50%; border:2px solid #555; background:#000; display:flex; align-items:center; justify-content:center; font-weight:bold; color:#fff;">ALL</div><span>All Units</span></div>`;
+    let unitsHtml = `<div class="config-item ${tempGuideUnit === 'all' ? 'selected' : ''}" onclick="selectGuideUnit('all')"><div class="cp-avatar-placeholder">ALL</div><span>All Units</span></div>`;
     unitDatabase.forEach(u => { 
         unitsHtml += `<div class="config-item ${tempGuideUnit === u.id ? 'selected' : ''}" onclick="selectGuideUnit('${u.id}')">${getUnitImgHtml(u, '', 'small')}<span>${u.name}</span></div>`; 
     });
@@ -667,7 +656,6 @@ function processGuideTop3(rawBuilds, unit, traitFilterId) {
     return filtered.slice(0, 3);
 }
 
-// Unified Guide Card Creator
 function createGuideCard(unitObj, builds, modeClass) {
     const bestBuild = builds[0];
     
@@ -694,7 +682,7 @@ function createGuideCard(unitObj, builds, modeClass) {
         </div>`;
 
     const tagsContent = `
-            <span class="guide-trait-tag" style="font-size:0.75rem;">Best: ${bestBuild.traitName}</span>
+            <span class="guide-trait-tag text-xs-plus">Best: ${bestBuild.traitName}</span>
     `;
 
     const guideRowConfig = {
@@ -704,7 +692,7 @@ function createGuideCard(unitObj, builds, modeClass) {
         unitId: unitObj.id
     };
 
-    const mainContent = `<div class="top-builds-list" style="padding:10px;">` + 
+    const mainContent = `<div class="top-builds-list guide-list-wrapper">` + 
             builds.map((build, index) => generateBuildRowHTML(build, index, guideRowConfig)).join('') + 
             `</div>`;
 
@@ -739,7 +727,6 @@ function renderGuides() {
         : unitDatabase.filter(u => u.id === filterUnitId);
 
     unitsToProcess.forEach(unit => {
-        // Ensure cache exists for guide units too
         if (!unitBuildsCache[unit.id]) processUnitCache(unit);
 
         for(let cfg = 0; cfg < 4; cfg++) {
@@ -760,6 +747,6 @@ function renderGuides() {
     });
     
     if (guideGrid.children.length === 0) {
-        guideGrid.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:40px; color:#666;">No guides found. Database may still be calculating.</div>`;
+        guideGrid.innerHTML = `<div class="msg-empty">No guides found. Database may still be calculating.</div>`;
     }
 }

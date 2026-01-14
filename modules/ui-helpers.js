@@ -9,14 +9,10 @@ const resetAndRender = () => {
 };
 
 function filterList(element) {
-    // 1. Find the parent unit card component
     const card = element.closest('.unit-card');
     if (!card) return;
-
-    // 2. Extract the Unit ID from the card's HTML ID (e.g., "card-miku" -> "miku")
     const unitId = card.id.replace('card-', '');
 
-    // 3. Trigger the display update function located in rendering.js
     if (typeof updateBuildListDisplay === 'function') {
         updateBuildListDisplay(unitId);
     }
@@ -36,7 +32,6 @@ const updateBodyClass = (className, isChecked) => {
 
 // Toggle sub-stats (INSTANT CSS) - Used by both DB and Guide toggles
 const toggleSubStats = (cb) => toggleCheckbox(cb, (el) => {
-    // Sync the other checkbox (DB <-> Guide)
     const otherId = el.id === 'globalSubStats' ? 'guideSubStats' : 'globalSubStats';
     const otherCb = document.getElementById(otherId);
     if(otherCb) {
@@ -48,7 +43,6 @@ const toggleSubStats = (cb) => toggleCheckbox(cb, (el) => {
 
 // Toggle head piece (INSTANT CSS) - Used by both DB and Guide toggles
 const toggleHeadPiece = (cb) => toggleCheckbox(cb, (el) => {
-    // Sync the other checkbox (DB <-> Guide)
     const otherId = el.id === 'globalHeadPiece' ? 'guideHeadPiece' : 'globalHeadPiece';
     const otherCb = document.getElementById(otherId);
     if(otherCb) {
@@ -90,7 +84,6 @@ const toggleGuideHeadPiece = toggleHeadPiece;
 
 // Toggle Kirito mode (Realm/Card) - OPTIMIZED to prevent full page reload
 function toggleKiritoMode(mode, checkbox) {
-    // 1. Update State
     if (mode === 'realm') {
         kiritoState.realm = checkbox.checked;
         if (!checkbox.checked) kiritoState.card = false; 
@@ -98,11 +91,9 @@ function toggleKiritoMode(mode, checkbox) {
         kiritoState.card = checkbox.checked;
     }
     
-    // 2. Identify Kirito Unit
     const unit = unitDatabase.find(u => u.id === 'kirito');
     if (!unit) return;
 
-    // 3. Recalculate Cache ONLY for Kirito
     if (typeof processUnitCache === 'function') {
         processUnitCache(unit);
     } else {
@@ -111,23 +102,18 @@ function toggleKiritoMode(mode, checkbox) {
         return;
     }
 
-    // 4. Update DOM: Toolbar controls (Syncs switches if Realm turns off Card)
     const card = document.getElementById('card-kirito');
     if (card && typeof getKiritoControlsHtml === 'function') {
-        // Find the specific toolbar containing the Kirito toggles and replace it
         const toolbars = card.querySelectorAll('.unit-toolbar');
         toolbars.forEach(tb => {
             if (tb.innerText.includes('Virtual Realm')) {
-                // Generate fresh HTML based on new state and replace just this section
                 tb.outerHTML = getKiritoControlsHtml(unit);
             }
         });
     }
 
-    // 5. Update DOM: Build List (The numbers/stats)
     updateBuildListDisplay('kirito');
     
-    // 6. If viewing Guides, update the Guides UI explicitly
     if (document.getElementById('guidesPage').classList.contains('active')) {
         renderGuides();
     }
@@ -148,15 +134,10 @@ const getValidSubCandidates = () => SUB_CANDIDATES.filter(c =>
 
 // Set Bambietta Element (OPTIMIZED for Single Unit Update)
 function setBambiettaElement(element, selectEl) {
-    // 1. Update State
     bambiettaState.element = element;
-    
-    // 2. Find Bambietta
     const unit = unitDatabase.find(u => u.id === 'bambietta');
     if (!unit) return;
 
-    // 3. Recalculate Cache ONLY for Bambietta
-    // We utilize the global helper from rendering.js
     if (typeof processUnitCache === 'function') {
         processUnitCache(unit);
     } else {
@@ -165,11 +146,8 @@ function setBambiettaElement(element, selectEl) {
         return;
     }
 
-    // 4. Update ONLY Bambietta's DOM
-    // This refreshes the build lists inside the card without creating a new card
     updateBuildListDisplay(unit.id);
     
-    // 5. If Guides page is active, refresh guides (fast enough)
     if (document.getElementById('guidesPage').classList.contains('active')) {
         renderGuides();
     }
@@ -222,11 +200,17 @@ const updateCompareBtn = () => {
     const btn = document.getElementById('compareBtn');
     const count = selectedUnitIds.size;
     document.getElementById('compareCount').innerText = count;
-    btn.style.display = (count > 0 && isDbPage) ? 'block' : 'none';
+    
+    if (count > 0 && isDbPage) {
+        btn.classList.add('is-visible');
+    } else {
+        btn.classList.remove('is-visible');
+    }
+
     document.getElementById('selectAllBtn').innerText = (count === unitDatabase.length && count > 0) ? "Deselect All" : "Select All";
 };
 
-// Toggle ability for a unit (INSTANT CSS SWITCH)
+// Toggle ability for a unit
 function toggleAbility(unitId, checkbox) {
     const card = document.getElementById('card-' + unitId);
     if (!card) return;
@@ -248,19 +232,27 @@ function switchPage(pid) {
     const isDb = pid === 'db';
     if (pid === 'db') {
         document.getElementById('dbPage').classList.add('active');
-        document.getElementById('dbInjector').style.display = 'flex';
-        document.getElementById('guidesToolbar').style.display = 'none';
+        document.getElementById('dbInjector').classList.remove('hidden');
+        document.getElementById('guidesToolbar').classList.add('hidden');
         event.target.classList.add('active');
     } else if (pid === 'guides') {
         document.getElementById('guidesPage').classList.add('active');
-        document.getElementById('guidesToolbar').style.display = 'flex';
-        document.getElementById('dbInjector').style.display = 'none';
+        document.getElementById('guidesToolbar').classList.remove('hidden');
+        document.getElementById('dbInjector').classList.add('hidden');
         event.target.classList.add('active');
         renderGuides();
     }
     
-    document.getElementById('selectAllBtn').style.display = isDb ? 'block' : 'none';
-    if (!isDb) document.getElementById('compareBtn').style.display = 'none'; else updateCompareBtn();
+    const selectAllBtn = document.getElementById('selectAllBtn');
+    if(isDb) selectAllBtn.classList.remove('hidden');
+    else selectAllBtn.classList.add('hidden');
+
+    const compareBtn = document.getElementById('compareBtn');
+    if (!isDb) {
+        compareBtn.classList.remove('is-visible');
+    } else {
+        updateCompareBtn();
+    }
 }
 
 // Toggle deep dive section
@@ -268,11 +260,11 @@ const toggleDeepDive = (btn) => {
     const content = btn.nextElementSibling;
     const arrow = btn.querySelector('.dd-arrow');
     
-    if (content.style.display === 'none') {
-        content.style.display = 'block';
+    if (content.classList.contains('hidden')) {
+        content.classList.remove('hidden');
         arrow.textContent = '▼';
     } else {
-        content.style.display = 'none';
+        content.classList.add('hidden');
         arrow.textContent = '▶';
     }
 };
@@ -289,12 +281,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (sentinel && toolbar) {
         const observer = new IntersectionObserver(([entry]) => {
-            // If sentinel scrolls out of view (scrolling down)
             if (!entry.isIntersecting && entry.boundingClientRect.top < 0) {
-                // Switch toolbar to fixed
                 toolbar.classList.add('is-sticky');
             } else {
-                // Back at the top
                 toolbar.classList.remove('is-sticky');
             }
         }, { threshold: [1] });
@@ -303,38 +292,27 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// Toggle Mobile Menu
-function toggleMobileMenu() {
-    const toolbar = document.getElementById('headerToolbarSection');
-    const fab = document.getElementById('mobileMenuFab');
-    const isOpen = toolbar.classList.contains('is-mobile-open');
+let savedScrollPosition = 0;
 
-    if (isOpen) {
-        toolbar.classList.remove('is-mobile-open');
-        fab.innerHTML = '<span>☰</span>'; // Hamburger icon
-        document.body.style.overflow = ''; // Restore scrolling
-        
-        // Optional: Remove click-outside listener
-        document.removeEventListener('click', closeMenuOnClickOutside);
+function updateBodyScroll() {
+    // UPDATED: Removed reliance on hard-coded 'style.display === flex'. Now relies purely on '.is-visible' class.
+    const visibleModals = Array.from(document.querySelectorAll('.modal-overlay')).some(m => m.classList.contains('is-visible'));
+    const visiblePopups = document.getElementById('mathInfoPopup');
+    const body = document.body;
+
+    if (visibleModals || visiblePopups) {
+        if (!body.classList.contains('scroll-locked')) {
+            savedScrollPosition = window.scrollY;
+            // NOTE: This inline style is REQUIRED for dynamic position locking. 
+            // It uses a CSS variable (--scroll-offset) mapped in base.css.
+            body.style.setProperty('--scroll-offset', `-${savedScrollPosition}px`);
+            body.classList.add('scroll-locked');
+        }
     } else {
-        toolbar.classList.add('is-mobile-open');
-        fab.innerHTML = '<span>✕</span>'; // Close icon
-        document.body.style.overflow = 'hidden'; // Lock background scrolling
-        
-        // Add listener to close when clicking background (delayed to prevent immediate close)
-        setTimeout(() => {
-            document.addEventListener('click', closeMenuOnClickOutside);
-        }, 100);
-    }
-}
-
-// Helper to close menu when clicking outside the sheet
-function closeMenuOnClickOutside(e) {
-    const toolbar = document.getElementById('headerToolbarSection');
-    const fab = document.getElementById('mobileMenuFab');
-    
-    // If click is NOT inside the toolbar AND NOT on the FAB
-    if (!toolbar.contains(e.target) && !fab.contains(e.target)) {
-        toggleMobileMenu(); // Close it
+        if (body.classList.contains('scroll-locked')) {
+            body.classList.remove('scroll-locked');
+            body.style.removeProperty('--scroll-offset');
+            window.scrollTo(0, savedScrollPosition);
+        }
     }
 }

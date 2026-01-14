@@ -1,0 +1,52 @@
+/* DESKTOP INSTANT TOGGLE MODES */
+.build-list-container { display: none !important; width: 100%; }
+.unit-card.mode-bugged, .unit-card.mode-fixed { display: none !important; }
+
+/* Logic Group 1: BASE + BUGGED */
+body:not(.show-fixed-relics):not(.show-head):not(.show-subs) .unit-card:not(.use-ability) .mode-base.mode-bugged.cfg-0,
+body:not(.show-fixed-relics):not(.show-head).show-subs       .unit-card:not(.use-ability) .mode-base.mode-bugged.cfg-1,
+body:not(.show-fixed-relics).show-head:not(.show-subs)       .unit-card:not(.use-ability) .mode-base.mode-bugged.cfg-2,
+body:not(.show-fixed-relics).show-head.show-subs             .unit-card:not(.use-ability) .mode-base.mode-bugged.cfg-3 {
+    display: block !important;
+}
+
+/* Logic Group 2: BASE + FIXED */
+body.show-fixed-relics:not(.show-head):not(.show-subs)       .unit-card:not(.use-ability) .mode-base.mode-fixed.cfg-0,
+body.show-fixed-relics:not(.show-head).show-subs             .unit-card:not(.use-ability) .mode-base.mode-fixed.cfg-1,
+body.show-fixed-relics.show-head:not(.show-subs)             .unit-card:not(.use-ability) .mode-base.mode-fixed.cfg-2,
+body.show-fixed-relics.show-head.show-subs                   .unit-card:not(.use-ability) .mode-base.mode-fixed.cfg-3 {
+    display: block !important;
+}
+
+/* Logic Group 3: ABILITY + BUGGED */
+body:not(.show-fixed-relics):not(.show-head):not(.show-subs) .unit-card.use-ability       .mode-abil.mode-bugged.cfg-0,
+body:not(.show-fixed-relics):not(.show-head).show-subs       .unit-card.use-ability       .mode-abil.mode-bugged.cfg-1,
+body:not(.show-fixed-relics).show-head:not(.show-subs)       .unit-card.use-ability       .mode-abil.mode-bugged.cfg-2,
+body:not(.show-fixed-relics).show-head.show-subs             .unit-card.use-ability       .mode-abil.mode-bugged.cfg-3 {
+    display: block !important;
+}
+
+/* Logic Group 4: ABILITY + FIXED */
+body.show-fixed-relics:not(.show-head):not(.show-subs)       .unit-card.use-ability       .mode-abil.mode-fixed.cfg-0,
+body.show-fixed-relics:not(.show-head).show-subs             .unit-card.use-ability       .mode-abil.mode-fixed.cfg-1,
+body.show-fixed-relics.show-head:not(.show-subs)             .unit-card.use-ability       .mode-abil.mode-fixed.cfg-2,
+body.show-fixed-relics.show-head.show-subs                   .unit-card.use-ability       .mode-abil.mode-fixed.cfg-3 {
+    display: block !important;
+}
+
+/* GUIDES Logic */
+body:not(.show-fixed-relics):not(.show-head):not(.show-subs) .unit-card.mode-bugged.cfg-0,
+body:not(.show-fixed-relics):not(.show-head).show-subs       .unit-card.mode-bugged.cfg-1,
+body:not(.show-fixed-relics).show-head:not(.show-subs)       .unit-card.mode-bugged.cfg-2,
+body:not(.show-fixed-relics).show-head.show-subs             .unit-card.mode-bugged.cfg-3 {
+    display: flex !important;
+}
+
+body.show-fixed-relics:not(.show-head):not(.show-subs)       .unit-card.mode-fixed.cfg-0,
+body.show-fixed-relics:not(.show-head).show-subs             .unit-card.mode-fixed.cfg-1,
+body.show-fixed-relics.show-head:not(.show-subs)             .unit-card.mode-fixed.cfg-2,
+body.show-fixed-relics.show-head.show-subs                   .unit-card.mode-fixed.cfg-3 {
+    display: flex !important;
+}
+
+body.show-fixed-relics .guide-warning { display: none !important; }

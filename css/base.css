@@ -1,0 +1,36 @@
+body { font-family: 'Segoe UI', Roboto, sans-serif; background-color: var(--bg-color); color: var(--text-primary); margin: 0; padding: 0; min-height: 100vh; display: flex; flex-direction: column; align-items: center; }
+html.no-scroll, body.no-scroll { overflow: hidden !important; height: 100% !important; }
+
+/* Scroll Lock Helper - Updated to use CSS Variable */
+body.scroll-locked { position: fixed; width: 100%; top: var(--scroll-offset, 0px); }
+
+header { text-align: center; width: 100%; }
+#headerContent { padding-top: 20px; padding-bottom: 10px; } 
+h1 { font-size: 2.5rem; margin: 0; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; background: linear-gradient(to right, var(--accent-start), var(--accent-end)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+/* HEADER COLLAPSE LOGIC */
+.header-wrapper { display: grid; grid-template-rows: 1fr; transition: grid-template-rows 0.3s cubic-bezier(0.4, 0, 0.2, 1); width: 100%; }
+.header-inner { overflow: hidden; min-height: 0; }
+#sticky-sentinel { width: 100%; height: 1px; visibility: hidden; pointer-events: none; margin-bottom: -1px; }
+
+/* HEADER TOGGLE STRIP */
+.header-toggle-strip { width: 100%; background: transparent; border-top: 1px solid rgba(255,255,255,0.05); cursor: pointer; text-align: center; z-index: 1100; padding: 2px 0; display: block; }
+.header-toggle-strip:hover .header-toggle-btn { color: var(--accent-start); }
+body.header-collapsed .header-toggle-btn { transform: rotate(180deg); }
+
+/* STICKY TOOLBAR */
+.sticky-toolbar-container { position: sticky; top: 0; z-index: 1000; width: 100%; background: rgba(5, 5, 5, 0.95); border-bottom: 1px solid var(--card-border); box-shadow: 0 4px 30px rgba(0,0,0,0.5); display: flex; flex-direction: column; align-items: center; }
+.sticky-toolbar-container .nav-bar, .sticky-toolbar-container .injector-panel { transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease, padding 0.3s ease, margin 0.3s ease; max-height: 500px; overflow: hidden; opacity: 1; }
+body.header-collapsed .sticky-toolbar-container .nav-bar, body.header-collapsed .sticky-toolbar-container .injector-panel { display: flex !important; max-height: 0; opacity: 0; padding-top: 0; padding-bottom: 0; margin-top: 0; margin-bottom: 0; border: none; }
+
+/* NAV & INJECTOR */
+.nav-bar { display: flex; gap: 10px; padding: 15px; justify-content: center; width: 100%; margin-bottom: 5px; flex-wrap: wrap; }
+.injector-panel { width: 100%; background: rgba(255,255,255,0.03); border-top: 1px solid rgba(255,255,255,0.05); padding: 10px 15px; display: flex; gap: 10px; align-items: center; justify-content: center; flex-wrap: wrap; white-space: nowrap; transition: 0.3s; }
+
+/* PAGES & LAYOUTS */
+.page { display: none; width: 100%; max-width: 1300px; padding: 20px 15px 20px 15px; animation: fadeIn 0.4s ease; }
+.page.active { display: grid; }
+.db-grid { grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 20px; width: 100%; }
+.guide-container { width: 100%; }
+.guide-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 20px; width: 100%; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }

@@ -1,58 +1,37 @@
-// ============================================================================
-// SUB-PRIORITY.JS - Sub Stat Analysis Logic
-// ============================================================================
+// --- START OF FILE sub-priority.js ---
 
 function viewSubPriority(buildId) {
     const resultData = cachedResults[buildId];
-    if (!resultData) { 
-        console.error("Build data not found"); 
-        return; 
-    }
+    if (!resultData) return;
 
-    // --- RECONSTRUCTION LOGIC FOR STATIC DB ---
-    // 1. Identify Unit
     let unit = unitDatabase.find(u => buildId.startsWith(u.id));
-    if (!unit) { console.error("Unit not found for ID string:", buildId); return; }
+    if (!unit) return;
 
-    // 2. Identify Active States
     const isAbility = buildId.includes('-ABILITY');
     const isVR = buildId.includes('-VR');
     const isCard = buildId.includes('-CARD');
 
-    // 3. Identify Trait
-    // Use traitName from data or fallback to parsing if name missing (unlikely)
     let trait = traitsList.find(t => t.name === resultData.traitName) || 
                 customTraits.find(t => t.name === resultData.traitName) ||
                 (unitSpecificTraits[unit.id] || []).find(t => t.name === resultData.traitName);
     
     if (!trait) trait = traitsList.find(t => t.id === 'ruler');
 
-    // 4. Identify Set & Main Stats
-    // If mainStats missing (super lite), guess based on Set Name, but static DB should have it.
     let ms = resultData.mainStats || { body: 'dmg', legs: 'dmg' };
     const setName = resultData.setName;
     const setEntry = SETS.find(s => s.name === setName) || SETS[2];
 
-    // UPDATED Helper: Apply Perfect Sub Stats Logic with Collision Handling
     const applySubLogic = (b, target, mainStat) => {
         let actual = target;
         let isFallback = false;
         
-        // If the target sub-stat matches the Main Stat, we must pick a fallback
         if (actual === mainStat) {
-            // If main stat is Range, fallback to Damage. Otherwise, fallback to Range.
-            // This ensures we always have a high-value stat filling the slot.
             actual = (mainStat === 'range') ? 'dmg' : 'range';
             isFallback = true;
         }
         
-        // Add Perfect Sub Rolls (6 rolls)
-        // Note: Logic allows mixing stats, but for priority view we assume "Pure" rolling on the target
         for (let k in PERFECT_SUBS) {
-            if (k === mainStat) continue; // Skip main stat base roll
-            
-            // If this is the chosen stat (actual), apply 6 rolls
-            // Otherwise apply 1 base roll (simulating the other 3 lines)
+            if (k === mainStat) continue; 
             let mult = (k === actual) ? 6 : 1;
             b[k] = (b[k] || 0) + (PERFECT_SUBS[k] * mult);
         }
@@ -63,7 +42,6 @@ function viewSubPriority(buildId) {
     let comparisonList = [];
     const candidates = ['spa', 'dmg', 'range', 'cm', 'cf', 'dot'];
     
-    // Determine context points
     const isSpaPrio = resultData.prio === 'spa';
     const dmgPts = isSpaPrio ? 0 : 99;
     const spaPts = isSpaPrio ? 99 : 0;
@@ -80,7 +58,6 @@ function viewSubPriority(buildId) {
         isVirtualRealm: unit.id === 'kirito' && isVR
     };
 
-    // Calculate Base Main Stats
     let baseDmg = 0, baseSpa = 0, baseCm = 0, baseCf = 0, baseRange = 0, baseDot = 0;
     const addMain = (type) => {
         if(type === 'dmg') baseDmg += 60;
@@ -104,7 +81,6 @@ function viewSubPriority(buildId) {
         effStats.dotStacks = 1; 
     }
 
-    // Calculate baseline (mixed level 1 subs)
     let baselineBuild = {
         set: setEntry.id,
         dmg: baseDmg, spa: baseSpa, cm: baseCm, cf: baseCf, range: baseRange, dot: baseDot
@@ -137,7 +113,6 @@ function viewSubPriority(buildId) {
         desc: "Simulates random Level 1 stats on all pieces (Un-rerolled)"
     });
 
-    // Calculate candidates
     candidates.forEach(cand => {
         if (cand === 'dot' && !statConfig.applyRelicDot) return;
         if ((cand === 'cm' || cand === 'cf') && !statConfig.applyRelicCrit) return;
@@ -178,7 +153,6 @@ function viewSubPriority(buildId) {
     comparisonList.sort((a, b) => b.val - a.val);
     const maxVal = comparisonList[0].val;
 
-    // Render
     let html = '';
     const getLabel = (k) => SUB_NAMES[k] || k.toUpperCase();
     
@@ -194,32 +168,31 @@ function viewSubPriority(buildId) {
         const isBaseline = item.type === 'baseline';
         
         let colorClass = isBest ? 'best' : '';
-        let barStyle = '';
+        // UPDATED: Used classes for bar color, width remains inline
+        let barClass = isBaseline ? 'sub-prio-bar-bg' : '';
+
         let labelText = getLabel(item.type);
-        
-        if (isBaseline) {
-            labelText = "Lv.1 Subs (Mixed)";
-            barStyle = 'background: #444; opacity: 1;'; 
-        }
+        if (isBaseline) labelText = "Lv.1 Subs (Mixed)";
 
         const fmtVal = unit.id === 'law' ? item.val.toFixed(1) : format(item.val);
         const label = unit.id === 'law' ? 'Range' : 'DPS';
         
         let warningIcon = '';
-        if (item.conflicts > 0) warningIcon = ` <span style="color:#ffcc00;">⚠️</span>`;
+        if (item.conflicts > 0) warningIcon = ` <span class="text-gold">⚠️</span>`;
 
         html += `
         <div class="prio-row" title="${item.desc}">
-            <div class="prio-label" style="${isBaseline ? 'color:#999;' : ''}">${labelText}${warningIcon}</div>
+            <div class="prio-label ${isBaseline ? 'text-dim' : ''}">${labelText}${warningIcon}</div>
             <div class="prio-bar-container">
-                <div class="prio-bar ${colorClass}" style="width:${percent}%; ${barStyle}"></div>
+                <div class="prio-bar ${colorClass} ${barClass}" style="--bar-width:${percent}%"></div>
                 <div class="prio-diff">${isBaseline ? 'FLOOR' : diff}</div>
-                <div class="prio-val">${fmtVal} <span style="font-size:0.6rem; opacity:0.7;">${label}</span></div>
+                <div class="prio-val">${fmtVal} <span class="text-xs-dim opacity-70">${label}</span></div>
             </div>
         </div>`;
     });
 
-    html += `<div style="margin-top:15px; font-size:0.7rem; color:#666; text-align:center;">
+    // UPDATED: Used class sub-prio-note
+    html += `<div class="sub-prio-note">
         Hover over bars to see specific piece stats.<br>
         ⚠️ = Fallback used (Main Stat cannot match Sub Stat).
     </div>`;
