@@ -81,21 +81,56 @@ header { text-align: center; width: 100%; }
 }
 
 /* RENAMED FROM .val-score to .eff-score */
-.eff-score {
-    display: block;
-    font-size: 1.1rem;
-    font-weight: 900;
-    color: var(--success); 
+.eff-score-line {
+    display: flex;
+    align-items: baseline; 
+    justify-content: flex-end;
+    gap: 3px;
     line-height: 1;
-    margin-bottom: 2px;
-    text-shadow: 0 0 10px rgba(16, 185, 129, 0.3);
+    margin-bottom: 3px;
+    color: var(--success); 
+    font-size: 0.95rem; 
+    font-weight: 900;
+    letter-spacing: -0.3px;
+    
+    /* New Interaction Styles */
+    cursor: help;
+    border-bottom: 1px dashed rgba(16, 185, 129, 0.4); /* Dashed underline to hint interaction */
+    padding-bottom: 2px;
+    transition: all 0.2s ease;
+    width: fit-content;
+    margin-left: auto; /* Aligns to right flex */
 }
 
-/* RENAMED FROM .is-value-mode to .is-efficiency-mode */
-.is-efficiency-mode .build-dps {
-    font-size: 0.75rem;
-    color: #aaa;
-    font-weight: normal;
+/* Hover Effect for Eff Score */
+.eff-score-line:hover {
+    color: #fff;
+    border-bottom-color: #fff;
+    text-shadow: 0 0 8px rgba(16, 185, 129, 0.8);
+    transform: translateY(-1px);
+}
+
+/* RENAMED FROM .val-label to .eff-label */
+.eff-label {
+    font-family: 'Segoe UI', sans-serif;
+    font-size: 0.5rem;
+    color: var(--success);
+    opacity: 0.8;
+    text-transform: uppercase;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    transition: color 0.2s;
+}
+
+.eff-score-line:hover .eff-label {
+    color: #fff;
+    opacity: 1;
+}
+
+/* Optional: Update the stat badge cursor since we added titles */
+.stat-badge {
+    /* ... existing styles ... */
+    cursor: help; /* Adds the ? cursor when hovering stats */
 }
 
 body.header-collapsed .header-toggle-btn {
