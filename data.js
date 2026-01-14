@@ -336,7 +336,7 @@ const unitDatabase = [
         totalCost: 39000,
         placement: 3, tags: [],
         meta: { short: "Ruler", long: "Ruler/Eternal/Astral", note: "Eternal provides highest DPS Potential, Ruler provides good dps to cost." },
-        stats: { dmg: 1500, spa: 9, crit: 0, cdmg: 150, dot: 100, dotStacks: 1, spaCap: 4, passiveDmg: 60, element: "Fire", dotDuration: 4, range: 30 }
+        stats: { dmg: 1500, spa: 9, crit: 0, cdmg: 150, dot: 100, dotStacks: 1, spaCap: 6, passiveDmg: 60, element: "Fire", dotDuration: 4, range: 30 }
     }, 
     {
         id: "Jingliu", name: "Jingliu", role: "Dmg",
