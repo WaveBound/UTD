@@ -1,11 +1,3 @@
-// --- START OF FILE rendering.js ---
-
-// ============================================================================
-// RENDERING.JS - HTML Generation & Display Functions
-// ============================================================================
-
-// --- SHARED HELPER FUNCTIONS ---
-
 function getKiritoControlsHtml(unit) {
     if (unit.id !== 'kirito') return '';
     const isRealm = kiritoState.realm;
@@ -234,11 +226,28 @@ function updateBuildListDisplay(unitId) {
                 return effB - effA;
             });
         } else {
-            if (unitId === 'law' && prioSelect === 'range') {
-                filtered.sort((a, b) => (b.range || 0) - (a.range || 0));
-            } else {
-                filtered.sort((a, b) => b.dps - a.dps);
-            }
+            // STANDARD DPS SORTING WITH SPECIAL LOGIC
+            filtered.sort((a, b) => {
+                let scoreA = a.dps;
+                let scoreB = b.dps;
+
+                // SPECIAL LOGIC: SJW prefers Dmg/Dmg over Crit/Dmg if values are close
+                // If a build is Dmg/Dmg, give it a 5% "sorting weight" boost.
+                // This ensures Dmg/Dmg appears #1 even if Crit is marginally better mathematically.
+                if (unitId === 'sjw') {
+                    const isPureDmgA = a.mainStats.body === 'dmg' && a.mainStats.legs === 'dmg';
+                    const isPureDmgB = b.mainStats.body === 'dmg' && b.mainStats.legs === 'dmg';
+                    
+                    if (isPureDmgA) scoreA *= 1.05; 
+                    if (isPureDmgB) scoreB *= 1.05;
+                }
+
+                if (unitId === 'law' && prioSelect === 'range') {
+                    return (b.range || 0) - (a.range || 0);
+                } else {
+                    return scoreB - scoreA;
+                }
+            });
         }
 
         let displaySlice = filtered.slice(0, 10);
