@@ -231,10 +231,10 @@ function updateBuildListDisplay(unitId) {
                 let scoreA = a.dps;
                 let scoreB = b.dps;
 
-                // SPECIAL LOGIC: SJW prefers Dmg/Dmg over Crit/Dmg if values are close
+                // SPECIAL LOGIC: SJW/Esdeath prefers Dmg/Dmg over Crit/Dmg if values are close
                 // If a build is Dmg/Dmg, give it a 5% "sorting weight" boost.
                 // This ensures Dmg/Dmg appears #1 even if Crit is marginally better mathematically.
-                if (unitId === 'sjw') {
+                if (unitId === 'sjw' || unitId === 'esdeath') {
                     const isPureDmgA = a.mainStats.body === 'dmg' && a.mainStats.legs === 'dmg';
                     const isPureDmgB = b.mainStats.body === 'dmg' && b.mainStats.legs === 'dmg';
                     
