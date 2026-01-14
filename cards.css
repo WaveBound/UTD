@@ -77,7 +77,7 @@
 .br-col-header { display: flex; justify-content: space-between; align-items: center; }
 
 /* Fix for sub-priority button alignment */
-.sub-list-btn { position: absolute; top: -3px; right: 0; }
+.sub-list-btn { position: absolute; top: -3px; right: 10px; }
 
 .br-col-title { font-size: 0.55rem; color: #666; font-weight: 800; text-transform: uppercase; margin-bottom: 5px; }
 .br-res-col { position: relative; display: flex; flex-direction: column; justify-content: center; align-items: flex-end; gap: 0; padding: 2px 2px 20px 5px; border-left: 1px solid rgba(255,255,255,0.05); min-width: auto; text-align: right; }
