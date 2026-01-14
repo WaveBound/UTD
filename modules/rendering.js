@@ -131,16 +131,25 @@ function generateBuildRowHTML(r, i, unitConfig = {}) {
         subInnerHtml = '<span style="font-size:0.65rem; color:#555;">None</span>';
     }
 
+    // Determine what main number to show based on sort mode
     let displayVal = format(r.dps);
     let displayLabel = "DPS";
     
-    if (r.prio === 'range') {
-        const val = (r.range !== undefined) ? r.range : r.dps;
+    if (sortMode === 'range') {
+        const val = (r.range !== undefined) ? r.range : 0;
         displayVal = val.toFixed(1);
         displayLabel = "RNG";
+    } else if (sortMode === 'damage') {
+        // DAMAGE SORT (Modified):
+        // Shows DPS value, but the List is sorted by preference for Dmg/Dmg builds.
+        displayVal = format(r.dps);
+        displayLabel = "DPS"; 
+    } else if (r.prio === 'range' && sortMode === 'dps') {
+        displayVal = format(r.dps);
+        displayLabel = "DPS";
     }
 
-    // UPDATED: CSS Class for efficiency sort
+    // CSS Class for efficiency sort styling
     const effSortClass = sortMode === 'efficiency' ? 'is-efficiency-sort' : '';
 
     return `
@@ -218,36 +227,36 @@ function updateBuildListDisplay(unitId) {
 
         if(filtered.length === 0) return '<div style="padding:10px; color:#666;">No matches found.</div>';
         
-        // UPDATED: Check for 'efficiency' instead of 'value'
+        // Sorting Logic
         if (sortSelect === 'efficiency') {
             filtered.sort((a, b) => {
                 const effA = calculateBuildEfficiency(a, unitCost, unitPlace, unitId);
                 const effB = calculateBuildEfficiency(b, unitCost, unitPlace, unitId);
                 return effB - effA;
             });
-        } else {
-            // STANDARD DPS SORTING WITH SPECIAL LOGIC
+        } else if (sortSelect === 'range') {
+            // Sort by Range (High to Low)
+            filtered.sort((a, b) => (b.range || 0) - (a.range || 0));
+        } else if (sortSelect === 'damage') {
+            // WEIGHTED DAMAGE SORT
+            // Sort by DPS, but heavily weight builds that use Damage Body & Damage Legs.
+            // This floats "Pure Damage" builds to the top while still showing DPS.
             filtered.sort((a, b) => {
                 let scoreA = a.dps;
                 let scoreB = b.dps;
 
-                // SPECIAL LOGIC: SJW/Esdeath prefers Dmg/Dmg over Crit/Dmg if values are close
-                // If a build is Dmg/Dmg, give it a 5% "sorting weight" boost.
-                // This ensures Dmg/Dmg appears #1 even if Crit is marginally better mathematically.
-                if (unitId === 'sjw' || unitId === 'esdeath') {
-                    const isPureDmgA = a.mainStats.body === 'dmg' && a.mainStats.legs === 'dmg';
-                    const isPureDmgB = b.mainStats.body === 'dmg' && b.mainStats.legs === 'dmg';
-                    
-                    if (isPureDmgA) scoreA *= 1.05; 
-                    if (isPureDmgB) scoreB *= 1.05;
-                }
+                const isDmgA = a.mainStats.body === 'dmg' && a.mainStats.legs === 'dmg';
+                const isDmgB = b.mainStats.body === 'dmg' && b.mainStats.legs === 'dmg';
+                
+                // 20% bias forces Dmg/Dmg builds to the top unless the alternative is massively better
+                if (isDmgA) scoreA *= 1.2; 
+                if (isDmgB) scoreB *= 1.2;
 
-                if (unitId === 'law' && prioSelect === 'range') {
-                    return (b.range || 0) - (a.range || 0);
-                } else {
-                    return scoreB - scoreA;
-                }
+                return scoreB - scoreA;
             });
+        } else {
+            // STANDARD DPS SORTING (Pure)
+            filtered.sort((a, b) => b.dps - a.dps);
         }
 
         let displaySlice = filtered.slice(0, 10);
@@ -445,15 +454,24 @@ function renderDatabase() {
             
             const topControls = `<div class="unit-toolbar"><div style="display:flex; gap:10px;"><button class="select-btn" onclick="toggleSelection('${unit.id}')">${selectedUnitIds.has(unit.id) ? 'Selected' : 'Select'}</button><button class="calc-btn" onclick="openCalc('${unit.id}')">🖩 Custom Relics</button></div>${abilityToggleHtml}</div>`;
 
-            // UPDATED: 'Sort: Efficiency' instead of 'Sort: Value'
+            // PRE-SELECT LOGIC FOR SORT DROPDOWN
+            let defaultSort = 'dps';
+            if (unit.id === 'sjw' || unit.id === 'esdeath') {
+                defaultSort = 'damage'; // Use our new Weighted Damage Sort
+            } else if (unit.id === 'law') {
+                defaultSort = 'range';
+            }
+
             const bottomControls = `
                 <div class="search-container" style="flex-direction:column; gap:8px;">
                     <div style="display:flex; gap:5px; width:100%;">
                         <input type="text" placeholder="Search..." style="flex-grow:1; padding:6px; border-radius:5px; border:1px solid #333; background:#111; color:#fff; font-size:0.8rem;" onkeyup="filterList(this)">
                         
                         <select onchange="filterList(this)" data-filter="sort" style="width:235px; padding:0 0 0 4px; font-size:0.7rem; height:30px; color:var(--success); font-weight:bold; border-color:rgba(16,185,129,0.3);">
-                            <option value="dps">Sort: DPS</option>
-                            <option value="efficiency">Sort: Efficiency</option>
+                            <option value="dps" ${defaultSort === 'dps' ? 'selected' : ''}>Sort: DPS</option>
+                            <option value="damage" ${defaultSort === 'damage' ? 'selected' : ''}>Sort: Damage</option>
+                            <option value="range" ${defaultSort === 'range' ? 'selected' : ''}>Sort: Range</option>
+                            <option value="efficiency" ${defaultSort === 'efficiency' ? 'selected' : ''}>Sort: Efficiency</option>
                         </select>
                         
                         <select onchange="filterList(this)" data-filter="prio" style="width:140px; padding:0 0 0 4px; font-size:0.7rem; height:30px;">
