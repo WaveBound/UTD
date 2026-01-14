@@ -1,8 +1,3 @@
-// ============================================================================
-// CONSTANTS.JS - Configuration & Static Data
-// ============================================================================
-
-// Main Stat Values for Calculator UI
 const MAIN_STAT_VALS = {
     body: { dmg: 60, dot: 75, cm: 120 },
     legs: { dmg: 60, spa: 22.5, cf: 37.5, range: 30 }
@@ -83,5 +78,10 @@ const infoDefinitions = {
         title: "Attack Rate & Multi-Hit",
         formula: `<span class="ip-var">Mult</span> = 1 + (<span class="ip-var">Extra</span> / <span class="ip-var">Needed</span>)`,
         desc: "Used for units like Kirito who trigger extra attacks upon critting.<br>If a unit hits multiple times per 'Attack Cycle' (SPA), we multiply the final DPS to account for the extra hits generated per second."
+    },
+    'efficiency': {
+        title: "Cost Efficiency (DPS per Yen)",
+        formula: `<span class="ip-var">Score</span> = <span class="ip-var">Total DPS</span> / <span class="ip-var">Total Cost</span>`,
+        desc: "This metric shows how much Damage Per Second you get for every <b>1 Yen</b> spent.<br><br><b>Total Cost</b> includes:<br>1. Deployment Cost<br>2. Max Upgrade Cost<br>3. Multiplied by Unit Placement Limit (e.g., x3 units).<br><br>A higher number means the unit is more economic."
     }
 };
