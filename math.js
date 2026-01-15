@@ -408,7 +408,65 @@ function calculateDPS(uStats, relicStats, context) {
 
     const hitDpsTotal = (avgHit / finalSpa) * placement * attackMultiplier;
 
-    // 11. DoT CALCULATION
+    // ==========================================================
+    // 11. SUMMON / PLANE CALCULATION (NEW LOGIC)
+    // ==========================================================
+    let summonDpsTotal = 0;
+    let summonData = null;
+
+    if (uStats.summonStats) {
+        const s = uStats.summonStats;
+        const planeBaseDmg = finalDmg * (s.dmgPct / 100); // 50% of Host Damage
+        
+        // Helper to calc plane DPS
+        const calcPlaneTypeDPS = (typeStats) => {
+            const attacksPerLife = Math.floor(typeStats.duration / typeStats.spa) + 1; // +1 for attack at t=0
+            let totalDamageOverLife = 0;
+
+            for (let i = 0; i < attacksPerLife; i++) {
+                const time = i * typeStats.spa;
+                let isBuffed = time < s.buffWindow;
+                
+                // Plane Crit Logic (Does not inherit host stats)
+                let pCr = isBuffed ? s.buffCrit : 0;
+                let pCdmg = isBuffed ? s.buffCdmg : 150; // Assume base 150
+                
+                let pMult = (1 + ((pCdmg/100) * (pCr/100)));
+                totalDamageOverLife += planeBaseDmg * pMult;
+            }
+            
+            // DPS of one plane of this type
+            return totalDamageOverLife / typeStats.duration; 
+        };
+
+        const dpsA = calcPlaneTypeDPS(s.planeA);
+        const dpsB = calcPlaneTypeDPS(s.planeB);
+        const avgOnePlaneDps = (dpsA + dpsB) / 2;
+
+        // Calculate Plane Count based on Host SPA
+        // Avg Duration / Host SPA = How many she can keep alive
+        const avgDuration = (s.planeA.duration + s.planeB.duration) / 2;
+        const theoreticalCount = avgDuration / finalSpa;
+        
+        // Capped at 9
+        const actualCount = Math.min(theoreticalCount, s.maxCount);
+        
+        // Total Summon DPS (multiplied by placement)
+        summonDpsTotal = (avgOnePlaneDps * actualCount) * placement;
+
+        summonData = {
+            count: actualCount,
+            max: s.maxCount,
+            avgPlaneDps: avgOnePlaneDps,
+            hostSpa: finalSpa,
+            avgDuration: avgDuration,
+            dpsA: dpsA,
+            dpsB: dpsB
+        };
+    }
+    // ==========================================================
+
+    // 12. DoT CALCULATION
     let dotDpsTotal = 0;
     let totalDotBuffs = traitDotBuff + headDotBuff + sBonus.dot;
     const dotCritMult = isVirtualRealm ? avgCritMult : 1;
@@ -449,9 +507,11 @@ function calculateDPS(uStats, relicStats, context) {
     }
 
     return {
-        total: hitDpsTotal + dotDpsTotal,
+        total: hitDpsTotal + dotDpsTotal + summonDpsTotal,
         hit: hitDpsTotal,
         dot: dotDpsTotal,
+        summon: summonDpsTotal,
+        summonData: summonData,
         spa: finalSpa,
         spaCap: cap,
         range: finalRange,

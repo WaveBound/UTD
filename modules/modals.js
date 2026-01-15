@@ -60,6 +60,8 @@ function reconstructMathData(liteData) {
     const isAbility = liteData.id.includes('ABILITY');
     const isVR = liteData.id.includes('VR');
     const isCard = liteData.id.includes('CARD');
+    
+    // UPDATED: Logic to detect mode from new ID tag
     const isBuggedMode = liteData.id.includes('-b-');
     const isFixedMode = liteData.id.includes('-f-');
 
@@ -97,6 +99,7 @@ function reconstructMathData(liteData) {
             totalStats[liteData.mainStats.legs] += MAIN_STAT_VALS.legs[liteData.mainStats.legs];
     }
 
+    // UPDATED: Toggle logic based on ID mode tag
     let applyDot = statConfig.applyRelicDot;
     let applyCrit = statConfig.applyRelicCrit;
 

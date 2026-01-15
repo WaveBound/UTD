@@ -1,10 +1,12 @@
+// --- START OF FILE calculations.js ---
+
 // ============================================================================
 // CALCULATIONS.JS - Build Calculation Logic
 // ============================================================================
 
 // Main calculation function for unit builds
-// UPDATED: Added specificTraitsOnly parameter to allow partial calculations (Hybrid Static/Dynamic)
-function calculateUnitBuilds(unit, effectiveStats, filteredBuilds, subCandidates, headsToProcess, includeSubs, specificTraitsOnly = null) {
+// UPDATED: Added 'mode' parameter to prevent cache overwrites between bugged/fixed states
+function calculateUnitBuilds(unit, effectiveStats, filteredBuilds, subCandidates, headsToProcess, includeSubs, specificTraitsOnly = null, isAbilityContext = false, mode = 'fixed') {
     cachedResults = cachedResults || {};
     
     // Determine which traits to calculate
@@ -16,8 +18,6 @@ function calculateUnitBuilds(unit, effectiveStats, filteredBuilds, subCandidates
         const specificTraits = unitSpecificTraits[unit.id] || [];
         activeTraits = [...traitsList, ...customTraits, ...specificTraits];
     }
-
-    const isAbilActive = activeAbilityIds.has(unit.id); 
     
     effectiveStats.id = unit.id;
     if (unit.id === 'kirito' && kiritoState.realm && kiritoState.card) {
@@ -83,7 +83,8 @@ function calculateUnitBuilds(unit, effectiveStats, filteredBuilds, subCandidates
                 let bestRangeConfig = getBestSubConfig(build, effectiveStats, includeSubs, headMode, currentCandidates, 'range');
                 let resRange = bestRangeConfig.res;
 
-                let suffix = isAbilActive ? '-ABILITY' : '-BASE';
+                // UPDATED: Suffix relies on calculation context
+                let suffix = isAbilityContext ? '-ABILITY' : '-BASE';
                 if (unit.id === 'kirito') { 
                     if (kiritoState.realm) suffix += '-VR'; 
                     if (kiritoState.card) suffix += '-CARD'; 
@@ -91,12 +92,20 @@ function calculateUnitBuilds(unit, effectiveStats, filteredBuilds, subCandidates
                 
                 let subsSuffix = includeSubs ? '-SUBS' : '-NOSUBS';
                 let headSuffix = `-${headMode}`; 
+                
+                // UPDATED: Generate unique ID based on mode to prevent cache collisions
+                // This ensures "Fixed" calc doesn't overwrite "Bugged" calc in the global cache
+                let modeTag = (mode === 'bugged') ? '-b-' : '-f-';
+                
                 let safeBuildName = build.name.replace(/[^a-zA-Z0-9]/g, '');
 
                 const pushResult = (res, config, prioStr) => {
                      if (!isNaN(res.total)) {
-                        let id = `${unit.id}${suffix}-${trait.id}-${safeBuildName}-${prioStr}${subsSuffix}${headSuffix}`;
+                        // ID Structure: [Unit][Context][Trait][Build][Prio][Subs][Head][MODE]
+                        let id = `${unit.id}${suffix}-${trait.id}-${safeBuildName}-${prioStr}${subsSuffix}${headSuffix}${modeTag}`;
+                        
                         cachedResults[id] = res;
+                        
                         unitResults.push({ 
                             id: id, 
                             setName: build.name.split('(')[0].trim(), 

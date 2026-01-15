@@ -1,5 +1,9 @@
 // --- START OF FILE rendering.js ---
 
+// ============================================================================
+// RENDERING.JS - UI Generation & Cache Management
+// ============================================================================
+
 function getKiritoControlsHtml(unit) {
     if (unit.id !== 'kirito') return '';
     const isRealm = kiritoState.realm;
@@ -374,7 +378,8 @@ function processUnitCache(unit) {
             }
 
             if (traitsForCalc === null || traitsForCalc.length > 0) {
-                const dynamicResults = calculateUnitBuilds(unit, currentStats, currentFilteredBuilds, currentSubCandidates, headsToProcess, includeSubs, traitsForCalc);
+                // FIXED: Passed 'mode' as the last argument to generate unique IDs
+                const dynamicResults = calculateUnitBuilds(unit, currentStats, currentFilteredBuilds, currentSubCandidates, headsToProcess, includeSubs, traitsForCalc, useAbility, mode);
                 calculatedResults = [...calculatedResults, ...dynamicResults];
             }
             
@@ -416,7 +421,14 @@ function renderDatabase() {
         processUnitCache(unit);
 
         let maxScore = 0;
-        const refList = unitBuildsCache[unit.id].base.fixed[3]; 
+        
+        // FIX: Check if ability is active for this unit to determine sorting score
+        const useAbil = activeAbilityIds.has(unit.id) && unit.ability;
+        const typeKey = useAbil ? 'abil' : 'base';
+        
+        // Use fixed/config-3 (Max Potential) for sorting
+        const refList = unitBuildsCache[unit.id][typeKey].fixed[3]; 
+
         if (refList && refList.length > 0) {
             maxScore = unit.id === 'law' ? (refList[0].range || 0) : refList[0].dps;
         }
@@ -425,7 +437,7 @@ function renderDatabase() {
 
     sortedUnits.sort((a, b) => b.maxScore - a.maxScore);
 
-    function processNextChunk() {
+function processNextChunk() {
         const startTime = performance.now();
         const fragment = document.createDocumentFragment();
         
@@ -439,7 +451,20 @@ function renderDatabase() {
             let traitButtonHtml = unit.meta ? `<button class="trait-guide-btn" onclick="openTraitGuide('${unit.id}')">📋 Rec. Traits</button>` : '';
             const bannerContent = `<div class="placement-badge">Max Place: ${unit.placement}</div>${getUnitImgHtml(unit, 'unit-avatar')}<div class="unit-title"><h2>${unit.name}</h2><span>${unit.role} <span class="sss-tag">SSS</span></span></div>${traitButtonHtml}`;
             
-            const abilityToggleHtml = unit.ability ? `<div class="toggle-wrapper"><span>Ability</span><label><input type="checkbox" class="ability-cb" ${activeAbilityIds.has(unit.id) ? 'checked' : ''} onchange="toggleAbility('${unit.id}', this)"><div class="mini-switch"></div></label></div>` : '<div></div>';
+            // Logic for dynamic ability labels (Sharpshooter / Phantom Captain)
+            let abilityLabel = 'Ability';
+            let toggleScript = '';
+
+            if (unit.id === 'phantom_captain') {
+                abilityLabel = 'Planes';
+            } else if (unit.id === 'sharpshooter') {
+                // Set initial label based on current active state
+                abilityLabel = activeAbilityIds.has(unit.id) ? 'Sniper Mode' : 'Normal Mode';
+                // Inline script to update label immediately on toggle
+                toggleScript = `; this.parentElement.previousElementSibling.innerText = this.checked ? 'Sniper Mode' : 'Normal Mode'`;
+            }
+            
+            const abilityToggleHtml = unit.ability ? `<div class="toggle-wrapper"><span>${abilityLabel}</span><label><input type="checkbox" class="ability-cb" ${activeAbilityIds.has(unit.id) ? 'checked' : ''} onchange="toggleAbility('${unit.id}', this)${toggleScript}"><div class="mini-switch"></div></label></div>` : '<div></div>';
             
             const topControls = `<div class="unit-toolbar"><div class="flex gap-md"><button class="select-btn" onclick="toggleSelection('${unit.id}')">${selectedUnitIds.has(unit.id) ? 'Selected' : 'Select'}</button><button class="calc-btn" onclick="openCalc('${unit.id}')">🖩 Custom Relics</button></div>${abilityToggleHtml}</div>`;
 
@@ -512,7 +537,7 @@ function renderDatabase() {
                 mainContent: mainContent
             });
 
-            // Keep dynamic style for staggered animation, updated to use variable
+            // Keep dynamic style for staggered animation
             card.style.setProperty('--stagger-delay', `${staggerIndex * 50}ms`); 
             staggerIndex++; 
 

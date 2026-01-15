@@ -26,6 +26,13 @@ const SUB_NAMES = {
 
 const patchNotesData = [
     {
+        version: "v3.6",
+        date: "Jan 15, 2026",
+        changes: [
+            { type: "Units", text: "<b>Unit Update:</b> Added Phantom Captain And Sharpshooter" }
+        ]
+    },
+    {
         version: "v3.5",
         date: "Jan 13, 2026",
         changes: [
@@ -200,7 +207,6 @@ const unitDatabase = [
     {
         id: "Maid", name: "Scarlet Maid (World)", role: "Dmg / Support",
         img: "images/Maid.png", 
-        // ADDED totalCost (Upgrade Cost + Deployment)
         totalCost: 76000,
         placement: 1, tags: [],
         meta: { short: "Ruler", long: "Ruler", note: "Ruler is strictly best due to 1 placement count." },
@@ -370,5 +376,45 @@ const unitDatabase = [
         placement: 1, tags: [],
         meta: { short: "Ruler", long: "Ruler", note: "Passive avg 37.5% Dmg (Cycles 0-75%). Ruler is strictly best due to 1 placement count." },
         stats: { dmg: 1975, spa: 7.5, crit: 0, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 3, passiveDmg: 37.5, element: "Ice", dotDuration: 0, range: 50 }
+    },
+    {
+        id: "phantom_captain", name: "Phantom Captain", role: "Summon / Dmg",
+        img: "images/Phantom.png",
+        totalCost: 68000,
+        placement: 1, tags: [],
+        meta: { short: "Ruler", long: "Ruler", note: "Needs low SPA (High Speed) to maintain max 9 planes." },
+        stats: { dmg: 3600, spa: 10, crit: 0, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 3, passiveDmg: 0, element: "Light", dotDuration: 0, range: 55 },
+        ability: {
+            summonStats: {
+                maxCount: 9,
+                dmgPct: 50, // 50% of Host Dmg
+                // Plane Type A: Explosive
+                planeA: { spa: 12, duration: 36 },
+                // Plane Type B: Mounted
+                planeB: { spa: 7.5, duration: 45 },
+                // Buff: First 10s
+                buffWindow: 10,
+                buffCrit: 30, // 30% CR
+                buffCdmg: 200 // 200% CDmg
+            }
+        }
+    },
+    {
+        id: "sharpshooter", name: "Sharpshooter", role: "Dmg / Support",
+        img: "images/Sharpshooter.png",
+        totalCost: 68000,
+        placement: 2, tags: [],
+        meta: { short: "Ruler", long: "Ruler", note: "Toggle Ability for Sniper Mode (Global Range)." },
+        stats: { 
+            dmg: 1450, spa: 6, crit: 0, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 3.5, 
+            element: "Fire", dotDuration: 0, range: 50,
+            passiveDmg: 125, // Normal Mode: 2.25x Dmg
+            passiveSpa: 0
+        },
+        ability: { 
+            passiveDmg: 10,  // Sniper Mode: 1.1x Dmg
+            passiveSpa: 10,  // Sniper Mode: 0.9x SPA (10% reduction)
+            range: 200  // Sniper Mode: 200 Range
+        }
     }
 ];

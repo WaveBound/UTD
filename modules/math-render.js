@@ -126,10 +126,30 @@ function renderMathContent(data) {
     
     const dotColorClass = data.dot > 0 ? 'text-accent-end' : 'text-dark-dim';
 
+    // NEW: SUMMON SECTION
+    const summonSection = data.summonData ? `
+    <div class="dd-section">
+        <div class="dd-title text-accent-start"><span>Summon Logic (Planes)</span></div>
+        <table class="calc-table">
+            <tr><td class="mt-cell-label">Plane Base Damage</td><td class="mt-cell-val">${num(data.dmgVal * 0.5)}</td></tr>
+            <tr><td class="mt-cell-label">Host SPA (Spawn Rate)</td><td class="mt-cell-val">${fix(data.summonData.hostSpa, 2)}s</td></tr>
+            
+            <tr><td class="mt-cell-label mt-pt-md text-white">Active Planes</td><td class="mt-cell-val mt-pt-md text-gold text-bold">${fix(data.summonData.count, 1)} / ${data.summonData.max}</td></tr>
+            <tr><td class="mt-cell-label calc-sub">Avg Duration</td><td class="mt-cell-val calc-sub">${data.summonData.avgDuration}s</td></tr>
+
+            <tr><td class="mt-cell-label mt-pt-md">Avg Plane DPS (Individual)</td><td class="mt-cell-val mt-pt-md">${num(data.summonData.avgPlaneDps)}</td></tr>
+            <tr><td class="mt-cell-label calc-sub">Type A (Explosive)</td><td class="mt-cell-val calc-sub">${num(data.summonData.dpsA)}</td></tr>
+            <tr><td class="mt-cell-label calc-sub">Type B (Mounted)</td><td class="mt-cell-val calc-sub">${num(data.summonData.dpsB)}</td></tr>
+
+            <tr><td class="mt-cell-label text-white mt-pt-md">Total Summon DPS (x${data.placement})</td><td class="mt-cell-val mt-pt-md text-accent-start text-bold">${num(data.summon)}</td></tr>
+        </table>
+    </div>` : '';
+
     return `
         <div class="math-section">
             <div class="math-header">Snapshot Overview</div>
             <div class="math-row"><span>Total DPS</span><b class="math-val-gold">${num(data.total)}</b></div>
+            ${data.summon > 0 ? `<div class="math-row"><span>Planes Active</span><b class="text-accent-start">${fix(data.summonData.count, 1)}</b></div>` : ''}
             <div class="math-row"><span>Placement</span><b>${data.placement} Unit(s)</b></div>
             <div class="math-row"><span>Final Range</span><b class="math-val-range">${fix(data.range, 1)}</b></div>
         </div>
@@ -140,7 +160,7 @@ function renderMathContent(data) {
                 <div><div class="mq-label">Hit DPS</div><div class="mq-val">${num(data.hit)}</div><div class="mq-sub">(${num(avgHitPerUnit)} avg ÷ ${fix(data.spa,2)}s) × ${data.placement}</div></div>
                 <div><div class="mq-label">DoT DPS</div><div class="mq-val ${dotColorClass}">${data.dot > 0 ? num(data.dot) : '-'}</div><div class="mq-sub">${data.dot > 0 ? (data.hasStackingDoT ? `Stacking: x${data.placement} units` : `Limited: x1 unit only`) : 'No DoT'}</div></div>
                 <div><div class="mq-label">Crit Rate / Dmg</div><div class="mq-val text-custom">${fix(data.critData.rate, 0)}% <span class="color-dim">|</span> x${fix(data.critData.cdmg/100, 2)}</div><div class="mq-sub">Avg Mult: x${fix(data.critData.avgMult, 3)}</div></div>
-                <div><div class="mq-label">Attack Rate</div><div class="mq-val text-accent-start">${fix(data.spa, 2)}s</div><div class="mq-sub">Base: ${data.baseStats.spa}s (Current Cap: ${data.spaCap}s)</div></div>
+                ${data.summon > 0 ? `<div><div class="mq-label">Plane DPS</div><div class="mq-val text-accent-start">${num(data.summon)}</div><div class="mq-sub">Independent of Host Stats</div></div>` : `<div><div class="mq-label">Attack Rate</div><div class="mq-val text-accent-start">${fix(data.spa, 2)}s</div><div class="mq-sub">Base: ${data.baseStats.spa}s (Current Cap: ${data.spaCap}s)</div></div>`}
             </div>
         </div>
 
@@ -263,12 +283,15 @@ function renderMathContent(data) {
                     ${data.placement > 1 ? `<tr><td class="mt-cell-label text-white border-dashed-top">Total DoT DPS (x${data.placement})</td><td class="mt-cell-val text-accent-end border-dashed-top">${num(data.dot)}</td></tr>` : ''}
                 </table>
             </div>` : ''}
+            
+            ${summonSection}
 
             <div class="dd-section border-l-gold">
                 <div class="dd-title text-gold">Final Synthesis</div>
                 <table class="calc-table">
                     <tr><td class="mt-cell-label">Hit DPS (x${data.placement} Units)</td><td class="mt-cell-formula"><span class="op">×</span>${data.placement}</td><td class="mt-cell-val calc-highlight">${num(data.hit)}</td></tr>
                     ${data.dot > 0 ? `<tr><td class="mt-cell-label">DoT DPS</td><td class="mt-cell-formula">+</td><td class="mt-cell-val text-accent-end">${num(data.dot)}</td></tr>` : ''}
+                    ${data.summon > 0 ? `<tr><td class="mt-cell-label">Plane DPS</td><td class="mt-cell-formula">+</td><td class="mt-cell-val text-accent-start">${num(data.summon)}</td></tr>` : ''}
                     <tr><td class="mt-cell-label mt-cell-val-lg text-white" colspan="2">TOTAL DPS</td><td class="mt-cell-val mt-text-gold mt-pt-md mt-cell-val-lg">${num(data.total)}</td></tr>
                 </table>
             </div>
