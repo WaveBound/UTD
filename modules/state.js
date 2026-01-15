@@ -6,7 +6,7 @@
 let customTraits = [];
 let unitSpecificTraits = {}; 
 let selectedUnitIds = new Set();
-let activeAbilityIds = new Set(['phantom_captain']); // UPDATED: Phantom Captain starts active
+let activeAbilityIds = new Set(['phantom_captain', 'megumin']); // UPDATED: Phantom Captain starts active
 let cachedResults = {}; 
 let unitBuildsCache = {}; 
 
