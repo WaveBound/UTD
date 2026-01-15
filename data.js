@@ -205,7 +205,7 @@ const elementIcons = {
 
 const unitDatabase = [
     {
-        id: "Maid", name: "Scarlet Maid (World)", role: "Dmg / Support",
+        id: "Maid", name: "Scarlet Maid (World)", role: "Damage / Support",
         img: "images/Maid.png", 
         totalCost: 76000,
         placement: 1, tags: [],
@@ -213,7 +213,7 @@ const unitDatabase = [
         stats: { dmg: 2950, spa: 5, crit: 0, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 3.5, passiveDmg: 0, element: "Light", dotDuration: 0, range: 28 }
     },
     {
-        id: "sjw", name: "SJW (Monarch)", role: "Raw Dmg",
+        id: "sjw", name: "SJW (Monarch)", role: "Damage",
         img: "images/Sjw.png", 
         totalCost: 93000,
         placement: 1, tags: [],
@@ -238,7 +238,7 @@ const unitDatabase = [
         stats: { dmg: 1200, spa: 7, crit: 50, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 4, hitCount: 14, reqCrits: 50, extraAttacks: 0, element: "Ice", range: 30 }
     },
     {
-        id: "genos", name: "Cyborg (Fearless)", role: "DoT / Raw",
+        id: "genos", name: "Cyborg (Fearless)", role: "DoT / Damage",
         img: "images/Genos.png", 
         totalCost: 26900,
         placement: 3, tags: [],
@@ -247,7 +247,7 @@ const unitDatabase = [
         ability: { passiveDmg: 75 }
     },
     {
-        id: "kenpachi", name: "Kenpachi", role: "Raw Dmg / Slow",
+        id: "kenpachi", name: "Kenpachi", role: "Damage / Slow",
         img: "images/Kenpachi.png",
         totalCost: 60000,
         placement: 1, tags: ["Peroxide", "Reaper", "Rage"],
@@ -255,7 +255,7 @@ const unitDatabase = [
         stats: { dmg: 2875, spa: 10, crit: 0, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 2.0, element: "Light", range: 27 }
     },
     {
-        id: "sasuke", name: "Sasuke (Chakra)", role: "Raw Dmg",
+        id: "sasuke", name: "Sasuke (Chakra)", role: "Damage",
         img: "images/Sasuke.png", 
         totalCost: 40000,
         placement: 2, tags: [],
@@ -263,7 +263,7 @@ const unitDatabase = [
         stats: { dmg: 2450, spa: 6.75, crit: 0, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 4, passiveDmg: 25, element: "Dark", range: 28 }
     },
     {
-        id: "mob", name: "Pyscho (100%)", role: "Raw Dmg",
+        id: "mob", name: "Pyscho (100%)", role: "Damage",
         img: "images/Mob.png", 
         totalCost: 56000,
         placement: 2, tags: [],
@@ -271,7 +271,7 @@ const unitDatabase = [
         stats: { dmg: 2600, spa: 6.5, crit: 0, cdmg: 150, dot: 20, dotStacks: 1, spaCap: 5.5, passiveDmg: 0, element: "Rose", dotDuration: 4, range: 35 }
     },
     {
-        id: "shanks", name: "Shanks (Conqueror)", role: "Raw Dmg",
+        id: "shanks", name: "Shanks (Conqueror)", role: "Damage",
         img: "images/Shanks.png", 
         totalCost: 64000,
         placement: 1, tags: [],
@@ -279,7 +279,7 @@ const unitDatabase = [
         stats: { dmg: 2750, spa: 12, crit: 0, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 2.5, passiveDmg: 0, element: "Rose", dotDuration: 0, range: 30}
     },
     {
-        id: "law", name: "Rule (Room)", role: "Support / Dmg",
+        id: "law", name: "Rule (Room)", role: "Support / Damage",
         img: "images/Law.png", 
         totalCost: 84000,
         placement: 2, tags: [],
@@ -287,7 +287,7 @@ const unitDatabase = [
         stats: { dmg: 1300, spa: 5, crit: 0, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 2, passiveDmg: 20, passiveSpa: 10, element: "Water", dotDuration: 0, range: 31.5 }
     },
     {
-        id: "akainu", name: "Admiral (Magma)", role: "Support / Dmg",
+        id: "akainu", name: "Admiral (Magma)", role: "Support / Damage",
         img: "images/Akainu.png", 
         totalCost: 108000,
         placement: 3, tags: [],
@@ -295,7 +295,7 @@ const unitDatabase = [
         stats: { dmg: 1100, spa: 5, crit: 0, cdmg: 150, dot: 60, dotStacks: 1, spaCap: 2, passiveDmg: 0, passiveSpa: 0, element: "Fire", dotDuration: 7, range: 37}
     },
     {
-        id: "ichigo", name: "Ichiko (Rage)", role: "Dmg",
+        id: "ichigo", name: "Ichiko (Rage)", role: "Damage",
         img: "images/Ichigo.png", 
         totalCost: 108000,
         placement: 1, tags: ["Peroxide", "Reaper", "Rage", "Hollow"],
@@ -303,7 +303,7 @@ const unitDatabase = [
         stats: { dmg: 3000, spa: 8, crit: 15, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 7, passiveDmg: 50, passiveSpa: 0, element: "Dark", dotDuration: 0, range: 38}
     },
     {
-        id: "grimjaw", name: "Grommjaw (Panther)", role: "Dmg",
+        id: "grimjaw", name: "Grommjaw (Panther)", role: "Damage",
         img: "images/Grimjaw.png", 
         totalCost: 40000,
         placement: 3, tags: ["Peroxide", "Hollow"],
@@ -311,7 +311,7 @@ const unitDatabase = [
         stats: { dmg: 1590, spa: 9, crit: 0, cdmg: 150, dot: 50, dotStacks: 1, spaCap: 3, passiveDmg: 6.67, passiveSpa: 4.17, element: "Water", dotDuration: 10, range: 35 }
     },
     {
-        id: "stark", name: "Koyote (Number one)", role: "Dmg",
+        id: "stark", name: "Koyote (Number one)", role: "Damage",
         img: "images/Stark.png", 
         totalCost: 44000,
         placement: 1, tags: ["Peroxide", "Hollow"],
@@ -319,7 +319,7 @@ const unitDatabase = [
         stats: { dmg: 2800, spa: 6, crit: 0, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 6, passiveDmg: 0, passiveSpa: 0, element: "Ice", dotDuration: 0, range: 42}
     },
     {
-        id: "ulquiorra", name: "Ultiiorra (Oblivion)", role: "Dmg",
+        id: "ulquiorra", name: "Ultiiorra (Oblivion)", role: "Damage",
         img: "images/Ulqiorra.png", 
         totalCost: 31760,
         placement: 3, tags: ["Peroxide", "Hollow"],
@@ -328,7 +328,7 @@ const unitDatabase = [
         ability: { buffDmg: 65, passiveSpa: 2.5, crit: 10 }
     },
     {
-        id: "harribel", name: "Tierrabel (Hydro)", role: "Dmg",
+        id: "harribel", name: "Tierrabel (Hydro)", role: "Damage",
         img: "images/Harribel.png", 
         totalCost: 30964,
         placement: 3, tags: ["Peroxide", "Hollow"],
@@ -337,7 +337,7 @@ const unitDatabase = [
         ability: { buffDmg: 35, buffDuration: 80, spaCap: 4, hasToggle: true }
     },
     {
-        id: "ace", name: "Ace", role: "Dmg / Burn(DoT)",
+        id: "ace", name: "Ace", role: "Damage / Burn(DoT)",
         img: "images/Ace.png",
         totalCost: 39000,
         placement: 3, tags: [],
@@ -345,7 +345,7 @@ const unitDatabase = [
         stats: { dmg: 1500, spa: 9, crit: 0, cdmg: 150, dot: 100, dotStacks: 1, spaCap: 6, passiveDmg: 60, element: "Fire", dotDuration: 4, range: 30 }
     }, 
     {
-        id: "Jingliu", name: "Jingliu", role: "Dmg",
+        id: "Jingliu", name: "Jingliu", role: "Damage",
         img: "images/Jingliu.png",
         totalCost: 33725,
         placement: 3, tags: [],
@@ -353,7 +353,7 @@ const unitDatabase = [
         stats: { dmg: 1700, spa: 6, crit: 50, cdmg: 200, dot: 0, dotStacks: 1, spaCap: 3, passiveDmg: 35, element: "Ice", dotDuration: 0, range: 40 }
     },
     {
-        id: "megumin", name: "Megumin", role: "Dmg / Burn(Dot)",
+        id: "megumin", name: "Megumin", role: "Damage / Burn(Dot)",
         img: "images/Megumin.png",
         totalCost: 136000,
         placement: 1, tags: [],
@@ -362,7 +362,7 @@ const unitDatabase = [
         ability: { passiveDmg: 50, passiveSpa: -50 } 
     },
     {
-        id: "bambietta", name: "Bambietta", role: "Dmg / (Support/Dot)",
+        id: "bambietta", name: "Bambietta", role: "Damage / (Support/Dot)",
         img: "images/Bambietta.png",
         totalCost: 40000,
         placement: 3, tags: [],
@@ -370,7 +370,7 @@ const unitDatabase = [
         stats: { dmg: 1250, spa: 6.5, crit: 0, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 2, passiveDmg: 0, element: "Dark", dotDuration: 0, range: 38, hasElementSelect: true }
     },
     {
-        id: "esdeath", name: "Esdeath", role: "Dmg / Support",
+        id: "esdeath", name: "Esdeath", role: "Damage / Support",
         img: "images/Esdeath.png",
         totalCost: 92000,
         placement: 1, tags: [],
@@ -400,7 +400,7 @@ const unitDatabase = [
         }
     },
     {
-        id: "sharpshooter", name: "Sharpshooter", role: "Dmg / Support",
+        id: "sharpshooter", name: "Sharpshooter", role: "Damage / Support",
         img: "images/Sharpshooter.png",
         totalCost: 68000,
         placement: 2, tags: [],
