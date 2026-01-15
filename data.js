@@ -359,7 +359,7 @@ const unitDatabase = [
         placement: 1, tags: [],
         meta: { short: "Ruler", long: "Ruler", note: "Ruler is strictly best due to 1 placement count." },
         stats: { dmg: 7530, spa: 14, crit: 0, cdmg: 150, dot: 50, dotStacks: 1, spaCap: 4, passiveDmg: 0, element: "Fire", dotDuration: 10, range: 50 },
-        ability: { passiveDmg: 50, passiveSpa: -50 } 
+        ability: { passiveDmg: 50, passiveSpa: 50 } 
     },
     {
         id: "bambietta", name: "Bambietta", role: "Damage / (Support/Dot)",
