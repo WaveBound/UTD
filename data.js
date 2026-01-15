@@ -414,7 +414,7 @@ const unitDatabase = [
         ability: { 
             passiveDmg: 10,  // Sniper Mode: 1.1x Dmg
             passiveSpa: 10,  // Sniper Mode: 0.9x SPA (10% reduction)
-            range: 200  // Sniper Mode: 200 Range
+            range: 120  // Sniper Mode: 200 Range
         }
     }
 ];
