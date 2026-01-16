@@ -1,4 +1,6 @@
-// --- START OF FILE modals.js ---
+// ============================================================================
+// MODALS.JS - Modal Logic, Info Popups & Math Reconstruction
+// ============================================================================
 
 const toggleModal = (modalId, show = true) => {
     const modal = document.getElementById(modalId);
@@ -12,6 +14,8 @@ const toggleModal = (modalId, show = true) => {
         updateBodyScroll();
     }
 };
+
+// --- INFO POPUPS (For Stat Badges) ---
 
 function openInfoPopup(key) {
     const data = infoDefinitions[key];
@@ -52,7 +56,10 @@ function closeInfoPopup() {
     updateBodyScroll();
 }
 
+// --- MATH DATA RECONSTRUCTION ---
+
 // HELPER: Reconstruct full calculation data from cached "Lite" data
+// UPDATED: Now supports unified -b-/-f- and -NOSUBS/-SUBS tags
 function reconstructMathData(liteData) {
     const unit = unitDatabase.find(u => liteData.id.startsWith(u.id));
     if (!unit) return null;
@@ -61,9 +68,12 @@ function reconstructMathData(liteData) {
     const isVR = liteData.id.includes('VR');
     const isCard = liteData.id.includes('CARD');
     
-    // UPDATED: Logic to detect mode from new ID tag
+    // 1. Detect Mode from ID Tags
     const isBuggedMode = liteData.id.includes('-b-');
     const isFixedMode = liteData.id.includes('-f-');
+    
+    // 2. Detect Sub-Stat Configuration from ID Tags
+    const isNoSubsMode = liteData.id.includes('-NOSUBS');
 
     let effectiveStats = { ...unit.stats };
     effectiveStats.id = unit.id;
@@ -91,6 +101,7 @@ function reconstructMathData(liteData) {
         dmg: 0, spa: 0, range: 0, cm: 0, cf: 0, dot: 0
     };
 
+    // Add Main Stats
     if (liteData.mainStats) {
         if (MAIN_STAT_VALS.body[liteData.mainStats.body]) 
             totalStats[liteData.mainStats.body] += MAIN_STAT_VALS.body[liteData.mainStats.body];
@@ -99,7 +110,7 @@ function reconstructMathData(liteData) {
             totalStats[liteData.mainStats.legs] += MAIN_STAT_VALS.legs[liteData.mainStats.legs];
     }
 
-    // UPDATED: Toggle logic based on ID mode tag
+    // Determine Logic State for this reconstruction
     let applyDot = statConfig.applyRelicDot;
     let applyCrit = statConfig.applyRelicCrit;
 
@@ -111,6 +122,7 @@ function reconstructMathData(liteData) {
         applyCrit = true;
     }
 
+    // Add explicitly stored sub-stats (from the lite object)
     if (liteData.subStats) {
         ['head', 'body', 'legs'].forEach(slot => {
             if (liteData.subStats[slot]) {
@@ -121,6 +133,7 @@ function reconstructMathData(liteData) {
         });
     }
 
+    // Determine valid stats for auto-filling
     const candidates = ['dmg', 'spa', 'range', 'cm', 'cf', 'dot'];
     const validCandidates = candidates.filter(c => {
          if (!applyDot && c === 'dot') return false;
@@ -128,6 +141,7 @@ function reconstructMathData(liteData) {
          return true;
     });
 
+    // Helper to auto-fill perfect subs if they weren't stored (Static DB optimization)
     const addBaseFills = (slot, mainStatType) => {
         const existingTypes = new Set();
         if (liteData.subStats && liteData.subStats[slot]) {
@@ -141,10 +155,14 @@ function reconstructMathData(liteData) {
         });
     };
 
-    if (liteData.headUsed && liteData.headUsed !== 'none') {
+    // LOGIC: Only fill HEAD stats if a head is used AND we aren't in NoSubs mode
+    // Heads always have subs in-game, but if configured off via toggle, ID has -NOSUBS
+    if (!isNoSubsMode && liteData.headUsed && liteData.headUsed !== 'none') {
         addBaseFills('head', null); 
     }
-    if (liteData.mainStats) {
+
+    // LOGIC: Only fill BODY/LEGS stats if -NOSUBS is NOT present in the ID
+    if (!isNoSubsMode && liteData.mainStats) {
         addBaseFills('body', liteData.mainStats.body);
         addBaseFills('legs', liteData.mainStats.legs);
     }
@@ -165,6 +183,7 @@ function reconstructMathData(liteData) {
         isVirtualRealm: (unit.id === 'kirito' && isVR)
     };
 
+    // Temporarily swap global config for this calculation
     const previousDotState = statConfig.applyRelicDot;
     const previousCritState = statConfig.applyRelicCrit;
     
@@ -173,6 +192,7 @@ function reconstructMathData(liteData) {
 
     const result = calculateDPS(effectiveStats, totalStats, context);
 
+    // Restore global config
     statConfig.applyRelicDot = previousDotState;
     statConfig.applyRelicCrit = previousCritState;
 
@@ -184,6 +204,7 @@ const showMath = (id) => {
     if(!data) return;
 
     const content = document.getElementById('mathContent'); 
+    // If cache object is "lite" (missing deep math), reconstruct it
     if (!data.lvStats || !data.critData) {
         try {
             data = reconstructMathData(data);
@@ -206,6 +227,9 @@ const showMath = (id) => {
 window.showMath = showMath;
 
 const closeMath = () => toggleModal('mathModal', false);
+
+// --- PATCH NOTES ---
+
 const openPatchNotes = () => toggleModal('patchModal', true);
 const closePatchNotes = () => toggleModal('patchModal', false);
 
@@ -230,6 +254,8 @@ function renderPatchNotes() {
     }).join('');
 }
 
+// --- COMPARISON MODAL ---
+
 function openComparison() {
     if (selectedUnitIds.size === 0) return;
 
@@ -242,6 +268,7 @@ function openComparison() {
     const showHead = document.getElementById('globalHeadPiece').checked;
     const showSubs = document.getElementById('globalSubStats').checked;
 
+    // Determine config index matches logic in rendering.js/static-db
     let configIndex = 0;
     if (!showHead && !showSubs) configIndex = 0;
     else if (!showHead && showSubs) configIndex = 1;
@@ -263,6 +290,7 @@ function openComparison() {
         const allBuilds = cacheEntry[mode][subMode][configIndex] || [];
         if (allBuilds.length === 0) return;
 
+        // Apply filters from the Unit Card
         const card = document.getElementById('card-' + unitId);
         let activePrio = 'all';
         let activeSet = 'all';
@@ -283,6 +311,7 @@ function openComparison() {
 
         if (filteredBuilds.length === 0) return; 
 
+        // Sort based on Prio (Range vs DPS)
         if (activePrio === 'range' || (unitId === 'law' && activePrio === 'all')) {
             filteredBuilds.sort((a, b) => (b.range || 0) - (a.range || 0));
         } else {
@@ -370,6 +399,8 @@ function openComparison() {
 }
 
 const closeCompare = () => { toggleModal('compareModal', false); };
+
+// --- TRAIT GUIDE MODAL ---
 
 function openTraitGuide(unitId) {
     const unit = unitDatabase.find(u => u.id === unitId);

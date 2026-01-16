@@ -100,7 +100,8 @@
 .calc-unit-details { flex-grow: 1; }
 .calc-unit-name { font-size: 1.2rem; font-weight: 900; color: #fff; margin: 0; text-transform: uppercase; line-height: 1; }
 .calc-unit-role { font-size: 0.75rem; color: var(--accent-start); font-weight: bold; text-transform: uppercase; }
-.calc-global-controls { display: flex; gap: 10px; flex-wrap: wrap; margin-top:5px; }
+
+/* Calc Footer & Results */
 .calc-footer-bar { padding: 15px 20px; background: #0f1014; border-top: 1px solid #222; display: flex; justify-content: flex-end; gap: 10px; flex-shrink: 0; z-index: 10; }
 
 .calc-result-area {
@@ -117,6 +118,47 @@
 .opt-reaper { color: #ef4444; }
 .opt-sreaper { color: #a855f7; }
 .opt-gold { color: var(--gold); font-weight: bold; }
+
+/* === UPDATED CALCULATOR LAYOUT === */
+
+/* Container for all 4 control boxes */
+.calc-global-controls { 
+    display: flex; 
+    align-items: center;
+    gap: 8px; /* Tightly packed */
+    margin-left: auto; /* Pushes entire group to the right */
+}
+
+/* Individual Control Box (Gray Background) */
+.calc-stat-group {
+    display: flex;
+    flex-direction: column;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid #333;
+    border-radius: 8px;
+    padding: 6px;
+    gap: 2px;
+    flex-shrink: 0;
+}
+
+/* Label Styling */
+.calc-stat-group label {
+    font-size: 0.55rem;
+    color: #888;
+    font-weight: 800;
+    text-transform: uppercase;
+    text-align: center;
+    display: block;
+}
+
+/* Input/Select Styling overrides for inside the group */
+.calc-stat-group .c-input {
+    width: 100% !important;
+    font-size: 0.8rem;
+    height: 24px;
+    padding: 2px 4px;
+}
+
 
 /* --- SUB PRIORITY MODAL --- */
 .sub-prio-header {

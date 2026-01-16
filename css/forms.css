@@ -1,3 +1,5 @@
+--- START OF FILE forms.css ---
+
 /* GLOBAL INPUTS */
 input, select { width: 100%; background-color: #050505; border: 1px solid var(--card-border); padding: 8px; border-radius: 6px; color: #fff; transition: 0.3s; font-size: 0.85rem; }
 input:focus, select:focus { border-color: var(--accent-start); outline: none; }
@@ -10,6 +12,16 @@ input[type=number] { -moz-appearance: textfield; }
 .nav-toggle-label input { display: none; }
 .nav-toggle-label:hover { border-color: #666; color: #fff; }
 .nav-toggle-label.is-checked { background: rgba(16, 185, 129, 0.1); border-color: var(--success); color: var(--success); box-shadow: 0 0 10px rgba(16, 185, 129, 0.2); }
+
+/* NEW: DISABLED STATE FOR EMPTY INVENTORY */
+.nav-toggle-label.disabled {
+    opacity: 0.5;
+    pointer-events: none;
+    filter: grayscale(100%);
+    cursor: not-allowed;
+    background: #111;
+    border-color: #222;
+}
 
 .toggle-wrapper { display: flex; align-items: center; gap: 8px; }
 .toggle-wrapper input { display: none; }

@@ -1,5 +1,3 @@
-// --- START OF FILE utils.js ---
-
 const format = (n) => 
     n >= 1e9 ? (n/1e9).toFixed(2) + 'B' : 
     n >= 1e6 ? (n/1e6).toFixed(2) + 'M' : 
@@ -10,22 +8,30 @@ const format = (n) =>
 function getStatType(key) {
     if (!key) return 'dmg';
     let k = key.toLowerCase();
+    
+    // Check exact matches first
+    if (k === 'potency' || k.includes('potency')) return 'potency';
+    if (k === 'elemental' || k.includes('elem')) return 'elemental';
+    
+    // Standard stats
     if (k === 'dmg' || k === 'damage') return 'dmg';
     if (k === 'spa') return 'spa';
     if (k === 'cm' || k.includes('crit dmg') || k.includes('crit damage')) return 'cdmg';
     if (k === 'cf' || k.includes('crit rate') || k.includes('crit')) return 'crit';
-    if (k === 'dot' || k.includes('buff')) return 'dot';
+    if (k === 'dot') return 'dot';
     if (k.includes('range') || k === 'rng') return 'range';
+    
     return 'dmg';
 }
 
 // Generate HTML badge for a single stat (MAIN STAT)
 function getBadgeHtml(statKeyOrName, value = null) {
-    if (!statKeyOrName) return '<span class="badge-empty">-</span>';
+    // FIX: Explicitly check for 'none' string to prevent it falling back to DMG
+    if (!statKeyOrName || statKeyOrName === 'none') return '<span class="badge-empty">-</span>';
     
     const type = getStatType(statKeyOrName);
     
-    // CSS CLASSES - using border classes instead of inline styles
+    // CSS CLASSES
     const borderClass = `border-${type}`; 
     const gradClass = `grad-${type}`;     
     const label = STAT_LABELS[type] || type;
@@ -38,7 +44,6 @@ function getBadgeHtml(statKeyOrName, value = null) {
         valueHtml = `<span class="badge-val val-main">${fmtVal}%</span>`;
     }
 
-    // Using onclick for popup info
     return `<div class="badge-base ${borderClass}" onclick="event.stopPropagation(); openInfoPopup('stat_${type}')">${labelHtml}${valueHtml}</div>`;
 }
 
@@ -96,7 +101,6 @@ function formatStatBadge(text, totalRolls = null) {
     return parts.map(p => getBadgeHtml(p)).join('');
 }
 
-// Generate unit image HTML with element icon
 function getUnitImgHtml(unit, imgClass = '', iconSizeClass = '') {
     const el = unit.stats && unit.stats.element;
     const elIcon = el ? elementIcons[el] : null;

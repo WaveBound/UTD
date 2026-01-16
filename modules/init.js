@@ -21,4 +21,5 @@ window.onload = () => {
     // 3. Render Content
     renderPatchNotes(); 
     renderDatabase(); 
+    if (typeof initInventory === 'function') initInventory();
 }

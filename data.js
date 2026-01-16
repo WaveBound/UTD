@@ -26,10 +26,12 @@ const SUB_NAMES = {
 
 const patchNotesData = [
     {
-        version: "v3.6",
-        date: "Jan 15, 2026",
+        version: "v3.7",
+        date: "Jan 16, 2026",
         changes: [
-            { type: "Units", text: "<b>Unit Update:</b> Added Phantom Captain And Sharpshooter" }
+            { type: "Feature", text: "<b>Relic Inventory:</b> You can now save your actual in-game relics to a persistent inventory tab." },
+            { type: "Feature", text: "<b>Inventory Calculation:</b> Toggle 'Inventory Mode' to calculate the best build using ONLY the items you own." },
+            { type: "Fix", text: "<b>Range Priority:</b> Fixed logic where Range Optimization was incorrectly applying Damage Level Scaling points." }
         ]
     },
     {

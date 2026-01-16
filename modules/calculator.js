@@ -100,6 +100,26 @@ function updateCalcUI() {
     updateSelect('calcLegsMain', MAIN_STAT_VALS.legs, legsStarMult);
 }
 
+// Helper: Enforce Max Value on Input
+function enforceMax(el) {
+    el.oninput = () => {
+        let val = parseFloat(el.value);
+        const max = parseFloat(el.max);
+        const min = parseFloat(el.min);
+        
+        if (isNaN(val)) return;
+
+        if (val < min) el.value = min;
+        else if (val > max) el.value = max;
+    };
+    // Also enforce on blur to catch any edge cases
+    el.onblur = () => {
+        let val = parseFloat(el.value);
+        const max = parseFloat(el.max);
+        if (val > max) el.value = max;
+    };
+}
+
 // --- MAIN FUNCTIONS ---
 
 // Open custom calculator modal
@@ -177,8 +197,15 @@ function openCalc(unitId) {
     bodyStarsSelect.onchange = updateCalcUI;
     legsStarsSelect.onchange = updateCalcUI;
 
+    // RESET POINTS INPUTS
     document.getElementById('calcDmgPoints').value = 0;
     document.getElementById('calcSpaPoints').value = 0;
+    document.getElementById('calcRangePoints').value = 0; 
+
+    // RESET RANK INPUTS (Default to SSS max values)
+    document.getElementById('calcRankDmg').value = 20;
+    document.getElementById('calcRankSpa').value = 8;
+    document.getElementById('calcRankRange').value = 20;
     
     if (unit.meta && unit.meta.long) {
         traitSelect.value = unit.meta.long;
@@ -215,6 +242,54 @@ function openCalc(unitId) {
     updateLegsStarVisibility();
     updateCalcUI();
 
+    // Attach input listeners for sub-stat capping (Gear Cards)
+    const subStatInputs = document.querySelectorAll('#calcModal .gear-subs input.sub-val-input');
+    subStatInputs.forEach(inputElement => {
+        inputElement.oninput = () => {
+            let value = parseFloat(inputElement.value);
+            // Ensure value is not negative
+            if (value < 0) {
+                inputElement.value = 0;
+                value = 0;
+            }
+
+            const statKey = inputElement.dataset.stat;
+            const baseMaxValue = MAX_SUB_STAT_VALUES[statKey];
+
+            // Determine which star multiplier to use based on the parent gear card
+            let starMult = 1;
+            const parentCard = inputElement.closest('.gear-card');
+            if (parentCard) {
+                const allCards = document.querySelectorAll('#calcModal .gear-card');
+                const cardIndex = Array.from(allCards).indexOf(parentCard);
+
+                const headStarsSelect = document.getElementById('calcHeadStars');
+                const bodyStarsSelect = document.getElementById('calcBodyStars');
+                const legsStarsSelect = document.getElementById('calcLegsStars');
+
+                if (cardIndex === 0) starMult = (!headStarsSelect.classList.contains('hidden')) ? parseFloat(headStarsSelect.value) : 1;      
+                else if (cardIndex === 1) starMult = (!bodyStarsSelect.classList.contains('hidden')) ? parseFloat(bodyStarsSelect.value) : 1;  
+                else if (cardIndex === 2) starMult = (!legsStarsSelect.classList.contains('hidden')) ? parseFloat(legsStarsSelect.value) : 1;  
+            }
+
+            const dynamicMaxValue = baseMaxValue * starMult;
+
+            if (baseMaxValue !== undefined && value > dynamicMaxValue) {
+                inputElement.value = dynamicMaxValue.toFixed(3); // Apply capping with star multiplier
+            }
+        };
+    });
+
+    // Apply capping logic to Points and Ranks
+    [
+        document.getElementById('calcDmgPoints'),
+        document.getElementById('calcSpaPoints'),
+        document.getElementById('calcRangePoints'),
+        document.getElementById('calcRankDmg'),
+        document.getElementById('calcRankSpa'),
+        document.getElementById('calcRankRange')
+    ].forEach(enforceMax);
+
     toggleModal('calcModal', true);
 }
 
@@ -233,6 +308,13 @@ function runCustomCalc() {
 
         const dmgPoints = parseInt(document.getElementById('calcDmgPoints').value) || 0;
         const spaPoints = parseInt(document.getElementById('calcSpaPoints').value) || 0;
+        const rangePoints = parseInt(document.getElementById('calcRangePoints').value) || 0;
+
+        // NEW: Rank Inputs
+        const rankDmg = parseFloat(document.getElementById('calcRankDmg').value) || 0;
+        const rankSpa = parseFloat(document.getElementById('calcRankSpa').value) || 0;
+        const rankRange = parseFloat(document.getElementById('calcRankRange').value) || 0;
+
         const traitId = document.getElementById('calcTrait').value;
         const setId = document.getElementById('calcSet').value;
         const headId = document.getElementById('calcHead').value;
@@ -292,11 +374,14 @@ function runCustomCalc() {
         const context = {
             dmgPoints: dmgPoints,
             spaPoints: spaPoints,
+            rangePoints: rangePoints, 
             wave: 25,
             isBoss: false,
             traitObj: traitObj,
             placement: Math.min(unit.placement, traitObj.limitPlace || unit.placement),
-            isSSS: true,
+            // UPDATED: Pass Rank Data explicitly, disable isSSS boolean flag
+            rankData: { dmg: rankDmg, spa: rankSpa, range: rankRange },
+            isSSS: false, // math.js will use rankData instead
             headPiece: headId,
             isVirtualRealm: isKiritoVR,
             starMult: bodyStarMult

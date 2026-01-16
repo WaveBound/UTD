@@ -1,0 +1,298 @@
+/* 
+   INVENTORY.CSS 
+   Clean, compact layout for Relic Inventory.
+*/
+
+/* Grid Container */
+#relicGrid.inventory-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); 
+    gap: 20px;
+    padding: 0 25px 50px 25px;
+    width: 100%;
+    position: relative;
+    z-index: 1; /* Cards stay below header */
+}
+
+.inventory-empty-msg {
+    grid-column: 1 / -1;
+    text-align: center;
+    color: #666;
+    padding: 60px;
+    border: 2px dashed #333;
+    border-radius: 12px;
+    background: rgba(0,0,0,0.2);
+    font-size: 1.1rem;
+}
+
+/* 
+   NEW "CLEAN" RELIC CARD 
+*/
+.relic-card-clean {
+    background: #0f1014;
+    border: 1px solid #2d2f36;
+    border-radius: 12px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    height: auto;
+    min-height: 280px; 
+    animation: fadeIn 0.3s ease;
+    z-index: 1;
+}
+
+.relic-card-clean:hover {
+    border-color: var(--accent-start);
+    transform: translateY(-5px); /* Moves up on hover */
+    box-shadow: 0 12px 24px rgba(0,0,0,0.5);
+    z-index: 10; /* Brings hovered card to front, but below header's z-index 20 */
+}
+
+/* 1. Card Header */
+.rc-header {
+    display: flex;
+    justify-content: space-between;
+    padding: 12px 15px;
+    background: linear-gradient(to bottom, rgba(255,255,255,0.03), transparent);
+    z-index: 2;
+    position: relative;
+    height: 48px; /* Fixed height handles alignment automatically */
+}
+
+.rc-set-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.rc-set-name {
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: #e0e0e0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.rc-stars {
+    position: absolute; /* Takes stars out of flow */
+    bottom: 6px;        /* Pins to bottom of header */
+    left: 15px;
+    margin: 0;
+    font-size: 0.7rem; 
+    color: var(--gold);
+    letter-spacing: 1px;
+    line-height: 1;
+}
+
+.rc-delete-btn {
+    background: transparent;
+    border: none;
+    color: #555;
+    font-size: 1.2rem;
+    line-height: 0.8;
+    cursor: pointer;
+    transition: color 0.2s;
+    padding: 0 4px;
+}
+.rc-delete-btn:hover { color: #ef4444; }
+
+/* 2. Visual Center */
+.rc-visual-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 5px 0 10px 0;
+    flex-shrink: 0;
+}
+
+.rc-image-wrapper {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    position: relative;
+    box-shadow: 0 0 15px rgba(0,0,0,0.5);
+    border: 2px solid #333;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.rc-image {
+    width: 80%;
+    height: 80%;
+    object-fit: contain;
+    z-index: 1;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.8));
+}
+
+.rc-slot-badge {
+    position: absolute;
+    bottom: -6px;
+    background: #000;
+    color: #aaa;
+    border: 1px solid #444;
+    font-size: 0.55rem;
+    font-weight: 800;
+    padding: 1px 6px;
+    border-radius: 10px;
+    text-transform: uppercase;
+    z-index: 2;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+}
+
+/* 3. Stats Area */
+.rc-stats-container {
+    padding: 10px 15px 15px 15px;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    background: #0a0a0c;
+    border-top: 1px solid #222;
+}
+
+.rc-label {
+    font-size: 0.55rem;
+    color: #444;
+    font-weight: 900;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+    text-align: center;
+    letter-spacing: 1px;
+}
+
+/* Main Stat */
+.rc-main-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.rc-main-badge-wrapper .badge-base {
+    font-size: 0.55rem;
+    padding: 0 3px;
+    height: 17px;
+}
+
+/* Separator Line */
+.rc-separator {
+    height: 1px;
+    background: linear-gradient(to right, transparent, #333, transparent);
+    width: 100%;
+    margin: 4px 0 10px 0;
+}
+
+/* Sub Stats */
+.rc-sub-stats {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex-grow: 1;
+}
+
+.rc-subs-grid {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 5px;
+    width: 100%;
+}
+
+.rc-empty-subs {
+    font-size: 0.65rem;
+    color: #444;
+    font-style: italic;
+    margin-top: 5px;
+}
+
+#newRelicStars {
+    min-width: 140px; 
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* --- CLEAN DARK THEME HIGHLIGHT --- */
+/* A premium white/silver glow instead of yellow/blue */
+.relic-highlighted {
+    border: 2px solid #e5e5e5; /* Silver/White border */
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.15); /* Soft white glow */
+    transform: scale(1.02);
+    z-index: 10;
+    animation: pulseHighlightClean 2s infinite;
+}
+
+@keyframes pulseHighlightClean {
+    0% { box-shadow: 0 0 10px rgba(255, 255, 255, 0.1); border-color: #a3a3a3; }
+    50% { box-shadow: 0 0 25px rgba(255, 255, 255, 0.3); border-color: #ffffff; }
+    100% { box-shadow: 0 0 10px rgba(255, 255, 255, 0.1); border-color: #a3a3a3; }
+}
+
+/* Badge Layout in Build Row */
+.br-badges {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* --- CLEAN DARK INVENTORY BUTTON --- */
+.prio-badge.prio-inv {
+    /* Dark Theme Variables */
+    --inv-btn-bg: #1f2937;
+    --inv-btn-border: #4b5563;
+    --inv-btn-hover: #374151;
+    --inv-icon-color: #ffffff;
+    
+    background: var(--inv-btn-bg);
+    border: 1px solid var(--inv-btn-border);
+    color: var(--inv-icon-color);
+    
+    padding: 0;
+    width: 24px;
+    height: 19px;
+    border-radius: 5px;
+    
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.5); /* Subtle depth */
+    
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.prio-badge.prio-inv img {
+    width: 14px;
+    height: 14px;
+    display: block;
+    opacity: 0.9;
+    transition: opacity 0.2s;
+    /* Optional: Ensure image stays white regardless of source */
+    filter: brightness(0) invert(1); 
+}
+
+.prio-badge.prio-inv:hover {
+    background: var(--inv-btn-hover);
+    border-color: #9ca3af; /* Lighter grey border on hover */
+    box-shadow: 0 4px 8px rgba(0,0,0,0.6);
+    transform: translateY(-1px);
+}
+
+.prio-badge.prio-inv:hover img {
+    opacity: 1;
+    filter: brightness(0) invert(1) drop-shadow(0 0 2px rgba(255,255,255,0.5));
+}
+
+.prio-badge.prio-inv:active {
+    transform: translateY(1px);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.5);
+}
+
+@media (max-width: 480px) {
+    #relicGrid.inventory-grid {
+        grid-template-columns: 1fr; 
+    }
+}

@@ -1,20 +1,35 @@
 const MAIN_STAT_VALS = {
     body: { dmg: 60, dot: 75, cm: 120 },
-    legs: { dmg: 60, spa: 22.5, cf: 37.5, range: 30 }
+    legs: { dmg: 60, spa: 22.5, cf: 37.5, range: 30 },
+    // Visual values for Head (Math engine ignores these currently)
+    head: { potency: 75, elemental: 30 } 
 };
 
-// CSS Class Mapping - Now points to border classes for the container
+// CSS Class Mapping
 const STAT_CODE_TO_CLASS = {
     dmg:   'border-dmg',
     spa:   'border-spa',
     cdmg:  'border-cdmg',
     crit:  'border-crit',
     dot:   'border-dot',
-    range: 'border-range'
+    range: 'border-range',
+    potency: 'border-potency',   // New
+    elemental: 'border-elemental' // New
 };
 
 const STAT_LABELS = {
-    dmg: 'Dmg', spa: 'SPA', cdmg: 'CDmg', crit: 'Crit', dot: 'DoT', range: 'Range'
+    dmg: 'Dmg', spa: 'SPA', cdmg: 'CDmg', crit: 'Crit', dot: 'DoT', range: 'Range',
+    potency: 'Potency', elemental: 'Elem Dmg' // New Labels
+};
+
+// Assuming a max of 6 rolls for each sub-stat
+const MAX_SUB_STAT_VALUES = {
+    dmg: 24,    // 4 * 6
+    spa: 9,     // 1.5 * 6
+    cm: 27,     // 4.5 * 6
+    cf: 15,     // 2.5 * 6
+    dot: 30,    // 5 * 6
+    range: 12   // 2 * 6
 };
 
 // Stat Name Mappings
@@ -23,12 +38,13 @@ const NAME_TO_CODE = {
     "SPA": "spa",
     "Crit Dmg": "cm", "Crit Damage": "cm",
     "Crit Rate": "cf", "Crit": "cf", 
-    "DoT": "dot", "Buff Potency": "dot",
-    "Range": "range"
+    "DoT": "dot", 
+    "Range": "range",
+    "Potency": "potency", "Buff Potency": "potency",
+    "Elemental Dmg": "elemental", "Elem Dmg": "elemental", "Elemental": "elemental"
 };
 
 // Info Definitions for Popups
-// UPDATED: Added definitions for individual stats
 const infoDefinitions = {
     'stat_dmg': {
         title: "Damage (Dmg)",
@@ -53,20 +69,31 @@ const infoDefinitions = {
     'stat_dot': {
         title: "Damage Over Time (DoT)",
         formula: `<span class="ip-var">Damage Over Time</span>`,
-        desc: "Increases damage dealt by status effects (Burn, Bleed, etc) or Buff Potency for supports."
+        desc: "Increases damage dealt by status effects (Burn, Bleed, etc)."
     },
     'stat_range': {
         title: "Range (Rng)",
         formula: `<span class="ip-var">Range</span>`,
         desc: "Increases the radius of the unit's attack."
     },
+    'stat_potency': {
+        title: "Potency",
+        formula: `<span class="ip-var">Ignored</span>`,
+        desc: "intended to increase Buff Potency for supports."
+    },
+    'stat_elemental': {
+        title: "Elemental Damage",
+        formula: `<span class="ip-var">Ignored (Bugged)</span>`,
+        desc: "Intended to increase damage matching the unit's element. <br><strong class='text-red'>Currently bugged in-game and does nothing.</strong>"
+    },
     'level_scale': {
         title: "Level Scaling Formula",
         formula: `
         <span class="ip-var">Dmg</span> = <span class="ip-var">Base</span> * (1.0045125 ^ <span class="ip-var">Lv</span>)<br>
-        <span class="ip-var">SPA</span> = <span class="ip-var">Base</span> * (0.9954875 ^ <span class="ip-var">Lv</span>)
+        <span class="ip-var">SPA</span> = <span class="ip-var">Base</span> * (0.9954875 ^ <span class="ip-var">Lv</span>)<br>
+        <span class="ip-var">Range</span> = <span class="ip-var">Base</span> * (1.0045125 ^ <span class="ip-var">Lv</span>)
         `,
-        desc: "Damage increases exponentially by approx <span class='text-white'>0.45%</span> per level.<br>SPA decreases by approx <span class='text-white'>0.45%</span> per level.<br><br><b>SSS Rank:</b> Adds a flat multiplier (<span class='ip-num'>x1.2</span> Dmg, <span class='ip-num'>x0.92</span> SPA) applied <i>after</i> level scaling."
+        desc: "Damage <b>and Range</b> increase exponentially by approx <span class='text-white'>0.45%</span> per level.<br>SPA decreases by approx <span class='text-white'>0.45%</span> per level.<br><br><b>SSS Rank:</b> Adds a flat multiplier (<span class='ip-num'>x1.2</span> Dmg/Rng, <span class='ip-num'>x0.92</span> SPA) applied <i>after</i> level scaling."
     },
     'trait_logic': {
         title: "Trait Multipliers",

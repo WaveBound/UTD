@@ -1,0 +1,307 @@
+(function generateCleanStaticDB() {
+    console.log("🚀 Starting Final Clean Database Generation (Unified Tags)...");
+
+    // --- 1. SETUP & CONFIG ---
+    const originalStatConfig = { ...statConfig };
+    const originalKirito = typeof kiritoState !== 'undefined' ? { ...kiritoState } : { realm: true, card: false };
+    const originalBambietta = typeof bambiettaState !== 'undefined' ? { ...bambiettaState } : { element: "Dark" };
+
+    const CONFIGS = [
+        { head: false, subs: false }, { head: false, subs: true },
+        { head: true,  subs: false }, { head: true,  subs: true }
+    ];
+
+    // --- 2. ENUMS ---
+    const MAP_PRIO = { 'dmg': 0, 'spa': 1, 'range': 2, 'raw_dmg': 3 }; // Added raw_dmg just in case
+    const MAP_BODY = { 'dmg': 0, 'dot': 1, 'cm': 2 };
+    const MAP_LEGS = { 'dmg': 0, 'spa': 1, 'cf': 2, 'range': 3 };
+    const MAP_HEAD = { 'none': 0, 'sun_god': 1, 'ninja': 2, 'reaper_necklace': 3, 'shadow_reaper_necklace': 4 };
+
+    // --- 3. STRING COMPRESSION POOLS ---
+    const stringPool = new Map();
+    const stringArr = [""]; 
+    const subPool = new Map();
+    const subArr = [null]; 
+
+    const encodeStr = (val) => {
+        if (!val) return 0;
+        const s = String(val);
+        if (!stringPool.has(s)) {
+            stringPool.set(s, stringArr.length);
+            stringArr.push(s);
+        }
+        return stringPool.get(s);
+    };
+
+    const encodeSubs = (s) => {
+        if (!s) return 0;
+        const transform = (list) => (list||[]).map(i => [encodeStr(i.type), i.val]);
+        const compact = [transform(s.head), transform(s.body), transform(s.legs), s.selectedHead ? encodeStr(s.selectedHead) : 0];
+        const sig = JSON.stringify(compact);
+        if (!subPool.has(sig)) {
+            subPool.set(sig, subArr.length);
+            subArr.push(compact);
+        }
+        return subPool.get(sig);
+    };
+
+    // --- 4. BINARY ENCODER ---
+    const ROW_SIZE = 14;
+
+    const rowsToBuffer = (rows) => {
+        const buffer = new ArrayBuffer(rows.length * ROW_SIZE);
+        const view = new DataView(buffer);
+
+        rows.forEach((r, i) => {
+            const offset = i * ROW_SIZE;
+            
+            const p = MAP_PRIO[r.prio] || 0;
+            const b = MAP_BODY[r.mainStats.body] || 0;
+            const l = MAP_LEGS[r.mainStats.legs] || 0;
+            const h = MAP_HEAD[r.headUsed || 'none'];
+            const c = r.isCustom ? 1 : 0;
+            
+            // meta: 2 bits Prio, 2 bits Body, 2 bits Legs, 3 bits Head, 1 bit Custom
+            const meta = p | (b << 2) | (l << 4) | (h << 6) | (c << 9);
+
+            view.setUint8(offset, encodeStr(r.traitName));
+            view.setUint8(offset + 1, encodeStr(r.setName));
+            view.setFloat32(offset + 2, r.dps, true); 
+            view.setUint16(offset + 6, Math.round(r.spa * 1000), true);
+            view.setUint16(offset + 8, Math.round((r.range || 0) * 10), true);
+            view.setUint16(offset + 10, meta, true);
+            view.setUint16(offset + 12, encodeSubs(r.subStats), true);
+        });
+
+        let binary = '';
+        const bytes = new Uint8Array(buffer);
+        const len = bytes.byteLength;
+        for (let i = 0; i < len; i++) {
+            binary += String.fromCharCode(bytes[i]);
+        }
+        return btoa(binary);
+    };
+
+    // --- 5. CALCULATION LOOP ---
+    const FINAL_DB = {};
+    const tasks = [];
+    unitDatabase.forEach(u => {
+        tasks.push({ u, isCard: false });
+        if(u.id === 'kirito') tasks.push({ u, isCard: true });
+    });
+
+    console.log("⚙️ calculating...");
+
+    tasks.forEach(task => {
+        const { u, isCard } = task;
+        let baseKey = u.id;
+        if(u.id === 'kirito' && isCard) baseKey = 'kirito_card';
+        const types = u.ability ? ['base', 'abil'] : ['base'];
+
+        types.forEach(type => {
+            const finalKey = (type === 'abil') ? `${baseKey}_abil` : baseKey;
+            FINAL_DB[finalKey] = { b: [], f: [] }; 
+
+            ['bugged', 'fixed'].forEach(mode => {
+                // Global Config Override
+                if (mode === 'bugged') { 
+                    statConfig.applyRelicDot = false; 
+                    statConfig.applyRelicCrit = true; 
+                } else { 
+                    statConfig.applyRelicDot = true; 
+                    statConfig.applyRelicCrit = true; 
+                }
+
+                const currentFilteredBuilds = getFilteredBuilds();
+                const currentSubCandidates = getValidSubCandidates();
+
+                let currentStats = { ...u.stats }; 
+                if (type === 'abil' && u.ability) Object.assign(currentStats, u.ability);
+                if (u.tags) currentStats.tags = u.tags;
+                if (u.id === 'bambietta') Object.assign(currentStats, BAMBIETTA_MODES["Dark"]);
+                if (u.id === 'kirito') {
+                    kiritoState.realm = true; 
+                    kiritoState.card = isCard;
+                    if (isCard) { currentStats.dot = 200; currentStats.dotDuration = 4; currentStats.dotStacks = 1; }
+                }
+
+                CONFIGS.forEach(cfg => {
+                    const headsToProcess = cfg.head ? ['sun_god', 'ninja', 'reaper_necklace', 'shadow_reaper_necklace'] : ['none'];
+                    const includeSubs = cfg.subs;
+                    const traitsForCalc = [...traitsList, ...(unitSpecificTraits[u.id] || [])];
+
+                    const results = calculateUnitBuilds(
+                        u, {...currentStats}, currentFilteredBuilds, currentSubCandidates, headsToProcess, includeSubs, traitsForCalc
+                    );
+
+                    if (u.id === 'law') results.sort((a, b) => (b.range || 0) - (a.range || 0));
+                    else results.sort((a, b) => b.dps - a.dps);
+
+                    const key = mode === 'bugged' ? 'b' : 'f';
+                    FINAL_DB[finalKey][key].push(rowsToBuffer(results));
+                });
+            });
+        });
+    });
+
+    // Restore Globals
+    Object.assign(statConfig, originalStatConfig);
+    if (typeof kiritoState !== 'undefined') Object.assign(kiritoState, originalKirito);
+    if (typeof bambiettaState !== 'undefined') Object.assign(bambiettaState, originalBambietta);
+
+    // --- 6. PACKAGING ---
+    const payload = { s: stringArr, p: subArr, d: FINAL_DB };
+    const payloadStr = JSON.stringify(payload);
+
+    // --- 7. UNPACKER SCRIPT GENERATION ---
+    const fileContent = `
+(function() {
+    // BINARY STATIC DB (Unified Tags)
+    const RAW = ${payloadStr};
+    const S = RAW.s;
+    const P = RAW.p;
+    const D = RAW.d;
+
+    const PRIO = ['dmg', 'spa', 'range', 'raw_dmg'];
+    const BODY = ['dmg', 'dot', 'cm'];
+    const LEGS = ['dmg', 'spa', 'cf', 'range'];
+    const HEAD = ['none', 'sun_god', 'ninja', 'reaper_necklace', 'shadow_reaper_necklace'];
+    
+    // Mappings for ID Reconstruction (Must match data.js descriptions)
+    const DESC_BODY = ['Dmg', 'DoT', 'Crit Dmg'];
+    const DESC_LEGS = ['Dmg', 'Spa', 'Crit Rate', 'Range'];
+
+    const ROW_SIZE = 14;
+
+    const decode = (b64) => {
+        const bin = atob(b64);
+        const len = bin.length;
+        const bytes = new Uint8Array(len);
+        for (let i = 0; i < len; i++) bytes[i] = bin.charCodeAt(i);
+        return new DataView(bytes.buffer);
+    };
+
+    window.STATIC_BUILD_DB = new Proxy({}, {
+        get: function(target, prop) {
+            if (target[prop]) return target[prop];
+            if (D[prop]) {
+                const rawData = D[prop];
+                
+                // 1. Determine Context ID Base
+                // Matches calculation.js: unit.id + suffix
+                let unitId = prop.replace('_abil', '').replace('kirito_card', 'kirito');
+                let suffix = prop.endsWith('_abil') ? "-ABILITY" : "-BASE";
+                if (prop.startsWith('kirito')) {
+                    suffix += "-VR"; // All static Kirito calcs are VR=true
+                    if (prop.includes('card')) suffix += "-CARD";
+                }
+                const idContext = unitId + suffix;
+
+                const unpackList = (b64List, modeCode) => {
+                    // modeCode: 'b' -> '-b-', 'f' -> '-f-'
+                    const modeTag = (modeCode === 'b') ? "-b-" : "-f-";
+
+                    return b64List.map((b64, cfgIdx) => {
+                        const view = decode(b64);
+                        const count = view.byteLength / ROW_SIZE;
+                        const result = [];
+                        
+                        // Config Index Mapping matches CONFIGS array order:
+                        // 0: NoHead, NoSubs
+                        // 1: NoHead, YesSubs
+                        // 2: YesHead, NoSubs
+                        // 3: YesHead, YesSubs
+                        const subsSuffix = (cfgIdx % 2 !== 0) ? "-SUBS" : "-NOSUBS";
+
+                        for(let i=0; i<count; i++) {
+                            const off = i * ROW_SIZE;
+                            const tName = S[view.getUint8(off)];
+                            const sName = S[view.getUint8(off+1)];
+                            const dps = view.getFloat32(off+2, true);
+                            const spa = view.getUint16(off+6, true) / 1000;
+                            const range = view.getUint16(off+8, true) / 10;
+                            const meta = view.getUint16(off+10, true);
+                            const subId = view.getUint16(off+12, true);
+
+                            const pIdx = meta & 3;
+                            const bIdx = (meta >> 2) & 3;
+                            const lIdx = (meta >> 4) & 3;
+                            const hIdx = (meta >> 6) & 7;
+                            const isC = (meta >> 9) & 1;
+
+                            const prioStr = PRIO[pIdx];
+                            const headUsed = HEAD[hIdx];
+                            const headSuffix = "-" + headUsed;
+
+                            // Reconstruct Safe Build Name for ID
+                            // Format: SetName (BodyDesc/LegsDesc) -> Regex stripped
+                            const buildNameRaw = sName + " (" + DESC_BODY[bIdx] + "/" + DESC_LEGS[lIdx] + ")";
+                            const safeBuildName = buildNameRaw.replace(/[^a-zA-Z0-9]/g, '');
+
+                            // Lookup Trait ID (Fallback to lowercase name if global list unavailable)
+                            let traitId = tName.toLowerCase();
+                            if(typeof traitsList !== 'undefined') {
+                                const found = traitsList.find(t => t.name === tName);
+                                if(found) traitId = found.id;
+                            }
+
+                            // 2. Construct Exact Runtime ID
+                            // Structure: [Unit][Context][Trait][Build][Prio][Subs][Head][MODE]
+                            const uniqueId = idContext + "-" + traitId + "-" + safeBuildName + "-" + prioStr + subsSuffix + headSuffix + modeTag;
+
+                            let subs = undefined;
+                            if(subId !== 0) {
+                                const rS = P[subId]; 
+                                const mapS = (list) => list.map(x => ({ type: S[x[0]], val: x[1] }));
+                                subs = {
+                                    head: mapS(rS[0]),
+                                    body: mapS(rS[1]),
+                                    legs: mapS(rS[2]),
+                                    selectedHead: rS[3] ? S[rS[3]] : undefined
+                                };
+                            }
+
+                            result.push({
+                                id: uniqueId,
+                                traitName: tName,
+                                setName: sName,
+                                dps: dps,
+                                spa: spa,
+                                range: range,
+                                prio: prioStr,
+                                mainStats: { body: BODY[bIdx], legs: LEGS[lIdx] },
+                                headUsed: headUsed,
+                                isCustom: !!isC,
+                                subStats: subs
+                            });
+                        }
+                        return result;
+                    });
+                };
+
+                target[prop] = {
+                    bugged: unpackList(rawData.b, "b"), 
+                    fixed: unpackList(rawData.f, "f")   
+                };
+                
+                D[prop] = null;
+                return target[prop];
+            }
+            return undefined;
+        }
+    });
+    console.log("✅ Unified Static DB Loaded");
+})();
+`;
+
+    console.log("📦 Downloading...");
+    const blob = new Blob([fileContent], { type: 'text/javascript' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'static-database.js';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    console.log("🎉 Done!");
+})();

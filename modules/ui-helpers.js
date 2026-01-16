@@ -78,6 +78,29 @@ const toggleHypothetical = (checkbox) => {
     if(lbl2) lbl2.innerText = labelText;
 };
 
+// NEW: Toggle Inventory Mode
+const toggleInventoryMode = (checkbox) => {
+    const isChecked = checkbox.checked;
+    inventoryMode = isChecked;
+    
+    // Visual toggle
+    checkbox.parentNode.classList.toggle('is-checked', isChecked);
+
+    // Sync other toggle
+    const otherId = checkbox.id === 'globalInventoryMode' ? 'guideInventoryMode' : 'globalInventoryMode';
+    const otherCheckbox = document.getElementById(otherId);
+    if(otherCheckbox) {
+        otherCheckbox.checked = isChecked;
+        otherCheckbox.parentNode.classList.toggle('is-checked', isChecked);
+    }
+
+    // Trigger full calculation re-render
+    resetAndRender();
+    if(document.getElementById('guidesPage').classList.contains('active')) {
+        renderGuides();
+    }
+};
+
 // Map old names to new unified functions for compatibility
 const toggleGuideSubStats = toggleSubStats;
 const toggleGuideHeadPiece = toggleHeadPiece;
@@ -229,18 +252,32 @@ function switchPage(pid) {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
     
+    // Toggle Toolbars
+    const dbToolbar = document.getElementById('dbInjector');
+    const guidesToolbar = document.getElementById('guidesToolbar');
+    const invToolbar = document.getElementById('inventoryToolbar');
+
+    if(dbToolbar) dbToolbar.classList.add('hidden');
+    if(guidesToolbar) guidesToolbar.classList.add('hidden');
+    if(invToolbar) invToolbar.classList.add('hidden');
+
     const isDb = pid === 'db';
     if (pid === 'db') {
         document.getElementById('dbPage').classList.add('active');
-        document.getElementById('dbInjector').classList.remove('hidden');
-        document.getElementById('guidesToolbar').classList.add('hidden');
-        event.target.classList.add('active');
+        if(dbToolbar) dbToolbar.classList.remove('hidden');
+        if(event && event.target) event.target.classList.add('active');
     } else if (pid === 'guides') {
         document.getElementById('guidesPage').classList.add('active');
-        document.getElementById('guidesToolbar').classList.remove('hidden');
-        document.getElementById('dbInjector').classList.add('hidden');
-        event.target.classList.add('active');
+        if(guidesToolbar) guidesToolbar.classList.remove('hidden');
+        if(event && event.target) event.target.classList.add('active');
         renderGuides();
+    } else if (pid === 'inventory') {
+        document.getElementById('inventoryPage').classList.add('active');
+        if(invToolbar) invToolbar.classList.remove('hidden');
+        // Find the specific button for inventory to add active class
+        const invBtn = document.querySelector(`button[onclick*="switchPage('inventory')"]`) || 
+                       document.querySelector(`button[onclick*="resetAndOpenInventory()"]`);
+        if(invBtn) invBtn.classList.add('active');
     }
     
     const selectAllBtn = document.getElementById('selectAllBtn');
@@ -253,6 +290,14 @@ function switchPage(pid) {
     } else {
         updateCompareBtn();
     }
+}
+
+// NEW: Wrapper to clear highlights when clicking main nav button
+function resetAndOpenInventory() {
+    if (typeof clearInventoryHighlights === 'function') {
+        clearInventoryHighlights();
+    }
+    switchPage('inventory');
 }
 
 // Toggle deep dive section
@@ -295,7 +340,6 @@ document.addEventListener('DOMContentLoaded', () => {
 let savedScrollPosition = 0;
 
 function updateBodyScroll() {
-    // UPDATED: Removed reliance on hard-coded 'style.display === flex'. Now relies purely on '.is-visible' class.
     const visibleModals = Array.from(document.querySelectorAll('.modal-overlay')).some(m => m.classList.contains('is-visible'));
     const visiblePopups = document.getElementById('mathInfoPopup');
     const body = document.body;
@@ -303,8 +347,6 @@ function updateBodyScroll() {
     if (visibleModals || visiblePopups) {
         if (!body.classList.contains('scroll-locked')) {
             savedScrollPosition = window.scrollY;
-            // NOTE: This inline style is REQUIRED for dynamic position locking. 
-            // It uses a CSS variable (--scroll-offset) mapped in base.css.
             body.style.setProperty('--scroll-offset', `-${savedScrollPosition}px`);
             body.classList.add('scroll-locked');
         }
