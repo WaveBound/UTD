@@ -160,27 +160,22 @@ const SETS = [
     { id: "reaper_set",    name: "Reaper Set",    bonus: { spa: 7.5, range: 15 } }
 ];
 
-const globalBuilds = [];
-SETS.forEach(set => {
-    const bodies = [BODY_DMG, BODY_DOT, BODY_CDMG];
-    const legs   = [LEG_DMG, LEG_SPA, LEG_CRIT, LEG_RANGE];
-    bodies.forEach(body => {
-        legs.forEach(leg => {
-            globalBuilds.push({
-                name: `${set.name} (${body.desc}/${leg.desc})`,
-                set:  set.id,
-                dmg:  body.dmg + leg.dmg,
-                spa:  leg.spa, 
-                dot:  body.dot,
-                cm:   body.cm, 
-                cf:   (body.cf || 0) + (leg.cf || 0),
-                range: (leg.range || 0),
-                bodyType: body.type,
-                legType: leg.type
-            });
-        });
-    });
-});
+const globalBuilds = SETS.flatMap(set => 
+    [BODY_DMG, BODY_DOT, BODY_CDMG].flatMap(body => 
+        [LEG_DMG, LEG_SPA, LEG_CRIT, LEG_RANGE].map(leg => ({
+            name: `${set.name} (${body.desc}/${leg.desc})`,
+            set:  set.id,
+            dmg:  body.dmg + leg.dmg,
+            spa:  leg.spa, 
+            dot:  body.dot,
+            cm:   body.cm, 
+            cf:   (body.cf || 0) + (leg.cf || 0),
+            range: (leg.range || 0),
+            bodyType: body.type,
+            legType: leg.type
+        }))
+    )
+);
 
 const traitsList = [
     { id: "ruler", name: "Ruler", dmg: 200, spa: 20, range: 30, desc: "+200% Dmg, Limit 1", limitPlace: 1 },
