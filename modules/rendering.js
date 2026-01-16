@@ -452,17 +452,17 @@ function processNextChunk() {
             const bannerContent = `<div class="placement-badge">Max Place: ${unit.placement}</div>${getUnitImgHtml(unit, 'unit-avatar')}<div class="unit-title"><h2>${unit.name}</h2><span>${unit.role} <span class="sss-tag">SSS</span></span></div>${traitButtonHtml}`;
             
             // Logic for dynamic ability labels (Sharpshooter / Phantom Captain)
-            let abilityLabel = 'Ability';
-            let toggleScript = '';
+let abilityLabel = 'Ability';
+let toggleScript = '';
 
-            if (unit.id === 'phantom_captain') {
-                abilityLabel = 'Planes';
-            } else if (unit.id === 'sharpshooter') {
-                // Set initial label based on current active state
-                abilityLabel = activeAbilityIds.has(unit.id) ? 'Sniper Mode' : 'Normal Mode';
-                // Inline script to update label immediately on toggle
-                toggleScript = `; this.parentElement.previousElementSibling.innerText = this.checked ? 'Sniper Mode' : 'Normal Mode'`;
-            }
+if (unit.id === 'phantom_captain') {
+    abilityLabel = 'Planes';
+} else if (unit.id === 'megumin') {
+    abilityLabel = 'Passive'; // <--- ADD THIS LINE
+} else if (unit.id === 'sharpshooter') {
+    abilityLabel = activeAbilityIds.has(unit.id) ? 'Sniper Mode' : 'Normal Mode';
+    toggleScript = `; this.parentElement.previousElementSibling.innerText = this.checked ? 'Sniper Mode' : 'Normal Mode'`;
+}
             
             const abilityToggleHtml = unit.ability ? `<div class="toggle-wrapper"><span>${abilityLabel}</span><label><input type="checkbox" class="ability-cb" ${activeAbilityIds.has(unit.id) ? 'checked' : ''} onchange="toggleAbility('${unit.id}', this)${toggleScript}"><div class="mini-switch"></div></label></div>` : '<div></div>';
             

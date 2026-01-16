@@ -110,11 +110,11 @@ function renderMathContent(data) {
         </tr>`;
     }
     
-    const statPointsHtml = (data.dmgPoints !== undefined) ? `
+const statPointsHtml = (data.dmgPoints !== undefined) ? `
     <tr>
         <td class="mt-cell-label">Stat Points <button class="calc-info-btn" onclick="openInfoPopup('level_scale')">?</button></td>
-        <td class="mt-cell-formula">DMG: ${data.dmgPoints} | SPA: ${data.spaPoints}</td>
-        <td class="mt-cell-val">${num(data.baseStats.dmg * levelMult)}</td>
+        <td class="mt-cell-formula">Dmg x${fix(data.lvStats.dmgMult, 2)} Spa x${fix(data.lvStats.spaMult, 2)}</td>
+        <td class="mt-cell-val">${num(data.baseStats.dmg * data.lvStats.dmgMult)}</td>
     </tr>
     ` : `
     <tr>
