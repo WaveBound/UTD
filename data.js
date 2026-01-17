@@ -35,6 +35,13 @@ const patchNotesData = [
         ]
     },
     {
+        version: "v3.6",
+        date: "Jan 15, 2026",
+        changes: [
+            { type: "Units", text: "<b>Unit Update:</b> Added Phantom Captain And Sharpshooter" }
+        ]
+    },
+    {
         version: "v3.5",
         date: "Jan 13, 2026",
         changes: [
