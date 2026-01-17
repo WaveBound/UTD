@@ -465,8 +465,25 @@ function renderGuides() {
     document.getElementById('dispGuideTrait').innerText = tName;
 
     const unitsToProcess = (filterUnitId === 'all') ? unitDatabase : unitDatabase.filter(u => u.id === filterUnitId);
-    unitsToProcess.forEach(unit => {
+    
+    // Sort units by their best performance (DPS or Range for Law)
+    const scoredUnits = unitsToProcess.map(unit => {
         if (!unitBuildsCache[unit.id]) processUnitCache(unit);
+        
+        // Use Fixed Mode, Config 3 (Max Potential) as the sorting standard
+        const refBuilds = getGuideBuildsFromCache(unit, 'fixed', 3);
+        const top = processGuideTop3(refBuilds, unit, filterTraitId);
+        
+        let score = 0;
+        if (top && top.length > 0) {
+            score = (unit.id === 'law') ? (top[0].range || 0) : top[0].dps;
+        }
+        return { unit, score };
+    });
+
+    scoredUnits.sort((a, b) => b.score - a.score);
+
+    scoredUnits.forEach(({ unit }) => {
         for(let cfg = 0; cfg < 4; cfg++) {
             const bugged = processGuideTop3(getGuideBuildsFromCache(unit, 'bugged', cfg), unit, filterTraitId);
             if (bugged.length) guideGrid.appendChild(createGuideCard(unit, bugged, `mode-bugged cfg-${cfg}`));
