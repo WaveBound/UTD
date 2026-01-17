@@ -1,10 +1,3 @@
-// ============================================================================
-// MATH.JS - Core Calculation Engine
-// ============================================================================
-
-/**
- * Combines two traits into a single compound trait.
- */
 function combineTraits(t1, t2) {
     if (t1.id === 'none' && t2.id === 'none') return t1;
     if (t1.id === 'none') return t2;
@@ -38,6 +31,8 @@ function combineTraits(t1, t2) {
 
         isEternal: t1.isEternal || t2.isEternal,
         hasRadiation: t1.hasRadiation || t2.hasRadiation,
+        // Radiation specific compound logic
+        radiationPct: (t1.radiationPct || 0) + (t2.radiationPct || 0),
         radiationDuration: Math.max(t1.radiationDuration || 0, t2.radiationDuration || 0),
         
         allowDotStack: t1.allowDotStack || t2.allowDotStack,
@@ -331,45 +326,55 @@ function _calcSummonDPS(uStats, finalDmg, finalSpa, placement) {
     };
 }
 
-/**
- * Calculates DoT DPS.
- */
 function _calcDoTDPS(uStats, traitObj, totalDotBuffs, baseR_Dot, finalDmg, finalSpa, placement, isVirtualRealm, avgCritMult) {
     let dotDpsTotal = 0;
     const dotCritMult = isVirtualRealm ? avgCritMult : 1;
+
     let dotBreakdown = { 
+        nativeDps: 0,
+        radDps: 0,
         base: uStats.dot + totalDotBuffs, 
-        baseNoHead: uStats.dot + totalDotBuffs, // Adjusted in caller if needed
-        relicMult: 1, finalPct: 0, critMult: dotCritMult, internal: 1, finalTick: 0, timeUsed: finalSpa 
+        relicMult: 1 + (baseR_Dot / 100), 
+        critMult: dotCritMult,
+        nativeInterval: 0,
+        nativeTotalDmg: 0,
+        radInterval: 0,
+        radTotalDmg: 0
     };
 
-    if (uStats.dot > 0 || traitObj.hasRadiation) {
-        const internalStacks = (traitObj.allowDotStack && uStats.id === 'kirito' && isVirtualRealm) ? (uStats.hitCount || uStats.dotStacks || 1) : 1;
-        const baseDotPct = uStats.dot + totalDotBuffs;
-        const relicDotMult = 1 + (baseR_Dot / 100);
-        const singleTickPct = baseDotPct * relicDotMult;
+    const canStack = (traitObj.allowDotStack || traitObj.allowPlacementStack);
+
+    // 1. NATIVE DOT (Burn, Bleed, etc.)
+    if (uStats.dot > 0) {
+        const nativeTickPct = (uStats.dot + totalDotBuffs) * dotBreakdown.relicMult;
+        const totalNativeDmg = finalDmg * (nativeTickPct / 100) * dotCritMult;
         
-        dotBreakdown.relicMult = relicDotMult;
-        dotBreakdown.finalPct = singleTickPct;
-
-        const totalDoTPct = singleTickPct * internalStacks;
-        const totalDoTDmg = finalDmg * (totalDoTPct / 100) * dotCritMult;
+        const duration = uStats.dotDuration || 0;
+        // Interval Logic: First attack after duration expires
+        const interval = canStack ? finalSpa : (duration > 0 ? Math.ceil(duration / finalSpa) * finalSpa : finalSpa);
         
-        let timeBasis = finalSpa; 
-        if (!traitObj.allowDotStack && uStats.dotDuration && uStats.dotDuration > 0) {
-            timeBasis = Math.max(uStats.dotDuration, finalSpa);
-        } else if (traitObj.hasRadiation && traitObj.radiationDuration) {
-            timeBasis = Math.max(traitObj.radiationDuration, finalSpa);
-        }
-
-        const oneUnitDoTDps = totalDoTDmg / timeBasis;
-        const canStackPlacement = traitObj.allowDotStack || traitObj.allowPlacementStack;
-        dotDpsTotal = oneUnitDoTDps * (canStackPlacement ? placement : 1); 
-
-        dotBreakdown.internal = internalStacks;
-        dotBreakdown.finalTick = totalDoTDmg;
-        dotBreakdown.timeUsed = timeBasis;
+        dotBreakdown.nativeTotalDmg = totalNativeDmg;
+        dotBreakdown.nativeInterval = interval;
+        dotBreakdown.nativeDps = totalNativeDmg / interval;
     }
+
+    // 2. RADIATION DOT (Fission Trait)
+    if (traitObj.hasRadiation) {
+        const radPct = traitObj.radiationPct || 20;
+        const duration = traitObj.radiationDuration || 10;
+        const totalRadDmg = finalDmg * (radPct / 100) * dotCritMult;
+        
+        // Interval Logic: First attack after the 10s duration expires (e.g., 6.2 -> 12.4)
+        const interval = canStack ? finalSpa : Math.ceil(duration / finalSpa) * finalSpa;
+
+        dotBreakdown.radTotalDmg = totalRadDmg;
+        dotBreakdown.radInterval = interval;
+        dotBreakdown.radDps = totalRadDmg / interval;
+    }
+
+    const combinedOneUnitDps = dotBreakdown.nativeDps + dotBreakdown.radDps;
+    dotDpsTotal = combinedOneUnitDps * (canStack ? placement : 1);
+
     return { dotDpsTotal, dotBreakdown };
 }
 
@@ -495,7 +500,7 @@ function calculateDPS(uStats, relicStats, context) {
     const { dotDpsTotal, dotBreakdown } = _calcDoTDPS(uStats, traitObj, totalDotBuffs, baseR_Dot, finalDmg, finalSpa, placement, isVirtualRealm, avgCritMult);
     dotBreakdown.baseNoHead = uStats.dot + traitDotBuff + sBonus.dot; // Correct back for display
 
-    return {
+   return {
         total: hitDpsTotal + dotDpsTotal + summonDpsTotal,
         hit: hitDpsTotal,
         dot: dotDpsTotal,
@@ -504,6 +509,7 @@ function calculateDPS(uStats, relicStats, context) {
         spa: finalSpa,
         spaCap: cap,
         range: finalRange,
+        passiveRange: uStats.passiveRange || 0,
         dmgVal: finalDmg,
         lvStats,
         traitBuffs: { dmg: traitDmgPct, spa: traitSpaPct, range: traitRangePct },
@@ -528,7 +534,7 @@ function calculateDPS(uStats, relicStats, context) {
         baseStats: uStats,
         dmgPoints: context.dmgPoints,
         spaPoints: context.spaPoints,
-        rangePoints: context.rangePoints, // Pass back to result
+        rangePoints: context.rangePoints,
         singleUnitDoT: dotDpsTotal / (traitObj.allowDotStack || traitObj.allowPlacementStack ? placement : 1), 
         hasStackingDoT: traitObj.allowDotStack || traitObj.allowPlacementStack,
         extraAttacks: extraAttacksData,

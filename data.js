@@ -181,7 +181,7 @@ const globalBuilds = SETS.flatMap(set =>
 
 const traitsList = [
     { id: "ruler", name: "Ruler", dmg: 200, spa: 20, range: 30, desc: "+200% Dmg, Limit 1", limitPlace: 1 },
-    { id: "fission", name: "Fission", dmg: 15, spa: 15, range: 25, dotBuff: 20, radiationDuration: 10, desc: "+15% Dmg/SPA, Rad DoT", hasRadiation: true },
+    { id: "fission", name: "Fission", dmg: 15, spa: 15, range: 25, hasRadiation: true, radiationPct: 20,},
     { id: "eternal", name: "Eternal", dmg: 0, spa: 20, range: 0, desc: "-20% SPA, +Dmg/Rng/Wave", isEternal: true },
     { id: "sacred", name: "Sacred", dmg: 25, spa: 10, range: 25, desc: "+25% Dmg, -10% SPA" },
     { id: "astral", name: "Astral", dmg: 0, spa: 20, range: 15, desc: "DoT Stacks (All Units)", allowDotStack: true },
