@@ -186,9 +186,66 @@
 .prio-row {
     display: flex;
     align-items: center;
-    margin-bottom: 14px; /* Slightly more vertical space */
-    gap: 15px; /* More space between text and bar */
+    margin-bottom: 14px;
+    gap: 20px; /* Increased gap from 15px to 20px for better spacing */
 }
+
+.prio-label {
+    width: 100px; /* Slightly narrower to give bars more room on mobile */
+    flex-shrink: 0;
+    font-size: 0.75rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: #fff;
+    text-align: right; /* Changed from LEFT to RIGHT so text ends "in line" */
+    letter-spacing: 0.5px;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    line-height: 1.2;
+}
+
+/* Mobile specific adjustment for Sub-Stat labels */
+@media (max-width: 768px) {
+    .prio-label {
+        width: 85px; /* Further reduced for small screens */
+        font-size: 0.7rem;
+    }
+    .prio-row {
+        gap: 12px; /* Tighter gap for mobile to preserve bar width */
+    }
+}
+
+
+/* --- MATH TABLE (calc-table) UPDATES --- */
+
+.calc-table td {
+    padding: 6px 0; /* Increased vertical padding for better touch targets */
+    vertical-align: middle;
+}
+
+.mt-cell-label {
+    color: #ffffff;
+    width: 55%; /* Reduced from 60% to prevent squeezing the numbers */
+    opacity: 0.7;
+    display: flex;
+    justify-content: flex-end; /* Right-aligns content inside the flex container */
+    align-items: center;
+    gap: 8px;
+    padding-right: 15px; /* Creates a guaranteed "gutter" between text and values */
+    text-align: right;   /* Fallback for non-flex browsers */
+}
+
+.mt-cell-val {
+    color: #fff;
+    text-align: right;
+    font-weight: bold;
+    font-size: 0.85rem;
+    width: 30%; /* Set a relative width to ensure numbers stay "in line" vertically */
+    white-space: nowrap; /* Prevents numbers from wrapping to a second line */
+}
+
+/* Adjustment for nested sub-rows to maintain right-alignment hierarchy */
+.mt-pl-md { padding-right: 15px; padding-left: 0; }
+.mt-pl-lg { padding-right: 15px; padding-left: 0; }
 
 /* Label (Left Side) */
 .prio-label {
