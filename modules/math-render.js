@@ -172,14 +172,17 @@ function renderSummonSection(data) {
 }
 
 function renderFinalSection(data) {
+    const hitLabel = data.placement > 1 ? `Hit DPS (x${data.placement} Units)` : `Hit DPS`;
+    const hitFormula = data.placement > 1 ? `<span class="op">×</span>${data.placement}` : ``;
+
     return `
             <div class="dd-section border-l-gold">
                 <div class="dd-title text-gold">Final Synthesis</div>
                 <table class="calc-table">
-                    <tr><td class="mt-cell-label">Hit DPS (x${data.placement} Units)</td><td class="mt-cell-formula"><span class="op">×</span>${data.placement}</td><td class="mt-cell-val calc-highlight">${fmt.num(data.hit)}</td></tr>
+                    <tr><td class="mt-cell-label">${hitLabel}</td><td class="mt-cell-formula">${hitFormula}</td><td class="mt-cell-val calc-highlight">${fmt.num(data.hit)}</td></tr>
                     ${data.dot > 0 ? `<tr><td class="mt-cell-label">DoT DPS</td><td class="mt-cell-formula">+</td><td class="mt-cell-val text-accent-end">${fmt.num(data.dot)}</td></tr>` : ''}
                     ${data.summon > 0 ? `<tr><td class="mt-cell-label">Plane DPS</td><td class="mt-cell-formula">+</td><td class="mt-cell-val text-accent-start">${fmt.num(data.summon)}</td></tr>` : ''}
-                    <tr><td class="mt-cell-label mt-cell-val-lg text-white" colspan="2">TOTAL DPS</td><td class="mt-cell-val mt-text-gold mt-pt-md mt-cell-val-lg">${fmt.num(data.total)}</td></tr>
+                    <tr><td class="mt-cell-label text-white mt-pt-md" colspan="2" style="font-size: 1.1rem; font-weight: 800;">TOTAL DPS</td><td class="mt-cell-val mt-text-gold mt-pt-md" style="font-size: 1.6rem;">${fmt.num(data.total)}</td></tr>
                 </table>
             </div>`;
 }
