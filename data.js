@@ -26,6 +26,15 @@ const SUB_NAMES = {
 
 const patchNotesData = [
     {
+        version: "v3.8",
+        date: "Jan 17, 2026",
+        changes: [
+            { type: "UI", text: "<b>DPS Breakdown:</b> Added Range Breakdown box." },
+            { type: "Fix", text: "<b>DoT Logic:</b> Fixed DoT calculations." },
+            { type: "Math", text: "<b>Fission:</b> Updated Fission calculations." }
+        ]
+    },
+    {
         version: "v3.7",
         date: "Jan 16, 2026",
         changes: [
