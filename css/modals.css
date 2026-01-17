@@ -227,11 +227,11 @@
     width: 55%; /* Reduced from 60% to prevent squeezing the numbers */
     opacity: 0.7;
     display: flex;
-    justify-content: flex-end; /* Right-aligns content inside the flex container */
+    justify-content: flex-start; /* Left-aligns content inside the flex container */
     align-items: center;
     gap: 8px;
-    padding-right: 15px; /* Creates a guaranteed "gutter" between text and values */
-    text-align: right;   /* Fallback for non-flex browsers */
+    padding-right: 0;
+    text-align: left;   /* Fallback for non-flex browsers */
 }
 
 .mt-cell-val {
@@ -244,8 +244,8 @@
 }
 
 /* Adjustment for nested sub-rows to maintain right-alignment hierarchy */
-.mt-pl-md { padding-right: 15px; padding-left: 0; }
-.mt-pl-lg { padding-right: 15px; padding-left: 0; }
+.mt-pl-md { padding-right: 0; padding-left: 15px; }
+.mt-pl-lg { padding-right: 0; padding-left: 30px; }
 
 /* Label (Left Side) */
 .prio-label {
