@@ -196,7 +196,6 @@ function renderRangeSection(data) {
     const setRange = data.totalSetStats.range || 0;
     const hasEternal = (data.eternalRangeBuff || 0) > 0;
     const additiveLabel = hasEternal ? "Set Bonus + Passive + Eternal" : "Set Bonus + Passive";
-    const passiveLabel = hasEternal ? "Unit Passive + Eternal" : "Unit Passive";
 
     return `
         <div class="dd-section">
@@ -215,9 +214,8 @@ function renderRangeSection(data) {
                 <tr><td class="mt-cell-label mt-pt-md">${additiveLabel}</td><td class="mt-cell-formula mt-pt-md">x${fmt.fix(mAdditive, 2)}</td><td class="mt-cell-val mt-pt-md">${fmt.pct(totalAdditiveRange)}</td></tr>
                 
                 ${setRange > 0 ? `<tr><td class="mt-cell-label mt-pl-md opacity-70">↳ Set Bonus</td><td class="mt-cell-formula">${fmt.pct(setRange)}</td><td class="mt-cell-val"></td></tr>` : ''}
-                ${data.passiveRange > 0 ? `<tr><td class="mt-cell-label mt-pl-md opacity-70">↳ ${passiveLabel}</td><td class="mt-cell-formula">${fmt.pct(data.passiveRange)}</td><td class="mt-cell-val"></td></tr>` : ''}
-                ${(data.eternalRangeBuff > 0) ? `<tr><td class="mt-cell-label mt-pl-lg text-accent-start opacity-70">↳ Eternal Stacks</td><td class="mt-cell-formula text-accent-start">${fmt.pct(data.eternalRangeBuff)}</td><td class="mt-cell-val"></td></tr>` : ''}
-                ${(basePassiveRange > 0 && data.eternalRangeBuff > 0) ? `<tr><td class="mt-cell-label mt-pl-lg opacity-70">↳ Base Passive</td><td class="mt-cell-formula">${fmt.pct(basePassiveRange)}</td><td class="mt-cell-val"></td></tr>` : ''}
+                ${basePassiveRange > 0 ? `<tr><td class="mt-cell-label mt-pl-md opacity-70">↳ Unit Passive</td><td class="mt-cell-formula">${fmt.pct(basePassiveRange)}</td><td class="mt-cell-val"></td></tr>` : ''}
+                ${(data.eternalRangeBuff > 0) ? `<tr><td class="mt-cell-label mt-pl-md text-accent-start opacity-70">↳ Eternal Stacks</td><td class="mt-cell-formula text-accent-start">${fmt.pct(data.eternalRangeBuff)}</td><td class="mt-cell-val"></td></tr>` : ''}
 
                 <tr class="mt-border-top"><td class="mt-cell-label mt-pt-sm text-white">Final Range Result</td><td class="mt-cell-formula"></td><td class="mt-cell-val mt-pt-sm mt-text-bold" style="color: #fbbf24">${fmt.fix(data.range, 2)}</td></tr>
             </table>

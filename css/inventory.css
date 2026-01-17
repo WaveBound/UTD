@@ -110,6 +110,8 @@
 .rc-image-wrapper {
     width: 70px;
     height: 70px;
+    /* ADD THIS: Controls how much 'space' is around the image */
+    padding: 10px; 
     border-radius: 50%;
     position: relative;
     box-shadow: 0 0 15px rgba(0,0,0,0.5);
