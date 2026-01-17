@@ -40,7 +40,9 @@ function combineTraits(t1, t2) {
 
         relicBuff: (t1.relicBuff ? t1.relicBuff - 1 : 0) + (t2.relicBuff ? t2.relicBuff - 1 : 0) + 1,
         
-        limitPlace: (t1.limitPlace && t2.limitPlace) ? Math.min(t1.limitPlace, t2.limitPlace) : (t1.limitPlace || t2.limitPlace)
+        limitPlace: (t1.limitPlace && t2.limitPlace) ? Math.min(t1.limitPlace, t2.limitPlace) : (t1.limitPlace || t2.limitPlace),
+
+        costReduction: (t1.costReduction || 0) + (t2.costReduction || 0)
     };
 
     if(combined.relicBuff === 1) combined.relicBuff = undefined;
@@ -212,13 +214,17 @@ function _calcSetAndTagBonuses(relicStats, uStats, headPiece) {
     
     // Apply Head Piece Static Bonuses
     if (headPiece === 'reaper_necklace') {
-        sBonus.spa = (sBonus.spa || 0) + 7.5;
-        sBonus.range = (sBonus.range || 0) + 15;
+        if (relicStats.set !== 'reaper_set') {
+            sBonus.spa = (sBonus.spa || 0) + 7.5;
+            sBonus.range = (sBonus.range || 0) + 15;
+        }
     } else if (headPiece === 'shadow_reaper_necklace') {
-        sBonus.dmg = (sBonus.dmg || 0) + 2.5;
-        sBonus.range = (sBonus.range || 0) + 10;
-        sBonus.cf = (sBonus.cf || 0) + 5;
-        sBonus.cm = (sBonus.cm || 0) + 5;
+        if (relicStats.set !== 'shadow_reaper') {
+            sBonus.dmg = (sBonus.dmg || 0) + 2.5;
+            sBonus.range = (sBonus.range || 0) + 10;
+            sBonus.cf = (sBonus.cf || 0) + 5;
+            sBonus.cm = (sBonus.cm || 0) + 5;
+        }
     }
 
     const unitElement = uStats.element || "None";
@@ -415,11 +421,12 @@ function calculateDPS(uStats, relicStats, context) {
     let traitDotBuff = traitObj.dotBuff || 0;
 
     let eternalDmgBuff = 0;
+    let eternalRangeBuff = 0;
     if (traitObj.isEternal) {
         const waveCap = Math.min(wave, 12);
         eternalDmgBuff = waveCap * 5; 
         passivePcent += eternalDmgBuff; 
-        traitRangePct += waveCap * 2.5; 
+        eternalRangeBuff = waveCap * 2.5; 
     }
 
     // 3. Set Bonus Logic
@@ -458,10 +465,12 @@ function calculateDPS(uStats, relicStats, context) {
     // Updated: Range sources now multiply distinct buckets (Trait * Relic * Set * Passive)
     const mTrait = 1 + (traitRangePct / 100);
     const mRelic = 1 + (baseR_Range / 100); // Substats (includes Artificer scaling)
-    const mSet   = 1 + ((sBonus.range || 0) / 100);
-    const mPass  = 1 + ((uStats.passiveRange || 0) / 100);
     
-    const finalRange = lvStats.range * mTrait * mRelic * mSet * mPass;
+    const totalPassiveRange = (uStats.passiveRange || 0) + eternalRangeBuff;
+    const totalAdditiveRange = (sBonus.range || 0) + totalPassiveRange;
+    const mAdditiveRange = 1 + (totalAdditiveRange / 100);
+    
+    const finalRange = lvStats.range * mTrait * mRelic * mAdditiveRange;
 
     // 7. HEAD PIECE PASSIVES
     const { headDmgBuff, headDotBuff, headCalc } = _calcHeadDynamicBuffs(headPiece, finalSpa, finalRange);
@@ -509,7 +518,7 @@ function calculateDPS(uStats, relicStats, context) {
         spa: finalSpa,
         spaCap: cap,
         range: finalRange,
-        passiveRange: uStats.passiveRange || 0,
+        passiveRange: totalPassiveRange,
         dmgVal: finalDmg,
         lvStats,
         traitBuffs: { dmg: traitDmgPct, spa: traitSpaPct, range: traitRangePct },
@@ -521,6 +530,7 @@ function calculateDPS(uStats, relicStats, context) {
         passiveBuff: passivePcent + headDmgBuff, 
         passiveSpaBuff: passiveSpaPcent,
         eternalBuff: eternalDmgBuff,
+        eternalRangeBuff: eternalRangeBuff,
         totalAdditivePct: additiveTotal,
         conditionalData: uStats.burnMultiplier ? { name: "Target: Burn", val: uStats.burnMultiplier, mult: conditionalMult } : null,
         headBuffs: { dmg: headDmgBuff, dot: headDotBuff, type: headPiece, ...headCalc },
