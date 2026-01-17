@@ -32,7 +32,7 @@ function renderQuickBreakdownSection(data, avgHitPerUnit, dotColorClass) {
 function renderBaseDamageSection(data, levelMult, traitRowsDmg, dmgAfterRelic, headDmgHtml, preConditionalDmg, baseSetDmg, tagDmg, passiveDmg, eternalDmg, statPointsHtml) {
     return `
             <div class="dd-section">
-                <div class="dd-title"><span>1. Base Damage Calculation</span></div>
+                <div class="dd-title mt-text-red"><span>1. Base Damage Calculation</span></div>
                 <table class="calc-table">
                     <tr><td class="mt-cell-label">Base Stats (Lv 1)</td><td class="mt-cell-formula"></td><td class="mt-cell-val">${fmt.num(data.baseStats.dmg)}</td></tr>
                     ${statPointsHtml}
@@ -64,7 +64,7 @@ function renderBaseDamageSection(data, levelMult, traitRowsDmg, dmgAfterRelic, h
 function renderCritSection(data, setTagCfTotal, setTagCmTotal) {
     return `
             <div class="dd-section">
-                <div class="dd-title"><span>2. Crit Averaging</span> <button class="calc-info-btn" onclick="openInfoPopup('crit_avg')">?</button></div>
+                <div class="dd-title" style="color: #c084fc"><span>2. Crit Averaging</span> <button class="calc-info-btn" onclick="openInfoPopup('crit_avg')">?</button></div>
                 <table class="calc-table">
                     <tr><td class="mt-cell-label">Base Hit (Non-Crit)</td><td class="mt-cell-formula"></td><td class="mt-cell-val">${fmt.num(data.dmgVal)}</td></tr>
                     
@@ -87,10 +87,10 @@ function renderCritSection(data, setTagCfTotal, setTagCmTotal) {
 function renderSpaSection(data, traitRowsSpa, baseSetSpa, tagSpa, passiveSpa) {
     return `
             <div class="dd-section">
-                <div class="dd-title"><span>3. SPA (Speed) Calculation</span> <button class="calc-info-btn" onclick="openInfoPopup('spa_calc')">?</button></div>
+                <div class="dd-title mt-text-custom"><span>3. SPA (Speed) Calculation</span> <button class="calc-info-btn" onclick="openInfoPopup('spa_calc')">?</button></div>
                 <table class="calc-table">
                     <tr><td class="mt-cell-label">Base SPA (Lv 1)</td><td class="mt-cell-formula"></td><td class="mt-cell-val">${data.baseStats.spa}s</td></tr>
-                    <tr><td class="mt-cell-label">Stat Point Scaling</td><td class="mt-cell-formula"></td><td class="mt-cell-val">${fmt.fix(data.baseStats.spa * data.lvStats.spaMult, 3)}s</td></tr>
+                    <tr><td class="mt-cell-label">Stat Point Scaling</td><td class="mt-cell-formula">x${fmt.fix(data.lvStats.spaMult, 3)}</td><td class="mt-cell-val">${fmt.fix(data.baseStats.spa * data.lvStats.spaMult, 3)}s</td></tr>
                     ${data.isSSS ? `<tr><td class="mt-cell-label">SSS Rank (-8%)</td><td class="mt-cell-formula"><span class="op">×</span>0.92</td><td class="mt-cell-val">${fmt.fix(data.lvStats.spa, 3)}s</td></tr>` : ''}
                     ${traitRowsSpa}
                     
@@ -107,23 +107,47 @@ function renderSpaSection(data, traitRowsSpa, baseSetSpa, tagSpa, passiveSpa) {
 
 function renderDotSection(data, headDotRow) {
     if (data.dot <= 0) return '';
-    const sectionNum = data.extraAttacks ? 5 : 4;
+    const db = data.dotData;
+    const getFormula = (total, time) => {
+        if (time === 0) return '';
+        return `<span class="text-dim">(${fmt.num(total)} / ${fmt.fix(time, 1)}s)</span>`;
+    };
+
     return `
-            <div class="dd-section">
-                <div class="dd-title text-accent-end"><span>${sectionNum}. Status Effect (DoT)</span> <button class="calc-info-btn" onclick="openInfoPopup('dot_logic')">?</button></div>
-                <table class="calc-table">
-                    <tr><td class="mt-cell-label calc-sub">Base Hit Ref</td><td class="mt-cell-val calc-sub">${fmt.num(data.dmgVal)}</td></tr>
-                    <tr><td class="mt-cell-label">Base Tick %</td><td class="mt-cell-val">${fmt.fix(data.dotData.baseNoHead, 2)}%</td></tr>
-                    ${headDotRow}
-                    <tr><td class="mt-cell-label text-bold">Total Tick %</td><td class="mt-cell-val text-bold">${fmt.fix(data.dotData.base, 2)}%</td></tr>
-                    <tr><td class="mt-cell-label">Relic Mult (x${fmt.fix(data.dotData.relicMult, 2)})</td><td class="mt-cell-val text-accent-end">${fmt.fix(data.dotData.finalPct, 1)}%</td></tr>
-                    <tr><td class="mt-cell-label text-custom">Crit Avg Mult</td><td class="mt-cell-val text-custom">x${fmt.fix(data.dotData.critMult, 3)}</td></tr>
-                    <tr><td class="mt-cell-label">Total Damage (Lifetime)</td><td class="mt-cell-val">${fmt.num(data.dotData.finalTick)}</td></tr>
-                    <tr><td class="mt-cell-label calc-sub">Time Basis</td><td class="mt-cell-val calc-sub">${fmt.fix(data.dotData.timeUsed, 2)}s</td></tr>
-                    <tr><td class="mt-cell-label text-white">DoT DPS (1 Unit)</td><td class="mt-cell-val text-accent-end">${fmt.num(data.singleUnitDoT)}</td></tr>
-                    ${data.placement > 1 ? `<tr><td class="mt-cell-label text-white border-dashed-top">Total DoT DPS (x${data.placement})</td><td class="mt-cell-val text-accent-end border-dashed-top">${fmt.num(data.dot)}</td></tr>` : ''}
-                </table>
-            </div>`;
+    <div class="dd-section">
+        <div class="dd-title text-accent-end"><span>6. Status Effect (DoT) Breakdown</span> <button class="calc-info-btn" onclick="openInfoPopup('dot_logic')">?</button></div>
+        <table class="calc-table">
+            <tr><td class="mt-cell-label">Hit Ref (Crit Avg)</td><td class="mt-cell-val" colspan="2">${fmt.num(data.dmgVal * db.critMult)}</td></tr>
+            
+            ${db.nativeDps > 0 ? `
+            <tr>
+                <td class="mt-cell-label">Native DoT (${fmt.fix(db.base, 1)}%)</td>
+                <td class="mt-cell-formula">${getFormula(db.nativeTotalDmg, db.nativeInterval)}</td>
+                <td class="mt-cell-val">${fmt.num(db.nativeDps)} DPS</td>
+            </tr>
+            ` : ''}
+
+            ${db.radDps > 0 ? `
+            <tr>
+                <td class="mt-cell-label text-accent-start">Radiation DoT (${data.traitObj.radiationPct || 20}% / 10s)</td>
+                <td class="mt-cell-formula">${getFormula(db.radTotalDmg, db.radInterval)}</td>
+                <td class="mt-cell-val text-accent-start">${fmt.num(db.radDps)} DPS</td>
+            </tr>
+            ` : ''}
+
+            <tr class="mt-border-top">
+                <td class="mt-cell-label text-white">Total DoT (1 Unit)</td>
+                <td class="mt-cell-formula"></td>
+                <td class="mt-cell-val text-white">${fmt.num(db.nativeDps + db.radDps)}</td>
+            </tr>
+            ${data.placement > 1 ? `
+            <tr>
+                <td class="mt-cell-label text-gold">Total x${data.placement} Units ${data.hasStackingDoT ? '' : '<small class="opacity-50">(Non-Stacking)</small>'}</td>
+                <td class="mt-cell-formula">${data.hasStackingDoT ? '×' + data.placement : 'MAX'}</td>
+                <td class="mt-cell-val text-gold">${fmt.num(data.dot)}</td>
+            </tr>` : ''}
+        </table>
+    </div>`;
 }
 
 function renderSummonSection(data) {
@@ -158,6 +182,35 @@ function renderFinalSection(data) {
                     <tr><td class="mt-cell-label mt-cell-val-lg text-white" colspan="2">TOTAL DPS</td><td class="mt-cell-val mt-text-gold mt-pt-md mt-cell-val-lg">${fmt.num(data.total)}</td></tr>
                 </table>
             </div>`;
+}
+
+function renderRangeSection(data) {
+    const mTrait = 1 + (data.traitBuffs.range / 100);
+    const mRelic = 1 + (data.relicBuffs.range / 100);
+    const mSet   = 1 + ((data.totalSetStats.range || 0) / 100);
+    const mPass  = 1 + ((data.passiveRange || 0) / 100);
+
+    return `
+        <div class="dd-section">
+            <div class="dd-title" style="color: #fbbf24"><span>4. Range Calculation</span> <button class="calc-info-btn" onclick="openInfoPopup('stat_range')">?</button></div>
+            <table class="calc-table">
+                <tr><td class="mt-cell-label">Base Range (Lv 1)</td><td class="mt-cell-formula"></td><td class="mt-cell-val">${data.baseStats.range || 0}</td></tr>
+                
+                <tr><td class="mt-cell-label">Scaling (Level + Points)</td><td class="mt-cell-formula"><span class="op">×</span>${fmt.fix(data.lvStats.rangeMult, 3)}</td><td class="mt-cell-val">${fmt.fix(data.lvStats.range / (data.isSSS ? 1.2 : 1), 2)}</td></tr>
+                
+                ${data.isSSS ? `<tr><td class="mt-cell-label mt-pl-md opacity-70">↳ SSS Rank Bonus</td><td class="mt-cell-formula"><span class="op">×</span>1.2</td><td class="mt-cell-val">${fmt.fix(data.lvStats.range, 2)}</td></tr>` : ''}
+
+                <tr class="mt-border-top"><td class="mt-cell-label mt-pt-md">Trait Multiplier</td><td class="mt-cell-formula mt-pt-md">x${fmt.fix(mTrait, 2)}</td><td class="mt-cell-val mt-pt-md">${fmt.pct(data.traitBuffs.range)}</td></tr>
+                
+                <tr><td class="mt-cell-label">Relic Substats</td><td class="mt-cell-formula">x${fmt.fix(mRelic, 2)}</td><td class="mt-cell-val">${fmt.pct(data.relicBuffs.range)}</td></tr>
+                
+                <tr><td class="mt-cell-label">Set Bonus</td><td class="mt-cell-formula">x${fmt.fix(mSet, 2)}</td><td class="mt-cell-val">${fmt.pct(data.totalSetStats.range || 0)}</td></tr>
+                
+                ${data.passiveRange > 0 ? `<tr><td class="mt-cell-label">Unit Passive</td><td class="mt-cell-formula">x${fmt.fix(mPass, 2)}</td><td class="mt-cell-val">${fmt.pct(data.passiveRange)}</td></tr>` : ''}
+
+                <tr class="mt-border-top"><td class="mt-cell-label mt-pt-sm text-white">Final Range Result</td><td class="mt-cell-formula"></td><td class="mt-cell-val mt-pt-sm mt-text-bold" style="color: #fbbf24">${fmt.fix(data.range, 2)}</td></tr>
+            </table>
+        </div>`;
 }
 
 // Render complete math breakdown
@@ -235,12 +288,8 @@ function renderMathContent(data) {
     // UPDATED: Use data.lvStats.rangeMult for Range display
     const statPointsHtml = (data.dmgPoints !== undefined) ? `
     <tr>
-        <td class="mt-cell-label">Stat Points <button class="calc-info-btn" onclick="openInfoPopup('level_scale')">?</button></td>
-        <td class="mt-cell-formula">
-            Dmg x${fmt.fix(data.lvStats.dmgMult, 2)}<br>
-            Spa x${fmt.fix(data.lvStats.spaMult, 2)}<br>
-            Range x${fmt.fix(data.lvStats.rangeMult, 2)}
-        </td>
+        <td class="mt-cell-label">Stat Points (Dmg) <button class="calc-info-btn" onclick="openInfoPopup('level_scale')">?</button></td>
+        <td class="mt-cell-formula">x${fmt.fix(data.lvStats.dmgMult, 2)}</td>
         <td class="mt-cell-val">${fmt.num(data.baseStats.dmg * data.lvStats.dmgMult)}</td>
     </tr>` 
     : `
@@ -261,7 +310,8 @@ function renderMathContent(data) {
             ${renderBaseDamageSection(data, levelMult, traitRowsDmg, dmgAfterRelic, headDmgHtml, preConditionalDmg, baseSetDmg, tagDmg, passiveDmg, eternalDmg, statPointsHtml)}
             ${renderCritSection(data, setTagCfTotal, setTagCmTotal)}
             ${renderSpaSection(data, traitRowsSpa, baseSetSpa, tagSpa, passiveSpa)}
-            ${data.extraAttacks ? `<div class="dd-section"><div class="dd-title"><span>4. Attack Rate Multiplier</span> <button class="calc-info-btn" onclick="openInfoPopup('attack_rate')">?</button></div><table class="calc-table"><tr><td class="mt-cell-label">Hits Per Attack</td><td class="mt-cell-val">${data.extraAttacks.hits}</td></tr><tr><td class="mt-cell-label">Crits Req. for Extra</td><td class="mt-cell-val">${data.extraAttacks.req}</td></tr><tr><td class="mt-cell-label">Attacks needed to Trig</td><td class="mt-cell-val">${fmt.fix(data.extraAttacks.attacksNeeded, 2)}</td></tr><tr><td class="mt-cell-label">Final Dps Mult</td><td class="mt-cell-val calc-highlight">x${fmt.fix(data.extraAttacks.mult, 3)}</td></tr></table></div>` : ''}
+            ${renderRangeSection(data)}
+            ${data.extraAttacks ? `<div class="dd-section"><div class="dd-title mt-text-green"><span>5. Attack Rate Multiplier</span> <button class="calc-info-btn" onclick="openInfoPopup('attack_rate')">?</button></div><table class="calc-table"><tr><td class="mt-cell-label">Hits Per Attack</td><td class="mt-cell-val">${data.extraAttacks.hits}</td></tr><tr><td class="mt-cell-label">Crits Req. for Extra</td><td class="mt-cell-val">${data.extraAttacks.req}</td></tr><tr><td class="mt-cell-label">Attacks needed to Trig</td><td class="mt-cell-val">${fmt.fix(data.extraAttacks.attacksNeeded, 2)}</td></tr><tr><td class="mt-cell-label">Final Dps Mult</td><td class="mt-cell-val calc-highlight">x${fmt.fix(data.extraAttacks.mult, 3)}</td></tr></table></div>` : ''}
             ${renderDotSection(data, headDotRow)}
             ${renderSummonSection(data)}
             ${renderFinalSection(data)}
