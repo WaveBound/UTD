@@ -8,6 +8,92 @@ header { text-align: center; width: 100%; }
 #headerContent { padding-top: 20px; padding-bottom: 10px; } 
 h1 { font-size: 2.5rem; margin: 0; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; background: linear-gradient(to right, var(--accent-start), var(--accent-end)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
 
+/* CREDITS BADGES */
+.credits-badges { display: flex; justify-content: center; gap: 12px; margin-top: 12px; flex-wrap: wrap; }
+
+.credit-badge { 
+    display: inline-flex; 
+    align-items: center; 
+    background: #0f1014; 
+    border: 1px solid #2d2f36; 
+    border-radius: 8px; 
+    padding: 0;
+    cursor: pointer; 
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); 
+    user-select: none; 
+    overflow: hidden;
+    height: 32px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+}
+
+.credit-badge:hover { 
+    background: #1a1b21;
+    border-color: #555; 
+    transform: translateY(-2px);
+    box-shadow: 0 8px 15px rgba(0,0,0,0.5);
+}
+
+.credit-badge:active { transform: translateY(0); }
+
+.badge-role { 
+    font-size: 0.65rem; 
+    font-weight: 800; 
+    text-transform: uppercase; 
+    padding: 0 12px; 
+    height: 100%;
+    display: flex;
+    align-items: center;
+    letter-spacing: 1px;
+    border-right: 1px solid rgba(255,255,255,0.05);
+}
+
+/* Updated Colors - "Ugly Yellow" fixed to Premium Gold text on dark bg */
+.credit-badge.owner .badge-role { 
+    background: rgba(168, 85, 247, 0.1); 
+    color: #7b00ff; 
+    text-shadow: 0 0 15px #0a0147, 0 0 5px #0a0147;
+}
+
+.credit-badge.helper .badge-role { 
+    background: rgba(59, 130, 246, 0.1); 
+    color: #0073ff; 
+    text-shadow: 0 0 10px rgba(59, 130, 246, 0.3);
+}
+
+.badge-content {
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    gap: 8px;
+}
+
+.badge-pfp {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-left: -4px;
+}
+
+.badge-name { 
+    font-weight: 600; 
+    font-size: 0.85rem; 
+    color: #e0e0e0; 
+}
+
+.discord-icon {
+    color: #5865F2; 
+    opacity: 0.8;
+    transition: 0.2s;
+    margin-top: 1px;
+}
+
+.credit-badge:hover .discord-icon { 
+    opacity: 1; 
+    transform: scale(1.1) rotate(5deg); 
+    filter: drop-shadow(0 0 8px rgba(88, 101, 242, 0.8)); 
+}
+
 /* HEADER COLLAPSE LOGIC */
 .header-wrapper { display: grid; grid-template-rows: 1fr; transition: grid-template-rows 0.3s cubic-bezier(0.4, 0, 0.2, 1); width: 100%; }
 .header-inner { overflow: hidden; min-height: 0; }
