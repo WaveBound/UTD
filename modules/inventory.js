@@ -353,6 +353,24 @@ function getRelicVisuals(setKey, slot) {
     if (visualKey === 'shadow_reaper_necklace') visualKey = 'shadow_reaper';
     if (visualKey === 'reaper_necklace') visualKey = 'reaper_set';
 
+    // Custom Image Mapping: Define your specific filenames here
+    // Format: 'set_id': { 'Slot': 'Filename.png' }
+    const customImages = {
+        'ninja': { 'Head': 'MasterNinjaMask.png', 'Body': 'MasterNinjaTop.png', 'Legs': 'MasterNinjaBottom.png' },
+        'sun_god': { 'Head': 'SunGodMask.png', 'Body': 'SunGodTop.png', 'Legs': 'SunGodBottom.png' },
+        'laughing': { 'Head': 'LaughingMask.png', 'Body': 'LaughingTop.png', 'Legs': 'LaughingBottom.png' },
+        'ex': { 'Head': 'ExMask.png', 'Body': 'ExTop.png', 'Legs': 'ExBottom.png' },
+        'shadow_reaper': { 'Head': 'ShadowReaperMask.png', 'Body': 'ShadowReaperTop.png', 'Legs': 'ShadowReaperBottom.png' },
+        'reaper_set': { 'Head': 'ReaperMask.png', 'Body': 'ReaperTop.png', 'Legs': 'ReaperBottom.png' }
+    };
+
+    if (customImages[visualKey] && customImages[visualKey][slot]) {
+        return {
+            src: `images/Relic/${customImages[visualKey][slot]}`,
+            bg: RELIC_COLORS[visualKey] || RELIC_COLORS.default
+        };
+    }
+
     return {
         src: `images/relics/${visualKey}_${slot.toLowerCase()}.png`,
         bg: RELIC_COLORS[visualKey] || RELIC_COLORS.default
@@ -462,18 +480,18 @@ function renderInventory() {
             </div>
             <div class="rc-visual-container">
                 <div class="rc-image-wrapper" style="background: ${visuals.bg}">
-                    <img src="${visuals.src}" class="rc-image" onerror="this.style.display='none'">
+                    <img src="${visuals.src}" class="rc-image" onerror="console.warn('Missing Relic Image:', this.src); this.style.display='none'">
                     <div class="rc-slot-badge">${relic.slot}</div>
                 </div>
             </div>
             <div class="rc-stats-container">
                 <div class="rc-main-stat">
-                    <div class="rc-label">MAIN STAT</div>
+                    <div class="rc-label" style="font-size: 0.75rem;">MAIN STAT</div>
                     <div class="rc-main-badge-wrapper">${mainBadge}</div>
                 </div>
                 <div class="rc-separator"></div>
                 <div class="rc-sub-stats">
-                    <div class="rc-label">SUB STATS</div>
+                    <div class="rc-label" style="font-size: 0.75rem;">SUB STATS</div>
                     <div class="rc-subs-grid">${subHtml}</div>
                 </div>
             </div>

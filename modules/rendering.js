@@ -40,17 +40,20 @@ function createBaseUnitCard(unit, options = {}) {
 }
 
 function calculateBuildEfficiency(build, unitCost, unitMaxPlacement, unitId) {
+    const foundTrait = traitsList.find(t => t.name === build.traitName) || 
+                       customTraits.find(t => t.name === build.traitName) ||
+                       (unitSpecificTraits[unitId] || []).find(t => t.name === build.traitName);
+
     let traitLimit = null;
     if (build.traitName && build.traitName.includes('Ruler')) {
         traitLimit = 1;
-    } else {
-        const foundTrait = traitsList.find(t => t.name === build.traitName) || 
-                           customTraits.find(t => t.name === build.traitName) ||
-                           (unitSpecificTraits[unitId] || []).find(t => t.name === build.traitName);
-        if (foundTrait && foundTrait.limitPlace) traitLimit = foundTrait.limitPlace;
+    } else if (foundTrait && foundTrait.limitPlace) {
+        traitLimit = foundTrait.limitPlace;
     }
+
     const actualPlacement = traitLimit ? Math.min(unitMaxPlacement, traitLimit) : unitMaxPlacement;
-    const actualTotalCost = unitCost * actualPlacement;
+    const costMult = (foundTrait && foundTrait.costReduction) ? Math.max(0, 1 - (foundTrait.costReduction / 100)) : 1;
+    const actualTotalCost = unitCost * actualPlacement * costMult;
     return actualTotalCost === 0 ? 0 : (build.dps / actualTotalCost);
 }
 
@@ -173,6 +176,27 @@ function updateBuildListDisplay(unitId) {
             return searchText.includes(searchInput) && prioMatch && 
                    (setSelect === 'all' || r.setName === setSelect) && (headSelect === 'all' || (r.headUsed || 'none') === headSelect);
         });
+
+        // DEDUPLICATION: If "All Prio" is selected, show only the BEST variant for each build configuration
+        if (prioSelect === 'all') {
+            const uniqueMap = new Map();
+            filtered.forEach(r => {
+                // Key by Set + Trait + MainStats + Head (The physical build identity)
+                const key = `${r.setName}|${r.traitName}|${r.mainStats.body}|${r.mainStats.legs}|${r.headUsed}`;
+                
+                if (!uniqueMap.has(key)) {
+                    uniqueMap.set(key, r);
+                } else {
+                    const existing = uniqueMap.get(key);
+                    // Pick the better one based on current sort mode or unit role
+                    const isRangeSort = (sortSelect === 'range' || unitId === 'law');
+                    const isBetter = isRangeSort ? (r.range > existing.range) : (r.dps > existing.dps);
+                    
+                    if (isBetter) uniqueMap.set(key, r);
+                }
+            });
+            filtered = Array.from(uniqueMap.values());
+        }
 
         if(filtered.length === 0) return '<div class="msg-empty">No matches found.</div>';
         

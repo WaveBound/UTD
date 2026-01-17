@@ -168,12 +168,15 @@ function reconstructMathData(liteData) {
     }
 
     const isSpaPrio = liteData.prio === 'spa';
-    let dmgPts = 99, spaPts = 0;
+    const isRangePrio = liteData.prio === 'range';
+    let dmgPts = 99, spaPts = 0, rangePts = 0;
     if (isSpaPrio) { dmgPts = 0; spaPts = 99; }
+    else if (isRangePrio) { dmgPts = 0; spaPts = 0; rangePts = 99; }
     
     const context = {
         dmgPoints: dmgPts,
         spaPoints: spaPts,
+        rangePoints: rangePts,
         wave: 25,
         isBoss: false,
         traitObj: trait,
