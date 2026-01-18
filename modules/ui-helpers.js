@@ -358,3 +358,82 @@ function updateBodyScroll() {
         }
     }
 }
+
+// Render Credits from Data
+function renderCredits() {
+    const container = document.getElementById('creditsContainer');
+    if (!container || typeof creditsData === 'undefined') return;
+
+    const discordIcon = `<svg class="discord-icon" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037 13.486 13.486 0 0 0-.64 1.28 18.27 18.27 0 0 0-4.998 0 13.49 13.49 0 0 0-.644-1.28.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.118.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.086 2.157 2.419 0 1.334-.956 2.42-2.157 2.42zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.086 2.157 2.419 0 1.334-.946 2.42-2.157 2.42z"/></svg>`;
+
+    container.innerHTML = creditsData.map(c => `
+        <div class="credit-badge ${c.type}" onclick="handleCreditClick('${c.id}')" title="Copy Username">
+            <div class="badge-role">${c.role}</div>
+            <div class="badge-content">
+                ${c.pfp ? `<img src="${c.pfp}" class="badge-pfp" alt="${c.name}">` : ''}
+                <span class="badge-name">${c.name}</span>
+                ${discordIcon}
+            </div>
+        </div>
+    `).join('');
+}
+
+// Handle Credit Click (Copy Only)
+window.handleCreditClick = function(username) {
+    copyDiscordToClipboard(username);
+};
+
+// Copy Discord Username
+window.copyDiscordToClipboard = function(username) {
+    navigator.clipboard.writeText(username).then(() => {
+        showToast(`Copied "${username}" to clipboard! Paste in Discord to message.`);
+    }).catch(err => {
+        console.error('Failed to copy: ', err);
+        showToast('Failed to copy username.');
+    });
+};
+
+// Simple Toast Notification
+function showToast(message) {
+    let toast = document.createElement('div');
+    toast.className = 'custom-toast';
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    
+    // Toast Styles
+    Object.assign(toast.style, {
+        position: 'fixed',
+        bottom: '20px',
+        left: '50%',
+        transform: 'translateX(-50%)',
+        background: 'rgba(0, 0, 0, 0.9)',
+        color: '#fff',
+        padding: '12px 24px',
+        borderRadius: '50px',
+        zIndex: '9999',
+        fontSize: '0.9rem',
+        boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
+        border: '1px solid rgba(255,255,255,0.1)',
+        backdropFilter: 'blur(5px)',
+        animation: 'fadeInOut 3s forwards'
+    });
+
+    // Keyframes style (if not exists)
+    if (!document.getElementById('toast-style')) {
+        const style = document.createElement('style');
+        style.id = 'toast-style';
+        style.innerHTML = `
+            @keyframes fadeInOut {
+                0% { opacity: 0; transform: translate(-50%, 20px); }
+                10% { opacity: 1; transform: translate(-50%, 0); }
+                90% { opacity: 1; transform: translate(-50%, 0); }
+                100% { opacity: 0; transform: translate(-50%, -20px); }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+
+    setTimeout(() => {
+        if(toast && toast.parentNode) toast.parentNode.removeChild(toast);
+    }, 3000);
+}

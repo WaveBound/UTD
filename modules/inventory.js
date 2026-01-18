@@ -7,12 +7,12 @@ const RELIC_STORAGE_KEY = 'uto_relic_inventory_v1';
 
 const RELIC_COLORS = {
     'ninja': 'linear-gradient(135deg, #eee, #999)',
-    'sun_god': 'linear-gradient(135deg, #fbbf24, #d97706)',
-    'laughing': 'linear-gradient(135deg, #60a5fa, #2563eb)',
-    'ex': 'linear-gradient(135deg, #a78bfa, #7c3aed)',
-    'shadow_reaper': 'linear-gradient(135deg, #c084fc, #9333ea)',
-    'reaper_set': 'linear-gradient(135deg, #f87171, #dc2626)',
-    'default': 'linear-gradient(135deg, #333, #111)'
+    'sun_god': 'linear-gradient(135deg, #eee, #999)',
+    'laughing': 'linear-gradient(135deg, #eee, #999)',
+    'ex': 'linear-gradient(135deg, #eee, #999)',
+    'shadow_reaper': 'linear-gradient(135deg, #eee, #999)',
+    'reaper_set': 'linear-gradient(135deg, #eee, #999)',
+    'default': 'linear-gradient(135deg, #eee, #999)'
 };
 
 const SLOT_OPTIONS = {
@@ -246,7 +246,10 @@ function setupModalInputs() {
     }
 
     if (starSelect) {
-        starSelect.innerHTML = `<option value="1.05">3 Stars</option><option value="1.025">2 Stars</option><option value="1">1 Star</option>`;
+        starSelect.innerHTML = `
+  <option value="1">1 Star</option>
+  <option value="1.025">2 Stars</option>
+  <option value="1.05">3 Stars</option>`;
         starSelect.addEventListener('change', enforceSubStatLimits);
     }
 
@@ -274,7 +277,7 @@ function openAddRelicModal() {
     }
     
     const starSelect = document.getElementById('newRelicStars');
-    if (starSelect) starSelect.value = "1.05";
+    if (starSelect) starSelect.value = "1";
 
     updateStarVisibility();
     addRelicModalElement.classList.add('is-visible');
@@ -442,12 +445,6 @@ function renderInventory() {
         
         card.className = 'relic-card-clean' + (isHighlighted ? ' relic-highlighted' : '');
         
-        // Logic: Star Count Display
-        let starCount = 0;
-        if(relic.stars >= 1.05) starCount = 3;
-        else if(relic.stars >= 1.025) starCount = 2;
-        else if(relic.stars > 1) starCount = 1; 
-
         // Visuals and Set Name Mapping
         const visuals = getRelicVisuals(relic.setKey, relic.slot);
         
@@ -455,6 +452,14 @@ function renderInventory() {
         let lookupKey = relic.setKey;
         if (lookupKey === 'shadow_reaper_necklace') lookupKey = 'shadow_reaper';
         if (lookupKey === 'reaper_necklace') lookupKey = 'reaper_set';
+
+        // Logic: Star Count Display - ONLY for allowed sets
+        let starCount = 0;
+        if (lookupKey === 'shadow_reaper' || lookupKey === 'reaper_set') {
+            if(relic.stars >= 1.05) starCount = 3;
+            else if(relic.stars >= 1.025) starCount = 2;
+            else if(relic.stars >= 1) starCount = 1; 
+        }
 
         const setObj = SETS.find(s => s.id === lookupKey) || SETS[0];
         
