@@ -133,15 +133,15 @@ const guideData = [
         current: { trait: "Damage > Spa", set: "Laughing / Ninja", main: "Damage > Spa", sub: "Crit Rate / Spa" },
         fixed: { trait: "Dependent on Kit", set: "Laughing Captain", main: "Dependent", sub: "Crit Rate" }
     },
-    { unit: "Ace", img: "images/Ace.png", isCalculated: true },
-    { unit: "SJW", img: "images/SJW.png", isCalculated: true },
-    { unit: "Sasuke", img: "images/Sasuke.png", isCalculated: true },
-    { unit: "Kirito", img: "images/Kirito.png", isCalculated: true },
-    { unit: "Kenpachi", img: "images/Kenpachi.png", isCalculated: true },
-    { unit: "Ragna", img: "images/Ragna.png", isCalculated: true },
-    { unit: "Mob", img: "images/Mob.png", isCalculated: true },
-    { unit: "Shanks", img: "images/Shanks.png", isCalculated: true },
-    { unit: "Genos", img: "images/Genos.png", isCalculated: true }
+    { unit: "Ace", img: "images/units/Ace.png", isCalculated: true },
+    { unit: "SJW", img: "images/units/SJW.png", isCalculated: true },
+    { unit: "Sasuke", img: "images/units/Sasuke.png", isCalculated: true },
+    { unit: "Kirito", img: "images/units/Kirito.png", isCalculated: true },
+    { unit: "Kenpachi", img: "images/units/Kenpachi.png", isCalculated: true },
+    { unit: "Ragna", img: "images/units/Ragna.png", isCalculated: true },
+    { unit: "Mob", img: "images/units/Mob.png", isCalculated: true },
+    { unit: "Shanks", img: "images/units/Shanks.png", isCalculated: true },
+    { unit: "Genos", img: "images/units/Genos.png", isCalculated: true }
 ];
 
 const BAMBIETTA_MODES = {
@@ -223,7 +223,7 @@ const elementIcons = {
 const unitDatabase = [
     {
         id: "Maid", name: "Scarlet Maid (World)", role: "Damage / Support",
-        img: "images/Maid.png", 
+        img: "images/units/Maid.png", 
         totalCost: 76000,
         placement: 1, tags: [],
         meta: { short: "Ruler", long: "Ruler", note: "Ruler is strictly best due to 1 placement count." },
@@ -231,7 +231,7 @@ const unitDatabase = [
     },
     {
         id: "sjw", name: "SJW (Monarch)", role: "Damage",
-        img: "images/Sjw.png", 
+        img: "images/units/Sjw.png", 
         totalCost: 93000,
         placement: 1, tags: [],
         meta: { short: "Ruler", long: "Ruler", note: "Ruler is strictly best due to 1 placement count." },
@@ -239,7 +239,7 @@ const unitDatabase = [
     },
     {
         id: "ragna", name: "Ragna (Silverite)", role: "Burst / Hybrid",
-        img: "images/Ragna.png", 
+        img: "images/units/Ragna.png", 
         totalCost: 72000,
         placement: 1, tags: [],
         meta: { short: "Ruler", long: "Ruler", note: "Ruler is strictly best due to 1 placement count." },
@@ -248,7 +248,7 @@ const unitDatabase = [
     },
     {
         id: "kirito", name: "Kirito", role: "Burst / Crit",
-        img: "images/Kirito.png",
+        img: "images/units/Kirito.png",
         totalCost: 30400,
         placement: 3, tags: [],
         meta: { short: "Ruler", long: "Eternal", note: "Eternal provides highest DPS Potential, Ruler provides good dps to cost." },
@@ -256,7 +256,7 @@ const unitDatabase = [
     },
     {
         id: "genos", name: "Cyborg (Fearless)", role: "DoT / Damage",
-        img: "images/Genos.png", 
+        img: "images/units/Genos.png", 
         totalCost: 26900,
         placement: 3, tags: [],
         meta: { short: "Ruler", long: "Eternal/Sacred", note: "Standard DPS Selection." },
@@ -265,7 +265,7 @@ const unitDatabase = [
     },
     {
         id: "kenpachi", name: "Kenpachi", role: "Damage / Slow",
-        img: "images/Kenpachi.png",
+        img: "images/units/Kenpachi.png",
         totalCost: 60000,
         placement: 1, tags: ["Peroxide", "Reaper", "Rage"],
         meta: { short: "Ruler", long: "Ruler", note: "Ruler is strictly best due to 1 placement count." },
@@ -273,7 +273,7 @@ const unitDatabase = [
     },
     {
         id: "sasuke", name: "Sasuke (Chakra)", role: "Damage",
-        img: "images/Sasuke.png", 
+        img: "images/units/Sasuke.png", 
         totalCost: 40000,
         placement: 2, tags: [],
         meta: { short: "Ruler", long: "Eternal/Sacred", note: "Ruler for DPS, Eternal/Sacred for support." },
@@ -281,7 +281,7 @@ const unitDatabase = [
     },
     {
         id: "mob", name: "Pyscho (100%)", role: "Damage",
-        img: "images/Mob.png", 
+        img: "images/units/Mob.png", 
         totalCost: 56000,
         placement: 2, tags: [],
         meta: { short: "Ruler", long: "Ruler", note: "Standard DPS selection." },
@@ -289,7 +289,7 @@ const unitDatabase = [
     },
     {
         id: "shanks", name: "Shanks (Conqueror)", role: "Damage",
-        img: "images/Shanks.png", 
+        img: "images/units/Shanks.png", 
         totalCost: 64000,
         placement: 1, tags: [],
         meta: { short: "Ruler", long: "Ruler", note: "Ruler is strictly best due to 1 placement count." },
@@ -297,7 +297,7 @@ const unitDatabase = [
     },
     {
         id: "law", name: "Rule (Room)", role: "Support / Damage",
-        img: "images/Law.png", 
+        img: "images/units/Law.png", 
         totalCost: 84000,
         placement: 2, tags: [],
         meta: { short: "Ruler/Sacred", long: "Ruler/Sacred", note: "Ruler/Sacred offer the most Spa%- / Rng%+" },
@@ -305,7 +305,7 @@ const unitDatabase = [
     },
     {
         id: "akainu", name: "Admiral (Magma)", role: "Support / Damage",
-        img: "images/Akainu.png", 
+        img: "images/units/Akainu.png", 
         totalCost: 108000,
         placement: 3, tags: [],
         meta: { short: "Eternal/Sacred", long: "Eternal/Sacred", note: "Eternal/Sacred offer the the best dps + support performance." },
@@ -313,7 +313,7 @@ const unitDatabase = [
     },
     {
         id: "ichigo", name: "Ichiko (Rage)", role: "Damage",
-        img: "images/Ichigo.png", 
+        img: "images/units/Ichigo.png", 
         totalCost: 108000,
         placement: 1, tags: ["Peroxide", "Reaper", "Rage", "Hollow"],
         meta: { short: "Ruler", long: "Ruler", note: "Ruler is strictly best due to 1 placement count." },
@@ -321,7 +321,7 @@ const unitDatabase = [
     },
     {
         id: "grimjaw", name: "Grommjaw (Panther)", role: "Damage",
-        img: "images/Grimjaw.png", 
+        img: "images/units/Grimjaw.png", 
         totalCost: 40000,
         placement: 3, tags: ["Peroxide", "Hollow"],
         meta: { short: "Ruler", long: "Eternal", note: "Standard DPS selection." },
@@ -329,7 +329,7 @@ const unitDatabase = [
     },
     {
         id: "stark", name: "Koyote (Number one)", role: "Damage",
-        img: "images/Stark.png", 
+        img: "images/units/Stark.png", 
         totalCost: 44000,
         placement: 1, tags: ["Peroxide", "Hollow"],
         meta: { short: "Ruler", long: "Ruler", note: "Ruler is strictly best due to 1 placement count." },
@@ -337,7 +337,7 @@ const unitDatabase = [
     },
     {
         id: "ulquiorra", name: "Ultiiorra (Oblivion)", role: "Damage",
-        img: "images/Ulqiorra.png", 
+        img: "images/units/Ulqiorra.png", 
         totalCost: 31760,
         placement: 3, tags: ["Peroxide", "Hollow"],
         meta: { short: "Ruler", long: "Eternal", note: "Standard DPS selection." },
@@ -346,7 +346,7 @@ const unitDatabase = [
     },
     {
         id: "harribel", name: "Tierrabel (Hydro)", role: "Damage",
-        img: "images/Harribel.png", 
+        img: "images/units/Harribel.png", 
         totalCost: 30964,
         placement: 3, tags: ["Peroxide", "Hollow"],
         meta: { short: "Ruler", long: "Eternal", note: "Standard DPS selection." },
@@ -355,7 +355,7 @@ const unitDatabase = [
     },
     {
         id: "ace", name: "Ace", role: "Damage / Burn(DoT)",
-        img: "images/Ace.png",
+        img: "images/units/Ace.png",
         totalCost: 39000,
         placement: 3, tags: [],
         meta: { short: "Ruler", long: "Ruler/Eternal/Astral", note: "Eternal provides highest DPS Potential, Ruler provides good dps to cost." },
@@ -363,7 +363,7 @@ const unitDatabase = [
     }, 
     {
         id: "Jingliu", name: "Jingliu", role: "Damage",
-        img: "images/Jingliu.png",
+        img: "images/units/Jingliu.png",
         totalCost: 33725,
         placement: 3, tags: [],
         meta: { short: "Ruler", long: "Eternal/Sacred", note: "Eternal provides highest DPS Potential, Ruler provides good dps to cost." },
@@ -371,7 +371,7 @@ const unitDatabase = [
     },
     {
         id: "megumin", name: "Megumin", role: "Damage / Burn(Dot)",
-        img: "images/Megumin.png",
+        img: "images/units/Megumin.png",
         totalCost: 136000,
         placement: 1, tags: [],
         meta: { short: "Ruler", long: "Ruler", note: "Ruler is strictly best due to 1 placement count." },
@@ -380,7 +380,7 @@ const unitDatabase = [
     },
     {
         id: "bambietta", name: "Bambietta", role: "Damage / (Support/Dot)",
-        img: "images/Bambietta.png",
+        img: "images/units/Bambietta.png",
         totalCost: 40000,
         placement: 3, tags: [],
         meta: { short: "Ruler", long: "Eternal/Astral", note: "Eternal provides highest DPS Potential, Ruler provides good dps to cost." },
@@ -388,7 +388,7 @@ const unitDatabase = [
     },
     {
         id: "esdeath", name: "Esdeath", role: "Damage / Support",
-        img: "images/Esdeath.png",
+        img: "images/units/Esdeath.png",
         totalCost: 92000,
         placement: 1, tags: [],
         meta: { short: "Ruler", long: "Ruler", note: "Passive avg 37.5% Dmg (Cycles 0-75%). Ruler is strictly best due to 1 placement count." },
@@ -396,7 +396,7 @@ const unitDatabase = [
     },
     {
         id: "phantom_captain", name: "Phantom Captain", role: "Summon / Dmg",
-        img: "images/Phantom.png",
+        img: "images/units/Phantom.png",
         totalCost: 68000,
         placement: 1, tags: [],
         meta: { short: "Ruler", long: "Ruler", note: "Needs low SPA (High Speed) to maintain max 9 planes." },
@@ -418,7 +418,7 @@ const unitDatabase = [
     },
     {
         id: "sharpshooter", name: "Sharpshooter", role: "Damage / Support",
-        img: "images/Sharpshooter.png",
+        img: "images/units/Sharpshooter.png",
         totalCost: 68000,
         placement: 2, tags: [],
         meta: { short: "Ruler", long: "Ruler", note: "Toggle Ability for Sniper Mode (Global Range)." },
@@ -434,4 +434,9 @@ const unitDatabase = [
             range: 120  // Sniper Mode: 200 Range
         }
     }
+];
+
+const creditsData = [
+    { role: "Owner", name: "xKing.", id: "xking.", userId: "", pfp: "images/pfp/xking.png", type: "owner" },
+    { role: "Helper", name: "xAuroraFlare", id: "xauroraflare", userId: "", pfp: "images/pfp/xauroraflare.gif", type: "helper" }
 ];
