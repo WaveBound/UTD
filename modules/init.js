@@ -20,7 +20,6 @@ window.onload = () => {
 
     // 3. Render Content
     renderPatchNotes(); 
-    renderCredits();
     renderDatabase(); 
     if (typeof initInventory === 'function') initInventory();
 }
