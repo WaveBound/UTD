@@ -222,6 +222,9 @@
     vertical-align: middle;
 }
 
+/* Specific padding for colored rows to prevent text touching edges */
+.mt-row-sungod td, .mt-row-ninja td { padding-left: 10px; padding-right: 10px; }
+
 .mt-cell-label {
     color: #ffffff;
     width: 55%; /* Reduced from 60% to prevent squeezing the numbers */
