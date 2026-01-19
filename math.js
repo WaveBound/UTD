@@ -273,9 +273,13 @@ function _calcHeadDynamicBuffs(headPiece, finalSpa, finalRange) {
     if (headPiece === 'sun_god') {
         headCalc.attacks = 6;
         headCalc.duration = 7;
-        const timeToTrigger = headCalc.attacks * finalSpa;
-        headCalc.trigger = timeToTrigger;
-        headCalc.uptime = headCalc.duration / (headCalc.duration + timeToTrigger);
+        
+        const buffedAttacks = Math.floor(headCalc.duration / finalSpa);
+        const totalCycleAttacks = headCalc.attacks + buffedAttacks;
+        
+        headCalc.uptime = totalCycleAttacks > 0 ? buffedAttacks / totalCycleAttacks : 0;
+        headCalc.trigger = headCalc.attacks * finalSpa;
+        
         headDmgBuff += finalRange * headCalc.uptime;
     } else if (headPiece === 'ninja') {
         headCalc.attacks = 5;
