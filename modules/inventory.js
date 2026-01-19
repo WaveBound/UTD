@@ -44,12 +44,12 @@ const REVERSE_STAT_MAPPING = {
 };
 
 // --- DOM Elements ---
-let inventoryGrid, addRelicModalElement;
+let inventoryGrid;
 let highlightedRelicIds = new Set(); // State to track highlighting
 
 function initInventory() {
     inventoryGrid = document.getElementById('relicGrid');
-    addRelicModalElement = document.getElementById('addRelicModal');
+    // Removed addRelicModalElement caching since toggleModal handles lookup
     
     document.getElementById('openAddRelicBtn')?.addEventListener('click', openAddRelicModal);
     document.getElementById('addRelicConfirmBtn')?.addEventListener('click', addRelic);
@@ -280,7 +280,9 @@ function openAddRelicModal() {
     if (starSelect) starSelect.value = "1";
 
     updateStarVisibility();
-    addRelicModalElement.classList.add('is-visible');
+
+    // FIXED: Use the shared controller from modals.js
+    toggleModal('addRelicModal', true);
 }
 
 function addRelic() {

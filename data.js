@@ -26,6 +26,15 @@ const SUB_NAMES = {
 
 const patchNotesData = [
     {
+        version: "v3.9",
+        date: "Jan 19, 2026",
+        changes: [
+            { type: "UI", text: "<b>Modals:</b> Updated all popups to have a consistent look and feel. Also stopped text from highlighting randomly when you're just clicking buttons." },
+            { type: "Feature", text: "<b>Custom Pairs/Configure View:</b> You can select multiple specific units at once." },
+            { type: "Fix", text: "<b>Mobile Fixes:</b> The menu button now properly hides when you open a window, plus some other small visual cleanups." }
+        ]
+    },
+    {
         version: "v3.8",
         date: "Jan 17, 2026",
         changes: [

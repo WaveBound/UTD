@@ -1,412 +1,588 @@
-/* BASE MODAL */
-.modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 2500; display: none; align-items: center; justify-content: center; backdrop-filter: blur(8px); cursor: pointer; }
-/* Added Class for JS Toggling */
-.modal-overlay.is-visible { display: flex !important; }
+/* ==========================================================================
+   MODALS.CSS - Premium UI Update
+   ========================================================================== */
 
-.modal-content { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 15px; max-width: 600px; width: 95%; box-shadow: 0 0 40px rgba(0,0,0, 0.7); max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; padding: 0; position: relative; cursor: default; } 
-.modal-header-fixed { padding: 15px 20px; flex-shrink: 0; background: var(--card-bg); border-bottom: 1px solid #333; z-index: 5; display: flex; justify-content: space-between; align-items: center; }
-/* Reset H2 margins in headers */
-.modal-header-fixed h2 { margin: 0; }
-
-.modal-scroll-area { padding: 20px; overflow-y: auto; flex-grow: 1; scrollbar-width: thin; scrollbar-color: #444 #111; }
-.modal-footer-fixed { padding: 15px 20px; flex-shrink: 0; background: var(--card-bg); border-top: 1px solid #333; z-index: 5; }
-
-/* Size Variants */
-.modal-sm { max-width: 500px; }
-.modal-lg { max-width: 800px; }
-
-/* --- CUSTOM PAIR MODAL --- */
-.cp-header {
-    background: linear-gradient(to right, var(--cyan), #0f1014);
-    border-bottom: 1px solid var(--cyan);
-}
-.cp-header h2 { color: #fff !important; }
-
-.cp-section-header { color: var(--cyan); font-weight: bold; font-size: 0.9rem; text-transform: uppercase; margin-bottom: 10px; }
-
-.cp-preview-box {
-    margin-top: 25px;
-    background: var(--cyan-dim);
-    padding: 10px;
-    border-radius: 8px;
-    border: 1px solid var(--cyan);
-    text-align: center;
-}
-.cp-preview-label { color: #aaa; font-size: 0.8rem; text-transform: uppercase; }
-.cp-preview-val { color: #fff; font-size: 1.1rem; }
-
-/* --- MATH MODAL --- */
-#mathModal .modal-content { border: 1px solid #333; background: #0a0a0c; }
-.math-section { margin-bottom: 15px; border-bottom: 1px solid #333; padding-bottom: 10px; }
-.math-header { font-size: 0.8rem; color: var(--accent-start); font-weight: bold; text-transform: uppercase; margin-bottom: 5px; }
-.math-row { display: flex; justify-content: space-between; padding: 3px 0; font-size: 0.85rem; color: #bbb; }
-.math-row b { color: #fff; }
-.math-val-gold { color: var(--gold) !important; font-size: 1.1rem; }
-.math-val-range { color: #ffa500 !important; }
-
-/* Math Quick Breakdown Box */
-.mq-box { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; background: rgba(255,255,255,0.03); padding: 12px; border-radius: 8px; border: 1px solid #333; }
-.mq-label { font-size: 0.65rem; color: #888; text-transform: uppercase; }
-.mq-val { color: #fff; font-weight: bold; font-size: 0.9rem; }
-.mq-sub { font-size: 0.7rem; color: #bbb; margin-top: 2px; }
-
-/* Math Table Utilities */
-.calc-table { width: 100%; border-collapse: collapse; font-family: 'Consolas', monospace; font-size: 0.75rem; }
-.calc-table td { padding: 4px 0; vertical-align: middle; }
-.mt-cell-label { color: #ffffff; width: 60%; opacity: 0.7; display:flex; align-items:center; gap:6px; }
-.mt-cell-label-sm { opacity: 0.7; font-size: 0.8rem; color: #fff; } /* Extracted */
-.mt-cell-formula { color: #555; width: 15%; text-align: center; font-size: 0.75rem; }
-.mt-cell-val { color: #fff; text-align: right; font-weight: bold; font-size: 0.8rem; }
-.mt-cell-val-lg { font-size: 1.4rem; padding-top: 8px; } /* Extracted */
-
-.mt-row-sungod { background: rgba(255,215,0,0.08); border-left: 3px solid var(--gold); }
-.mt-row-ninja { background: rgba(6,182,212,0.08); border-left: 3px solid var(--custom); }
-
-.border-dashed-top { border-top: 1px dashed #333; } /* Extracted */
-.mt-font-mono { font-family: 'Consolas', monospace; }
-.mt-text-right { text-align: right; }
-.mt-text-gold { color: var(--gold) !important; }
-.mt-text-custom { color: var(--custom) !important; }
-.mt-text-green { color: #4ade80; }
-.mt-text-red { color: #ef4444; }
-.mt-text-orange { color: #ff7733; }
-.mt-text-range { color: #ffa500; }
-.mt-text-dim { color: #666; }
-.mt-text-bold { font-weight: 900; }
-.mt-pt-sm { padding-top: 4px; }
-.mt-pt-md { padding-top: 8px; }
-.mt-pl-sm { padding-left: 8px; }
-.mt-pl-md { padding-left: 10px; }
-.mt-pl-lg { padding-left: 20px; }
-.mt-border-top { border-top: 1px solid rgba(255,255,255,0.1); }
-.mt-flex-between { display: flex; justify-content: space-between; align-items: center; }
-.mt-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
-
-.calc-highlight { color: var(--accent-start) !important; }
-.calc-result { border-top: 1px solid #333; color: var(--gold) !important; padding-top: 5px !important; margin-top: 5px; }
-.calc-sub { color: #666 !important; font-style: italic; }
-.op { color: var(--custom); display: inline-block; width: 10px; text-align: center; }
-
-.deep-dive-trigger { display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.05); padding: 8px 12px; margin-top: 20px; border-radius: 6px; cursor: pointer; border: 1px solid rgba(255,255,255,0.1); }
-.deep-dive-trigger span { font-size: 0.8rem; font-weight: bold; color: var(--accent-start); text-transform: uppercase; }
-.deep-dive-content { animation: fadeIn 0.3s ease; }
-.dd-section { background: #0e0e11; border-radius: 8px; padding: 15px; margin-top: 10px; border-left: 3px solid #333; font-family: 'JetBrains Mono', monospace; }
-.dd-title { display:flex; justify-content:space-between; align-items:center; color: var(--text-secondary); font-size: 0.7rem; font-weight: 800; text-transform: uppercase; margin-bottom: 5px; letter-spacing:1px; }
-
-/* --- CALCULATOR MODAL --- */
-#calcModal .modal-content { max-width: 900px; background: #050505; }
-.calc-unit-header { display: flex; gap: 15px; padding: 15px; background: linear-gradient(to right, rgba(46, 16, 101, 0.4), rgba(0,0,0,0)); border-bottom: 1px solid rgba(255,255,255,0.1); align-items: center; }
-.calc-avatar { width: 60px; height: 60px; border-radius: 50%; border: 2px solid #fff; background: #222; object-fit: cover; box-shadow: 0 0 15px rgba(0,0,0,0.5); }
-.calc-unit-details { flex-grow: 1; }
-.calc-unit-name { font-size: 1.2rem; font-weight: 900; color: #fff; margin: 0; text-transform: uppercase; line-height: 1; }
-.calc-unit-role { font-size: 0.75rem; color: var(--accent-start); font-weight: bold; text-transform: uppercase; }
-
-/* Calc Footer & Results */
-.calc-footer-bar { padding: 15px 20px; background: #0f1014; border-top: 1px solid #222; display: flex; justify-content: flex-end; gap: 10px; flex-shrink: 0; z-index: 10; }
-
-.calc-result-area {
-    /* hidden by default via class, removed display:none */
-    border-top: 1px solid #222;
-    background: #0a0a0c;
-    padding: 20px;
-}
-.calc-scroll-bg { padding: 0; background: #050505; }
-
-/* Dropdown Option Classes */
-.opt-sungod { color: #38bdf8; font-weight: bold; }
-.opt-ninja { color: #fff; font-weight: bold; }
-.opt-reaper { color: #ef4444; }
-.opt-sreaper { color: #a855f7; }
-.opt-gold { color: var(--gold); font-weight: bold; }
-
-/* === UPDATED CALCULATOR LAYOUT === */
-
-/* Container for all 4 control boxes */
-.calc-global-controls { 
-    display: flex; 
+/* --- OVERLAY & ANIMATION --- */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(8px); /* Glass blur effect */
+    -webkit-backdrop-filter: blur(8px);
+    z-index: 2000;
+    display: flex;
     align-items: center;
-    gap: 8px; /* Tightly packed */
-    margin-left: auto; /* Pushes entire group to the right */
+    justify-content: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    padding: 20px; /* Prevent edge touching on mobile */
 }
 
-/* Individual Control Box (Gray Background) */
-.calc-stat-group {
+.modal-overlay.is-visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* --- MODAL BOX STRUCTURE --- */
+.modal-box {
+    background: linear-gradient(145deg, #0f1014 0%, #050505 100%);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    box-shadow: 
+        0 20px 50px rgba(0, 0, 0, 0.8),
+        0 0 0 1px rgba(255, 255, 255, 0.05) inset; /* Inner bezel */
     display: flex;
     flex-direction: column;
-    background: rgba(255,255,255,0.03);
-    border: 1px solid #333;
-    border-radius: 8px;
-    padding: 6px;
-    gap: 2px;
-    flex-shrink: 0;
+    max-height: 90vh; /* Leave room */
+    width: 100%;
+    max-width: 600px;
+    position: relative;
+    transform: scale(0.95) translateY(10px);
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    overflow: hidden; /* Clips children */
+    -webkit-user-select: none; /* Safari */
+    -moz-user-select: none;    /* Firefox */
+    -ms-user-select: none;     /* IE10+/Edge */
+    user-select: none;         /* Standard */
 }
 
-/* Label Styling */
-.calc-stat-group label {
-    font-size: 0.55rem;
-    color: #888;
+/* Re-enable selection for inputs so users can type/edit */
+.modal-box input,
+.modal-box textarea,
+.selectable-text {
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+    user-select: text;
+    cursor: text;
+}
+
+.modal-overlay.is-visible .modal-box {
+    transform: scale(1) translateY(0);
+}
+
+/* Size Variants */
+.modal-sm { max-width: 450px; }
+.modal-md { max-width: 600px; }
+.modal-lg { max-width: 900px; }
+.modal-xl { max-width: 1100px; }
+
+/* --- SECTIONS --- */
+
+/* 1. Header */
+.modal-header {
+    flex-shrink: 0;
+    padding: 18px 24px;
+    background: rgba(255, 255, 255, 0.02);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+}
+
+/* Decorative gradient line at top */
+.modal-header::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--accent-start), var(--accent-end), transparent);
+    opacity: 0.8;
+}
+
+.modal-title {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: #e2e8f0;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin: 0;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+}
+
+/* 2. Body */
+.modal-body {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 24px;
+    /* Custom Scrollbar */
+    scrollbar-width: thin;
+    scrollbar-color: #333 transparent;
+}
+
+/* Webkit Scrollbar Styling */
+.modal-body::-webkit-scrollbar { width: 6px; }
+.modal-body::-webkit-scrollbar-track { background: transparent; }
+.modal-body::-webkit-scrollbar-thumb { background-color: #333; border-radius: 10px; }
+.modal-body::-webkit-scrollbar-thumb:hover { background-color: #555; }
+
+/* 3. Footer */
+.modal-footer {
+    flex-shrink: 0;
+    padding: 16px 24px;
+    background: #08080a;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    z-index: 5;
+}
+
+/* --- MATH MODAL STYLES --- */
+
+/* Section Containers */
+.math-section {
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    padding: 15px;
+    margin-bottom: 15px;
+}
+
+.math-header {
+    font-size: 0.75rem;
+    color: var(--accent-start);
     font-weight: 800;
     text-transform: uppercase;
-    text-align: center;
-    display: block;
-}
-
-/* Input/Select Styling overrides for inside the group */
-.calc-stat-group .c-input {
-    width: 100% !important;
-    font-size: 0.8rem;
-    height: 24px;
-    padding: 2px 4px;
-}
-
-
-/* --- SUB PRIORITY MODAL --- */
-.sub-prio-header {
-    background: linear-gradient(to right, rgba(255,255,255,0.05), transparent);
-    padding: 15px 20px;
-    border-bottom: 1px solid rgba(255,255,255,0.1);
+    letter-spacing: 1px;
+    margin-bottom: 10px;
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
-.sub-prio-header h2 {
-    font-size: 1rem;
+
+.math-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 5px 0;
+    font-size: 0.9rem;
+    color: #94a3b8;
+    border-bottom: 1px dashed rgba(255, 255, 255, 0.05);
+}
+.math-row:last-child { border-bottom: none; }
+.math-row b { color: #fff; font-family: 'Consolas', monospace; }
+
+/* Highlight Values */
+.math-val-gold { color: var(--gold) !important; font-size: 1.1rem; text-shadow: 0 0 10px rgba(255, 215, 0, 0.2); }
+.math-val-range { color: #ffa500 !important; }
+
+/* Quick Breakdown Grid */
+.mq-box {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.mq-box > div {
+    background: rgba(0,0,0,0.3);
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid rgba(255,255,255,0.05);
+}
+
+.mq-label { font-size: 0.65rem; color: #666; font-weight: 800; text-transform: uppercase; display: block; margin-bottom: 4px; }
+.mq-val { color: #fff; font-weight: 700; font-size: 1rem; }
+.mq-sub { font-size: 0.7rem; color: #777; margin-top: 2px; }
+
+/* Calc Table (Inside Math) */
+.calc-table { width: 100%; border-collapse: collapse; font-family: 'Consolas', monospace; font-size: 0.8rem; }
+.calc-table td { padding: 8px 4px; border-bottom: 1px solid rgba(255,255,255,0.03); }
+.mt-cell-label { color: #ccc; width: 55%; display: flex; align-items: center; gap: 6px; }
+.mt-cell-formula { color: #666; width: 20%; text-align: center; font-size: 0.75rem; }
+.mt-cell-val { color: #fff; text-align: right; font-weight: bold; }
+
+/* Deep Dive Accordion */
+.deep-dive-trigger {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 12px;
+    border-radius: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    transition: 0.2s;
+    margin-top: 20px;
+}
+.deep-dive-trigger:hover { background: rgba(255, 255, 255, 0.06); border-color: var(--accent-start); }
+.deep-dive-trigger span { font-weight: 700; color: #ccc; font-size: 0.85rem; text-transform: uppercase; }
+
+/* --- CALCULATOR MODAL STYLES --- */
+.calc-unit-header {
+    display: flex;
+    gap: 20px;
+    padding: 20px;
+    background: linear-gradient(135deg, rgba(46, 16, 101, 0.5) 0%, rgba(0,0,0,0) 100%);
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    align-items: center;
+}
+
+.calc-avatar {
+    width: 64px;
+    height: 64px;
+    border-radius: 12px; /* Soft square */
+    border: 2px solid rgba(255,255,255,0.8);
+    background: #000;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+}
+
+.calc-unit-name { font-size: 1.5rem; font-weight: 900; color: #fff; line-height: 1; margin: 0; }
+.calc-unit-role { font-size: 0.8rem; color: var(--accent-start); font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+
+/* Calc Controls (Top Right) */
+.calc-global-controls { display: flex; gap: 10px; margin-left: auto; align-items: stretch; }
+
+.calc-stat-group {
+    background: #08080a;
+    border: 1px solid #333;
+    border-radius: 8px;
+    padding: 8px 10px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 4px;
+    min-width: 80px;
+}
+
+/* Gear Cards Grid */
+.gear-grid-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+    padding: 10px 0;
+}
+
+.gear-card {
+    background: #0f1014;
+    border: 1px solid #2d2f36;
+    border-radius: 12px;
+    overflow: hidden;
+    transition: 0.2s;
+}
+.gear-card:hover { border-color: #555; }
+
+.gear-header {
+    background: rgba(255,255,255,0.03);
+    padding: 12px 15px;
+    border-bottom: 1px solid #222;
+}
+
+.gear-title {
+    font-size: 0.7rem;
     font-weight: 800;
-    color: #fff;
+    color: var(--gold);
     text-transform: uppercase;
     letter-spacing: 1px;
-    margin: 0;
+    display: block;
+    margin-bottom: 8px;
 }
 
-.sub-prio-content {
-    padding: 20px;
+.gear-subs {
+    padding: 15px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px 15px;
+    background: #08080a;
 }
 
-/* Row Layout */
-.prio-row {
+/* Sub-Stat Input Row */
+.sub-input-group {
     display: flex;
     align-items: center;
-    margin-bottom: 14px;
-    gap: 20px; /* Increased gap from 15px to 20px for better spacing */
-}
-
-.prio-label {
-    width: 100px; /* Slightly narrower to give bars more room on mobile */
-    flex-shrink: 0;
-    font-size: 0.75rem;
-    font-weight: 800;
-    text-transform: uppercase;
-    color: #fff;
-    text-align: right; /* Changed from LEFT to RIGHT so text ends "in line" */
-    letter-spacing: 0.5px;
-    text-shadow: 0 2px 4px rgba(0,0,0,0.5);
-    line-height: 1.2;
-}
-
-/* Mobile specific adjustment for Sub-Stat labels */
-@media (max-width: 768px) {
-    .prio-label {
-        width: 85px; /* Further reduced for small screens */
-        font-size: 0.7rem;
-    }
-    .prio-row {
-        gap: 12px; /* Tighter gap for mobile to preserve bar width */
-    }
-}
-
-
-/* --- MATH TABLE (calc-table) UPDATES --- */
-
-.calc-table td {
-    padding: 6px 0; /* Increased vertical padding for better touch targets */
-    vertical-align: middle;
-}
-
-/* Specific padding for colored rows to prevent text touching edges */
-.mt-row-sungod td, .mt-row-ninja td { padding-left: 10px; padding-right: 10px; }
-
-.mt-cell-label {
-    color: #ffffff;
-    width: 55%; /* Reduced from 60% to prevent squeezing the numbers */
-    opacity: 0.7;
-    display: flex;
-    justify-content: flex-start; /* Left-aligns content inside the flex container */
-    align-items: center;
-    gap: 8px;
-    padding-right: 0;
-    text-align: left;   /* Fallback for non-flex browsers */
-}
-
-.mt-cell-val {
-    color: #fff;
-    text-align: right;
-    font-weight: bold;
-    font-size: 0.85rem;
-    width: 30%; /* Set a relative width to ensure numbers stay "in line" vertically */
-    white-space: nowrap; /* Prevents numbers from wrapping to a second line */
-}
-
-/* Adjustment for nested sub-rows to maintain right-alignment hierarchy */
-.mt-pl-md { padding-right: 0; padding-left: 15px; }
-.mt-pl-lg { padding-right: 0; padding-left: 30px; }
-
-/* Label (Left Side) */
-.prio-label {
-    width: 110px; /* Wider to accommodate text without cramping */
-    flex-shrink: 0;
-    font-size: 0.75rem;
-    font-weight: 800;
-    text-transform: uppercase;
-    color: #fff; /* Brighter white */
-    text-align: left; /* ALIGNED LEFT */
-    letter-spacing: 0.5px;
-    text-shadow: 0 2px 4px rgba(0,0,0,0.5); /* Better legibility */
-    line-height: 1.2; /* Helps if text wraps */
-}
-
-/* Bar Track */
-.prio-bar-container {
-    flex-grow: 1;
-    background: rgba(0,0,0,0.4);
-    height: 26px;
+    background: #111;
+    border: 1px solid #333;
     border-radius: 4px;
-    border: 1px solid rgba(255,255,255,0.1);
+    padding: 4px 8px;
+    transition: 0.2s;
+}
+.sub-input-group:focus-within { border-color: var(--accent-start); box-shadow: 0 0 0 1px var(--accent-start); }
+.sub-input-group.disabled { opacity: 0.3; pointer-events: none; border-style: dashed; }
+
+.sub-label { font-size: 0.65rem; font-weight: 800; text-transform: uppercase; width: 35px; flex-shrink: 0; }
+.sub-val-input { width: 100%; background: transparent; border: none; color: #fff; text-align: right; font-family: 'Consolas', monospace; font-size: 0.9rem; }
+.sub-val-input:focus { outline: none; }
+
+/* Colors for Sub Labels */
+.sub-dmg { color: #ff8888; } 
+.sub-spa { color: #88ccff; } 
+.sub-range { color: #ffa500; } 
+.sub-cm { color: #d8b4fe; } 
+.sub-cf { color: #ffd700; } 
+.sub-dot { color: #4ade80; }
+
+/* --- COMPARISON TABLE --- */
+.compare-table { width: 100%; border-collapse: separate; border-spacing: 0; font-family: 'Consolas', monospace; font-size: 0.85rem; }
+
+.compare-table th {
+    text-align: left;
+    background: rgba(15, 16, 20, 0.95); /* Nearly opaque for sticky */
+    padding: 12px 15px;
+    color: #94a3b8;
+    font-size: 0.7rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    border-bottom: 2px solid #333;
+    position: sticky;
+    top: -24px; /* Offset for modal padding */
+    z-index: 10;
+}
+
+.compare-table td {
+    padding: 15px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    vertical-align: middle;
+    color: #e2e8f0;
+}
+
+.compare-table tr:hover td { background: rgba(255,255,255,0.02); }
+
+.comp-highlight { font-size: 1.1rem; font-weight: bold; color: #fff; }
+.comp-val-label { font-size: 0.6rem; vertical-align: middle; margin-left: 4px; padding: 2px 4px; border-radius: 3px; background: rgba(255,255,255,0.1); }
+.comp-val-dps { color: #aaa; }
+.comp-val-rng { color: #4ade80; }
+
+.comp-tag {
+    display: inline-block;
+    background: rgba(59, 130, 246, 0.1);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    color: var(--accent-start);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+}
+
+/* --- SUB PRIORITY CHARTS --- */
+.sub-prio-header { 
+    margin-bottom: 20px; 
+    text-align: center; 
+    font-size: 0.85rem; 
+    color: #94a3b8; 
+}
+.sub-prio-content { padding: 0 10px; }
+
+.prio-row { display: flex; align-items: center; margin-bottom: 15px; gap: 15px; }
+.prio-label { 
+    width: 90px; 
+    text-align: right; 
+    font-size: 0.7rem; 
+    font-weight: 800; 
+    color: #ccc; 
+    text-transform: uppercase; 
+}
+
+.prio-bar-container { 
+    flex-grow: 1; 
+    background: #1a1a1d; 
+    height: 28px; 
+    border-radius: 6px; 
+    border: 1px solid #333; 
+    position: relative; 
+    overflow: hidden; 
+}
+
+.prio-bar { 
+    height: 100%; 
+    background: linear-gradient(90deg, #3b82f6, #8b5cf6); 
+    width: var(--bar-width); 
     position: relative;
-    overflow: hidden;
-    display: flex;
-    align-items: center;
+    box-shadow: 0 0 15px rgba(59, 130, 246, 0.3);
 }
 
-/* The Bar Itself */
-.prio-bar {
-    height: 100%;
-    /* Updated to use CSS Variable */
-    width: var(--bar-width, 0%);
-    background: linear-gradient(90deg, var(--accent-start), var(--accent-end));
-    transition: width 0.5s cubic-bezier(0.22, 1, 0.36, 1);
-    opacity: 0.9;
-    box-shadow: 0 0 10px rgba(59, 130, 246, 0.2);
+.prio-bar.best { background: linear-gradient(90deg, #10b981, #059669); box-shadow: 0 0 15px rgba(16, 185, 129, 0.3); }
+
+.prio-val { 
+    position: absolute; 
+    right: 10px; 
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.8rem; 
+    font-weight: bold; 
+    color: #fff; 
+    text-shadow: 0 1px 3px rgba(0,0,0,0.8); 
+    z-index: 2; 
 }
 
-/* "Best" Option Highlight */
-.prio-bar.best {
-    background: var(--success); /* Green */
-    opacity: 1;
-    box-shadow: 0 0 15px rgba(16, 185, 129, 0.3);
-}
-
-/* Text Overlays (Inside Bar) */
 .prio-diff {
     position: absolute;
     left: 10px;
-    font-size: 0.7rem;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.65rem;
     font-weight: 700;
-    color: rgba(255,255,255,0.9);
-    z-index: 5;
-    text-shadow: 0 1px 3px rgba(0,0,0,0.9);
+    color: rgba(255,255,255,0.8);
+    z-index: 2;
 }
 
-/* Update the container to have a strong black outline/shadow */
-.prio-val {
-    position: absolute;
-    right: 10px;
-    font-family: 'Consolas', monospace;
-    font-size: 0.8rem;
-    font-weight: bold;
-    color: #fff;
-    z-index: 5;
-    /* This double-layer shadow creates a strong backdrop for the text */
-    text-shadow: 0 1px 4px #000, 0 0 2px #000; 
-}
-
-/* Update the inner text (DPS) to be bold and bright */
-.prio-val span, 
-.prio-val small {
-    color: #fff !important;      /* Pure white */
-    font-weight: 900 !important; /* Extra thick */
-    opacity: 1 !important;       /* No fading */
-    letter-spacing: 0.5px;       /* Adds a tiny bit of space for readability */
-}
-
-/* Bottom Note */
 .sub-prio-note {
-    margin-top: 20px;
-    padding: 10px;
-    background: rgba(255,255,255,0.03);
-    border: 1px dashed rgba(255,255,255,0.1);
+    margin-top: 25px;
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px dashed #333;
     border-radius: 6px;
-    font-size: 0.7rem;
-    color: #888;
+    font-size: 0.75rem;
+    color: #666;
     text-align: center;
 }
 
-/* --- COMPARE MODAL --- */
-.compare-table { width: 100%; border-collapse: collapse; font-family: 'Consolas', monospace; font-size: 0.8rem; }
-.compare-table th { text-align: left; color: #d8b4fe; background: rgba(46, 16, 101, 0.4); border-bottom: 2px solid var(--banner-border); padding: 15px 10px; font-weight:800; text-transform:uppercase; font-size:0.7rem; }
-.compare-table td { padding: 15px 10px; border-bottom: 1px solid rgba(255,255,255,0.05); vertical-align: middle; color: #ddd; }
-.comp-row-custom { border-left: 3px solid var(--custom); background: linear-gradient(90deg, rgba(6, 182, 212, 0.1), transparent) !important; }
-.comp-row-custom td { color: var(--custom) !important; }
-.comp-unit-wrap { display: flex; align-items: center; gap: 10px; }
-.comp-img { width: 40px; height: 40px; border-radius: 50%; border: 2px solid #fff; }
-.comp-highlight { color: var(--gold); font-weight: bold; font-size: 0.95rem; }
-.comp-sub { font-size:0.7rem; color:#888; display:block; }
-.comp-val-label { font-size:0.6rem; vertical-align:middle; font-weight:bold; margin-left:2px; }
-.comp-val-dps { color: #666; }
-.comp-val-rng { color: #4caf50; }
-.comp-build-name { font-size:0.75rem; margin-top:4px; opacity:0.8; }
-.comp-prio-tag { font-weight:bold; font-size:0.7rem; }
-.comp-tag { font-weight: 700; font-size: 0.75rem; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; background: linear-gradient(315deg, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #9400d3, #ff0000); background-size: 400% 400%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: rainbowFlow 3s linear infinite; }
-.comp-empty { text-align: center; padding: 20px; color: #666; }
+/* --- CONFIG & SELECTION MODALS --- */
+.config-section { margin-bottom: 20px; }
+.config-header { font-size: 0.75rem; font-weight: 800; color: var(--accent-start); text-transform: uppercase; margin-bottom: 12px; letter-spacing: 1px; }
 
-/* TRAIT GUIDE */
-.tg-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
-.tg-section { background: rgba(255,255,255,0.03); border: 1px solid #333; border-radius: 8px; padding: 15px; display: flex; flex-direction: column; align-items: center; gap: 8px; transition:0.2s; }
-.tg-section:hover { border-color:#555; background:rgba(255,255,255,0.05); }
-.tg-label { font-size: 0.75rem; color: #888; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
-.tg-trait { font-size: 1.1rem; font-weight: 900; color: #fff; }
-.tg-trait.tg-short { color: var(--gold); }
-.tg-trait.tg-long { color: var(--custom); }
-.tg-note { background: rgba(59, 130, 246, 0.1); border-left: 3px solid var(--accent-start); padding: 12px; border-radius: 6px; font-size: 0.85rem; color: #ddd; line-height: 1.5; }
-.tg-note strong { color: var(--accent-start); }
+.config-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 10px; }
+.config-item {
+    background: #0f1014;
+    border: 1px solid #2d2f36;
+    border-radius: 8px;
+    padding: 12px;
+    text-align: center;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    transition: 0.2s;
+}
+.config-item:hover { border-color: #666; transform: translateY(-2px); }
+.config-item.selected { border-color: var(--accent-start); background: rgba(59, 130, 246, 0.1); box-shadow: 0 0 15px rgba(59, 130, 246, 0.2); }
+.config-item img { width: 45px; height: 45px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.1); }
+.config-item span { font-size: 0.7rem; font-weight: 700; color: #e2e8f0; line-height: 1.2; }
 
-/* CONFIG MODAL */
-.config-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 12px; }
-.config-header { font-size: 0.9rem; font-weight: 700; text-transform: uppercase; color: var(--custom); margin-bottom: 10px; letter-spacing: 1px; }
-.config-item { background: rgba(255,255,255,0.03); border: 2px solid #333; border-radius: 8px; padding: 10px; text-align: center; cursor: pointer; transition: 0.2s; display: flex; flex-direction: column; align-items: center; gap: 8px; }
-.config-item:hover { background: rgba(255,255,255,0.08); border-color: #666; }
-.config-item.selected { border-color: var(--accent-start); background: rgba(59, 130, 246, 0.1); }
-.config-item img:not(.element-icon) { width: 50px; height: 50px; border-radius: 50%; border: 2px solid #fff; }
-.config-item span { font-size: 0.7rem; font-weight: 700; line-height: 1.1; color: #fff; }
 .config-chips { display: flex; flex-wrap: wrap; gap: 8px; }
-.config-chip { background: #111; border: 1px solid #444; color: #aaa; padding: 6px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; cursor: pointer; transition: 0.2s; }
-.config-chip.selected { background: var(--accent-end); border-color: var(--accent-end); color: #fff; }
-.cp-avatar-placeholder { width: 50px; height: 50px; border-radius: 50%; border: 2px solid #555; background: #000; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #fff; }
+.config-chip {
+    background: #1a1a1d;
+    border: 1px solid #333;
+    color: #94a3b8;
+    padding: 6px 14px;
+    border-radius: 50px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: 0.2s;
+}
+.config-chip:hover { border-color: #666; color: #fff; }
+.config-chip.selected { background: var(--accent-end); border-color: var(--accent-end); color: #fff; box-shadow: 0 4px 10px rgba(168, 85, 247, 0.4); }
 
-/* INFO POPUP */
-.info-popup-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 99999; display: none; align-items: center; justify-content: center; backdrop-filter: blur(4px); animation: fadeIn 0.2s ease; }
-/* Added Class for JS Toggling */
-.info-popup-overlay.is-visible { display: flex !important; }
+/* --- CUSTOM PAIR PREVIEW --- */
+.cp-preview-box {
+    margin-top: 0px;
+    background: linear-gradient(135deg, rgba(6, 182, 212, 0.1), rgba(0,0,0,0));
+    padding: 15px;
+    border-radius: 12px;
+    border: 1px solid rgba(6, 182, 212, 0.3);
+    text-align: center;
+}
+.cp-preview-label { font-size: 0.7rem; color: var(--cyan); text-transform: uppercase; font-weight: 800; letter-spacing: 1px; }
+.cp-preview-val { font-size: 1.2rem; color: #fff; margin-top: 0px; display: block; }
 
-.info-popup-content { background: #08080a; border: 1px solid #333; border-radius: 12px; width: 90%; max-width: 420px; padding: 25px; box-shadow: 0 20px 50px rgba(0,0,0,0.95); position: relative; animation: slideUp 0.25s cubic-bezier(0.18, 0.89, 0.32, 1.28); }
-.ip-close { position: absolute; top: 15px; right: 15px; background: transparent; border: none; color: #666; font-size: 1.5rem; line-height: 1; cursor: pointer; transition: 0.2s; }
-.ip-close:hover { color: #fff; transform: scale(1.1); }
-.ip-header { font-size: 1.1rem; color: #fff; font-weight: 900; margin-bottom: 15px; display:flex; align-items:center; gap:10px; border-bottom: 1px solid #222; padding-bottom: 12px; letter-spacing: 0.5px; }
-.ip-body { font-size: 0.9rem; color: #bbb; line-height: 1.6; }
-.ip-formula { background: #000; padding: 15px; border-radius: 8px; border: 1px solid #222; font-family: 'JetBrains Mono', 'Consolas', monospace; color: #888; margin-top: 15px; font-size: 0.8rem; box-shadow: inset 0 2px 5px rgba(0,0,0,0.5); }
-.ip-var { color: #d8b4fe; font-weight: bold; } .ip-num { color: #f59e0b; } .ip-hl { color: #38bdf8; } 
+/* NEW: Placeholder Circle for "ALL" Selection */
+.cp-avatar-placeholder {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    background: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: #888;
+    transition: 0.2s;
+}
 
-/* PATCH NOTES */
-#patchModal .modal-content { max-width: 600px; }
-.patch-entry { background: rgba(255,255,255,0.03); border-radius: 8px; padding: 15px; margin-bottom: 15px; border-left: 3px solid var(--accent-start); }
-.patch-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+.config-item.selected .cp-avatar-placeholder {
+    border-color: var(--accent-start);
+    color: var(--accent-start);
+    background: rgba(59, 130, 246, 0.1);
+}
+
+/* --- FEEDBACK FORM --- */
+.feedback-form label { display: block; margin-bottom: 15px; }
+.feedback-textarea {
+    width: 100%;
+    height: 140px;
+    background: #050505;
+    border: 1px solid #333;
+    color: #fff;
+    padding: 12px;
+    border-radius: 8px;
+    resize: none;
+    margin-top: 6px;
+    font-family: inherit;
+    font-size: 0.9rem;
+    transition: 0.2s;
+}
+.feedback-textarea:focus { border-color: var(--accent-start); outline: none; }
+#feedbackStatus { text-align: right; font-size: 0.8rem; min-height: 20px; margin-top: 5px; }
+
+/* --- MOBILE ADJUSTMENTS --- */
+@media (max-width: 768px) {
+    .modal-box {
+        width: 95%; /* Use almost full width but leave a gap */
+        height: auto; /* Let content dictate height */
+        max-height: 90vh; /* Prevent it from touching edges, allow scrolling */
+        border-radius: 12px; /* Restore rounded corners for a cleaner look */
+        border: 1px solid rgba(255, 255, 255, 0.08); /* Restore border */
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .calc-unit-header {
+        flex-direction: column;
+        text-align: center;
+        padding: 15px;
+    }
+    
+    .calc-global-controls {
+        width: 100%;
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        margin-top: 10px;
+        margin-left: 0;
+    }
+    .calc-stat-group:first-child { grid-column: 1 / -1; }
+    
+    .modal-body { 
+        padding: 15px;
+        overflow-y: auto; /* Ensure scrolling works inside the flexible box */
+    }
+    .gear-grid-container { grid-template-columns: 1fr; }
+}
+
+
+/* --- PATCH NOTES STYLES --- */
+.patch-entry {
+    background: rgba(255,255,255,0.03);
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 15px;
+    border-left: 3px solid var(--accent-start);
+}
+.patch-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+}
 .patch-version { font-size: 1.1rem; font-weight: 800; color: #fff; letter-spacing: 0.5px; }
 .patch-date { font-size: 0.75rem; color: #999; background: rgba(0,0,0,0.3); padding: 3px 8px; border-radius: 12px; }
 .patch-list { list-style: none; padding: 0; margin: 0; }
 .patch-list li { margin-bottom: 8px; font-size: 0.9rem; color: #ddd; display: flex; align-items: baseline; line-height: 1.4; }
-.patch-tag { color: var(--accent-start); font-weight: 700; font-size: 0.7rem; text-transform: uppercase; background: rgba(59, 130, 246, 0.15); padding: 2px 6px; border-radius: 4px; margin-right: 10px; flex-shrink: 0; }
-/* --- FEEDBACK MODAL --- */
-#feedbackModal .modal-content { max-width: 500px; }
-.feedback-form { display: flex; flex-direction: column; gap: 15px; }
-.feedback-textarea { width: 100%; height: 150px; background: rgba(0,0,0,0.3); border: 1px solid #444; color: #fff; padding: 10px; border-radius: 6px; resize: vertical; font-family: inherit; }
-.feedback-textarea:focus { border-color: var(--accent-start); outline: none; }
-#feedbackStatus { font-size: 0.9rem; text-align: right; min-height: 20px; }
+.patch-tag { 
+    color: var(--accent-start); font-weight: 700; font-size: 0.65rem; 
+    text-transform: uppercase; background: rgba(59, 130, 246, 0.15); 
+    padding: 2px 6px; border-radius: 4px; margin-right: 10px; flex-shrink: 0; 
+}

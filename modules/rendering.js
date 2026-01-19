@@ -84,7 +84,7 @@ function generateBuildRowHTML(r, i, unitConfig = {}) {
 
     let prioHtml = '';
 
-    // FIX: Check for relicIds existence to detect Inventory Mode items
+    // Check for relicIds existence to detect Inventory Mode items
     if (r.relicIds) {
         // Inventory Mode: Double Badge (Inventory Button + Stat Type)
         const hId = r.relicIds.head || 'none';
@@ -168,30 +168,22 @@ function updateBuildListDisplay(unitId) {
             let headSearchName = ({'sun_god':'Sun God Head','ninja':'Ninja Head','reaper_necklace':'Reaper Necklace','shadow_reaper_necklace':'Shadow Reaper Necklace'})[r.headUsed] || '';
             const searchText = (r.traitName + ' ' + r.setName + ' ' + r.prio + ' ' + headSearchName).toLowerCase();
             
-            // UPDATED FILTER LOGIC:
-            // Allow matching if prio is exact OR if it's "INV" (legacy check, though mostly unused now) 
-            // OR if we are in Inventory Mode, we show specific variations so the prio check works normally.
             const prioMatch = (prioSelect === 'all' || r.prio === prioSelect);
 
             return searchText.includes(searchInput) && prioMatch && 
                    (setSelect === 'all' || r.setName === setSelect) && (headSelect === 'all' || (r.headUsed || 'none') === headSelect);
         });
 
-        // DEDUPLICATION: If "All Prio" is selected, show only the BEST variant for each build configuration
         if (prioSelect === 'all') {
             const uniqueMap = new Map();
             filtered.forEach(r => {
-                // Key by Set + Trait + MainStats + Head (The physical build identity)
                 const key = `${r.setName}|${r.traitName}|${r.mainStats.body}|${r.mainStats.legs}|${r.headUsed}`;
-                
                 if (!uniqueMap.has(key)) {
                     uniqueMap.set(key, r);
                 } else {
                     const existing = uniqueMap.get(key);
-                    // Pick the better one based on current sort mode or unit role
                     const isRangeSort = (sortSelect === 'range' || unitId === 'law');
                     const isBetter = isRangeSort ? (r.range > existing.range) : (r.dps > existing.dps);
-                    
                     if (isBetter) uniqueMap.set(key, r);
                 }
             });
@@ -252,14 +244,12 @@ function processUnitCache(unit) {
         let dbKey = unit.id + (unit.id === 'kirito' && kiritoState.card ? 'kirito_card' : '') + (useAbility && unit.ability ? '_abil' : '');
         const resultSet = [];
 
-        // Determine calculation logic: Normal vs Inventory
         const useInventory = (inventoryMode === true);
 
         for (let i = 0; i < 4; i++) {
             const cfg = CONFIGS[i];
             let calculatedResults = [];
             
-            // If Inventory Mode is OFF, try to load static DB first
             if (!useInventory) {
                 const canUseStatic = (unit.id !== 'bambietta') || (bambiettaState.element === 'Dark');
                 if (canUseStatic && window.STATIC_BUILD_DB && window.STATIC_BUILD_DB[dbKey]) {
@@ -274,7 +264,6 @@ function processUnitCache(unit) {
             const traitsForCalc = (calculatedResults.length > 0) ? [...(typeof customTraits !== 'undefined' ? customTraits : []), ...(unitSpecificTraits[unit.id] || [])] : null;
             
             if (traitsForCalc === null || traitsForCalc.length > 0 || useInventory) {
-                // calculateUnitBuilds now handles the Inventory Mode branch internally
                 const dynamicResults = calculateUnitBuilds(unit, currentStats, getFilteredBuilds(), getValidSubCandidates(), cfg.head ? ['sun_god', 'ninja', 'reaper_necklace', 'shadow_reaper_necklace'] : ['none'], cfg.subs, traitsForCalc, useAbility, mode);
                 calculatedResults = [...calculatedResults, ...dynamicResults];
             }
@@ -304,7 +293,6 @@ function renderDatabase() {
 
     const sortedUnits = unitDatabase.map(unit => {
         processUnitCache(unit);
-        // Use index 3 (Full Config) for initial sort, or 0 if others are empty
         const refList = unitBuildsCache[unit.id][activeAbilityIds.has(unit.id) && unit.ability ? 'abil' : 'base'].fixed[3];
         return { unit, maxScore: (refList && refList.length > 0) ? (unit.id === 'law' ? (refList[0].range || 0) : refList[0].dps) : 0 };
     }).sort((a, b) => b.maxScore - a.maxScore);
@@ -375,7 +363,6 @@ function renderDatabase() {
         if (renderQueueIndex < sortedUnits.length) renderQueueId = requestAnimationFrame(processNextChunk);
         else {
             renderQueueId = null; updateCompareBtn();
-            // Force re-apply visibility classes if Inventory Mode is off, or generally apply them
             if(document.getElementById('globalHeadPiece').checked) document.body.classList.add('show-head');
             if(document.getElementById('globalSubStats').checked) document.body.classList.add('show-subs');
         }
@@ -402,26 +389,60 @@ function populateGuideDropdowns() {
     traitsList.forEach(trait => { if (trait.id !== 'none') traitSelect.add(new Option(trait.name, trait.id)); });
 }
 
+// Requirement 3: Copy current selection to temp set for the modal
 function openGuideConfig() {
-    tempGuideUnit = document.getElementById('guideUnitSelect').value;
+    tempGuideUnitSet = new Set(guideUnitSelection);
     tempGuideTrait = document.getElementById('guideTraitSelect').value;
     renderGuideConfigUI();
     toggleModal('guideConfigModal', true);
 }
 
 const closeGuideConfig = () => toggleModal('guideConfigModal', false);
-const selectGuideUnit = (id) => { tempGuideUnit = id; renderGuideConfigUI(); };
+
+// Requirement 3: Logic for Multi-Select in Modal
+const selectGuideUnit = (id) => { 
+    if (id === 'all') {
+        tempGuideUnitSet.clear();
+        tempGuideUnitSet.add('all');
+    } else {
+        if (tempGuideUnitSet.has('all')) tempGuideUnitSet.delete('all');
+        
+        if (tempGuideUnitSet.has(id)) {
+            tempGuideUnitSet.delete(id);
+        } else {
+            tempGuideUnitSet.add(id);
+        }
+        
+        if (tempGuideUnitSet.size === 0) tempGuideUnitSet.add('all');
+    }
+    renderGuideConfigUI(); 
+};
+
 const selectGuideTrait = (id) => { tempGuideTrait = id; renderGuideConfigUI(); };
 
 function renderGuideConfigUI() {
     const unitGrid = document.getElementById('guideConfigUnitGrid');
     const traitList = document.getElementById('guideConfigTraitList');
     
-    let unitsHtml = `<div class="config-item ${tempGuideUnit === 'all' ? 'selected' : ''}" onclick="selectGuideUnit('all')"><div class="cp-avatar-placeholder">ALL</div><span>All Units</span></div>`;
-    unitDatabase.forEach(u => unitsHtml += `<div class="config-item ${tempGuideUnit === u.id ? 'selected' : ''}" onclick="selectGuideUnit('${u.id}')">${getUnitImgHtml(u, '', 'small')}<span>${u.name}</span></div>`);
+    // Check if 'all' is selected to style accordingly
+    const isAll = tempGuideUnitSet.has('all');
+
+    let unitsHtml = `<div class="config-item ${isAll ? 'selected' : ''}" onclick="selectGuideUnit('all')"><div class="cp-avatar-placeholder">ALL</div><span>All Units</span></div>`;
+    
+    unitDatabase.forEach(u => {
+        const isSelected = tempGuideUnitSet.has(u.id); 
+        unitsHtml += `<div class="config-item ${isSelected ? 'selected' : ''}" onclick="selectGuideUnit('${u.id}')">${getUnitImgHtml(u, '', 'small')}<span>${u.name}</span></div>`;
+    });
     unitGrid.innerHTML = unitsHtml;
 
-    let availableTraits = [...traitsList, ...(tempGuideUnit !== 'all' ? (unitSpecificTraits[tempGuideUnit] || []) : customTraits)];
+    // Filter available traits based on selection (if specific units selected, show their specific traits)
+    let availableTraits = [...traitsList, ...customTraits];
+    if (!isAll && tempGuideUnitSet.size === 1) {
+        // If single specific unit, include its specific traits
+        const singleId = Array.from(tempGuideUnitSet)[0];
+        if (unitSpecificTraits[singleId]) availableTraits = [...availableTraits, ...unitSpecificTraits[singleId]];
+    }
+
     availableTraits = availableTraits.filter((t, index, self) => index === self.findIndex((x) => x.id === t.id) && t.id !== 'none');
     
     let traitsHtml = `<div class="config-chip ${tempGuideTrait === 'auto' ? 'selected' : ''}" onclick="selectGuideTrait('auto')">Auto (Best)</div>`;
@@ -429,10 +450,25 @@ function renderGuideConfigUI() {
     traitList.innerHTML = traitsHtml;
 }
 
+// Requirement 3: Apply changes from temp set to active set
 const applyGuideConfig = () => {
-    document.getElementById('guideUnitSelect').value = tempGuideUnit;
+    guideUnitSelection = new Set(tempGuideUnitSet);
+    
+    // Update toolbar text to reflect selection
+    const unitSelect = document.getElementById('guideUnitSelect');
+    if (guideUnitSelection.has('all')) {
+        unitSelect.innerHTML = '<option value="all">All Units</option>';
+        unitSelect.value = 'all';
+    } else {
+        const count = guideUnitSelection.size;
+        const text = count === 1 ? unitDatabase.find(u => u.id === Array.from(guideUnitSelection)[0]).name : `${count} Units Selected`;
+        unitSelect.innerHTML = `<option value="multi">${text}</option>`;
+        unitSelect.value = 'multi';
+    }
+
     document.getElementById('guideTraitSelect').value = tempGuideTrait;
-    renderGuides(); closeGuideConfig();
+    renderGuides(); 
+    closeGuideConfig();
 };
 
 function getGuideBuildsFromCache(unit, mode, configIndex) {
@@ -476,10 +512,18 @@ function renderGuides() {
     if (!guideGrid) return;
     guideGrid.innerHTML = '';
     
-    const filterUnitId = document.getElementById('guideUnitSelect').value;
     const filterTraitId = document.getElementById('guideTraitSelect').value;
 
-    const uName = filterUnitId === 'all' ? 'All Units' : unitDatabase.find(u => u.id === filterUnitId)?.name || 'Unknown';
+    // Display Text Logic
+    let uName = 'All Units';
+    if (!guideUnitSelection.has('all')) {
+        if (guideUnitSelection.size === 1) {
+            uName = unitDatabase.find(u => u.id === Array.from(guideUnitSelection)[0])?.name || 'Unknown';
+        } else {
+            uName = `${guideUnitSelection.size} Units`;
+        }
+    }
+
     let tName = 'Auto Trait';
     if(filterTraitId !== 'auto') { 
         const found = traitsList.find(t => t.id === filterTraitId) || customTraits.find(t => t.id === filterTraitId); 
@@ -488,13 +532,15 @@ function renderGuides() {
     document.getElementById('dispGuideUnit').innerText = uName; 
     document.getElementById('dispGuideTrait').innerText = tName;
 
-    const unitsToProcess = (filterUnitId === 'all') ? unitDatabase : unitDatabase.filter(u => u.id === filterUnitId);
+    // Requirement 3: Filter based on Set logic
+    const unitsToProcess = (guideUnitSelection.has('all')) 
+        ? unitDatabase 
+        : unitDatabase.filter(u => guideUnitSelection.has(u.id));
     
-    // Sort units by their best performance (DPS or Range for Law)
+    // Sort units by their best performance
     const scoredUnits = unitsToProcess.map(unit => {
         if (!unitBuildsCache[unit.id]) processUnitCache(unit);
         
-        // Use Fixed Mode, Config 3 (Max Potential) as the sorting standard
         const refBuilds = getGuideBuildsFromCache(unit, 'fixed', 3);
         const top = processGuideTop3(refBuilds, unit, filterTraitId);
         

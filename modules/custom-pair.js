@@ -1,11 +1,11 @@
-// --- START OF FILE custom-pair.js ---
-
-let cpUnit = 'all';
+// Changed from single string to Set for multi-select
+let cpUnitSelection = new Set(['all']); 
 let cpT1 = 'ruler';
 let cpT2 = 'none';
 
 function openCustomPairModal() {
-    cpUnit = 'all'; 
+    // Reset to default state
+    cpUnitSelection = new Set(['all']);
     cpT1 = 'ruler'; 
     cpT2 = 'none';
     renderCustomPairUI();
@@ -13,7 +13,23 @@ function openCustomPairModal() {
 }
 
 const selectCpUnit = (id) => { 
-    cpUnit = id;  
+    if (id === 'all') {
+        cpUnitSelection.clear();
+        cpUnitSelection.add('all');
+    } else {
+        // If "all" was selected, remove it first
+        if (cpUnitSelection.has('all')) cpUnitSelection.delete('all');
+        
+        // Toggle selection
+        if (cpUnitSelection.has(id)) {
+            cpUnitSelection.delete(id);
+        } else {
+            cpUnitSelection.add(id);
+        }
+        
+        // If nothing selected, revert to all
+        if (cpUnitSelection.size === 0) cpUnitSelection.add('all');
+    }
     renderCustomPairUI(); 
 };
 
@@ -32,10 +48,15 @@ function renderCustomPairUI() {
     const t1List = document.getElementById('cpTrait1List');
     const t2List = document.getElementById('cpTrait2List');
     
+    // Check if 'all' is selected
+    const isAll = cpUnitSelection.has('all');
+
     // Units Grid
-    let unitsHtml = `<div class="config-item ${cpUnit === 'all' ? 'selected' : ''}" onclick="selectCpUnit('all')"><div class="cp-avatar-placeholder">ALL</div><span>All Units</span></div>`;
+    let unitsHtml = `<div class="config-item ${isAll ? 'selected' : ''}" onclick="selectCpUnit('all')"><div class="cp-avatar-placeholder">ALL</div><span>All Units</span></div>`;
+    
     unitDatabase.forEach(u => { 
-        unitsHtml += `<div class="config-item ${cpUnit === u.id ? 'selected' : ''}" onclick="selectCpUnit('${u.id}')">${getUnitImgHtml(u, '', 'small')}<span>${u.name}</span></div>`; 
+        const isSelected = cpUnitSelection.has(u.id);
+        unitsHtml += `<div class="config-item ${isSelected ? 'selected' : ''}" onclick="selectCpUnit('${u.id}')">${getUnitImgHtml(u, '', 'small')}<span>${u.name}</span></div>`; 
     });
     unitGrid.innerHTML = unitsHtml;
 
@@ -54,12 +75,22 @@ function renderCustomPairUI() {
     });
     t2List.innerHTML = t2Html;
 
-    // Preview Text
-    const uName = cpUnit === 'all' ? 'All Units' : unitDatabase.find(u => u.id === cpUnit).name;
+    // Preview Text Logic
+    let uName = 'All Units';
+    if (!isAll) {
+        if (cpUnitSelection.size === 1) {
+            // Get name of single selected unit
+            const id = Array.from(cpUnitSelection)[0];
+            const u = unitDatabase.find(x => x.id === id);
+            uName = u ? u.name : 'Unknown';
+        } else {
+            uName = `${cpUnitSelection.size} Units Selected`;
+        }
+    }
+
     const t1Name = traitsList.find(t => t.id === cpT1).name;
     const t2Name = (cpT2 === 'none') ? '(None)' : traitsList.find(t => t.id === cpT2).name;
     
-    // UPDATED: Used CSS classes text-dim, text-accent-start, text-accent-end
     document.getElementById('cpPreviewText').innerHTML = `${uName} <span class="text-dim">+</span> <span class="text-accent-start">${t1Name}</span> <span class="text-dim">+</span> <span class="text-accent-end">${t2Name}</span>`;
 }
 
@@ -69,28 +100,50 @@ function confirmAddCustomPair() {
 
     if (t1 && t2) {
         const combo = combineTraits(t1, t2);
-        if (cpUnit === 'all') {
+
+        if (cpUnitSelection.has('all')) {
+            // Case 1: Add to Global Custom Traits
             const allTraits = [...traitsList, ...customTraits];
             const alreadyExists = allTraits.some(t => t.name === combo.name);
+            
             if (!alreadyExists && combo.id !== 'none') { 
                 customTraits.push(combo); 
                 alert(`Added global custom trait: ${combo.name}`); 
             } else {
-                alert("Trait combination already exists!");
+                alert("Trait combination already exists globally!");
+                return; // Stop here if duplicate
             }
+
         } else {
-            if (!unitSpecificTraits[cpUnit]) unitSpecificTraits[cpUnit] = [];
-            const unitList = unitSpecificTraits[cpUnit];
-            const alreadyExists = unitList.some(t => t.name === combo.name);
-            if (!alreadyExists && combo.id !== 'none') { 
-                unitList.push(combo); 
-                alert(`Added custom trait to unit.`); 
+            // Case 2: Add to specific units
+            let successCount = 0;
+            
+            cpUnitSelection.forEach(unitId => {
+                if (!unitSpecificTraits[unitId]) unitSpecificTraits[unitId] = [];
+                const unitList = unitSpecificTraits[unitId];
+                
+                // Check duplicate per unit
+                const alreadyExists = unitList.some(t => t.name === combo.name);
+                
+                if (!alreadyExists && combo.id !== 'none') {
+                    // We push a clone or the same ref (same ref is fine for read-only)
+                    unitSpecificTraits[unitId].push(combo);
+                    successCount++;
+                }
+            });
+
+            if (successCount > 0) {
+                alert(`Added custom trait to ${successCount} unit(s).`);
             } else {
-                alert("Trait combination already exists for this unit!");
+                alert("Trait combination already exists for selected unit(s)!");
+                return;
             }
         }
+        
+        // Refresh UI
         resetAndRender();
         if(document.getElementById('guidesPage').classList.contains('active')) renderGuides();
+        
         closeModal('customPairModal');
     }
 }

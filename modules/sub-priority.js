@@ -157,9 +157,7 @@ function viewSubPriority(buildId) {
     const getLabel = (k) => SUB_NAMES[k] || k.toUpperCase();
     
     const pieceCount = context.headPiece === 'none' ? 2 : 3;
-    const subHeaderText = `Comparing <b>${pieceCount} Perfect Pieces</b> (Full Build Simulation)`;
-    const descEl = document.querySelector('#subPriorityModal .modal-content > div:nth-child(2)');
-    if(descEl) descEl.innerHTML = subHeaderText;
+    const subHeaderText = `Comparing <b>${pieceCount} Perfect Pieces</b>`;
 
     comparisonList.forEach((item, index) => {
         const percent = (item.val / maxVal) * 100;
@@ -168,11 +166,10 @@ function viewSubPriority(buildId) {
         const isBaseline = item.type === 'baseline';
         
         let colorClass = isBest ? 'best' : '';
-        // UPDATED: Used classes for bar color, width remains inline
         let barClass = isBaseline ? 'sub-prio-bar-bg' : '';
 
         let labelText = getLabel(item.type);
-        if (isBaseline) labelText = "Lv.1 Subs (Mixed)";
+        if (isBaseline) labelText = "Lv.1 Subs";
 
         const fmtVal = unit.id === 'law' ? item.val.toFixed(1) : format(item.val);
         const label = unit.id === 'law' ? 'Range' : 'DPS';
@@ -191,12 +188,18 @@ function viewSubPriority(buildId) {
         </div>`;
     });
 
-    // UPDATED: Used class sub-prio-note
     html += `<div class="sub-prio-note">
         Hover over bars to see specific piece stats.<br>
         ⚠️ = Fallback used (Main Stat cannot match Sub Stat).
     </div>`;
 
-    document.getElementById('subPriorityContent').innerHTML = html;
-    toggleModal('subPriorityModal', true);
+    // USE THE UNIVERSAL MODAL
+    showUniversalModal({
+        title: 'SUB-STAT PRIORITY',
+        content: `
+            <div class="sub-prio-header">${subHeaderText}</div>
+            <div class="sub-prio-content">${html}</div>
+        `,
+        size: 'modal-sm'
+    });
 }

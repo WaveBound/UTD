@@ -12,7 +12,7 @@ let unitBuildsCache = {};
 
 // Mode & Configuration
 let currentGuideMode = 'current';
-let inventoryMode = false; // NEW: Toggle state for Inventory calculation
+let inventoryMode = false; // Toggle state for Inventory calculation
 
 const kiritoState = {
     realm: true,
@@ -25,8 +25,11 @@ const bambiettaState = {
 
 // Caches for performance optimization
 // Temporary UI State
-let tempGuideUnit = 'all';
+// Requirement 3: Replaced tempGuideUnit string with Set for multi-selection
+let guideUnitSelection = new Set(['all']); // Persistent selection for Guide view
+let tempGuideUnitSet = new Set(['all']);   // Temporary selection inside Config Modal
 let tempGuideTrait = 'auto';
+
 let currentCalcUnitId = null;
 
 // Async Rendering State

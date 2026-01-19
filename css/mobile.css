@@ -4,9 +4,16 @@
     border-radius: 50%; background: linear-gradient(135deg, var(--accent-start), var(--accent-end));
     color: white; border: none; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6); z-index: 9990;
     cursor: pointer; align-items: center; justify-content: center; font-size: 1.8rem;
-    transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.2s;
 }
 .mobile-fab:active { transform: scale(0.9); }
+
+/* NEW: Hide FAB when any modal is open */
+body.modal-open .mobile-fab {
+    display: none !important;
+    opacity: 0;
+    pointer-events: none;
+}
 
 /* MENU BACKDROP */
 body.menu-open::after {

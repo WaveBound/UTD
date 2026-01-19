@@ -19,7 +19,7 @@
 </head>
 <body>
 
-    <!-- 1. HEADER TITLE SECTION -->
+    <!-- HEADER & TOOLBAR (Same as before) -->
     <div id="headerTitleSection" class="header-wrapper">
         <div class="header-inner">
             <header id="mainHeader">
@@ -31,147 +31,185 @@
         </div>
     </div>
 
-    <!-- 2. TOOLBAR SECTION (Desktop: Sticky Top | Mobile: Bottom Sheet) -->
+    <!-- TOOLBAR SECTION -->
     <div id="sticky-sentinel"></div>
     <div id="headerToolbarSection" class="sticky-toolbar-container">
-        
-        <!-- Mobile Drag Handle -->
         <div class="mobile-menu-handle" onclick="toggleMobileMenu()"></div>
-
-        <!-- Navigation -->
         <div class="nav-bar">
             <button class="nav-btn active" onclick="switchPage('db'); toggleMobileMenuIfOpen()">Unit Database</button>
             <button class="nav-btn" onclick="switchPage('guides'); toggleMobileMenuIfOpen()">Build Guides</button>
             <button class="nav-btn" onclick="resetAndOpenInventory(); toggleMobileMenuIfOpen()">Relic Inventory</button>
             <button id="selectAllBtn" class="nav-btn" onclick="selectAllUnits()">Select All</button>
-            
-            <!-- COMPARE BUTTON -->
             <button id="compareBtn" class="nav-btn" onclick="openComparison(); toggleMobileMenuIfOpen()">Compare (<span id="compareCount">0</span>)</button>
-            
-            <!-- PATCH NOTES -->
             <button class="nav-btn" onclick="openPatchNotes(); toggleMobileMenuIfOpen()">Patch Notes</button>
-
-            <!-- FEEDBACK BUTTON -->
             <button class="nav-btn" onclick="openFeedbackModal(); toggleMobileMenuIfOpen()">Report / Suggest</button>
         </div>
 
-        <!-- 1. DATABASE TOOLBAR -->
         <div id="dbInjector" class="injector-panel">
             <button class="nav-btn add-btn" onclick="openCustomPairModal(); toggleMobileMenuIfOpen()">+ Add Custom Pair</button>
-            
-            <label id="invModeToggle" class="nav-toggle-label" title="Calculate using ONLY relics from your Inventory">
+            <label id="invModeToggle" class="nav-toggle-label" title="Calculate using Inventory">
                 <input type="checkbox" id="globalInventoryMode" onchange="toggleInventoryMode(this)">
                 <span id="invLabel" class="text-accent-start">Inventory Mode</span>
                 <div class="mobile-switch-visual"></div>
             </label>
-
-            <label id="hypoToggle" class="nav-toggle-label" title="Current: Relic Stats for DoT% are ignored (Bugged). Check to apply fixes.">
+            <label id="hypoToggle" class="nav-toggle-label">
                 <input type="checkbox" id="globalHypothetical" onchange="toggleHypothetical(this)">
                 <span id="hypoLabel">Bugged Relics</span>
                 <div class="mobile-switch-visual"></div>
             </label>
-
-            <label id="headPieceToggle" class="nav-toggle-label is-checked" title="Auto-equips the best Unique Head Piece">
+            <label id="headPieceToggle" class="nav-toggle-label is-checked">
                 <input type="checkbox" id="globalHeadPiece" onchange="toggleHeadPiece(this)" checked>
                 <span>+ Head Relic</span>
                 <div class="mobile-switch-visual"></div>
             </label>
-
-            <label id="subStatsToggle" class="nav-toggle-label is-checked" title="Adds Perfect Sub-Stats to Calculations">
+            <label id="subStatsToggle" class="nav-toggle-label is-checked">
                 <input type="checkbox" id="globalSubStats" onchange="toggleSubStats(this)" checked>
                 <span>+ Sub Stats</span>
                 <div class="mobile-switch-visual"></div>
             </label>
         </div>
 
-        <!-- 2. GUIDES TOOLBAR -->
+        <!-- Guides Toolbar -->
         <div id="guidesToolbar" class="injector-panel hidden">
             <select id="guideUnitSelect" class="hidden"><option value="all">All Units</option></select>
             <select id="guideTraitSelect" class="hidden"><option value="auto">Auto</option></select>
-
-            <button class="nav-btn config-view-btn" onclick="openGuideConfig(); toggleMobileMenuIfOpen()">
-            Configure View
-            </button>
-
+            <button class="nav-btn config-view-btn" onclick="openGuideConfig(); toggleMobileMenuIfOpen()">Configure View</button>
             <label class="nav-toggle-label">
                 <input type="checkbox" id="guideInventoryMode" onchange="toggleInventoryMode(this)">
                 <span class="text-accent-start">Inventory Mode</span>
                 <div class="mobile-switch-visual"></div>
             </label>
-
             <label id="guideHypoToggleWrapper" class="nav-toggle-label">
                 <input type="checkbox" id="guideHypoToggle" onchange="toggleHypothetical(this)">
                 <span id="guideHypoLabel">Bugged Relics</span>
                 <div class="mobile-switch-visual"></div>
             </label>
-
             <label class="nav-toggle-label is-checked">
                 <input type="checkbox" id="guideHeadPiece" onchange="toggleGuideHeadPiece(this)" checked>
-                <span>+ Head Relic</span>
+                <span>+ Head</span>
                 <div class="mobile-switch-visual"></div>
             </label>
-
             <label class="nav-toggle-label is-checked">
                 <input type="checkbox" id="guideSubStats" onchange="toggleGuideSubStats(this)" checked>
-                <span>+ Sub Stats</span>
+                <span>+ Subs</span>
                 <div class="mobile-switch-visual"></div>
             </label>
         </div>
 
-        <!-- 3. INVENTORY TOOLBAR -->
         <div id="inventoryToolbar" class="injector-panel hidden">
             <button id="openAddRelicBtn" class="nav-btn add-btn" onclick="toggleMobileMenuIfOpen()">+ Add Relic</button>
         </div>
-
-        <!-- HEADER TOGGLE STRIP -->
-        <div class="header-toggle-strip" onclick="toggleHeader()" title="Toggle Header">
-            <button id="headerToggleBtn" class="header-toggle-btn">▲</button>
-        </div>
+        <div class="header-toggle-strip" onclick="toggleHeader()"><button id="headerToggleBtn" class="header-toggle-btn">▲</button></div>
     </div>
 
-    <!-- Mobile Floating Action Button -->
-    <button id="mobileMenuFab" class="mobile-fab" onclick="toggleMobileMenu()">
-        <span>☰</span>
-    </button>
+    <button id="mobileMenuFab" class="mobile-fab" onclick="toggleMobileMenu()"><span>☰</span></button>
 
-    <!-- DATABASE PAGE -->
+    <!-- PAGES -->
     <div id="dbPage" class="page active db-grid"></div>
-
-    <!-- INVENTORY PAGE -->
-    <div id="inventoryPage" class="page">
-        <div id="relicGrid" class="inventory-grid"></div>
-    </div>
-
-    <!-- GUIDES PAGE -->
+    <div id="inventoryPage" class="page"><div id="relicGrid" class="inventory-grid"></div></div>
     <div id="guidesPage" class="page">
         <div class="guide-container">
-            <div id="activeGuideSelection" class="text-center mb-2 text-sm-dim">
-                Showing: <b class="color-white" id="dispGuideUnit">All Units</b> with <b class="color-accent" id="dispGuideTrait">Auto Trait</b>
-            </div>
-            <div id="guideWarning" class="guide-warning">
-                ⚠️ CURRENT BUG: Relic Stats for <b>DoT%</b> are currently ignored by the game. <br>
-                Crit Rate% and Crit Dmg% are working effectively.
-            </div>
+            <div id="activeGuideSelection" class="text-center mb-2 text-sm-dim">Showing: <b class="color-white" id="dispGuideUnit">All</b> with <b class="color-accent" id="dispGuideTrait">Auto</b></div>
+            <div id="guideWarning" class="guide-warning">⚠️ CURRENT BUG: Relic Stats for <b>DoT%</b> are currently ignored.</div>
             <div id="guideList" class="guide-grid"></div>
         </div>
     </div>
 
-    <!-- MODALS -->
-    <!-- Add Relic Modal -->
+    <!-- ================= MODALS ================= -->
+
+    <!-- 1. THE UNIVERSAL MODAL (Replaces Math, Patch, Compare, SubPrio, Guide) -->
+    <div id="universalModal" class="modal-overlay" onclick="closeModal('universalModal')">
+        <div class="modal-box" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h2 class="modal-title">TITLE</h2>
+            </div>
+            <div class="modal-body">
+                <!-- Content Injected via JS -->
+            </div>
+            <div class="modal-footer">
+                <button class="action-btn" onclick="closeModal('universalModal')">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. CALCULATOR MODAL (Kept separate for complex form handling) -->
+    <div id="calcModal" class="modal-overlay" onclick="closeModal('calcModal')">
+        <div class="modal-box modal-xl" onclick="event.stopPropagation()">
+            <div class="calc-unit-header">
+                <div style="display: flex; align-items: center; gap: 15px; flex-grow: 1;">
+                    <img id="calcUnitImg" src="" class="calc-avatar">
+                    <div class="calc-unit-details"><h2 id="calcUnitName" class="modal-title">Unit</h2><span id="calcUnitRole" class="calc-unit-role">Role</span></div>
+                </div>
+                <div class="calc-global-controls">
+                    <!-- Controls injected/managed by JS -->
+                    <div class="calc-stat-group" style="width: 150px;">
+                        <label>Relic Set</label><select id="calcSet" class="c-input w-full" style="padding: 3px 6px;"></select>
+                        <label class="mt-2">Trait</label><select id="calcTrait" class="c-input w-full" style="padding: 3px 6px;"></select>
+                    </div>
+                    <div class="calc-stat-group" style="width: 80px;">
+                        <label>Dmg Pts</label><input type="number" id="calcDmgPoints" class="c-input text-center" value="0" min="0" max="100">
+                        <label class="mt-2">Rank Dmg%</label><input type="number" id="calcRankDmg" class="c-input opt-gold text-center" value="20" min="0" max="20">
+                    </div>
+                    <div class="calc-stat-group" style="width: 80px;">
+                        <label>Spa Pts</label><input type="number" id="calcSpaPoints" class="c-input text-center" value="0" min="0" max="100">
+                        <label class="mt-2">Rank Spa%</label><input type="number" id="calcRankSpa" class="c-input opt-gold text-center" value="8" min="0" max="8">
+                    </div>
+                    <div class="calc-stat-group" style="width: 80px;">
+                        <label>Rng Pts</label><input type="number" id="calcRangePoints" class="c-input text-center" value="0" min="0" max="100">
+                        <label class="mt-2">Rank Rng%</label><input type="number" id="calcRankRange" class="c-input opt-gold text-center" value="20" min="0" max="20">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-body calc-scroll-bg">
+                <div class="gear-grid-container">
+                    <!-- Gear Cards (Head/Body/Legs) - Contents managed by JS -->
+                    <div class="gear-card">
+                        <div class="gear-header"><span class="gear-title">Head Piece</span><div class="flex-1 flex-between gap-md items-end">
+                            <select id="calcHead" class="gear-main-select"><option value="none">None</option><option value="sun_god">Sun God</option><option value="ninja">Ninja</option><option value="reaper_necklace">Reaper</option><option value="shadow_reaper_necklace">S. Reaper</option></select>
+                            <select id="calcHeadStars" class="gear-main-select opt-gold w-65px hidden"><option value="1">1★</option><option value="1.025">2★</option><option value="1.05" selected>3★</option></select>
+                        </div></div>
+                        <div class="gear-subs">
+                            <div class="sub-input-group"><span class="sub-label sub-dmg">Dmg</span><input type="number" data-stat="dmg" class="sub-val-input" placeholder="0"></div>
+                            <div class="sub-input-group"><span class="sub-label sub-spa">Spa</span><input type="number" data-stat="spa" class="sub-val-input" placeholder="0"></div>
+                            <div class="sub-input-group"><span class="sub-label sub-range">Rng</span><input type="number" data-stat="range" class="sub-val-input" placeholder="0"></div>
+                            <div class="sub-input-group"><span class="sub-label sub-cm">CDmg</span><input type="number" data-stat="cm" class="sub-val-input" placeholder="0"></div>
+                            <div class="sub-input-group"><span class="sub-label sub-cf">Crit</span><input type="number" data-stat="cf" class="sub-val-input" placeholder="0"></div>
+                            <div class="sub-input-group"><span class="sub-label sub-dot">DoT</span><input type="number" data-stat="dot" class="sub-val-input" placeholder="0"></div>
+                        </div>
+                    </div>
+                    <!-- Body & Legs Cards identical structure... -->
+                    <div class="gear-card">
+                        <div class="gear-header"><span class="gear-title">Body Main</span><div class="flex-1 flex-between gap-md items-end"><select id="calcBodyMain" class="gear-main-select"><option value="dmg">Damage</option><option value="dot">DoT</option><option value="cm">Crit Dmg</option></select><select id="calcBodyStars" class="gear-main-select opt-gold w-65px hidden"><option value="1.05">3★</option></select></div></div>
+                        <div class="gear-subs"><div class="sub-input-group"><span class="sub-label sub-dmg">Dmg</span><input type="number" data-stat="dmg" class="sub-val-input"></div><div class="sub-input-group"><span class="sub-label sub-spa">Spa</span><input type="number" data-stat="spa" class="sub-val-input"></div><div class="sub-input-group"><span class="sub-label sub-range">Rng</span><input type="number" data-stat="range" class="sub-val-input"></div><div class="sub-input-group"><span class="sub-label sub-cm">CDmg</span><input type="number" data-stat="cm" class="sub-val-input"></div><div class="sub-input-group"><span class="sub-label sub-cf">Crit</span><input type="number" data-stat="cf" class="sub-val-input"></div><div class="sub-input-group"><span class="sub-label sub-dot">DoT</span><input type="number" data-stat="dot" class="sub-val-input"></div></div>
+                    </div>
+                    <div class="gear-card">
+                        <div class="gear-header"><span class="gear-title">Legs Main</span><div class="flex-1 flex-between gap-md items-end"><select id="calcLegsMain" class="gear-main-select"><option value="dmg">Damage</option><option value="spa">SPA</option><option value="cf">Crit Rate</option><option value="range">Range</option></select><select id="calcLegsStars" class="gear-main-select opt-gold w-65px hidden"><option value="1.05">3★</option></select></div></div>
+                        <div class="gear-subs"><div class="sub-input-group"><span class="sub-label sub-dmg">Dmg</span><input type="number" data-stat="dmg" class="sub-val-input"></div><div class="sub-input-group"><span class="sub-label sub-spa">Spa</span><input type="number" data-stat="spa" class="sub-val-input"></div><div class="sub-input-group"><span class="sub-label sub-range">Rng</span><input type="number" data-stat="range" class="sub-val-input"></div><div class="sub-input-group"><span class="sub-label sub-cm">CDmg</span><input type="number" data-stat="cm" class="sub-val-input"></div><div class="sub-input-group"><span class="sub-label sub-cf">Crit</span><input type="number" data-stat="cf" class="sub-val-input"></div><div class="sub-input-group"><span class="sub-label sub-dot">DoT</span><input type="number" data-stat="dot" class="sub-val-input"></div></div>
+                    </div>
+                </div>
+                <div id="calcResultArea" class="calc-result-area hidden"><div id="calcResultContent"></div></div>
+            </div>
+            <div class="modal-footer">
+                <button class="action-btn secondary btn-close-secondary" onclick="closeModal('calcModal')">Close</button>
+                <button class="action-btn btn-calc-execute" onclick="runCustomCalc()">Calculate DPS</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. ADD RELIC MODAL -->
     <div id="addRelicModal" class="modal-overlay" onclick="closeModal('addRelicModal')">
-        <div class="modal-content" onclick="event.stopPropagation()">
-            <div class="modal-header-fixed"><h2 class="text-lg uppercase">Add New Relic</h2></div>
-            <div class="modal-scroll-area">
-                <div class="gear-grid-container" style="grid-template-columns: 1fr; padding: 0;">
+        <div class="modal-box modal-sm" onclick="event.stopPropagation()">
+            <div class="modal-header"><h2 class="modal-title">Add Relic</h2></div>
+            <div class="modal-body">
+                 <!-- Inputs for Add Relic -->
+                 <div class="gear-grid-container" style="grid-template-columns: 1fr; padding: 0;">
                     <div class="gear-card">
                         <div class="gear-header">
                             <span class="gear-title">Relic Details</span>
                             <div class="flex-1 flex-between gap-md items-end">
                                 <div style="display:flex; flex-direction:column; gap:5px; flex: 1;">
                                     <label class="mq-label">Slot</label>
-                                    <select id="newRelicSlot" class="gear-main-select">
-                                        <option value="Head">Head</option><option value="Body">Body</option><option value="Legs">Legs</option>
-                                    </select>
+                                    <select id="newRelicSlot" class="gear-main-select"><option value="Head">Head</option><option value="Body">Body</option><option value="Legs">Legs</option></select>
                                 </div>
                                 <div style="display:flex; flex-direction:column; gap:5px; flex: 1;">
                                     <label class="mq-label">Set</label>
@@ -198,224 +236,71 @@
                     </div>
                 </div>
             </div>
-            <div class="modal-footer-fixed flex-between gap-md justify-start">
+            <div class="modal-footer">
                 <button id="addRelicCancelBtn" class="action-btn secondary" onclick="closeModal('addRelicModal')">Cancel</button>
                 <button id="addRelicConfirmBtn" class="action-btn">Add to Inventory</button>
             </div>
         </div>
     </div>
 
-    <!-- Trait Guide Modal -->
-    <div id="traitGuideModal" class="modal-overlay" onclick="closeModal('traitGuideModal')">
-        <div class="modal-content modal-sm" onclick="event.stopPropagation()">
-            <div class="modal-header-fixed"><h2 class="text-lg uppercase">Recommended Traits</h2></div>
-            <div id="traitGuideContent" class="modal-scroll-area"></div>
-            <div class="modal-footer-fixed"><button class="action-btn" onclick="closeModal('traitGuideModal')">Close</button></div>
-        </div>
-    </div>
-    
-    <!-- Guide Config Modal -->
+    <!-- 4. GUIDE CONFIG MODAL -->
     <div id="guideConfigModal" class="modal-overlay" onclick="closeModal('guideConfigModal')">
-        <div class="modal-content modal-lg" onclick="event.stopPropagation()">
-            <div class="modal-header-fixed"><h2 class="text-lg uppercase">Guide Configuration</h2></div>
-            <div class="modal-scroll-area">
+        <div class="modal-box modal-lg" onclick="event.stopPropagation()">
+            <div class="modal-header"><h2 class="modal-title">Guide Configuration</h2></div>
+            <div class="modal-body">
                 <div class="config-section"><div class="config-header">1. Select Unit</div><div class="config-grid" id="guideConfigUnitGrid"></div></div>
                 <div class="config-section mt-4"><div class="config-header">2. Select Trait</div><div class="config-chips" id="guideConfigTraitList"></div></div>
             </div>
-            <div class="modal-footer-fixed flex-between gap-md justify-start">
+            <div class="modal-footer">
                 <button class="action-btn secondary" onclick="closeModal('guideConfigModal')">Cancel</button>
                 <button class="action-btn" onclick="applyGuideConfig()">Apply Settings</button>
             </div>
         </div>
     </div>
 
-    <!-- Custom Pair Modal -->
+    <!-- 5. CUSTOM PAIR MODAL -->
     <div id="customPairModal" class="modal-overlay" onclick="closeModal('customPairModal')">
-        <div class="modal-content modal-lg" onclick="event.stopPropagation()">
-            <div class="modal-header-fixed cp-header"><h2 class="text-lg uppercase color-white">Create Custom Pair</h2></div>
-            <div class="modal-scroll-area">
+        <div class="modal-box modal-lg" onclick="event.stopPropagation()">
+            <div class="modal-header cp-header"><h2 class="modal-title">Create Custom Pair</h2></div>
+            <div class="modal-body">
                 <div class="config-section"><div class="config-header cp-section-header">1. Assign To Unit</div><div class="config-grid" id="cpUnitGrid"></div></div>
                 <div class="config-section mt-4"><div class="config-header cp-section-header">2. Select First Trait</div><div class="config-chips" id="cpTrait1List"></div></div>
                 <div class="config-section mt-4"><div class="config-header cp-section-header">3. Select Second Trait</div><div class="config-chips" id="cpTrait2List"></div></div>
                 <div class="cp-preview-box"><span class="cp-preview-label">Creating Combination:</span><br><b class="cp-preview-val" id="cpPreviewText">Loading...</b></div>
             </div>
-            <div class="modal-footer-fixed flex-between gap-md justify-start">
+            <div class="modal-footer">
                 <button class="action-btn secondary" onclick="closeModal('customPairModal')">Cancel</button>
                 <button class="action-btn btn-cp-action" onclick="confirmAddCustomPair()">Create Pair</button>
             </div>
         </div>
     </div>
-    
-    <div id="mathModal" class="modal-overlay" onclick="closeModal('mathModal')"><div class="modal-content" onclick="event.stopPropagation()"><div class="modal-header-fixed"><h2 class="text-accent-start text-lg uppercase">DPS Breakdown</h2></div><div id="mathContent" class="modal-scroll-area"></div><div class="modal-footer-fixed"><button class="action-btn" onclick="closeModal('mathModal')">Close</button></div></div></div>
-    <div id="subPriorityModal" class="modal-overlay" onclick="closeModal('subPriorityModal')"><div class="modal-content modal-sm" onclick="event.stopPropagation()"><div class="modal-header-fixed"><h2 class="text-lg uppercase">Sub-Stat Priority</h2></div><div class="sub-prio-header">Comparing performance if you roll <strong>Perfect Stats</strong> of a specific type.</div><div id="subPriorityContent" class="modal-scroll-area"></div><div class="modal-footer-fixed"><button class="action-btn" onclick="closeModal('subPriorityModal')">Close</button></div></div></div>
-    <div id="compareModal" class="modal-overlay" onclick="closeModal('compareModal')"><div class="modal-content" onclick="event.stopPropagation()"><div class="modal-header-fixed"><h2 class="text-lg uppercase">Meta Comparison</h2></div><div id="compareContent" class="modal-scroll-area"></div><div class="modal-footer-fixed"><button class="action-btn secondary" onclick="closeModal('compareModal')">Close</button></div></div></div>
-    <div id="patchModal" class="modal-overlay" onclick="closeModal('patchModal')"><div class="modal-content" onclick="event.stopPropagation()"><div class="modal-header-fixed"><h2 class="text-lg uppercase">Patch Notes</h2></div><div class="modal-scroll-area" id="patchNotesContainer"></div><div class="modal-footer-fixed"><button class="action-btn" onclick="closeModal('patchModal')">Close</button></div></div></div>
-    
-    <!-- Feedback Modal -->
+
+    <!-- 6. FEEDBACK MODAL -->
     <div id="feedbackModal" class="modal-overlay" onclick="closeModal('feedbackModal')">
-        <div class="modal-content" onclick="event.stopPropagation()">
-            <div class="modal-header-fixed"><h2 class="text-lg uppercase">Feedback</h2></div>
-            <div class="modal-scroll-area">
+        <div class="modal-box modal-sm" onclick="event.stopPropagation()">
+            <div class="modal-header"><h2 class="modal-title">Feedback</h2></div>
+            <div class="modal-body">
                 <div class="feedback-form">
-                    <label>
-                        <span class="mq-label">Type</span>
-                        <select id="feedbackType" class="gear-main-select mt-2">
-                            <option value="suggestion" selected>Suggestion</option>
-                            <option value="bug">Bug Report</option>
-                        </select>
+                    <label><span class="mq-label">Type</span>
+                        <select id="feedbackType" class="gear-main-select mt-2"><option value="suggestion" selected>Suggestion</option><option value="bug">Bug Report</option></select>
                     </label>
-                    <label>
-                        <span class="mq-label">Message</span>
-                        <textarea id="feedbackText" class="feedback-textarea mt-2" placeholder="Describe your suggestion or bug..."></textarea>
+                    <label><span class="mq-label">Message</span>
+                        <textarea id="feedbackText" class="feedback-textarea" placeholder="Describe your suggestion or bug..."></textarea>
                     </label>
                     <div id="feedbackStatus"></div>
                 </div>
             </div>
-            <div class="modal-footer-fixed flex-between gap-md justify-start">
+            <div class="modal-footer">
                 <button class="action-btn secondary" onclick="closeModal('feedbackModal')">Cancel</button>
                 <button id="feedbackSendBtn" class="action-btn" onclick="sendFeedback()">Send</button>
             </div>
         </div>
     </div>
 
-    <!-- CALCULATOR MODAL (UPDATED LAYOUT) -->
-    <div id="calcModal" class="modal-overlay" onclick="closeModal('calcModal')">
-        <div class="modal-content" onclick="event.stopPropagation()">
-            
-            <div class="calc-unit-header">
-                <!-- Left: Avatar & Name -->
-                <div style="display: flex; align-items: center; gap: 15px; flex-grow: 1;">
-                    <img id="calcUnitImg" src="" class="calc-avatar">
-                    <div class="calc-unit-details">
-                        <h2 id="calcUnitName" class="calc-unit-name">Unit Name</h2>
-                        <span id="calcUnitRole" class="calc-unit-role">Role</span>
-                    </div>
-                </div>
-                
-                <!-- Right: All Controls Tightly Packed -->
-                <div class="calc-global-controls">
-                    
-                    <!-- Box 1: Set & Trait (Wider) -->
-                    <div class="calc-stat-group" style="width: 150px;">
-                        <label>Relic Set</label>
-                        <select id="calcSet" class="c-input w-full" style="padding: 3px 6px;"></select>
-                        
-                        <label class="mt-2">Trait</label>
-                        <select id="calcTrait" class="c-input w-full" style="padding: 3px 6px;"></select>
-                    </div>
-
-                    <!-- Box 2: Damage -->
-                    <div class="calc-stat-group" style="width: 80px;">
-                        <label>Dmg Pts</label>
-                        <input type="number" id="calcDmgPoints" class="c-input text-center" value="0" min="0" max="100">
-                        <label class="mt-2">Rank Dmg%</label>
-                        <input type="number" id="calcRankDmg" class="c-input opt-gold text-center" value="20" min="0" max="20">
-                    </div>
-                    
-                    <!-- Box 3: SPA -->
-                    <div class="calc-stat-group" style="width: 80px;">
-                        <label>Spa Pts</label>
-                        <input type="number" id="calcSpaPoints" class="c-input text-center" value="0" min="0" max="100">
-                        <label class="mt-2">Rank Spa%</label>
-                        <input type="number" id="calcRankSpa" class="c-input opt-gold text-center" value="8" min="0" max="8">
-                    </div>
-                    
-                    <!-- Box 4: Range -->
-                    <div class="calc-stat-group" style="width: 80px;">
-                        <label>Rng Pts</label>
-                        <input type="number" id="calcRangePoints" class="c-input text-center" value="0" min="0" max="100">
-                        <label class="mt-2">Rank Rng%</label>
-                        <input type="number" id="calcRankRange" class="c-input opt-gold text-center" value="20" min="0" max="20">
-                    </div>
-
-                </div>
-            </div>
-
-            <div class="modal-scroll-area calc-scroll-bg">
-                <div class="gear-grid-container">
-                    <!-- Head Piece -->
-                    <div class="gear-card">
-                        <div class="gear-header"><span class="gear-title">Head Piece</span>
-                            <div class="flex-1 flex-between gap-md items-end"><select id="calcHead" class="gear-main-select" style="border-color:#333; color:#aaa;">
-                                    <option value="none">None / Standard</option>
-                                    <option value="sun_god" class="opt-sungod">Sun God (+Range% Dmg)</option>
-                                    <option value="ninja" class="opt-ninja">Master Ninja (+20% DoT)</option>
-                                    <option value="reaper_necklace" class="opt-reaper">Reaper Necklace</option>
-                                    <option value="shadow_reaper_necklace" class="opt-sreaper">Shadow Reaper Necklace</option>
-                                </select><select id="calcHeadStars" class="gear-main-select opt-gold w-65px hidden">
-                                    <option value="1">1★</option>
-                                    <option value="1.025">2★</option>
-                                    <option value="1.05" selected>3★</option>
-                                </select></div>
-                        </div>
-                        <div class="gear-subs">
-                            <div class="sub-input-group"><span class="sub-label sub-dmg">Dmg</span><input type="number" data-stat="dmg" class="sub-val-input" placeholder="0"></div>
-                            <div class="sub-input-group"><span class="sub-label sub-spa">Spa</span><input type="number" data-stat="spa" class="sub-val-input" placeholder="0"></div>
-                            <div class="sub-input-group"><span class="sub-label sub-range">Rng</span><input type="number" data-stat="range" class="sub-val-input" placeholder="0"></div>
-                            <div class="sub-input-group"><span class="sub-label sub-cm">CDmg</span><input type="number" data-stat="cm" class="sub-val-input" placeholder="0"></div>
-                            <div class="sub-input-group"><span class="sub-label sub-cf">Crit</span><input type="number" data-stat="cf" class="sub-val-input" placeholder="0"></div>
-                            <div class="sub-input-group"><span class="sub-label sub-dot">DoT</span><input type="number" data-stat="dot" class="sub-val-input" placeholder="0"></div>
-                        </div>
-                    </div>
-                    <!-- Body Piece -->
-                    <div class="gear-card">
-                        <div class="gear-header"><span class="gear-title">Body Main Stat</span>
-                            <div class="flex-1 flex-between gap-md items-end"><select id="calcBodyMain" class="gear-main-select">
-                                    <option value="dmg">Damage +60%</option>
-                                    <option value="dot">DoT +75%</option>
-                                    <option value="cm">Crit Dmg +120%</option>
-                                </select><select id="calcBodyStars" class="gear-main-select opt-gold w-65px hidden">
-                                    <option value="1">1★</option>
-                                    <option value="1.025">2★</option>
-                                    <option value="1.05" selected>3★</option>
-                                </select></div>
-                        </div>
-                        <div class="gear-subs">
-                            <div class="sub-input-group"><span class="sub-label sub-dmg">Dmg</span><input type="number" data-stat="dmg" class="sub-val-input" placeholder="0"></div>
-                            <div class="sub-input-group"><span class="sub-label sub-spa">Spa</span><input type="number" data-stat="spa" class="sub-val-input" placeholder="0"></div>
-                            <div class="sub-input-group"><span class="sub-label sub-range">Rng</span><input type="number" data-stat="range" class="sub-val-input" placeholder="0"></div>
-                            <div class="sub-input-group"><span class="sub-label sub-cm">CDmg</span><input type="number" data-stat="cm" class="sub-val-input" placeholder="0"></div>
-                            <div class="sub-input-group"><span class="sub-label sub-cf">Crit</span><input type="number" data-stat="cf" class="sub-val-input" placeholder="0"></div>
-                            <div class="sub-input-group"><span class="sub-label sub-dot">DoT</span><input type="number" data-stat="dot" class="sub-val-input" placeholder="0"></div>
-                        </div>
-                    </div>
-                    <!-- Legs Piece -->
-                    <div class="gear-card">
-                        <div class="gear-header"><span class="gear-title">Legs Main Stat</span>
-                            <div class="flex-1 flex-between gap-md items-end"><select id="calcLegsMain" class="gear-main-select">
-                                    <option value="dmg">Damage +60%</option>
-                                    <option value="spa">SPA -22.5%</option>
-                                    <option value="cf">Crit Rate +37.5%</option>
-                                    <option value="range">Range +30%</option>
-                                </select><select id="calcLegsStars" class="gear-main-select opt-gold w-65px hidden">
-                                    <option value="1">1★</option>
-                                    <option value="1.025">2★</option>
-                                    <option value="1.05" selected>3★</option>
-                                </select></div>
-                        </div>
-                        <div class="gear-subs">
-                            <div class="sub-input-group"><span class="sub-label sub-dmg">Dmg</span><input type="number" data-stat="dmg" class="sub-val-input" placeholder="0"></div>
-                            <div class="sub-input-group"><span class="sub-label sub-spa">Spa</span><input type="number" data-stat="spa" class="sub-val-input" placeholder="0"></div>
-                            <div class="sub-input-group"><span class="sub-label sub-range">Rng</span><input type="number" data-stat="range" class="sub-val-input" placeholder="0"></div>
-                            <div class="sub-input-group"><span class="sub-label sub-cm">CDmg</span><input type="number" data-stat="cm" class="sub-val-input" placeholder="0"></div>
-                            <div class="sub-input-group"><span class="sub-label sub-cf">Crit</span><input type="number" data-stat="cf" class="sub-val-input" placeholder="0"></div>
-                            <div class="sub-input-group"><span class="sub-label sub-dot">DoT</span><input type="number" data-stat="dot" class="sub-val-input" placeholder="0"></div>
-                        </div>
-                    </div>
-                </div>
-                <div id="calcResultArea" class="calc-result-area hidden">
-                    <div id="calcResultContent"></div>
-                </div>
-            </div>
-            <div class="calc-footer-bar"><button class="action-btn secondary btn-close-secondary" onclick="closeModal('calcModal')">Close</button><button class="action-btn btn-calc-execute" onclick="runCustomCalc()">Calculate DPS</button></div>
-        </div>
-    </div>
-    <!-- Data & Math Engines -->
+    <!-- SCRIPTS -->
     <script src="data.js"></script>
     <script src="math.js"></script>
     <script src="static-database.js"></script>
-
-    <!-- Modular Script Files -->
     <script src="modules/state.js"></script>
     <script src="modules/constants.js"></script>
     <script src="modules/utils.js"></script>
@@ -448,27 +333,19 @@
                 document.body.classList.add('menu-open');
                 fab.innerHTML = '<span>✕</span>';
                 document.body.style.overflow = 'hidden';
-                setTimeout(() => {
-                    document.addEventListener('click', closeMenuOnClickOutside);
-                }, 100);
+                setTimeout(() => { document.addEventListener('click', closeMenuOnClickOutside); }, 100);
             }
         }
-
         function toggleMobileMenuIfOpen() {
             if (window.innerWidth <= 768) {
                 const toolbar = document.getElementById('headerToolbarSection');
-                if (toolbar.classList.contains('is-mobile-open')) {
-                    toggleMobileMenu();
-                }
+                if (toolbar.classList.contains('is-mobile-open')) toggleMobileMenu();
             }
         }
-
         function closeMenuOnClickOutside(e) {
             const toolbar = document.getElementById('headerToolbarSection');
             const fab = document.getElementById('mobileMenuFab');
-            if (!toolbar.contains(e.target) && !fab.contains(e.target)) {
-                toggleMobileMenu();
-            }
+            if (!toolbar.contains(e.target) && !fab.contains(e.target)) toggleMobileMenu();
         }
     </script>
 </body>

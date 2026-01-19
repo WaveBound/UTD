@@ -1,21 +1,196 @@
 // ============================================================================
-// MODALS.JS - Modal Logic, Info Popups & Math Reconstruction
+// MODALS.JS - Unified Modal Manager
 // ============================================================================
 
+// --- GENERIC MODAL CONTROLLER ---
+
+/**
+ * Toggles visibility of a specific modal ID.
+ * Handles scroll locking on the body and exclusive modal visibility.
+ */
 const toggleModal = (modalId, show = true) => {
     const modal = document.getElementById(modalId);
-    if (modal) {
-        if (show) {
-            modal.classList.add('is-visible');
-        } else {
-            modal.classList.remove('is-visible');
-            closeInfoPopup(); 
-        }
-        updateBodyScroll();
+    if (!modal) return;
+
+    if (show) {
+        // Requirement 1: Close all other open modals first
+        const otherVisible = document.querySelectorAll('.modal-overlay.is-visible');
+        otherVisible.forEach(m => {
+            if (m.id !== modalId) m.classList.remove('is-visible');
+        });
+
+        modal.classList.add('is-visible');
+        document.body.classList.add('scroll-locked');
+        
+        // Requirement 2: Add class to body to hide Mobile FAB via CSS
+        document.body.classList.add('modal-open'); 
+    } else {
+        modal.classList.remove('is-visible');
+        
+        // Check if any other modals are still open (shouldn't be, but good practice)
+        // Use timeout to allow UI to update
+        setTimeout(() => {
+            const anyVisible = document.querySelectorAll('.modal-overlay.is-visible').length > 0;
+            if (!anyVisible) {
+                document.body.classList.remove('scroll-locked');
+                document.body.classList.remove('modal-open'); // Re-show FAB
+            }
+        }, 50);
     }
 };
 
-// --- INFO POPUPS (For Stat Badges) ---
+/**
+ * Opens the single Universal Modal with dynamic content.
+ * @param {Object} options
+ * @param {string} options.title - Header text
+ * @param {string} options.content - HTML body content
+ * @param {string} options.footer - HTML footer content (buttons)
+ * @param {string} options.size - 'sm', 'lg', 'xl' (optional)
+ * @param {string} options.headerClass - Optional class for header styling
+ */
+function showUniversalModal({ title, content, footerButtons = '', size = '', headerClass = '' }) {
+    const modal = document.getElementById('universalModal');
+    const box = modal.querySelector('.modal-box');
+    const titleEl = modal.querySelector('.modal-title');
+    const bodyEl = modal.querySelector('.modal-body');
+    const footerEl = modal.querySelector('.modal-footer');
+    const headerEl = modal.querySelector('.modal-header');
+
+    // Reset Classes
+    box.className = 'modal-box ' + size;
+    headerEl.className = 'modal-header ' + headerClass;
+
+    // Set Content
+    titleEl.innerHTML = title;
+    bodyEl.innerHTML = content;
+
+    // Default Close Button if no footer provided, or append custom buttons
+    if (!footerButtons) {
+        footerEl.innerHTML = `<button class="action-btn" onclick="closeModal('universalModal')">Close</button>`;
+    } else {
+        footerEl.innerHTML = footerButtons;
+    }
+
+    toggleModal('universalModal', true);
+}
+
+// Global closer helper
+window.closeModal = (id) => toggleModal(id, false);
+
+// --- SPECIFIC IMPLEMENTATIONS USING UNIVERSAL MODAL ---
+
+/**
+ * Shows Math Breakdown
+ */
+const showMath = (id) => {
+    let data = cachedResults[id];
+    if (!data) return;
+
+    // If "lite" data, reconstruct it
+    if (!data.lvStats || !data.critData) {
+        try {
+            data = reconstructMathData(data);
+        } catch (e) {
+            console.error(e);
+            return;
+        }
+    }
+
+    const htmlContent = renderMathContent(data);
+    
+    showUniversalModal({
+        title: `<span class="text-accent-start">DPS BREAKDOWN</span>`,
+        content: htmlContent,
+        size: 'modal-lg' // Use large width for math tables
+    });
+};
+window.showMath = showMath; // Expose global
+
+/**
+ * Shows Patch Notes
+ */
+const openPatchNotes = () => {
+    if (typeof patchNotesData === 'undefined') return;
+
+    const html = patchNotesData.map(patch => {
+        const changesHtml = patch.changes.map(c => 
+            `<li><span class="patch-tag">${c.type}</span> <span>${c.text}</span></li>`
+        ).join('');
+
+        return `
+            <div class="patch-entry">
+                <div class="patch-header">
+                    <span class="patch-version">${patch.version}</span>
+                    <span class="patch-date">${patch.date}</span>
+                </div>
+                <ul class="patch-list">${changesHtml}</ul>
+            </div>
+        `;
+    }).join('');
+
+    showUniversalModal({
+        title: 'PATCH NOTES',
+        content: html,
+        size: 'modal-md'
+    });
+};
+
+/**
+ * Shows Trait Guide
+ */
+function openTraitGuide(unitId) {
+    const unit = unitDatabase.find(u => u.id === unitId);
+    if (!unit || !unit.meta) return;
+
+    const getTraitName = (id) => {
+        if(!id) return '-';
+        const t = traitsList.find(x => x.id === id);
+        return t ? t.name : id;
+    };
+
+    const html = `
+        <div class="tg-grid">
+            <div class="tg-section">
+                <span class="tg-label">Wave 1-30</span>
+                <span class="tg-trait tg-short">⚡ ${getTraitName(unit.meta.short)}</span>
+            </div>
+            <div class="tg-section">
+                <span class="tg-label">Infinite Mode</span>
+                <span class="tg-trait tg-long">♾️ ${getTraitName(unit.meta.long)}</span>
+            </div>
+        </div>
+        <div class="tg-note">
+            <strong>Strategy Note:</strong><br>
+            ${unit.meta.note || "No specific strategy notes available for this unit."}
+        </div>
+    `;
+
+    showUniversalModal({
+        title: 'RECOMMENDED TRAITS',
+        content: html,
+        size: 'modal-sm'
+    });
+}
+
+/**
+ * Shows Comparison
+ * (Relies on rendering.js logic to build string)
+ */
+function openComparison() {
+    if (selectedUnitIds.size === 0) return;
+
+    // We need to generate the HTML. 
+    const html = generateComparisonHTML(); 
+
+    showUniversalModal({
+        title: 'META COMPARISON',
+        content: html,
+        size: 'modal-lg',
+        footerButtons: `<button class="action-btn secondary" onclick="closeModal('universalModal')">Close</button>`
+    });
+}
+
+// --- INFO POPUPS (Overlay style) ---
 
 function openInfoPopup(key) {
     const data = infoDefinitions[key];
@@ -24,11 +199,13 @@ function openInfoPopup(key) {
     const existing = document.getElementById('mathInfoPopup');
     if(existing) existing.remove();
 
-    const parent = document.body;
     let overlay = document.createElement('div');
     overlay.id = 'mathInfoPopup';
     overlay.className = 'info-popup-overlay is-visible';
     
+    // Also add modal-open class to hide FAB when info popup is open
+    document.body.classList.add('modal-open');
+
     overlay.onclick = function(e) {
         if (e.target === overlay) closeInfoPopup();
     };
@@ -45,233 +222,28 @@ function openInfoPopup(key) {
             </div>
         </div>
     `;
-    
-    parent.appendChild(overlay);
-    updateBodyScroll();
+    document.body.appendChild(overlay);
 }
 
 function closeInfoPopup() {
     const overlay = document.getElementById('mathInfoPopup');
     if(overlay) overlay.remove();
-    updateBodyScroll();
+    
+    // Only remove modal-open if no other modals are active
+    const otherModals = document.querySelectorAll('.modal-overlay.is-visible');
+    if(otherModals.length === 0) {
+        document.body.classList.remove('modal-open');
+    }
 }
 
-// --- MATH DATA RECONSTRUCTION ---
-
-// HELPER: Reconstruct full calculation data from cached "Lite" data
-// UPDATED: Now supports unified -b-/-f- and -NOSUBS/-SUBS tags
-function reconstructMathData(liteData) {
-    const unit = unitDatabase.find(u => liteData.id.startsWith(u.id));
-    if (!unit) return null;
-
-    const isAbility = liteData.id.includes('ABILITY');
-    const isVR = liteData.id.includes('VR');
-    const isCard = liteData.id.includes('CARD');
-    
-    // 1. Detect Mode from ID Tags
-    const isBuggedMode = liteData.id.includes('-b-');
-    const isFixedMode = liteData.id.includes('-f-');
-    
-    // 2. Detect Sub-Stat Configuration from ID Tags
-    const isNoSubsMode = liteData.id.includes('-NOSUBS');
-
-    let effectiveStats = { ...unit.stats };
-    effectiveStats.id = unit.id;
-    if (unit.tags) effectiveStats.tags = unit.tags;
-    
-    if (isAbility && unit.ability) Object.assign(effectiveStats, unit.ability);
-    
-    if (unit.id === 'kirito' && isVR && isCard) {
-        effectiveStats.dot = 200; effectiveStats.dotDuration = 4; effectiveStats.dotStacks = 1;
-    }
-    
-    if (unit.id === 'bambietta') {
-        Object.assign(effectiveStats, BAMBIETTA_MODES["Dark"]);
-    }
-
-    let trait = traitsList.find(t => t.name === liteData.traitName) || 
-                customTraits.find(t => t.name === liteData.traitName) ||
-                (unitSpecificTraits[unit.id] || []).find(t => t.name === liteData.traitName);
-    if (!trait) trait = traitsList.find(t => t.id === 'ruler');
-
-    const setEntry = SETS.find(s => s.name === liteData.setName) || SETS[2];
-    
-    let totalStats = {
-        set: setEntry.id,
-        dmg: 0, spa: 0, range: 0, cm: 0, cf: 0, dot: 0
-    };
-
-    // Add Main Stats
-    if (liteData.mainStats) {
-        if (MAIN_STAT_VALS.body[liteData.mainStats.body]) 
-            totalStats[liteData.mainStats.body] += MAIN_STAT_VALS.body[liteData.mainStats.body];
-        
-        if (MAIN_STAT_VALS.legs[liteData.mainStats.legs]) 
-            totalStats[liteData.mainStats.legs] += MAIN_STAT_VALS.legs[liteData.mainStats.legs];
-    }
-
-    // Determine Logic State for this reconstruction
-    let applyDot = statConfig.applyRelicDot;
-    let applyCrit = statConfig.applyRelicCrit;
-
-    if (isBuggedMode) {
-        applyDot = false;
-        applyCrit = true; 
-    } else if (isFixedMode) {
-        applyDot = true;
-        applyCrit = true;
-    }
-
-    // Add explicitly stored sub-stats (from the lite object)
-    if (liteData.subStats) {
-        ['head', 'body', 'legs'].forEach(slot => {
-            if (liteData.subStats[slot]) {
-                liteData.subStats[slot].forEach(sub => {
-                    if (sub.type && sub.val) totalStats[sub.type] += sub.val;
-                });
-            }
-        });
-    }
-
-    // Determine valid stats for auto-filling
-    const candidates = ['dmg', 'spa', 'range', 'cm', 'cf', 'dot'];
-    const validCandidates = candidates.filter(c => {
-         if (!applyDot && c === 'dot') return false;
-         if (!applyCrit && (c === 'cm' || c === 'cf')) return false;
-         return true;
-    });
-
-    // Helper to auto-fill perfect subs if they weren't stored (Static DB optimization)
-    const addBaseFills = (slot, mainStatType) => {
-        const existingTypes = new Set();
-        if (liteData.subStats && liteData.subStats[slot]) {
-             liteData.subStats[slot].forEach(s => existingTypes.add(s.type));
-        }
-
-        validCandidates.forEach(cand => {
-             if (cand === mainStatType) return;
-             if (existingTypes.has(cand)) return;
-             totalStats[cand] = (totalStats[cand] || 0) + PERFECT_SUBS[cand];
-        });
-    };
-
-    // LOGIC: Only fill HEAD stats if a head is used AND we aren't in NoSubs mode
-    // Heads always have subs in-game, but if configured off via toggle, ID has -NOSUBS
-    if (!isNoSubsMode && liteData.headUsed && liteData.headUsed !== 'none') {
-        addBaseFills('head', null); 
-    }
-
-    // LOGIC: Only fill BODY/LEGS stats if -NOSUBS is NOT present in the ID
-    if (!isNoSubsMode && liteData.mainStats) {
-        addBaseFills('body', liteData.mainStats.body);
-        addBaseFills('legs', liteData.mainStats.legs);
-    }
-
-    const isSpaPrio = liteData.prio === 'spa';
-    const isRangePrio = liteData.prio === 'range';
-    let dmgPts = 99, spaPts = 0, rangePts = 0;
-    if (isSpaPrio) { dmgPts = 0; spaPts = 99; }
-    else if (isRangePrio) { dmgPts = 0; spaPts = 0; rangePts = 99; }
-    
-    const context = {
-        dmgPoints: dmgPts,
-        spaPoints: spaPts,
-        rangePoints: rangePts,
-        wave: 25,
-        isBoss: false,
-        traitObj: trait,
-        placement: Math.min(unit.placement, trait.limitPlace || unit.placement),
-        isSSS: true,
-        headPiece: liteData.headUsed || (liteData.subStats && liteData.subStats.selectedHead) || 'none',
-        isVirtualRealm: (unit.id === 'kirito' && isVR)
-    };
-
-    // Temporarily swap global config for this calculation
-    const previousDotState = statConfig.applyRelicDot;
-    const previousCritState = statConfig.applyRelicCrit;
-    
-    statConfig.applyRelicDot = applyDot;
-    statConfig.applyRelicCrit = applyCrit;
-
-    const result = calculateDPS(effectiveStats, totalStats, context);
-
-    // Restore global config
-    statConfig.applyRelicDot = previousDotState;
-    statConfig.applyRelicCrit = previousCritState;
-
-    return result;
-}
-
-const showMath = (id) => { 
-    let data = cachedResults[id]; 
-    if(!data) return;
-
-    const content = document.getElementById('mathContent'); 
-    // If cache object is "lite" (missing deep math), reconstruct it
-    if (!data.lvStats || !data.critData) {
-        try {
-            data = reconstructMathData(data);
-            if (!data) throw new Error("Failed to reconstruct unit data");
-        } catch (e) {
-            console.error(e);
-            content.innerHTML = `<div class="msg-error">Error recalculating data.</div>`;
-            toggleModal('mathModal', true);
-            return;
-        }
-    }
-
-    try {
-        content.innerHTML = renderMathContent(data); 
-        toggleModal('mathModal', true); 
-    } catch (e) {
-        console.error(e);
-    }
-};
-window.showMath = showMath;
-
-// Generic Close Helper
-window.closeModal = (id) => toggleModal(id, false);
-
-// --- PATCH NOTES ---
-
-const openPatchNotes = () => toggleModal('patchModal', true);
-
-function renderPatchNotes() {
-    const container = document.getElementById('patchNotesContainer');
-    if (!container || typeof patchNotesData === 'undefined') return;
-
-    container.innerHTML = patchNotesData.map(patch => {
-        const changesHtml = patch.changes.map(c => 
-            `<li><span class="patch-tag">${c.type}</span> <span>${c.text}</span></li>`
-        ).join('');
-
-        return `
-            <div class="patch-entry">
-                <div class="patch-header">
-                    <span class="patch-version">${patch.version}</span>
-                    <span class="patch-date">${patch.date}</span>
-                </div>
-                <ul class="patch-list">${changesHtml}</ul>
-            </div>
-        `;
-    }).join('');
-}
-
-// --- COMPARISON MODAL ---
-
-function openComparison() {
-    if (selectedUnitIds.size === 0) return;
-
-    toggleModal('compareModal', true);
-    const content = document.getElementById('compareContent');
-    
+function generateComparisonHTML() {
+    // Copied and adapted logic from previous openComparison
     const isFixedMode = document.body.classList.contains('show-fixed-relics');
     const subMode = isFixedMode ? 'fixed' : 'bugged';
 
     const showHead = document.getElementById('globalHeadPiece').checked;
     const showSubs = document.getElementById('globalSubStats').checked;
 
-    // Determine config index matches logic in rendering.js/static-db
     let configIndex = 0;
     if (!showHead && !showSubs) configIndex = 0;
     else if (!showHead && showSubs) configIndex = 1;
@@ -363,7 +335,6 @@ function openComparison() {
     } else {
         comparisonData.forEach(data => {
             const rowClass = data.isCustom ? 'comp-row-custom' : '';
-            
             const valStr = data.isRangePrio ? data.sortVal.toFixed(1) : format(data.sortVal);
             const labelStr = data.isRangePrio ? "RANGE" : "DPS";
             const labelClass = data.isRangePrio ? "comp-val-rng" : "comp-val-dps";
@@ -398,39 +369,5 @@ function openComparison() {
     }
     
     html += `</tbody></table>`;
-    content.innerHTML = html;
-}
-
-// --- TRAIT GUIDE MODAL ---
-
-function openTraitGuide(unitId) {
-    const unit = unitDatabase.find(u => u.id === unitId);
-    if (!unit || !unit.meta) return;
-
-    const modalContent = document.getElementById('traitGuideContent');
-    const getTraitName = (id) => {
-        if(!id) return '-';
-        const t = traitsList.find(x => x.id === id);
-        return t ? t.name : id;
-    };
-
-    let html = `
-        <div class="tg-grid">
-            <div class="tg-section">
-                <span class="tg-label">Wave 1-30</span>
-                <span class="tg-trait tg-short">⚡ ${getTraitName(unit.meta.short)}</span>
-            </div>
-            <div class="tg-section">
-                <span class="tg-label">Infinite Mode</span>
-                <span class="tg-trait tg-long">♾️ ${getTraitName(unit.meta.long)}</span>
-            </div>
-        </div>
-        <div class="tg-note">
-            <strong>Strategy Note:</strong><br>
-            ${unit.meta.note || "No specific strategy notes available for this unit."}
-        </div>
-    `;
-
-    modalContent.innerHTML = html;
-    toggleModal('traitGuideModal', true);
+    return html;
 }
