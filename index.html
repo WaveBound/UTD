@@ -50,6 +50,9 @@
             
             <!-- PATCH NOTES -->
             <button class="nav-btn" onclick="openPatchNotes(); toggleMobileMenuIfOpen()">Patch Notes</button>
+
+            <!-- FEEDBACK BUTTON -->
+            <button class="nav-btn" onclick="openFeedbackModal(); toggleMobileMenuIfOpen()">Report / Suggest</button>
         </div>
 
         <!-- 1. DATABASE TOOLBAR -->
@@ -248,6 +251,33 @@
     <div id="compareModal" class="modal-overlay" onclick="closeCompare()"><div class="modal-content" onclick="event.stopPropagation()"><div class="modal-header-fixed"><h2 class="text-lg uppercase">Meta Comparison</h2></div><div id="compareContent" class="modal-scroll-area"></div><div class="modal-footer-fixed"><button class="action-btn secondary" onclick="closeCompare()">Close</button></div></div></div>
     <div id="patchModal" class="modal-overlay" onclick="closePatchNotes()"><div class="modal-content" onclick="event.stopPropagation()"><div class="modal-header-fixed"><h2 class="text-lg uppercase">Patch Notes</h2></div><div class="modal-scroll-area" id="patchNotesContainer"></div><div class="modal-footer-fixed"><button class="action-btn" onclick="closePatchNotes()">Close</button></div></div></div>
     
+    <!-- Feedback Modal -->
+    <div id="feedbackModal" class="modal-overlay" onclick="closeFeedbackModal()">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="modal-header-fixed"><h2 class="text-lg uppercase">Feedback</h2></div>
+            <div class="modal-scroll-area">
+                <div class="feedback-form">
+                    <label>
+                        <span class="mq-label">Type</span>
+                        <select id="feedbackType" class="gear-main-select mt-2">
+                            <option value="suggestion" selected>Suggestion</option>
+                            <option value="bug">Bug Report</option>
+                        </select>
+                    </label>
+                    <label>
+                        <span class="mq-label">Message</span>
+                        <textarea id="feedbackText" class="feedback-textarea mt-2" placeholder="Describe your suggestion or bug..."></textarea>
+                    </label>
+                    <div id="feedbackStatus"></div>
+                </div>
+            </div>
+            <div class="modal-footer-fixed flex-between gap-md justify-start">
+                <button class="action-btn secondary" onclick="closeFeedbackModal()">Cancel</button>
+                <button id="feedbackSendBtn" class="action-btn" onclick="sendFeedback()">Send</button>
+            </div>
+        </div>
+    </div>
+
 <!-- CALCULATOR MODAL (UPDATED LAYOUT) -->
     <div id="calcModal" class="modal-overlay" onclick="closeCalc()">
         <div class="modal-content" onclick="event.stopPropagation()">
@@ -399,6 +429,7 @@
     <script src="modules/math-render.js"></script>
     <script src="modules/sub-priority.js"></script>
     <script src="modules/inventory.js"></script>
+    <script src="modules/feedback.js"></script>
     <script src="modules/init.js"></script>
 
     <script>
