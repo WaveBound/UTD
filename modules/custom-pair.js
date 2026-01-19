@@ -12,10 +12,8 @@ function openCustomPairModal() {
     toggleModal('customPairModal', true);
 }
 
-const closeCustomPairModal = () => { toggleModal('customPairModal', false); };
-
 const selectCpUnit = (id) => { 
-    cpUnit = id; 
+    cpUnit = id;  
     renderCustomPairUI(); 
 };
 
@@ -93,6 +91,6 @@ function confirmAddCustomPair() {
         }
         resetAndRender();
         if(document.getElementById('guidesPage').classList.contains('active')) renderGuides();
-        closeCustomPairModal();
+        closeModal('customPairModal');
     }
 }

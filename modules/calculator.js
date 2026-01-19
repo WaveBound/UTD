@@ -293,10 +293,6 @@ function openCalc(unitId) {
     toggleModal('calcModal', true);
 }
 
-const closeCalc = () => {
-    toggleModal('calcModal', false);
-};
-
 // Run custom calculation
 function runCustomCalc() {
     try {

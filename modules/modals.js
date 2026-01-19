@@ -229,12 +229,12 @@ const showMath = (id) => {
 };
 window.showMath = showMath;
 
-const closeMath = () => toggleModal('mathModal', false);
+// Generic Close Helper
+window.closeModal = (id) => toggleModal(id, false);
 
 // --- PATCH NOTES ---
 
 const openPatchNotes = () => toggleModal('patchModal', true);
-const closePatchNotes = () => toggleModal('patchModal', false);
 
 function renderPatchNotes() {
     const container = document.getElementById('patchNotesContainer');
@@ -401,8 +401,6 @@ function openComparison() {
     content.innerHTML = html;
 }
 
-const closeCompare = () => { toggleModal('compareModal', false); };
-
 // --- TRAIT GUIDE MODAL ---
 
 function openTraitGuide(unitId) {
@@ -436,5 +434,3 @@ function openTraitGuide(unitId) {
     modalContent.innerHTML = html;
     toggleModal('traitGuideModal', true);
 }
-
-const closeTraitGuide = () => { toggleModal('traitGuideModal', false); };

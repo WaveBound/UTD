@@ -14,8 +14,6 @@ const openFeedbackModal = () => {
     document.getElementById('feedbackSendBtn').disabled = false;
 };
 
-const closeFeedbackModal = () => toggleModal('feedbackModal', false);
-
 async function sendFeedback() {
     const type = document.getElementById('feedbackType').value;
     const message = document.getElementById('feedbackText').value.trim();
@@ -44,7 +42,7 @@ async function sendFeedback() {
 
         if (response.ok) {
             statusEl.innerHTML = '<span class="text-success">Sent successfully! Thank you.</span>';
-            setTimeout(closeFeedbackModal, 2000);
+            setTimeout(() => closeModal('feedbackModal'), 2000);
         } else {
             throw new Error('Server error');
         }

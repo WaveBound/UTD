@@ -158,22 +158,22 @@
 
     <!-- MODALS -->
     <!-- Add Relic Modal -->
-    <div id="addRelicModal" class="modal-overlay" onclick="closeAddRelicModal()">
+    <div id="addRelicModal" class="modal-overlay" onclick="closeModal('addRelicModal')">
         <div class="modal-content" onclick="event.stopPropagation()">
             <div class="modal-header-fixed"><h2 class="text-lg uppercase">Add New Relic</h2></div>
             <div class="modal-scroll-area">
-                <div class="gear-grid-container" style="grid-template-columns: 1fr;">
-                    <div class="gear-card" style="border: none; background: transparent;">
+                <div class="gear-grid-container" style="grid-template-columns: 1fr; padding: 0;">
+                    <div class="gear-card">
                         <div class="gear-header">
                             <span class="gear-title">Relic Details</span>
                             <div class="flex-1 flex-between gap-md items-end">
-                                <div style="display:flex; flex-direction:column; gap:5px;">
+                                <div style="display:flex; flex-direction:column; gap:5px; flex: 1;">
                                     <label class="mq-label">Slot</label>
                                     <select id="newRelicSlot" class="gear-main-select">
                                         <option value="Head">Head</option><option value="Body">Body</option><option value="Legs">Legs</option>
                                     </select>
                                 </div>
-                                <div style="display:flex; flex-direction:column; gap:5px;">
+                                <div style="display:flex; flex-direction:column; gap:5px; flex: 1;">
                                     <label class="mq-label">Set</label>
                                     <select id="newRelicSet" class="gear-main-select"></select>
                                 </div>
@@ -187,7 +187,7 @@
                                 <select id="newRelicMainStat" class="gear-main-select"></select>
                             </div>
                         </div>
-                        <div class="gear-subs" style="margin-top:10px; border-radius:8px;">
+                        <div class="gear-subs" style="margin-top:0; border-radius:0;">
                             <div class="sub-input-group"><span class="sub-label sub-dmg">Dmg</span><input type="number" id="subDmg" class="sub-val-input" placeholder="0"></div>
                             <div class="sub-input-group"><span class="sub-label sub-spa">Spa</span><input type="number" id="subSpa" class="sub-val-input" placeholder="0"></div>
                             <div class="sub-input-group"><span class="sub-label sub-range">Rng</span><input type="number" id="subRange" class="sub-val-input" placeholder="0"></div>
@@ -199,23 +199,23 @@
                 </div>
             </div>
             <div class="modal-footer-fixed flex-between gap-md justify-start">
-                <button id="addRelicCancelBtn" class="action-btn secondary">Cancel</button>
+                <button id="addRelicCancelBtn" class="action-btn secondary" onclick="closeModal('addRelicModal')">Cancel</button>
                 <button id="addRelicConfirmBtn" class="action-btn">Add to Inventory</button>
             </div>
         </div>
     </div>
 
     <!-- Trait Guide Modal -->
-    <div id="traitGuideModal" class="modal-overlay" onclick="closeTraitGuide()">
+    <div id="traitGuideModal" class="modal-overlay" onclick="closeModal('traitGuideModal')">
         <div class="modal-content modal-sm" onclick="event.stopPropagation()">
             <div class="modal-header-fixed"><h2 class="text-lg uppercase">Recommended Traits</h2></div>
             <div id="traitGuideContent" class="modal-scroll-area"></div>
-            <div class="modal-footer-fixed"><button class="action-btn" onclick="closeTraitGuide()">Close</button></div>
+            <div class="modal-footer-fixed"><button class="action-btn" onclick="closeModal('traitGuideModal')">Close</button></div>
         </div>
     </div>
     
     <!-- Guide Config Modal -->
-    <div id="guideConfigModal" class="modal-overlay" onclick="closeGuideConfig()">
+    <div id="guideConfigModal" class="modal-overlay" onclick="closeModal('guideConfigModal')">
         <div class="modal-content modal-lg" onclick="event.stopPropagation()">
             <div class="modal-header-fixed"><h2 class="text-lg uppercase">Guide Configuration</h2></div>
             <div class="modal-scroll-area">
@@ -223,14 +223,14 @@
                 <div class="config-section mt-4"><div class="config-header">2. Select Trait</div><div class="config-chips" id="guideConfigTraitList"></div></div>
             </div>
             <div class="modal-footer-fixed flex-between gap-md justify-start">
-                <button class="action-btn secondary" onclick="closeGuideConfig()">Cancel</button>
+                <button class="action-btn secondary" onclick="closeModal('guideConfigModal')">Cancel</button>
                 <button class="action-btn" onclick="applyGuideConfig()">Apply Settings</button>
             </div>
         </div>
     </div>
 
     <!-- Custom Pair Modal -->
-    <div id="customPairModal" class="modal-overlay" onclick="closeCustomPairModal()">
+    <div id="customPairModal" class="modal-overlay" onclick="closeModal('customPairModal')">
         <div class="modal-content modal-lg" onclick="event.stopPropagation()">
             <div class="modal-header-fixed cp-header"><h2 class="text-lg uppercase color-white">Create Custom Pair</h2></div>
             <div class="modal-scroll-area">
@@ -240,19 +240,19 @@
                 <div class="cp-preview-box"><span class="cp-preview-label">Creating Combination:</span><br><b class="cp-preview-val" id="cpPreviewText">Loading...</b></div>
             </div>
             <div class="modal-footer-fixed flex-between gap-md justify-start">
-                <button class="action-btn secondary" onclick="closeCustomPairModal()">Cancel</button>
+                <button class="action-btn secondary" onclick="closeModal('customPairModal')">Cancel</button>
                 <button class="action-btn btn-cp-action" onclick="confirmAddCustomPair()">Create Pair</button>
             </div>
         </div>
     </div>
     
-    <div id="mathModal" class="modal-overlay" onclick="closeMath()"><div class="modal-content" onclick="event.stopPropagation()"><div class="modal-header-fixed"><h2 class="text-accent-start text-lg uppercase">DPS Breakdown</h2></div><div id="mathContent" class="modal-scroll-area"></div><div class="modal-footer-fixed"><button class="action-btn" onclick="closeMath()">Close</button></div></div></div>
-    <div id="subPriorityModal" class="modal-overlay" onclick="closeSubPriority()"><div class="modal-content modal-sm" onclick="event.stopPropagation()"><div class="modal-header-fixed"><h2 class="text-lg uppercase">Sub-Stat Priority</h2></div><div class="sub-prio-header">Comparing performance if you roll <strong>Perfect Stats</strong> of a specific type.</div><div id="subPriorityContent" class="modal-scroll-area"></div><div class="modal-footer-fixed"><button class="action-btn" onclick="closeSubPriority()">Close</button></div></div></div>
-    <div id="compareModal" class="modal-overlay" onclick="closeCompare()"><div class="modal-content" onclick="event.stopPropagation()"><div class="modal-header-fixed"><h2 class="text-lg uppercase">Meta Comparison</h2></div><div id="compareContent" class="modal-scroll-area"></div><div class="modal-footer-fixed"><button class="action-btn secondary" onclick="closeCompare()">Close</button></div></div></div>
-    <div id="patchModal" class="modal-overlay" onclick="closePatchNotes()"><div class="modal-content" onclick="event.stopPropagation()"><div class="modal-header-fixed"><h2 class="text-lg uppercase">Patch Notes</h2></div><div class="modal-scroll-area" id="patchNotesContainer"></div><div class="modal-footer-fixed"><button class="action-btn" onclick="closePatchNotes()">Close</button></div></div></div>
+    <div id="mathModal" class="modal-overlay" onclick="closeModal('mathModal')"><div class="modal-content" onclick="event.stopPropagation()"><div class="modal-header-fixed"><h2 class="text-accent-start text-lg uppercase">DPS Breakdown</h2></div><div id="mathContent" class="modal-scroll-area"></div><div class="modal-footer-fixed"><button class="action-btn" onclick="closeModal('mathModal')">Close</button></div></div></div>
+    <div id="subPriorityModal" class="modal-overlay" onclick="closeModal('subPriorityModal')"><div class="modal-content modal-sm" onclick="event.stopPropagation()"><div class="modal-header-fixed"><h2 class="text-lg uppercase">Sub-Stat Priority</h2></div><div class="sub-prio-header">Comparing performance if you roll <strong>Perfect Stats</strong> of a specific type.</div><div id="subPriorityContent" class="modal-scroll-area"></div><div class="modal-footer-fixed"><button class="action-btn" onclick="closeModal('subPriorityModal')">Close</button></div></div></div>
+    <div id="compareModal" class="modal-overlay" onclick="closeModal('compareModal')"><div class="modal-content" onclick="event.stopPropagation()"><div class="modal-header-fixed"><h2 class="text-lg uppercase">Meta Comparison</h2></div><div id="compareContent" class="modal-scroll-area"></div><div class="modal-footer-fixed"><button class="action-btn secondary" onclick="closeModal('compareModal')">Close</button></div></div></div>
+    <div id="patchModal" class="modal-overlay" onclick="closeModal('patchModal')"><div class="modal-content" onclick="event.stopPropagation()"><div class="modal-header-fixed"><h2 class="text-lg uppercase">Patch Notes</h2></div><div class="modal-scroll-area" id="patchNotesContainer"></div><div class="modal-footer-fixed"><button class="action-btn" onclick="closeModal('patchModal')">Close</button></div></div></div>
     
     <!-- Feedback Modal -->
-    <div id="feedbackModal" class="modal-overlay" onclick="closeFeedbackModal()">
+    <div id="feedbackModal" class="modal-overlay" onclick="closeModal('feedbackModal')">
         <div class="modal-content" onclick="event.stopPropagation()">
             <div class="modal-header-fixed"><h2 class="text-lg uppercase">Feedback</h2></div>
             <div class="modal-scroll-area">
@@ -272,14 +272,14 @@
                 </div>
             </div>
             <div class="modal-footer-fixed flex-between gap-md justify-start">
-                <button class="action-btn secondary" onclick="closeFeedbackModal()">Cancel</button>
+                <button class="action-btn secondary" onclick="closeModal('feedbackModal')">Cancel</button>
                 <button id="feedbackSendBtn" class="action-btn" onclick="sendFeedback()">Send</button>
             </div>
         </div>
     </div>
 
-<!-- CALCULATOR MODAL (UPDATED LAYOUT) -->
-    <div id="calcModal" class="modal-overlay" onclick="closeCalc()">
+    <!-- CALCULATOR MODAL (UPDATED LAYOUT) -->
+    <div id="calcModal" class="modal-overlay" onclick="closeModal('calcModal')">
         <div class="modal-content" onclick="event.stopPropagation()">
             
             <div class="calc-unit-header">
@@ -407,10 +407,9 @@
                     <div id="calcResultContent"></div>
                 </div>
             </div>
-            <div class="calc-footer-bar"><button class="action-btn secondary btn-close-secondary" onclick="closeCalc()">Close</button><button class="action-btn btn-calc-execute" onclick="runCustomCalc()">Calculate DPS</button></div>
+            <div class="calc-footer-bar"><button class="action-btn secondary btn-close-secondary" onclick="closeModal('calcModal')">Close</button><button class="action-btn btn-calc-execute" onclick="runCustomCalc()">Calculate DPS</button></div>
         </div>
     </div>
-
     <!-- Data & Math Engines -->
     <script src="data.js"></script>
     <script src="math.js"></script>

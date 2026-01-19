@@ -200,7 +200,3 @@ function viewSubPriority(buildId) {
     document.getElementById('subPriorityContent').innerHTML = html;
     toggleModal('subPriorityModal', true);
 }
-
-const closeSubPriority = () => {
-    toggleModal('subPriorityModal', false);
-};

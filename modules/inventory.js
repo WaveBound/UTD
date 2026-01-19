@@ -53,7 +53,7 @@ function initInventory() {
     
     document.getElementById('openAddRelicBtn')?.addEventListener('click', openAddRelicModal);
     document.getElementById('addRelicConfirmBtn')?.addEventListener('click', addRelic);
-    document.getElementById('addRelicCancelBtn')?.addEventListener('click', closeAddRelicModal);
+    document.getElementById('addRelicCancelBtn')?.addEventListener('click', () => closeModal('addRelicModal'));
     
     setupModalInputs();
     
@@ -283,11 +283,6 @@ function openAddRelicModal() {
     addRelicModalElement.classList.add('is-visible');
 }
 
-function closeAddRelicModal() {
-    addRelicModalElement.classList.remove('is-visible');
-}
-window.closeAddRelicModal = closeAddRelicModal; // Expose globally for HTML onclick
-
 function addRelic() {
     const subs = {};
     Object.keys(STAT_MAPPING).forEach(id => {
@@ -327,7 +322,7 @@ function addRelic() {
         resetAndRender();
     }
     
-    closeAddRelicModal();
+    closeModal('addRelicModal');
 }
 
 function deleteRelic(id) {
