@@ -514,9 +514,81 @@
 
 /* --- MOBILE ADJUSTMENTS --- */
 @media (max-width: 768px) {
+    /* Existing Modal Adjustments */
     .modal-box { width: 95%; height: auto; max-height: 90vh; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.08); }
     .calc-unit-header { flex-direction: column; text-align: center; padding: 15px; }
     .calc-global-controls { width: 100%; display: grid; grid-template-columns: 1fr 1fr 1fr; margin-top: 10px; margin-left: 0; }
     .calc-stat-group:first-child { grid-column: 1 / -1; }
     .gear-grid-container { grid-template-columns: 1fr; }
+
+    /* --- NEW: RESPONSIVE COMPARISON TABLE (Stack as Cards) --- */
+    .compare-table { border: none; }
+    .compare-table thead { display: none; } /* Hide Table Headers */
+    .compare-table tbody { display: block; width: 100%; }
+    
+    .compare-table tr { 
+        display: flex; 
+        flex-direction: column; 
+        background: rgba(255,255,255,0.03); 
+        border: 1px solid rgba(255,255,255,0.08); 
+        border-radius: 8px; 
+        margin-bottom: 12px; 
+        padding: 12px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+    }
+    
+    .compare-table td { 
+        display: block; 
+        width: 100%; 
+        padding: 8px 0; 
+        border-bottom: 1px solid rgba(255,255,255,0.05); 
+        text-align: left;
+    }
+    
+    .compare-table td:last-child { border-bottom: none; }
+    
+    /* Cell 1: Unit Info - Keep layout */
+    .compare-table td:first-child { 
+        display: flex; 
+        align-items: center;
+        padding-top: 0;
+    }
+    
+    /* Cell 2: Primary Stat - Flex Row with Label */
+    .compare-table td:nth-child(2) {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .compare-table td:nth-child(2)::before {
+        content: 'Primary Stat';
+        font-size: 0.65rem;
+        color: #666;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    /* Cell 3: Build Info - Stack with Label */
+    .compare-table td:nth-child(3) {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        align-items: flex-start;
+    }
+    .compare-table td:nth-child(3)::before {
+        content: 'Best Config';
+        font-size: 0.65rem;
+        color: #666;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 2px;
+    }
+
+    /* Wrap long build names */
+    .comp-build-name {
+        white-space: normal;
+        line-height: 1.4;
+    }
 }
