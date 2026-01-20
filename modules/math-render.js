@@ -116,8 +116,20 @@ function renderDotSection(data, headDotRow) {
     const db = data.dotData;
     const getFormula = (total, time) => {
         if (time === 0) return '';
-        return `<span class="text-dim">(${fmt.num(total)} / ${fmt.fix(time, 1)}s)</span>`;
+        const label = Math.abs(time - data.spa) < 0.001 ? 'SPA' : 'Interval';
+        return `<span class="text-dim">(${fmt.num(total)} / ${fmt.fix(time, 1)}s ${label})</span>`;
     };
+
+    // Breakdown Logic
+    const baseDot = data.baseStats.dot || 0;
+    const traitDot = data.traitObj.dotBuff || 0;
+    const setDot = data.totalSetStats.dot || 0;
+    const headDot = data.headBuffs.dot || 0;
+    const relicDot = data.relicBuffs.dot || 0;
+    
+    const preRelicTotal = baseDot + traitDot + setDot + headDot;
+    const relicMult = 1 + (relicDot / 100);
+    const finalTickPct = preRelicTotal * relicMult;
 
     return `
     <div class="dd-section">
@@ -125,26 +137,38 @@ function renderDotSection(data, headDotRow) {
         <table class="calc-table">
             <tr><td class="mt-cell-label">Hit Ref (Crit Avg)</td><td class="mt-cell-val" colspan="2">${fmt.num(data.dmgVal * db.critMult)}</td></tr>
             
+            ${headDotRow}
+
             ${db.nativeDps > 0 ? `
+            <!-- Native DoT Breakdown -->
+            <tr><td class="mt-cell-label mt-pt-md mt-text-bold">Native Tick % Calculation</td><td class="mt-cell-formula mt-pt-md"></td><td class="mt-cell-val mt-pt-md mt-text-bold">${fmt.fix(finalTickPct, 1)}%</td></tr>
+            
+            ${baseDot > 0 ? `<tr><td class="mt-cell-label mt-pl-md opacity-70">↳ Unit Base</td><td class="mt-cell-formula"></td><td class="mt-cell-val text-xs">${fmt.pct(baseDot)}</td></tr>` : ''}
+            ${traitDot > 0 ? `<tr><td class="mt-cell-label mt-pl-md opacity-70">↳ Trait Buff</td><td class="mt-cell-formula"></td><td class="mt-cell-val text-xs">${fmt.pct(traitDot)}</td></tr>` : ''}
+            ${setDot > 0 ? `<tr><td class="mt-cell-label mt-pl-md opacity-70">↳ Set Bonus</td><td class="mt-cell-formula"></td><td class="mt-cell-val text-xs">${fmt.pct(setDot)}</td></tr>` : ''}
+            ${headDot > 0 ? `<tr><td class="mt-cell-label mt-pl-md opacity-70">↳ Head Passive</td><td class="mt-cell-formula"></td><td class="mt-cell-val text-xs">${fmt.pct(headDot)}</td></tr>` : ''}
+            
+            <tr><td class="mt-cell-label mt-pl-md text-accent-end">↳ Relic Multiplier</td><td class="mt-cell-formula">x${fmt.fix(relicMult, 2)}</td><td class="mt-cell-val text-accent-end">${fmt.pct(relicDot)}</td></tr>
+
             <tr>
-                <td class="mt-cell-label">Native DoT (${fmt.fix(db.base, 1)}%)</td>
-                <td class="mt-cell-formula">${getFormula(db.nativeTotalDmg, db.nativeInterval)}</td>
-                <td class="mt-cell-val">${fmt.num(db.nativeDps)} DPS</td>
+                <td class="mt-cell-label mt-pt-sm">Native DoT DPS</td>
+                <td class="mt-cell-formula mt-pt-sm">${getFormula(db.nativeTotalDmg, db.nativeInterval)}</td>
+                <td class="mt-cell-val mt-pt-sm">${fmt.num(db.nativeDps)}</td>
             </tr>
             ` : ''}
 
             ${db.radDps > 0 ? `
             <tr>
-                <td class="mt-cell-label text-accent-start">Radiation DoT (${data.traitObj.radiationPct || 20}% / 10s)</td>
-                <td class="mt-cell-formula">${getFormula(db.radTotalDmg, db.radInterval)}</td>
-                <td class="mt-cell-val text-accent-start">${fmt.num(db.radDps)} DPS</td>
+                <td class="mt-cell-label text-accent-start mt-pt-md">Radiation DoT (${data.traitObj.radiationPct || 20}% / 10s)</td>
+                <td class="mt-cell-formula mt-pt-md">${getFormula(db.radTotalDmg, db.radInterval)}</td>
+                <td class="mt-cell-val text-accent-start mt-pt-md">${fmt.num(db.radDps)} DPS</td>
             </tr>
             ` : ''}
 
             <tr class="mt-border-top">
-                <td class="mt-cell-label text-white">Total DoT (1 Unit)</td>
-                <td class="mt-cell-formula"></td>
-                <td class="mt-cell-val text-white">${fmt.num(db.nativeDps + db.radDps)}</td>
+                <td class="mt-cell-label text-white mt-pt-md">Total DoT (1 Unit)</td>
+                <td class="mt-cell-formula mt-pt-md"></td>
+                <td class="mt-cell-val text-white mt-pt-md">${fmt.num(db.nativeDps + db.radDps)}</td>
             </tr>
             ${data.placement > 1 ? `
             <tr>
