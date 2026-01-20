@@ -107,3 +107,43 @@ function getUnitImgHtml(unit, imgClass = '', iconSizeClass = '') {
     if (!elIcon) return `<img src="${unit.img}" class="${imgClass}">`;
     return `<div class="unit-img-wrapper"><img src="${unit.img}" class="${imgClass}"><img src="${elIcon}" class="element-icon ${iconSizeClass}"></div>`;
 }
+
+// ============================================================================
+// SHARED RELIC SCALING LOGIC (Fixes floating point drift)
+// ============================================================================
+
+/**
+ * Call this on 'input' events (and initial load). 
+ * Stores the unscaled (1-star) value in a data attribute to prevent rounding drift.
+ */
+function trackBaseStatValue(input, currentStarMult) {
+    const val = parseFloat(input.value);
+    if (isNaN(val)) {
+        input.removeAttribute('data-base-val');
+        return;
+    }
+    // Calculate what the value would be at 1 Star and store it (high precision)
+    // val / mult = base
+    // Use 6 decimal places to maintain precision during round-trips
+    const baseVal = val / (currentStarMult || 1);
+    input.dataset.baseVal = baseVal.toFixed(6); 
+}
+
+/**
+ * Call this on Star Dropdown 'change' events.
+ * Updates the displayed value based on the stored base value * new multiplier.
+ */
+function applyStarScalingToInput(input, newStarMult) {
+    // If no base value exists, assume current value is the base (handled gracefully)
+    if (!input.dataset.baseVal && input.value !== '') {
+        // Initialize base assuming previous mult was 1 (safe fallback)
+        trackBaseStatValue(input, 1); 
+    }
+
+    const base = parseFloat(input.dataset.baseVal);
+    if (isNaN(base)) return;
+
+    // Calculate new display value
+    const newVal = parseFloat((base * newStarMult).toFixed(3));
+    input.value = newVal;
+}

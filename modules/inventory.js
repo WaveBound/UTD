@@ -15,23 +15,23 @@ const RELIC_COLORS = {
     'default': 'linear-gradient(135deg, #eee, #999)'
 };
 
-const SLOT_OPTIONS = {
-    Head: [
-        { value: 'potency', text: 'Potency' },
-        { value: 'elemental', text: 'Elemental Dmg (Bugged)' }
-    ],
-    Body: [
-        { value: 'dmg', text: `Damage (${BODY_DMG.dmg}%)` },
-        { value: 'dot', text: `DoT (${BODY_DOT.dot}%)` },
-        { value: 'cm', text: `Crit Dmg (${BODY_CDMG.cm}%)` }
-    ],
-    Legs: [
-        { value: 'dmg', text: `Damage (${LEG_DMG.dmg}%)` },
-        { value: 'spa', text: `SPA (${LEG_SPA.spa}%)` },
-        { value: 'cf', text: `Crit Rate (${LEG_CRIT.cf}%)` },
-        { value: 'range', text: `Range (${LEG_RANGE.range}%)` }
-    ]
-};
+function getSlotOptions(slot, starMult = 1) {
+    const opts = [];
+    if (slot === 'Head') {
+        opts.push({ value: 'potency', text: `Potency (${(75 * starMult).toFixed(1)}%)` });
+        opts.push({ value: 'elemental', text: `Elemental Dmg (${(30 * starMult).toFixed(1)}%)` });
+    } else if (slot === 'Body') {
+        opts.push({ value: 'dmg', text: `Damage (${(BODY_DMG.dmg * starMult).toFixed(1)}%)` });
+        opts.push({ value: 'dot', text: `DoT (${(BODY_DOT.dot * starMult).toFixed(1)}%)` });
+        opts.push({ value: 'cm', text: `Crit Dmg (${(BODY_CDMG.cm * starMult).toFixed(1)}%)` });
+    } else if (slot === 'Legs') {
+        opts.push({ value: 'dmg', text: `Damage (${(LEG_DMG.dmg * starMult).toFixed(1)}%)` });
+        opts.push({ value: 'spa', text: `SPA (${(LEG_SPA.spa * starMult).toFixed(1)}%)` });
+        opts.push({ value: 'cf', text: `Crit Rate (${(LEG_CRIT.cf * starMult).toFixed(1)}%)` });
+        opts.push({ value: 'range', text: `Range (${(LEG_RANGE.range * starMult).toFixed(1)}%)` });
+    }
+    return opts;
+}
 
 const STAT_MAPPING = {
     'subDmg': 'dmg', 'subSpa': 'spa', 'subCdmg': 'cm', 
@@ -49,7 +49,6 @@ let highlightedRelicIds = new Set(); // State to track highlighting
 
 function initInventory() {
     inventoryGrid = document.getElementById('relicGrid');
-    // Removed addRelicModalElement caching since toggleModal handles lookup
     
     document.getElementById('openAddRelicBtn')?.addEventListener('click', openAddRelicModal);
     document.getElementById('addRelicConfirmBtn')?.addEventListener('click', addRelic);
@@ -57,11 +56,9 @@ function initInventory() {
     
     setupModalInputs();
     
-    // Load from Local Storage on Init
     loadInventory();
     renderInventory();
     
-    // Check initial state of toggles
     updateInventoryToggleState();
 }
 
@@ -81,7 +78,7 @@ function loadInventory() {
         if (stored) {
             relicInventory = JSON.parse(stored);
         } else {
-            relicInventory = []; // Default to empty if nothing saved
+            relicInventory = []; 
         }
     } catch (e) {
         console.error("Failed to load inventory:", e);
@@ -91,15 +88,12 @@ function loadInventory() {
 
 // --- Logic Helpers ---
 
-// NEW: Updates the visual state of Inventory Mode toggles based on item count
 function updateInventoryToggleState() {
     const isEmpty = (!relicInventory || relicInventory.length === 0);
     const toggleIds = ['globalInventoryMode', 'guideInventoryMode'];
 
-    // Fail-safe: If currently in inventory mode but it's empty, switch off
     if (isEmpty && typeof inventoryMode !== 'undefined' && inventoryMode) {
         inventoryMode = false;
-        // Trigger global render to revert to normal calculation
         if (typeof resetAndRender === 'function') resetAndRender();
     }
 
@@ -110,19 +104,16 @@ function updateInventoryToggleState() {
         const label = input.parentNode;
         
         if (isEmpty) {
-            // Disable it
             input.disabled = true;
             input.checked = false;
             label.classList.add('disabled');
             label.classList.remove('is-checked');
             label.title = "Inventory is empty. Add relics to enable.";
         } else {
-            // Enable it
             input.disabled = false;
             label.classList.remove('disabled');
             label.title = "Calculate using ONLY relics from your Inventory";
             
-            // Sync visual state with global state variable
             if (typeof inventoryMode !== 'undefined') {
                 input.checked = inventoryMode;
                 if(inventoryMode) label.classList.add('is-checked');
@@ -137,8 +128,6 @@ function updateSetOptions(slot) {
     if (!setSelect) return;
 
     const currentSelection = setSelect.value;
-    
-    // Sets that DO NOT have a Head piece in-game
     const invalidHeadSets = ['laughing', 'ex'];
 
     const filteredSets = SETS.filter(s => {
@@ -150,7 +139,6 @@ function updateSetOptions(slot) {
 
     setSelect.innerHTML = filteredSets.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
 
-    // Restore selection if valid, else select first
     if (filteredSets.some(s => s.id === currentSelection)) {
         setSelect.value = currentSelection;
     } else if (filteredSets.length > 0) {
@@ -185,14 +173,13 @@ function updateStarVisibility() {
     const starSelect = document.getElementById('newRelicStars');
     if (!starSelect) return;
 
-    // Only allow stars for Shadow Reaper or Reaper Set
     const showStars = (setId === 'shadow_reaper' || setId === 'reaper_set');
     
     if (showStars) {
         starSelect.parentElement.classList.remove('hidden');
     } else {
         starSelect.parentElement.classList.add('hidden');
-        starSelect.value = "1"; // Reset to 1 star if hidden
+        starSelect.value = "1"; 
     }
     
     enforceSubStatLimits();
@@ -208,15 +195,39 @@ function lockConflictingSubStat(mainStatValue) {
         const shouldDisable = (id === targetId);
         el.disabled = shouldDisable;
         el.parentElement.classList.toggle('disabled', shouldDisable);
-        if (shouldDisable) el.value = '';
+        if (shouldDisable) {
+            el.value = '';
+            el.removeAttribute('data-base-val'); // Clear tracking on disable
+        }
+    });
+}
+
+// Updated Sub-Stat Scaling using Shared Utility
+function updateSubStatValues(newMult) {
+    Object.keys(STAT_MAPPING).forEach(id => {
+        const input = document.getElementById(id);
+        if (input && !input.disabled && input.value !== '') {
+            applyStarScalingToInput(input, newMult);
+        }
     });
 }
 
 function updateMainStatOptions(slot) {
+    const starSelect = document.getElementById('newRelicStars');
+    const starVal = starSelect ? (parseFloat(starSelect.value) || 1) : 1;
+    
     const select = document.getElementById('newRelicMainStat');
-    const opts = SLOT_OPTIONS[slot] || [];
+    const currentVal = select.value;
+    
+    const opts = getSlotOptions(slot, starVal);
     select.innerHTML = opts.map(o => `<option value="${o.value}">${o.text}</option>`).join('');
-    if (opts.length > 0) lockConflictingSubStat(opts[0].value);
+    
+    if (opts.some(o => o.value === currentVal)) {
+        select.value = currentVal;
+    } else if (opts.length > 0) {
+        select.value = opts[0].value;
+        lockConflictingSubStat(opts[0].value);
+    }
 }
 
 // --- Setup ---
@@ -229,34 +240,53 @@ function setupModalInputs() {
     const starSelect = document.getElementById('newRelicStars');
 
     if (slotSelect && mainStatSelect && setSelect) {
-        // Init Sets for the first time
         updateSetOptions(slotSelect.value);
 
         slotSelect.addEventListener('change', () => {
             updateMainStatOptions(slotSelect.value);
-            updateSetOptions(slotSelect.value); // Filter sets based on slot
+            updateSetOptions(slotSelect.value); 
         });
         
         mainStatSelect.addEventListener('change', () => lockConflictingSubStat(mainStatSelect.value));
         setSelect.addEventListener('change', updateStarVisibility);
 
-        // Init
         updateMainStatOptions(slotSelect.value);
         updateStarVisibility();
     }
 
     if (starSelect) {
         starSelect.innerHTML = `
-  <option value="1">1 Star</option>
-  <option value="1.025">2 Stars</option>
-  <option value="1.05">3 Stars</option>`;
-        starSelect.addEventListener('change', enforceSubStatLimits);
+          <option value="1">1★</option>
+          <option value="1.025">2★</option>
+          <option value="1.05">3★</option>`;
+          
+        starSelect.addEventListener('change', () => {
+            const newMult = parseFloat(starSelect.value) || 1;
+            
+            // Update Main Stat Text
+            const slot = document.getElementById('newRelicSlot').value;
+            updateMainStatOptions(slot);
+
+            // Scale Sub Stats (SHARED LOGIC)
+            updateSubStatValues(newMult);
+
+            // Enforce Limits
+            enforceSubStatLimits();
+        });
     }
 
     // 2. Attach Sub-Stat Cap Listeners (Once)
     Object.keys(STAT_MAPPING).forEach(id => {
         const input = document.getElementById(id);
-        if (input) input.oninput = () => capStatInput(input, STAT_MAPPING[id]);
+        if (input) {
+            input.oninput = () => {
+                capStatInput(input, STAT_MAPPING[id]);
+                
+                // NEW: Track Base Value
+                const starMult = parseFloat(document.getElementById('newRelicStars').value) || 1;
+                trackBaseStatValue(input, starMult);
+            };
+        }
     });
 }
 
@@ -265,6 +295,7 @@ function setupModalInputs() {
 function openAddRelicModal() {
     document.querySelectorAll('#addRelicModal input[type="number"]').forEach(inp => {
         inp.value = '';
+        inp.removeAttribute('data-base-val'); // Reset base value tracking
         inp.disabled = false;
         inp.parentElement.classList.remove('disabled');
     });
@@ -273,15 +304,13 @@ function openAddRelicModal() {
     if (slotSelect) {
         slotSelect.value = 'Head';
         updateMainStatOptions('Head');
-        updateSetOptions('Head'); // Ensure correct sets are shown
+        updateSetOptions('Head'); 
     }
     
     const starSelect = document.getElementById('newRelicStars');
     if (starSelect) starSelect.value = "1";
 
     updateStarVisibility();
-
-    // FIXED: Use the shared controller from modals.js
     toggleModal('addRelicModal', true);
 }
 
@@ -295,7 +324,6 @@ function addRelic() {
     const slot = document.getElementById('newRelicSlot').value;
     let setKey = document.getElementById('newRelicSet').value;
 
-    // FIX: Map Set IDs to Necklace IDs for Head slot to ensure Math Engine works
     if (slot === 'Head') {
         if (setKey === 'shadow_reaper') setKey = 'shadow_reaper_necklace';
         if (setKey === 'reaper_set') setKey = 'reaper_necklace';
@@ -312,14 +340,10 @@ function addRelic() {
 
     relicInventory.push(newRelic);
     
-    // Save and Render Inventory UI
     saveInventory();
     renderInventory();
-    
-    // Update Toggle State (Now enabled because list > 0)
     updateInventoryToggleState();
 
-    // REGENERATE: Trigger global database update so calculations reflect new item
     if (typeof resetAndRender === 'function') {
         resetAndRender();
     }
@@ -331,14 +355,10 @@ function deleteRelic(id) {
     if (confirm('Delete this relic?')) {
         relicInventory = relicInventory.filter(r => r.id !== id);
         
-        // Save and Render Inventory UI
         saveInventory();
         renderInventory();
-
-        // Check if list is empty to disable toggle
         updateInventoryToggleState();
 
-        // REGENERATE: Trigger global database update so calculations reflect removal
         if (typeof resetAndRender === 'function') {
             resetAndRender();
         }
@@ -348,13 +368,10 @@ function deleteRelic(id) {
 // --- Visuals & Rendering ---
 
 function getRelicVisuals(setKey, slot) {
-    // Normalize Necklace IDs back to Set IDs for assets/colors
     let visualKey = setKey;
     if (visualKey === 'shadow_reaper_necklace') visualKey = 'shadow_reaper';
     if (visualKey === 'reaper_necklace') visualKey = 'reaper_set';
 
-    // Custom Image Mapping: Define your specific filenames here
-    // Format: 'set_id': { 'Slot': 'Filename.png' }
     const customImages = {
         'ninja': { 'Head': 'MasterNinjaMask.png', 'Body': 'MasterNinjaTop.png', 'Legs': 'MasterNinjaBottom.png' },
         'sun_god': { 'Head': 'SunGodMask.png', 'Body': 'SunGodTop.png', 'Legs': 'SunGodBottom.png' },
@@ -379,18 +396,14 @@ function getRelicVisuals(setKey, slot) {
 
 function calculateMainValue(relic) {
     let val = 0;
-
-    // Determine Base Value
     if (relic.mainStat === 'potency') val = 75;
     else if (relic.mainStat === 'elemental') val = 30;
     else if (MAIN_STAT_VALS.body[relic.mainStat]) val = MAIN_STAT_VALS.body[relic.mainStat];
     else if (MAIN_STAT_VALS.legs[relic.mainStat]) val = MAIN_STAT_VALS.legs[relic.mainStat];
 
-    // Apply Star Multiplier to ALL main stats
     return val * (relic.stars || 1);
 }
 
-// Highlight and View Logic
 function viewInventoryItems(headId, bodyId, legsId) {
     highlightedRelicIds.clear();
     
@@ -398,18 +411,13 @@ function viewInventoryItems(headId, bodyId, legsId) {
     if (bodyId && bodyId !== 'none-b') highlightedRelicIds.add(bodyId);
     if (legsId && legsId !== 'none-l') highlightedRelicIds.add(legsId);
 
-    // Switch to Inventory Page
     switchPage('inventory');
-    
-    // Re-render to apply classes
     renderInventory();
 
-    // Scroll top of grid
     if (inventoryGrid) inventoryGrid.scrollTop = 0;
 }
-window.viewInventoryItems = viewInventoryItems; // Expose globally
+window.viewInventoryItems = viewInventoryItems; 
 
-// Helper to clear highlights when navigating manually
 function clearInventoryHighlights() {
     highlightedRelicIds.clear();
     renderInventory();
@@ -427,13 +435,12 @@ function renderInventory() {
 
     const frag = document.createDocumentFragment();
 
-    // Sort: Highlighted items first, then by slot
     const sortedInventory = [...relicInventory].sort((a, b) => {
         const aH = highlightedRelicIds.has(a.id);
         const bH = highlightedRelicIds.has(b.id);
         if (aH && !bH) return -1;
         if (!aH && bH) return 1;
-        return 0; // Default sort order
+        return 0; 
     });
 
     sortedInventory.forEach(relic => {
@@ -442,15 +449,12 @@ function renderInventory() {
         
         card.className = 'relic-card-clean' + (isHighlighted ? ' relic-highlighted' : '');
         
-        // Visuals and Set Name Mapping
         const visuals = getRelicVisuals(relic.setKey, relic.slot);
         
-        // Normalize Necklace IDs back to Set IDs for display name lookup
         let lookupKey = relic.setKey;
         if (lookupKey === 'shadow_reaper_necklace') lookupKey = 'shadow_reaper';
         if (lookupKey === 'reaper_necklace') lookupKey = 'reaper_set';
 
-        // Logic: Star Count Display - ONLY for allowed sets
         let starCount = 0;
         if (lookupKey === 'shadow_reaper' || lookupKey === 'reaper_set') {
             if(relic.stars >= 1.05) starCount = 3;
@@ -460,7 +464,6 @@ function renderInventory() {
 
         const setObj = SETS.find(s => s.id === lookupKey) || SETS[0];
         
-        // Logic: Stats (Calculated with stars)
         const mainVal = calculateMainValue(relic);
         const mainBadge = getBadgeHtml(relic.mainStat, mainVal);
         

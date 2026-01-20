@@ -4,8 +4,21 @@
 
 // --- HELPER FUNCTIONS ---
 
+// Scale sub-stats when stars change (Refactored to use stable Base Value)
+function scaleCardSubs(cardIndex, newMult) {
+    const card = document.querySelectorAll('#calcModal .gear-card')[cardIndex];
+    if (!card) return;
+    
+    const inputs = card.querySelectorAll('input.sub-val-input');
+    inputs.forEach(input => {
+        if (!input.disabled && input.value !== '') {
+             applyStarScalingToInput(input, newMult);
+        }
+    });
+}
+
 // Update card sub-stats with blocking logic
-function updateCardSubs(card, blockStatType) {
+function updateCardSubs(card, blockStatType, force = false) {
     const inputs = card.querySelectorAll('input.sub-val-input');
     
     const allCards = document.querySelectorAll('#calcModal .gear-card');
@@ -22,7 +35,6 @@ function updateCardSubs(card, blockStatType) {
     const legsStarsSelect = document.getElementById('calcLegsStars');
     
     let starMult = 1;
-    // Check classes instead of style.display
     if (cardIndex === 0) starMult = (!headStarsSelect.classList.contains('hidden')) ? parseFloat(headStarsSelect.value) : 1;      
     else if (cardIndex === 1) starMult = (!bodyStarsSelect.classList.contains('hidden')) ? parseFloat(bodyStarsSelect.value) : 1;  
     else if (cardIndex === 2) starMult = (!legsStarsSelect.classList.contains('hidden')) ? parseFloat(legsStarsSelect.value) : 1;  
@@ -33,8 +45,14 @@ function updateCardSubs(card, blockStatType) {
             input.value = 0;
             input.parentElement.classList.add('disabled'); 
             input.disabled = true; 
+            trackBaseStatValue(input, starMult); // Track 0 as base
         } else {
-            input.value = parseFloat((PERFECT_SUBS[statType] * starMult).toFixed(3));
+            // Only update value if forced OR if it was previously disabled (unblocking)
+            if (force || input.disabled) {
+                input.value = parseFloat((PERFECT_SUBS[statType] * starMult).toFixed(3));
+                // Update base tracking immediately after programmatic change
+                trackBaseStatValue(input, starMult);
+            }
             input.parentElement.classList.remove('disabled');
             input.disabled = false;
         }
@@ -42,7 +60,7 @@ function updateCardSubs(card, blockStatType) {
 }
 
 // Update calculator UI with star multipliers
-function updateCalcUI() {
+function updateCalcUI(force = false) {
     const headStarsSelect = document.getElementById('calcHeadStars');
     const bodyStarsSelect = document.getElementById('calcBodyStars');
     const legsStarsSelect = document.getElementById('calcLegsStars');
@@ -68,8 +86,9 @@ function updateCalcUI() {
 
             const type = input.dataset.stat;
             const base = PERFECT_SUBS[type];
-            if (base) {
+            if (base && force) {
                 input.value = parseFloat((base * mult).toFixed(3)); 
+                trackBaseStatValue(input, mult);
             }
         });
     });
@@ -100,7 +119,7 @@ function updateCalcUI() {
     updateSelect('calcLegsMain', MAIN_STAT_VALS.legs, legsStarMult);
 }
 
-// Helper: Enforce Max Value on Input
+// Helper: Enforce Max Value on Input (With Base Tracking)
 function enforceMax(el) {
     el.oninput = () => {
         let val = parseFloat(el.value);
@@ -112,7 +131,6 @@ function enforceMax(el) {
         if (val < min) el.value = min;
         else if (val > max) el.value = max;
     };
-    // Also enforce on blur to catch any edge cases
     el.onblur = () => {
         let val = parseFloat(el.value);
         const max = parseFloat(el.max);
@@ -158,11 +176,10 @@ function openCalc(unitId) {
         const headVal = headSelect.value;
         const showStars = (headVal === 'reaper_necklace' || headVal === 'shadow_reaper_necklace');
         
-        // Use classes instead of style.display
         if (showStars) headStarsSelect.classList.remove('hidden');
         else headStarsSelect.classList.add('hidden');
 
-        if (!showStars) headStarsSelect.value = '1.05';
+        if (!showStars) headStarsSelect.value = '1';
         updateCalcUI();
     };
 
@@ -173,7 +190,7 @@ function openCalc(unitId) {
         if (showStars) bodyStarsSelect.classList.remove('hidden');
         else bodyStarsSelect.classList.add('hidden');
 
-        if (!showStars) bodyStarsSelect.value = '1.05';
+        if (!showStars) bodyStarsSelect.value = '1';
         updateCalcUI();
     };
 
@@ -184,7 +201,7 @@ function openCalc(unitId) {
         if (showStars) legsStarsSelect.classList.remove('hidden');
         else legsStarsSelect.classList.add('hidden');
 
-        if (!showStars) legsStarsSelect.value = '1.05';
+        if (!showStars) legsStarsSelect.value = '1';
         updateCalcUI();
     };
 
@@ -193,16 +210,30 @@ function openCalc(unitId) {
         updateBodyStarVisibility();
         updateLegsStarVisibility();
     };
-    headStarsSelect.onchange = updateCalcUI;
-    bodyStarsSelect.onchange = updateCalcUI;
-    legsStarsSelect.onchange = updateCalcUI;
+
+    // Star Scaling Logic - UPDATED to use new shared scaling
+    headStarsSelect.onchange = () => {
+        const newMult = parseFloat(headStarsSelect.value) || 1;
+        scaleCardSubs(0, newMult);
+        updateCalcUI();
+    };
+    bodyStarsSelect.onchange = () => {
+        const newMult = parseFloat(bodyStarsSelect.value) || 1;
+        scaleCardSubs(1, newMult);
+        updateCalcUI();
+    };
+    legsStarsSelect.onchange = () => {
+        const newMult = parseFloat(legsStarsSelect.value) || 1;
+        scaleCardSubs(2, newMult);
+        updateCalcUI();
+    };
 
     // RESET POINTS INPUTS
     document.getElementById('calcDmgPoints').value = 0;
     document.getElementById('calcSpaPoints').value = 0;
     document.getElementById('calcRangePoints').value = 0; 
 
-    // RESET RANK INPUTS (Default to SSS max values)
+    // RESET RANK INPUTS
     document.getElementById('calcRankDmg').value = 20;
     document.getElementById('calcRankSpa').value = 8;
     document.getElementById('calcRankRange').value = 20;
@@ -213,7 +244,6 @@ function openCalc(unitId) {
         traitSelect.value = unit.meta.short;
     }
 
-    // Hide result area initially via class
     document.getElementById('calcResultArea').classList.add('hidden');
 
     const calcBodyMain = document.getElementById('calcBodyMain');
@@ -234,20 +264,38 @@ function openCalc(unitId) {
     };
 
     // Initial locking
-    updateCardSubs(document.querySelectorAll('#calcModal .gear-card')[1], calcBodyMain.value);
-    updateCardSubs(document.querySelectorAll('#calcModal .gear-card')[2], calcLegsMain.value);
+    updateCardSubs(document.querySelectorAll('#calcModal .gear-card')[1], calcBodyMain.value, true);
+    updateCardSubs(document.querySelectorAll('#calcModal .gear-card')[2], calcLegsMain.value, true);
     
     updateHeadStarVisibility();
     updateBodyStarVisibility();
     updateLegsStarVisibility();
-    updateCalcUI();
+    updateCalcUI(true);
 
-    // Attach input listeners for sub-stat capping (Gear Cards)
+    // Attach input listeners for sub-stat capping & TRACKING (Gear Cards)
     const subStatInputs = document.querySelectorAll('#calcModal .gear-subs input.sub-val-input');
     subStatInputs.forEach(inputElement => {
+        // Define how to get the current star multiplier for this specific input dynamically
+        const getMyMult = () => {
+            let starMult = 1;
+            const parentCard = inputElement.closest('.gear-card');
+            if (parentCard) {
+                const allCards = document.querySelectorAll('#calcModal .gear-card');
+                const cardIndex = Array.from(allCards).indexOf(parentCard);
+
+                const hS = document.getElementById('calcHeadStars');
+                const bS = document.getElementById('calcBodyStars');
+                const lS = document.getElementById('calcLegsStars');
+
+                if (cardIndex === 0) starMult = (!hS.classList.contains('hidden')) ? parseFloat(hS.value) : 1;      
+                else if (cardIndex === 1) starMult = (!bS.classList.contains('hidden')) ? parseFloat(bS.value) : 1;  
+                else if (cardIndex === 2) starMult = (!lS.classList.contains('hidden')) ? parseFloat(lS.value) : 1;  
+            }
+            return starMult;
+        };
+
         inputElement.oninput = () => {
             let value = parseFloat(inputElement.value);
-            // Ensure value is not negative
             if (value < 0) {
                 inputElement.value = 0;
                 value = 0;
@@ -255,29 +303,20 @@ function openCalc(unitId) {
 
             const statKey = inputElement.dataset.stat;
             const baseMaxValue = MAX_SUB_STAT_VALUES[statKey];
-
-            // Determine which star multiplier to use based on the parent gear card
-            let starMult = 1;
-            const parentCard = inputElement.closest('.gear-card');
-            if (parentCard) {
-                const allCards = document.querySelectorAll('#calcModal .gear-card');
-                const cardIndex = Array.from(allCards).indexOf(parentCard);
-
-                const headStarsSelect = document.getElementById('calcHeadStars');
-                const bodyStarsSelect = document.getElementById('calcBodyStars');
-                const legsStarsSelect = document.getElementById('calcLegsStars');
-
-                if (cardIndex === 0) starMult = (!headStarsSelect.classList.contains('hidden')) ? parseFloat(headStarsSelect.value) : 1;      
-                else if (cardIndex === 1) starMult = (!bodyStarsSelect.classList.contains('hidden')) ? parseFloat(bodyStarsSelect.value) : 1;  
-                else if (cardIndex === 2) starMult = (!legsStarsSelect.classList.contains('hidden')) ? parseFloat(legsStarsSelect.value) : 1;  
-            }
+            const starMult = getMyMult();
 
             const dynamicMaxValue = baseMaxValue * starMult;
 
             if (baseMaxValue !== undefined && value > dynamicMaxValue) {
-                inputElement.value = dynamicMaxValue.toFixed(3); // Apply capping with star multiplier
+                inputElement.value = dynamicMaxValue.toFixed(3);
             }
+
+            // NEW: Track the base value for scaling
+            trackBaseStatValue(inputElement, starMult);
         };
+
+        // Initialize base value on open (using current stars)
+        trackBaseStatValue(inputElement, getMyMult());
     });
 
     // Apply capping logic to Points and Ranks
@@ -306,7 +345,6 @@ function runCustomCalc() {
         const spaPoints = parseInt(document.getElementById('calcSpaPoints').value) || 0;
         const rangePoints = parseInt(document.getElementById('calcRangePoints').value) || 0;
 
-        // NEW: Rank Inputs
         const rankDmg = parseFloat(document.getElementById('calcRankDmg').value) || 0;
         const rankSpa = parseFloat(document.getElementById('calcRankSpa').value) || 0;
         const rankRange = parseFloat(document.getElementById('calcRankRange').value) || 0;
@@ -322,7 +360,6 @@ function runCustomCalc() {
         const bodyStarsSelect = document.getElementById('calcBodyStars');
         const legsStarsSelect = document.getElementById('calcLegsStars');
         
-        // Check classes instead of style
         const headStarMult = (!headStarsSelect.classList.contains('hidden')) ? parseFloat(headStarsSelect.value) : 1;
         const bodyStarMult = (!bodyStarsSelect.classList.contains('hidden')) ? parseFloat(bodyStarsSelect.value) : 1;
         const legsStarMult = (!legsStarsSelect.classList.contains('hidden')) ? parseFloat(legsStarsSelect.value) : 1;
@@ -375,9 +412,8 @@ function runCustomCalc() {
             isBoss: false,
             traitObj: traitObj,
             placement: Math.min(unit.placement, traitObj.limitPlace || unit.placement),
-            // UPDATED: Pass Rank Data explicitly, disable isSSS boolean flag
             rankData: { dmg: rankDmg, spa: rankSpa, range: rankRange },
-            isSSS: false, // math.js will use rankData instead
+            isSSS: false,
             headPiece: headId,
             isVirtualRealm: isKiritoVR,
             starMult: bodyStarMult
@@ -388,11 +424,9 @@ function runCustomCalc() {
         const content = document.getElementById('calcResultContent');
         content.innerHTML = renderMathContent(result);
         
-        // Show result area via class removal
         const resultArea = document.getElementById('calcResultArea');
         resultArea.classList.remove('hidden');
         
-        // FIX: Target the correct modal body class and add a safety check
         const scrollArea = document.querySelector('#calcModal .modal-body');
         if (scrollArea) {
             scrollArea.scrollTo({ top: scrollArea.scrollHeight, behavior: 'smooth' });
