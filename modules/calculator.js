@@ -392,8 +392,11 @@ function runCustomCalc() {
         const resultArea = document.getElementById('calcResultArea');
         resultArea.classList.remove('hidden');
         
-        const scrollArea = document.querySelector('.modal-scroll-area');
-        scrollArea.scrollTo({ top: scrollArea.scrollHeight, behavior: 'smooth' });
+        // FIX: Target the correct modal body class and add a safety check
+        const scrollArea = document.querySelector('#calcModal .modal-body');
+        if (scrollArea) {
+            scrollArea.scrollTo({ top: scrollArea.scrollHeight, behavior: 'smooth' });
+        }
 
     } catch (error) {
         console.error(error);

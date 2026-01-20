@@ -357,3 +357,189 @@ function calculateInventoryBuilds(unit, effectiveStats, specificTraitsOnly, isAb
     unitResults.sort((a, b) => b.dps - a.dps);
     return unitResults;
 }
+
+function reconstructMathData(liteData) {
+    if (!liteData || !liteData.id) throw new Error("Invalid data for reconstruction");
+
+    const unit = unitDatabase.find(u => liteData.id.startsWith(u.id));
+    if (!unit) return null;
+
+    // 1. Identify Context from ID Tags
+    const isAbility = liteData.id.includes('ABILITY');
+    const isVR = liteData.id.includes('VR');
+    const isCard = liteData.id.includes('CARD');
+    
+    // Detect Calculation Mode
+    const isBuggedMode = liteData.id.includes('-b-');
+    const isFixedMode = liteData.id.includes('-f-');
+    
+    // Detect Sub-Stat Toggle Configuration (Crucial for adding base fills)
+    const isNoSubsMode = liteData.id.includes('-NOSUBS');
+
+    let effectiveStats = { ...unit.stats };
+    effectiveStats.id = unit.id;
+    if (unit.tags) effectiveStats.tags = unit.tags;
+    
+    if (isAbility && unit.ability) Object.assign(effectiveStats, unit.ability);
+    
+    // Kirito Specifics
+    if (unit.id === 'kirito' && isVR && isCard) {
+        effectiveStats.dot = 200; 
+        effectiveStats.dotDuration = 4; 
+        effectiveStats.dotStacks = 1;
+    }
+    
+    // Bambietta Specifics
+    if (unit.id === 'bambietta') {
+        // Default to Dark if not specified, or infer from somewhere else if needed
+        // Assuming Dark for static reconstruction usually
+        if (typeof BAMBIETTA_MODES !== 'undefined') {
+             Object.assign(effectiveStats, BAMBIETTA_MODES["Dark"]);
+        }
+    }
+
+    // Identify Trait
+    let trait = traitsList.find(t => t.name === liteData.traitName) || 
+                (typeof customTraits !== 'undefined' ? customTraits.find(t => t.name === liteData.traitName) : null) ||
+                (unitSpecificTraits[unit.id] || []).find(t => t.name === liteData.traitName);
+    
+    // Fallback trait to prevent crash
+    if (!trait) trait = traitsList.find(t => t.id === 'ruler');
+
+    const setEntry = SETS.find(s => s.name === liteData.setName) || SETS[2]; // Default to generic if not found
+    
+    let totalStats = {
+        set: setEntry.id,
+        dmg: 0, spa: 0, range: 0, cm: 0, cf: 0, dot: 0
+    };
+
+    // Helper: Normalize stat keys (handle cdmg vs cm, crit vs cf mismatch)
+    const mapStatKey = (k) => {
+        if (k === 'cdmg' || k === 'crit dmg') return 'cm';
+        if (k === 'crit' || k === 'crit rate') return 'cf';
+        return k;
+    };
+
+    // Add Main Stats
+    if (liteData.mainStats) {
+        if (liteData.mainStats.body) {
+            const k = mapStatKey(liteData.mainStats.body);
+            if (MAIN_STAT_VALS.body[k]) totalStats[k] += MAIN_STAT_VALS.body[k];
+        }
+        if (liteData.mainStats.legs) {
+            const k = mapStatKey(liteData.mainStats.legs);
+            if (MAIN_STAT_VALS.legs[k]) totalStats[k] += MAIN_STAT_VALS.legs[k];
+        }
+    }
+
+    // Determine Logic State for this reconstruction based on ID tags
+    // This overrides the current global toggle to match the build's original intent
+    let applyDot = statConfig.applyRelicDot;
+    let applyCrit = statConfig.applyRelicCrit;
+
+    if (isBuggedMode) {
+        applyDot = false;
+        applyCrit = true; 
+    } else if (isFixedMode) {
+        applyDot = true;
+        applyCrit = true;
+    }
+
+    // 1. Add explicitly stored sub-stats (from Inventory or Cache)
+    if (liteData.subStats) {
+        ['head', 'body', 'legs'].forEach(slot => {
+            if (liteData.subStats[slot] && Array.isArray(liteData.subStats[slot])) {
+                liteData.subStats[slot].forEach(sub => {
+                    if (sub.type && sub.val) {
+                        const k = mapStatKey(sub.type);
+                        totalStats[k] = (totalStats[k] || 0) + sub.val;
+                    }
+                });
+            }
+        });
+    }
+
+    // 2. FILL MISSING BASE STATS (The critical fix)
+    // Determine valid stats for auto-filling based on mode
+    const candidates = ['dmg', 'spa', 'range', 'cm', 'cf', 'dot'];
+    const validCandidates = candidates.filter(c => {
+         if (!applyDot && c === 'dot') return false;
+         if (!applyCrit && (c === 'cm' || c === 'cf')) return false;
+         return true;
+    });
+
+    // Helper to auto-fill perfect subs if they weren't stored (Static DB optimization)
+    const addBaseFills = (slot, mainStatType) => {
+        const existingTypes = new Set();
+        
+        // Check what we already added from liteData.subStats so we don't double add
+        if (liteData.subStats && liteData.subStats[slot] && Array.isArray(liteData.subStats[slot])) {
+             liteData.subStats[slot].forEach(s => existingTypes.add(mapStatKey(s.type)));
+        }
+
+        const mappedMain = mapStatKey(mainStatType);
+
+        validCandidates.forEach(cand => {
+             if (cand === mappedMain) return; // Don't add sub if it matches main
+             if (existingTypes.has(cand)) return; // Don't add if already exists
+             
+             // Add perfect sub value
+             totalStats[cand] = (totalStats[cand] || 0) + PERFECT_SUBS[cand];
+        });
+    };
+
+    // LOGIC: Only fill HEAD stats if a head is used AND we aren't in NoSubs mode
+    if (!isNoSubsMode && liteData.headUsed && liteData.headUsed !== 'none') {
+        addBaseFills('head', null); 
+    }
+
+    // LOGIC: Only fill BODY/LEGS stats if -NOSUBS is NOT present in the ID
+    if (!isNoSubsMode && liteData.mainStats) {
+        addBaseFills('body', liteData.mainStats.body);
+        addBaseFills('legs', liteData.mainStats.legs);
+    }
+
+    // Context Setup
+    const isSpaPrio = liteData.prio === 'spa';
+    const isRangePrio = liteData.prio === 'range';
+    let dmgPts = 99, spaPts = 0, rangePts = 0;
+    
+    if (isSpaPrio) { dmgPts = 0; spaPts = 99; }
+    else if (isRangePrio) { dmgPts = 0; spaPts = 0; rangePts = 99; }
+    
+    // Determine placement limit
+    let actualPlacement = unit.placement;
+    if (trait.limitPlace) actualPlacement = Math.min(unit.placement, trait.limitPlace);
+
+    const context = {
+        dmgPoints: dmgPts,
+        spaPoints: spaPts,
+        rangePoints: rangePts,
+        wave: 25,
+        isBoss: false,
+        traitObj: trait,
+        placement: actualPlacement,
+        isSSS: true,
+        headPiece: liteData.headUsed || (liteData.subStats && liteData.subStats.selectedHead) || 'none',
+        isVirtualRealm: (unit.id === 'kirito' && isVR)
+    };
+
+    // Temporarily swap global config for this calculation to match the build's mode
+    const previousDotState = statConfig.applyRelicDot;
+    const previousCritState = statConfig.applyRelicCrit;
+    
+    statConfig.applyRelicDot = applyDot;
+    statConfig.applyRelicCrit = applyCrit;
+
+    // Calculate
+    const result = calculateDPS(effectiveStats, totalStats, context);
+
+    // Restore global config
+    statConfig.applyRelicDot = previousDotState;
+    statConfig.applyRelicCrit = previousCritState;
+
+    return result;
+}
+
+// Expose globally so modals.js can access it
+window.reconstructMathData = reconstructMathData;

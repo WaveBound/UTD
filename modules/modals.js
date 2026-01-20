@@ -86,22 +86,18 @@ const showMath = (id) => {
     let data = cachedResults[id];
     if (!data) return;
 
-    // If "lite" data, reconstruct it
     if (!data.lvStats || !data.critData) {
         try {
             data = reconstructMathData(data);
-        } catch (e) {
-            console.error(e);
-            return;
-        }
+        } catch (e) { console.error(e); return; }
     }
 
     const htmlContent = renderMathContent(data);
     
     showUniversalModal({
-        title: `<span class="text-accent-start">DPS BREAKDOWN</span>`,
+        title: `<span class="text-white">DPS BREAKDOWN</span>`, // Clean white title
         content: htmlContent,
-        size: 'modal-lg' // Use large width for math tables
+        size: 'modal-md' // CHANGED FROM 'modal-lg' TO 'modal-md'
     });
 };
 window.showMath = showMath; // Expose global
@@ -196,6 +192,7 @@ function openInfoPopup(key) {
     const data = infoDefinitions[key];
     if(!data) return;
     
+    // Remove existing if any
     const existing = document.getElementById('mathInfoPopup');
     if(existing) existing.remove();
 
@@ -203,22 +200,28 @@ function openInfoPopup(key) {
     overlay.id = 'mathInfoPopup';
     overlay.className = 'info-popup-overlay is-visible';
     
-    // Also add modal-open class to hide FAB when info popup is open
+    // Prevent background scrolling while this top-level popup is open
     document.body.classList.add('modal-open');
 
+    // Close on backdrop click
     overlay.onclick = function(e) {
         if (e.target === overlay) closeInfoPopup();
     };
     
+    // Reusing the standard .modal-box structure
     overlay.innerHTML = `
-        <div class="info-popup-content">
-            <button class="ip-close" onclick="closeInfoPopup()">×</button>
-            <div class="ip-header">
-                <span class="color-custom font-bold text-xl-popup">?</span> ${data.title}
+        <div class="modal-box modal-sm info-popup-box">
+            <div class="modal-header">
+                <h2 class="modal-title">${data.title}</h2>
             </div>
-            <div class="ip-body">
-                ${data.desc}
+            <div class="modal-body">
+                <p style="color: #ccc; font-size: 0.95rem; line-height: 1.6; margin-bottom: 15px;">
+                    ${data.desc}
+                </p>
                 <div class="ip-formula">${data.formula}</div>
+            </div>
+            <div class="modal-footer">
+                <button class="action-btn secondary" onclick="closeInfoPopup()">Close</button>
             </div>
         </div>
     `;
@@ -230,11 +233,13 @@ function closeInfoPopup() {
     if(overlay) overlay.remove();
     
     // Only remove modal-open if no other modals are active
+    // (This ensures the underlying Math modal remains scroll-locked if it's open)
     const otherModals = document.querySelectorAll('.modal-overlay.is-visible');
     if(otherModals.length === 0) {
         document.body.classList.remove('modal-open');
     }
 }
+
 
 function generateComparisonHTML() {
     // Copied and adapted logic from previous openComparison

@@ -79,7 +79,13 @@ function renderCritSection(data, setTagCfTotal, setTagCmTotal) {
                     ${setTagCmTotal > 0 ? `<tr><td class="mt-cell-label mt-pl-lg text-dim text-xs">• Set & Tags</td><td class="mt-cell-formula"></td><td class="mt-cell-val text-dim text-xs">+${fmt.fix(setTagCmTotal, 1)}%</td></tr>` : ''}
 
                     <tr><td class="mt-cell-label">Total Crit Damage</td><td class="mt-cell-formula">=</td><td class="mt-cell-val calc-highlight">${fmt.fix(data.critData.cdmg, 0)}%</td></tr>
-                    <tr><td class="mt-cell-label text-right pr-2" colspan="2">Avg Damage Per Hit</td><td class="mt-cell-val calc-result">${fmt.num(data.dmgVal * data.critData.avgMult)}</td></tr>
+                    
+                    <!-- UPDATED: Avg Damage Row without border/block (Relies on new CSS) -->
+                    <tr>
+                        <td class="mt-cell-label text-right pr-2">Avg Damage Per Hit</td>
+                        <td class="mt-cell-formula"></td>
+                        <td class="mt-cell-val calc-result text-right">${fmt.num(data.dmgVal * data.critData.avgMult)}</td>
+                    </tr>
                 </table>
             </div>`;
 }
@@ -182,7 +188,11 @@ function renderFinalSection(data) {
                     <tr><td class="mt-cell-label">${hitLabel}</td><td class="mt-cell-formula">${hitFormula}</td><td class="mt-cell-val calc-highlight">${fmt.num(data.hit)}</td></tr>
                     ${data.dot > 0 ? `<tr><td class="mt-cell-label">DoT DPS</td><td class="mt-cell-formula">+</td><td class="mt-cell-val text-accent-end">${fmt.num(data.dot)}</td></tr>` : ''}
                     ${data.summon > 0 ? `<tr><td class="mt-cell-label">Plane DPS</td><td class="mt-cell-formula">+</td><td class="mt-cell-val text-accent-start">${fmt.num(data.summon)}</td></tr>` : ''}
-                    <tr><td class="mt-cell-label text-white mt-pt-md" colspan="2" style="font-size: 1.1rem; font-weight: 800;">TOTAL DPS</td><td class="mt-cell-val mt-text-gold mt-pt-md" style="font-size: 1.6rem;">${fmt.num(data.total)}</td></tr>
+                    <tr>
+                        <td class="mt-cell-label text-white mt-pt-md" style="font-size: 1.1rem; font-weight: 800;">TOTAL DPS</td>
+                        <td class="mt-cell-formula"></td>
+                        <td class="mt-cell-val mt-text-gold mt-pt-md" style="font-size: 1.2rem;">${fmt.num(data.total)}</td>
+                    </tr>
                 </table>
             </div>`;
 }
@@ -279,10 +289,23 @@ function renderMathContent(data) {
     let headDmgHtml = '';
     if (data.headBuffs && data.headBuffs.type === 'sun_god') {
         const uptimePct = (data.headBuffs.uptime || 0);
+        
+        // UPDATED: New Grid Layout for Sun God Passive
         headDmgHtml = `
-        <tr class="mt-row-sungod"><td colspan="3" class="p-2"><div class="mt-flex-between mb-2"><span class="text-gold mt-text-bold text-xs tracking-sm">SUN GOD PASSIVE</span><button class="calc-info-btn" onclick="openInfoPopup('sungod_passive')">?</button></div>
-        <div class="text-xs text-white mt-grid-2 mb-2"><span class="opacity-70">Range Stat:</span> <span class="mt-font-mono mt-text-right mt-text-range">${fmt.fix(data.range,1)}</span><span class="opacity-70">Uptime:</span> <span class="mt-font-mono mt-text-right ${uptimePct >= 1 ? 'mt-text-green' : 'mt-text-orange'}">${fmt.fix(uptimePct*100,1)}%</span></div>
-        <div class="mt-flex-between mt-border-top mt-pt-sm"><span class="text-white text-xs text-bold">Avg Damage Buff</span><span class="text-gold text-sm mt-text-bold">+${fmt.num(data.headBuffs.dmg)}%</span></div></td></tr>`;
+        <tr class="mt-row-sungod"><td colspan="3" class="p-2">
+            <div class="mt-flex-between mb-2"><span class="text-gold mt-text-bold text-xs tracking-sm">SUN GOD PASSIVE</span><button class="calc-info-btn" onclick="openInfoPopup('sungod_passive')">?</button></div>
+            
+            <div class="mt-flex-between text-xs text-white mb-1">
+                <span class="opacity-70">Range Stat:</span>
+                <span class="mt-font-mono mt-text-right mt-text-range">${fmt.fix(data.range,1)}</span>
+            </div>
+            <div class="mt-flex-between text-xs text-white mb-3">
+                <span class="opacity-70">Uptime:</span>
+                <span class="mt-font-mono mt-text-right ${uptimePct >= 1 ? 'mt-text-green' : 'mt-text-orange'}">${fmt.fix(uptimePct*100,1)}%</span>
+            </div>
+
+            <div class="mt-flex-between mt-border-top mt-pt-sm"><span class="text-white text-xs text-bold">Avg Damage Buff</span><span class="text-gold text-sm mt-text-bold"> +${fmt.num(data.headBuffs.dmg)}%</span></div>
+        </td></tr>`;
     }
 
     let headDotRow = '';
@@ -294,7 +317,6 @@ function renderMathContent(data) {
         <div class="mt-flex-between mt-border-top mt-pt-sm"><span class="text-white text-xs text-bold">Avg DoT Buff</span><span class="text-custom text-sm mt-text-bold">+${fmt.fix(data.headBuffs.dot, 2)}%</span></div></td></tr>`;
     }
 
-    // UPDATED: Use data.lvStats.rangeMult for Range display
     const statPointsHtml = (data.dmgPoints !== undefined) ? `
     <tr>
         <td class="mt-cell-label">Stat Points (Dmg) <button class="calc-info-btn" onclick="openInfoPopup('level_scale')">?</button></td>
