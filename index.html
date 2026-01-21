@@ -280,7 +280,7 @@
         </div>
     </div>
 
-    <!-- 6. FEEDBACK MODAL -->
+<!-- 6. FEEDBACK MODAL -->
     <div id="feedbackModal" class="modal-overlay" onclick="closeModal('feedbackModal')">
         <div class="modal-box modal-sm" onclick="event.stopPropagation()">
             <div class="modal-header"><h2 class="modal-title">Feedback</h2></div>
@@ -288,6 +288,12 @@
                 <div class="feedback-form">
                     <label><span class="mq-label">Type</span>
                         <select id="feedbackType" class="gear-main-select mt-2"><option value="suggestion" selected>Suggestion</option><option value="bug">Bug Report</option></select>
+                    </label>
+                    
+                    <!-- UPDATED DISCORD INPUT -->
+                    <label>
+                        <div class="mq-label">Discord</div>
+                        <input type="text" id="feedbackContact" class="c-input mt-2 w-full" placeholder="Username or ID">
                     </label>
                     <label><span class="mq-label">Message</span>
                         <textarea id="feedbackText" class="feedback-textarea" placeholder="Describe your suggestion or bug..."></textarea>

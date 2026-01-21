@@ -1,4 +1,3 @@
-
 // ============================================================================
 // FEEDBACK.JS - Handling Suggestions & Bug Reports
 // ============================================================================
@@ -9,6 +8,7 @@ const openFeedbackModal = () => {
     toggleModal('feedbackModal', true);
     // Reset form
     document.getElementById('feedbackType').value = 'suggestion';
+    document.getElementById('feedbackContact').value = ''; // <--- Add reset here
     document.getElementById('feedbackText').value = '';
     document.getElementById('feedbackStatus').innerHTML = '';
     document.getElementById('feedbackSendBtn').disabled = false;
@@ -16,12 +16,14 @@ const openFeedbackModal = () => {
 
 async function sendFeedback() {
     const type = document.getElementById('feedbackType').value;
+    const contact = document.getElementById('feedbackContact').value.trim(); // Get value
     const message = document.getElementById('feedbackText').value.trim();
     const statusEl = document.getElementById('feedbackStatus');
     const btn = document.getElementById('feedbackSendBtn');
 
-    if (!message) {
-        statusEl.innerHTML = '<span class="text-error">Please enter a message.</span>';
+    // VALIDATION CHANGE: Check both Contact and Message
+    if (!contact || !message) {
+        statusEl.innerHTML = '<span class="text-error">Please enter your Discord and a message.</span>';
         return;
     }
 
@@ -34,9 +36,9 @@ async function sendFeedback() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 type: type,
+                contact: contact,
                 message: message,
-                timestamp: new Date().toISOString(),
-                userAgent: navigator.userAgent
+                timestamp: new Date().toISOString()
             })
         });
 

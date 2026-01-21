@@ -26,6 +26,15 @@ const SUB_NAMES = {
 
 const patchNotesData = [
     {
+        version: "v3.10",
+        date: "Jan 20, 2026",
+        changes: [
+            { type: "QoL", text: "<b>Calculator Persistence:</b> Changing Sets, Traits, or Main Stats in the Custom Relic Modal/Add Relic Modal no longer resets your manually entered Sub-Stat values." },
+            { type: "UI", text: "<b>Mobile Comparison:</b> Redesigned the Compare Modal for mobile devices. It now displays units as stacked cards for better readability." },
+            { type: "System", text: "<b>Feedback Form:</b> Added a Discord Username field to the Feedback/Report modal so we can follow up on specific issues." }
+        ]
+    },
+    {
         version: "v3.9",
         date: "Jan 19, 2026",
         changes: [
