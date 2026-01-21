@@ -389,16 +389,55 @@
 
 /* --- 6. CALCULATOR MODAL SPECIFICS --- */
 .calc-unit-header {
-    display: flex; gap: 20px; padding: 20px;
+    display: flex; 
+    gap: 20px; 
+    padding: 20px;
     background: linear-gradient(135deg, rgba(46, 16, 101, 0.5) 0%, rgba(0,0,0,0) 100%);
-    border-bottom: 1px solid rgba(255,255,255,0.1); align-items: center;
+    border-bottom: 1px solid rgba(255,255,255,0.1); 
+    align-items: center;
+    justify-content: flex-start;
 }
-.calc-avatar { width: 64px; height: 64px; border-radius: 12px; border: 2px solid rgba(255,255,255,0.8); background: #000; box-shadow: 0 8px 20px rgba(0,0,0,0.5); }
+.calc-avatar { 
+    width: 64px; 
+    height: 64px; 
+    border-radius: 12px; 
+    border: 2px solid rgba(255,255,255,0.8); 
+    background: #000; 
+    box-shadow: 0 8px 20px rgba(0,0,0,0.5); 
+}
 .calc-unit-name { font-size: 1.5rem; font-weight: 900; color: #fff; line-height: 1; margin: 0; }
 .calc-unit-role { font-size: 0.8rem; color: var(--accent-start); font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
 
-.calc-global-controls { display: flex; gap: 10px; margin-left: auto; align-items: stretch; }
-.calc-stat-group { background: #08080a; border: 1px solid #333; border-radius: 8px; padding: 8px 10px; display: flex; flex-direction: column; justify-content: center; gap: 4px; min-width: 80px; }
+/* New Body Controls Container */
+.calc-global-controls { 
+    display: flex; 
+    gap: 10px; 
+    width: 100%;
+    background: #0a0a0c; 
+    border: 1px solid #222;
+    border-radius: 12px;
+    padding: 15px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.calc-stat-group { 
+    background: rgba(255, 255, 255, 0.03); 
+    border: 1px solid #333; 
+    border-radius: 8px; 
+    padding: 8px 10px; 
+    display: flex; 
+    flex-direction: column; 
+    justify-content: center; 
+    gap: 4px; 
+    flex: 1;
+    min-width: 80px;
+}
+
+.calc-stat-group.group-wide {
+    flex: 1.5;
+    min-width: 140px;
+}
 
 /* Gear Cards */
 .gear-grid-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; padding: 10px 0; }
@@ -516,9 +555,28 @@
 @media (max-width: 768px) {
     /* Existing Modal Adjustments */
     .modal-box { width: 95%; height: auto; max-height: 90vh; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.08); }
-    .calc-unit-header { flex-direction: column; text-align: center; padding: 15px; }
-    .calc-global-controls { width: 100%; display: grid; grid-template-columns: 1fr 1fr 1fr; margin-top: 10px; margin-left: 0; }
-    .calc-stat-group:first-child { grid-column: 1 / -1; }
+    
+    /* MODAL HEADER RESET */
+    .calc-unit-header { 
+        flex-direction: row; 
+        text-align: left; 
+        padding: 15px; 
+    }
+
+    /* CONTROLS IN BODY GRID LAYOUT */
+    .calc-global-controls { 
+        display: grid; 
+        grid-template-columns: 1fr 1fr; /* 2 Columns */
+        gap: 8px; 
+        margin-top: 0; 
+        padding: 10px;
+    }
+
+    /* Set/Trait takes full width on mobile */
+    .calc-stat-group.group-wide { 
+        grid-column: 1 / -1; 
+    }
+
     .gear-grid-container { grid-template-columns: 1fr; }
 
     /* --- NEW: RESPONSIVE COMPARISON TABLE (Stack as Cards) --- */
