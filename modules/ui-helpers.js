@@ -2,7 +2,7 @@
 // UI-HELPERS.JS - UI Interaction & Toggle Functions
 // ============================================================================
 
-// Reset and trigger database re-render (Used for deep logic changes like Kirito Realm)
+// Reset and trigger database re-render
 const resetAndRender = () => { 
     renderQueueIndex = 0; 
     renderDatabase(); 
@@ -30,29 +30,42 @@ const updateBodyClass = (className, isChecked) => {
     else document.body.classList.remove(className);
 };
 
-// Toggle sub-stats (INSTANT CSS) - Used by both DB and Guide toggles
-const toggleSubStats = (cb) => toggleCheckbox(cb, (el) => {
-    const otherId = el.id === 'globalSubStats' ? 'guideSubStats' : 'globalSubStats';
-    const otherCb = document.getElementById(otherId);
-    if(otherCb) {
-        otherCb.checked = el.checked;
-        otherCb.parentNode.classList.toggle('is-checked', el.checked);
-    }
-    updateBodyClass('show-subs', el.checked);
-});
+// --- GENERIC SYNCED TOGGLE LOGIC ---
 
-// Toggle head piece (INSTANT CSS) - Used by both DB and Guide toggles
-const toggleHeadPiece = (cb) => toggleCheckbox(cb, (el) => {
-    const otherId = el.id === 'globalHeadPiece' ? 'guideHeadPiece' : 'globalHeadPiece';
-    const otherCb = document.getElementById(otherId);
-    if(otherCb) {
-        otherCb.checked = el.checked;
-        otherCb.parentNode.classList.toggle('is-checked', el.checked);
-    }
-    updateBodyClass('show-head', el.checked);
-});
+/**
+ * Syncs a checkbox with another checkbox ID and toggles a body class.
+ * Replaces toggleSubStats, toggleHeadPiece, etc.
+ * @param {HTMLInputElement} triggerEl - The checkbox clicked
+ * @param {string} targetId - The ID of the matching checkbox in the other menu (Header vs Guide)
+ * @param {string} cssClass - The class to toggle on document.body
+ */
+const syncVisualToggle = (triggerEl, targetId, cssClass) => {
+    toggleCheckbox(triggerEl, (el) => {
+        const otherCb = document.getElementById(targetId);
+        if(otherCb) {
+            otherCb.checked = el.checked;
+            otherCb.parentNode.classList.toggle('is-checked', el.checked);
+        }
+        updateBodyClass(cssClass, el.checked);
+    });
+};
 
-// Toggle hypothetical/bugged relics checkbox (INSTANT CSS)
+// Wrappers for HTML onclick handlers
+const toggleSubStats = (cb) => {
+    const target = cb.id === 'globalSubStats' ? 'guideSubStats' : 'globalSubStats';
+    syncVisualToggle(cb, target, 'show-subs');
+};
+
+const toggleHeadPiece = (cb) => {
+    const target = cb.id === 'globalHeadPiece' ? 'guideHeadPiece' : 'globalHeadPiece';
+    syncVisualToggle(cb, target, 'show-head');
+};
+
+// Map old names for compatibility
+const toggleGuideSubStats = toggleSubStats;
+const toggleGuideHeadPiece = toggleHeadPiece;
+
+// Toggle hypothetical/bugged relics checkbox
 const toggleHypothetical = (checkbox) => {
     const isChecked = checkbox.checked;
     
@@ -78,7 +91,7 @@ const toggleHypothetical = (checkbox) => {
     if(lbl2) lbl2.innerText = labelText;
 };
 
-// NEW: Toggle Inventory Mode
+// Toggle Inventory Mode
 const toggleInventoryMode = (checkbox) => {
     const isChecked = checkbox.checked;
     inventoryMode = isChecked;
@@ -101,11 +114,8 @@ const toggleInventoryMode = (checkbox) => {
     }
 };
 
-// Map old names to new unified functions for compatibility
-const toggleGuideSubStats = toggleSubStats;
-const toggleGuideHeadPiece = toggleHeadPiece;
 
-// Toggle Kirito mode (Realm/Card) - OPTIMIZED to prevent full page reload
+// Toggle Kirito mode (Realm/Card)
 function toggleKiritoMode(mode, checkbox) {
     if (mode === 'realm') {
         kiritoState.realm = checkbox.checked;
@@ -155,7 +165,7 @@ const getValidSubCandidates = () => SUB_CANDIDATES.filter(c =>
     !((!statConfig.applyRelicCrit && (c === 'cm' || c === 'cf')) || (!statConfig.applyRelicDot && c === 'dot'))
 );
 
-// Set Bambietta Element (OPTIMIZED for Single Unit Update)
+// Set Bambietta Element
 function setBambiettaElement(element, selectEl) {
     bambiettaState.element = element;
     const unit = unitDatabase.find(u => u.id === 'bambietta');
@@ -252,7 +262,6 @@ function switchPage(pid) {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
     
-    // Toggle Toolbars
     const dbToolbar = document.getElementById('dbInjector');
     const guidesToolbar = document.getElementById('guidesToolbar');
     const invToolbar = document.getElementById('inventoryToolbar');
@@ -274,7 +283,6 @@ function switchPage(pid) {
     } else if (pid === 'inventory') {
         document.getElementById('inventoryPage').classList.add('active');
         if(invToolbar) invToolbar.classList.remove('hidden');
-        // Find the specific button for inventory to add active class
         const invBtn = document.querySelector(`button[onclick*="switchPage('inventory')"]`) || 
                        document.querySelector(`button[onclick*="resetAndOpenInventory()"]`);
         if(invBtn) invBtn.classList.add('active');
@@ -292,7 +300,6 @@ function switchPage(pid) {
     }
 }
 
-// NEW: Wrapper to clear highlights when clicking main nav button
 function resetAndOpenInventory() {
     if (typeof clearInventoryHighlights === 'function') {
         clearInventoryHighlights();
@@ -314,12 +321,11 @@ const toggleDeepDive = (btn) => {
     }
 };
 
-// Toggle Header visibility
 function toggleHeader() {
     document.body.classList.toggle('header-collapsed');
 }
 
-// Sticky detection observer with Fixed Positioning Swap
+// Sticky detection observer
 document.addEventListener('DOMContentLoaded', () => {
     const sentinel = document.getElementById('sticky-sentinel');
     const toolbar = document.getElementById('headerToolbarSection');
@@ -359,7 +365,6 @@ function updateBodyScroll() {
     }
 }
 
-// Render Credits from Data
 function renderCredits() {
     const container = document.getElementById('creditsContainer');
     if (!container || typeof creditsData === 'undefined') return;
@@ -378,12 +383,10 @@ function renderCredits() {
     `).join('');
 }
 
-// Handle Credit Click (Copy Only)
 window.handleCreditClick = function(username) {
     copyDiscordToClipboard(username);
 };
 
-// Copy Discord Username
 window.copyDiscordToClipboard = function(username) {
     navigator.clipboard.writeText(username).then(() => {
         showToast(`Copied "${username}" to clipboard! Paste in Discord to message.`);
@@ -393,14 +396,12 @@ window.copyDiscordToClipboard = function(username) {
     });
 };
 
-// Simple Toast Notification
 function showToast(message) {
     let toast = document.createElement('div');
     toast.className = 'custom-toast';
     toast.textContent = message;
     document.body.appendChild(toast);
     
-    // Toast Styles
     Object.assign(toast.style, {
         position: 'fixed',
         bottom: '20px',
@@ -418,7 +419,6 @@ function showToast(message) {
         animation: 'fadeInOut 3s forwards'
     });
 
-    // Keyframes style (if not exists)
     if (!document.getElementById('toast-style')) {
         const style = document.createElement('style');
         style.id = 'toast-style';
