@@ -211,7 +211,7 @@ function openCalc(unitId) {
         updateLegsStarVisibility();
     };
 
-    // Star Scaling Logic - UPDATED to use new shared scaling
+    // Star Scaling Logic
     headStarsSelect.onchange = () => {
         const newMult = parseFloat(headStarsSelect.value) || 1;
         scaleCardSubs(0, newMult);
@@ -238,11 +238,8 @@ function openCalc(unitId) {
     document.getElementById('calcRankSpa').value = 8;
     document.getElementById('calcRankRange').value = 20;
     
-    if (unit.meta && unit.meta.long) {
-        traitSelect.value = unit.meta.long;
-    } else if (unit.meta && unit.meta.short) {
-        traitSelect.value = unit.meta.short;
-    }
+    // Default Trait Selection: Always Ruler
+    traitSelect.value = 'ruler';
 
     document.getElementById('calcResultArea').classList.add('hidden');
 
@@ -311,7 +308,7 @@ function openCalc(unitId) {
                 inputElement.value = dynamicMaxValue.toFixed(3);
             }
 
-            // NEW: Track the base value for scaling
+            // Track base value for scaling
             trackBaseStatValue(inputElement, starMult);
         };
 
