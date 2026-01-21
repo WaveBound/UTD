@@ -1,40 +1,55 @@
+// ============================================================================
+// UTILS.JS - Shared Helper Functions
+// ============================================================================
+
 const format = (n) => 
     n >= 1e9 ? (n/1e9).toFixed(2) + 'B' : 
     n >= 1e6 ? (n/1e6).toFixed(2) + 'M' : 
     n >= 1e3 ? (n/1e3).toFixed(1) + 'k' : 
     n.toLocaleString(undefined, {maximumFractionDigits:0});
 
-// Resolve stat type from key/name
+// Resolve stat type from key/name (Normalization for UI/CSS)
 function getStatType(key) {
     if (!key) return 'dmg';
     let k = key.toLowerCase();
     
-    // Check exact matches first
+    // Normalize Input IDs (subDmg -> dmg)
+    if (k.startsWith('sub')) k = k.substring(3);
+
     if (k === 'potency' || k.includes('potency')) return 'potency';
     if (k === 'elemental' || k.includes('elem')) return 'elemental';
     
-    // Standard stats
     if (k === 'dmg' || k === 'damage') return 'dmg';
     if (k === 'spa') return 'spa';
-    if (k === 'cm' || k.includes('crit dmg') || k.includes('crit damage')) return 'cdmg';
-    if (k === 'cf' || k.includes('crit rate') || k.includes('crit')) return 'crit';
+    
+    // FIX: Map to 'cdmg' and 'crit' for CSS/Labels
+    if (k === 'cm' || k.includes('crit dmg') || k.includes('crit damage') || k === 'cdmg') return 'cdmg';
+    if (k === 'cf' || k.includes('crit rate') || k.includes('crit') || k === 'crit') return 'crit';
+    
     if (k === 'dot') return 'dot';
     if (k.includes('range') || k === 'rng') return 'range';
     
     return 'dmg';
 }
 
+// Helper to map UI keys back to code keys for Limits (cm/cf)
+function normalizeStatKey(key) {
+    const type = getStatType(key);
+    // Return keys matching MAX_SUB_STAT_VALUES in constants.js
+    if (type === 'cdmg') return 'cm'; 
+    if (type === 'crit') return 'cf'; 
+    return type;
+}
+
 // Generate HTML badge for a single stat (MAIN STAT)
 function getBadgeHtml(statKeyOrName, value = null) {
-    // FIX: Explicitly check for 'none' string to prevent it falling back to DMG
-    if (!statKeyOrName || statKeyOrName === 'none') return '<span class="badge-empty">-</span>';
+    if (!statKeyOrName || statKeyOrName === 'none' || statKeyOrName === 'null') return '<span class="badge-empty">-</span>';
     
     const type = getStatType(statKeyOrName);
     
-    // CSS CLASSES
     const borderClass = `border-${type}`; 
     const gradClass = `grad-${type}`;     
-    const label = STAT_LABELS[type] || type;
+    const label = STAT_LABELS[type] || type.toUpperCase();
     
     const labelHtml = `<span class="${gradClass}">${label}</span>`;
 
@@ -54,8 +69,8 @@ function getRichBadgeHtml(statsArray) {
     // Sort logic (Priority: Dmg > Range > Spa > Others)
     const priority = { 'dmg': 1, 'damage': 1, 'range': 2, 'spa': 3 };
     statsArray.sort((a, b) => {
-        const pa = priority[a.type.toLowerCase()] || 99;
-        const pb = priority[b.type.toLowerCase()] || 99;
+        const pa = priority[getStatType(a.type)] || 99;
+        const pb = priority[getStatType(b.type)] || 99;
         return pa - pb;
     });
 
@@ -66,7 +81,6 @@ function getRichBadgeHtml(statsArray) {
         const type = getStatType(stat.type);
         const valStr = stat.val.toFixed(1) + '%';
         const label = STAT_LABELS[type] || type;
-        
         const textClass = `text-${type}`; 
         const gradClass = `grad-${type}`; 
         
@@ -79,28 +93,6 @@ function getRichBadgeHtml(statsArray) {
     </div>`;
 }
 
-// Updated to handle both Strings (Old) and Arrays (New)
-function formatStatBadge(text, totalRolls = null) {
-    if(!text) return '';
-    
-    if (Array.isArray(text)) {
-        return getRichBadgeHtml(text);
-    }
-
-    if (typeof text === 'string' && text.includes('<')) return text;
-    
-    let parts = text.split(/[\/>,]+/).map(p => p.trim()).filter(p => p);
-    
-    if (parts.length === 2 && totalRolls) {
-        return getRichBadgeHtml([
-            { type: parts[0], val: PERFECT_SUBS[NAME_TO_CODE[parts[0]] || 'dmg'] * (totalRolls/2) },
-            { type: parts[1], val: PERFECT_SUBS[NAME_TO_CODE[parts[1]] || 'dmg'] * (totalRolls/2) }
-        ]);
-    }
-
-    return parts.map(p => getBadgeHtml(p)).join('');
-}
-
 function getUnitImgHtml(unit, imgClass = '', iconSizeClass = '') {
     const el = unit.stats && unit.stats.element;
     const elIcon = el ? elementIcons[el] : null;
@@ -109,12 +101,11 @@ function getUnitImgHtml(unit, imgClass = '', iconSizeClass = '') {
 }
 
 // ============================================================================
-// SHARED RELIC SCALING LOGIC (Fixes floating point drift)
+// SHARED RELIC SCALING LOGIC
 // ============================================================================
 
 /**
- * Call this on 'input' events (and initial load). 
- * Stores the unscaled (1-star) value in a data attribute to prevent rounding drift.
+ * Stores unscaled (1-star) value to prevent floating point drift.
  */
 function trackBaseStatValue(input, currentStarMult) {
     const val = parseFloat(input.value);
@@ -122,28 +113,46 @@ function trackBaseStatValue(input, currentStarMult) {
         input.removeAttribute('data-base-val');
         return;
     }
-    // Calculate what the value would be at 1 Star and store it (high precision)
-    // val / mult = base
-    // Use 6 decimal places to maintain precision during round-trips
     const baseVal = val / (currentStarMult || 1);
     input.dataset.baseVal = baseVal.toFixed(6); 
 }
 
 /**
- * Call this on Star Dropdown 'change' events.
- * Updates the displayed value based on the stored base value * new multiplier.
+ * Updates displayed value based on base value * new multiplier.
  */
 function applyStarScalingToInput(input, newStarMult) {
-    // If no base value exists, assume current value is the base (handled gracefully)
     if (!input.dataset.baseVal && input.value !== '') {
-        // Initialize base assuming previous mult was 1 (safe fallback)
         trackBaseStatValue(input, 1); 
     }
-
     const base = parseFloat(input.dataset.baseVal);
     if (isNaN(base)) return;
+    input.value = parseFloat((base * newStarMult).toFixed(3));
+}
 
-    // Calculate new display value
-    const newVal = parseFloat((base * newStarMult).toFixed(3));
-    input.value = newVal;
+/**
+ * Attaches scaling, clamping, and base-tracking logic to a stat input.
+ */
+function attachStatScaler(inputElement, getStarMultFn) {
+    inputElement.oninput = () => {
+        let value = parseFloat(inputElement.value);
+        if (value < 0 || isNaN(value)) {
+             if(value < 0) { inputElement.value = 0; value = 0; }
+        }
+
+        // Determine Stat Key (Handle 'data-stat' vs 'id')
+        let rawKey = inputElement.dataset.stat || inputElement.id;
+        const statKey = normalizeStatKey(rawKey);
+        
+        const baseMaxValue = MAX_SUB_STAT_VALUES[statKey];
+        const starMult = getStarMultFn();
+        const dynamicMaxValue = baseMaxValue * starMult;
+
+        if (baseMaxValue !== undefined && value > dynamicMaxValue) {
+            inputElement.value = dynamicMaxValue.toFixed(3);
+        }
+
+        trackBaseStatValue(inputElement, starMult);
+    };
+
+    trackBaseStatValue(inputElement, getStarMultFn());
 }

@@ -83,44 +83,32 @@ function generateBuildRowHTML(r, i, unitConfig = {}) {
     };
 
     let prioHtml = '';
-
-    // Check for relicIds existence to detect Inventory Mode items
     if (r.relicIds) {
-        // Inventory Mode: Double Badge (Inventory Button + Stat Type)
+        // Inventory Mode
         const hId = r.relicIds.head || 'none';
         const bId = r.relicIds.body || 'none-b';
         const lId = r.relicIds.legs || 'none-l';
-        
-        // Determine the label based on the calculated priority ('dmg', 'spa', 'range')
         const currentPrio = r.prio || 'default';
         const secCfg = prioConfig[currentPrio] || prioConfig['default'];
         
-        // Online Image Backpack Icon (Clean White)
-        const invBadge = `<button class="prio-badge prio-inv clickable" onclick="viewInventoryItems('${hId}', '${bId}', '${lId}')" title="Locate in Inventory">
-            <img src="https://img.icons8.com/fluency-systems-filled/48/ffffff/backpack.png" alt="Inv">
-        </button>`;
+        const invBadge = `<button class="prio-badge prio-inv clickable" onclick="viewInventoryItems('${hId}', '${bId}', '${lId}')" title="Locate in Inventory"><img src="https://img.icons8.com/fluency-systems-filled/48/ffffff/backpack.png" alt="Inv"></button>`;
         const statBadge = `<span class="prio-badge ${secCfg.cls}">${secCfg.label}</span>`;
-        
         prioHtml = `<div class="br-badges">${invBadge}${statBadge}</div>`;
     } else {
-        // Standard Mode: Single Badge
         const pCfg = prioConfig[r.prio] || prioConfig['default'];
         prioHtml = `<span class="prio-badge ${pCfg.cls}">${pCfg.label}</span>`;
     }
 
+    // Unified Badge Generation
     const mainBodyBadge = getBadgeHtml(r.mainStats.body, MAIN_STAT_VALS.body[r.mainStats.body]);
     const mainLegsBadge = getBadgeHtml(r.mainStats.legs, MAIN_STAT_VALS.legs[r.mainStats.legs]);
     const headHtml = getHeadBadgeHtml(r.headUsed);
 
     const s = r.subStats || {};
     
-    const headRow = (r.headUsed && r.headUsed !== 'none') 
-        ? `<div class="stat-line"><span class="sl-label">SUB</span> ${getRichBadgeHtml(s.head || [])}</div>` 
-        : '';
-
+    const headRow = (r.headUsed && r.headUsed !== 'none') ? `<div class="stat-line"><span class="sl-label">SUB</span> ${getRichBadgeHtml(s.head || [])}</div>` : '';
     const bodyRow = `<div class="stat-line"><span class="sl-label">BODY</span> ${getRichBadgeHtml(s.body || [])}</div>`;
     const legsRow = `<div class="stat-line"><span class="sl-label">LEGS</span> ${getRichBadgeHtml(s.legs || [])}</div>`;
-
     const subInnerHtml = `${headRow}${bodyRow}${legsRow}`;
 
     let displayVal = format(r.dps), displayLabel = "DPS";
@@ -167,11 +155,8 @@ function updateBuildListDisplay(unitId) {
         let filtered = builds.filter(r => {
             let headSearchName = ({'sun_god':'Sun God Head','ninja':'Ninja Head','reaper_necklace':'Reaper Necklace','shadow_reaper_necklace':'Shadow Reaper Necklace'})[r.headUsed] || '';
             const searchText = (r.traitName + ' ' + r.setName + ' ' + r.prio + ' ' + headSearchName).toLowerCase();
-            
             const prioMatch = (prioSelect === 'all' || r.prio === prioSelect);
-
-            return searchText.includes(searchInput) && prioMatch && 
-                   (setSelect === 'all' || r.setName === setSelect) && (headSelect === 'all' || (r.headUsed || 'none') === headSelect);
+            return searchText.includes(searchInput) && prioMatch && (setSelect === 'all' || r.setName === setSelect) && (headSelect === 'all' || (r.headUsed || 'none') === headSelect);
         });
 
         if (prioSelect === 'all') {
@@ -226,6 +211,8 @@ function updateBuildListDisplay(unitId) {
     });
 }
 
+// ... rest of rendering.js (processUnitCache, renderDatabase etc) remains unchanged ...
+// Including required functions to keep file complete
 function processUnitCache(unit) {
     unitBuildsCache[unit.id] = { base: { bugged: [], fixed: [] }, abil: { bugged: [], fixed: [] } };
     const CONFIGS = [{ head: false, subs: false }, { head: false, subs: true }, { head: true,  subs: false }, { head: true,  subs: true }];
@@ -243,7 +230,6 @@ function processUnitCache(unit) {
 
         let dbKey = unit.id + (unit.id === 'kirito' && kiritoState.card ? 'kirito_card' : '') + (useAbility && unit.ability ? '_abil' : '');
         const resultSet = [];
-
         const useInventory = (inventoryMode === true);
 
         for (let i = 0; i < 4; i++) {
@@ -389,7 +375,6 @@ function populateGuideDropdowns() {
     traitsList.forEach(trait => { if (trait.id !== 'none') traitSelect.add(new Option(trait.name, trait.id)); });
 }
 
-// Requirement 3: Copy current selection to temp set for the modal
 function openGuideConfig() {
     tempGuideUnitSet = new Set(guideUnitSelection);
     tempGuideTrait = document.getElementById('guideTraitSelect').value;
@@ -399,20 +384,13 @@ function openGuideConfig() {
 
 const closeGuideConfig = () => toggleModal('guideConfigModal', false);
 
-// Requirement 3: Logic for Multi-Select in Modal
 const selectGuideUnit = (id) => { 
     if (id === 'all') {
         tempGuideUnitSet.clear();
         tempGuideUnitSet.add('all');
     } else {
         if (tempGuideUnitSet.has('all')) tempGuideUnitSet.delete('all');
-        
-        if (tempGuideUnitSet.has(id)) {
-            tempGuideUnitSet.delete(id);
-        } else {
-            tempGuideUnitSet.add(id);
-        }
-        
+        if (tempGuideUnitSet.has(id)) tempGuideUnitSet.delete(id); else tempGuideUnitSet.add(id);
         if (tempGuideUnitSet.size === 0) tempGuideUnitSet.add('all');
     }
     renderGuideConfigUI(); 
@@ -423,26 +401,20 @@ const selectGuideTrait = (id) => { tempGuideTrait = id; renderGuideConfigUI(); }
 function renderGuideConfigUI() {
     const unitGrid = document.getElementById('guideConfigUnitGrid');
     const traitList = document.getElementById('guideConfigTraitList');
-    
-    // Check if 'all' is selected to style accordingly
     const isAll = tempGuideUnitSet.has('all');
 
     let unitsHtml = `<div class="config-item ${isAll ? 'selected' : ''}" onclick="selectGuideUnit('all')"><div class="cp-avatar-placeholder">ALL</div><span>All Units</span></div>`;
-    
     unitDatabase.forEach(u => {
         const isSelected = tempGuideUnitSet.has(u.id); 
         unitsHtml += `<div class="config-item ${isSelected ? 'selected' : ''}" onclick="selectGuideUnit('${u.id}')">${getUnitImgHtml(u, '', 'small')}<span>${u.name}</span></div>`;
     });
     unitGrid.innerHTML = unitsHtml;
 
-    // Filter available traits based on selection (if specific units selected, show their specific traits)
     let availableTraits = [...traitsList, ...customTraits];
     if (!isAll && tempGuideUnitSet.size === 1) {
-        // If single specific unit, include its specific traits
         const singleId = Array.from(tempGuideUnitSet)[0];
         if (unitSpecificTraits[singleId]) availableTraits = [...availableTraits, ...unitSpecificTraits[singleId]];
     }
-
     availableTraits = availableTraits.filter((t, index, self) => index === self.findIndex((x) => x.id === t.id) && t.id !== 'none');
     
     let traitsHtml = `<div class="config-chip ${tempGuideTrait === 'auto' ? 'selected' : ''}" onclick="selectGuideTrait('auto')">Auto (Best)</div>`;
@@ -450,11 +422,8 @@ function renderGuideConfigUI() {
     traitList.innerHTML = traitsHtml;
 }
 
-// Requirement 3: Apply changes from temp set to active set
 const applyGuideConfig = () => {
     guideUnitSelection = new Set(tempGuideUnitSet);
-    
-    // Update toolbar text to reflect selection
     const unitSelect = document.getElementById('guideUnitSelect');
     if (guideUnitSelection.has('all')) {
         unitSelect.innerHTML = '<option value="all">All Units</option>';
@@ -465,7 +434,6 @@ const applyGuideConfig = () => {
         unitSelect.innerHTML = `<option value="multi">${text}</option>`;
         unitSelect.value = 'multi';
     }
-
     document.getElementById('guideTraitSelect').value = tempGuideTrait;
     renderGuides(); 
     closeGuideConfig();
@@ -514,7 +482,6 @@ function renderGuides() {
     
     const filterTraitId = document.getElementById('guideTraitSelect').value;
 
-    // Display Text Logic
     let uName = 'All Units';
     if (!guideUnitSelection.has('all')) {
         if (guideUnitSelection.size === 1) {
@@ -532,22 +499,14 @@ function renderGuides() {
     document.getElementById('dispGuideUnit').innerText = uName; 
     document.getElementById('dispGuideTrait').innerText = tName;
 
-    // Requirement 3: Filter based on Set logic
-    const unitsToProcess = (guideUnitSelection.has('all')) 
-        ? unitDatabase 
-        : unitDatabase.filter(u => guideUnitSelection.has(u.id));
+    const unitsToProcess = (guideUnitSelection.has('all')) ? unitDatabase : unitDatabase.filter(u => guideUnitSelection.has(u.id));
     
-    // Sort units by their best performance
     const scoredUnits = unitsToProcess.map(unit => {
         if (!unitBuildsCache[unit.id]) processUnitCache(unit);
-        
         const refBuilds = getGuideBuildsFromCache(unit, 'fixed', 3);
         const top = processGuideTop3(refBuilds, unit, filterTraitId);
-        
         let score = 0;
-        if (top && top.length > 0) {
-            score = (unit.id === 'law') ? (top[0].range || 0) : top[0].dps;
-        }
+        if (top && top.length > 0) score = (unit.id === 'law') ? (top[0].range || 0) : top[0].dps;
         return { unit, score };
     });
 
