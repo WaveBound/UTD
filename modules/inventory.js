@@ -304,7 +304,7 @@ function getRelicVisuals(setKey, slot) {
     if (customImages[visualKey] && customImages[visualKey][slot]) {
         return { src: `images/Relic/${customImages[visualKey][slot]}`, bg: RELIC_COLORS[visualKey] || RELIC_COLORS.default };
     }
-    return { src: `images/relics/${visualKey}_${slot.toLowerCase()}.png`, bg: RELIC_COLORS[visualKey] || RELIC_COLORS.default };
+    return { src: `images/relic/${visualKey}_${slot.toLowerCase()}.png`, bg: RELIC_COLORS[visualKey] || RELIC_COLORS.default };
 }
 
 function calculateMainValue(relic) {
