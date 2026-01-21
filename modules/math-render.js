@@ -7,7 +7,7 @@ const fmt = {
 
 function renderOverviewSection(data) {
     return `
-        <div class="math-section">
+        <div class="math-section" style="border-color: rgba(251, 191, 36, 0.3);">
             <div class="math-header">Snapshot Overview</div>
             <div class="math-row"><span>Total DPS</span><b class="math-val-gold">${fmt.num(data.total)}</b></div>
             ${data.summon > 0 ? `<div class="math-row"><span>Planes Active</span><b class="text-accent-start">${fmt.fix(data.summonData.count, 1)}</b></div>` : ''}
@@ -17,14 +17,15 @@ function renderOverviewSection(data) {
 }
 
 function renderQuickBreakdownSection(data, avgHitPerUnit, dotColorClass) {
+    const dotLabelClass = data.dot > 0 ? 'text-accent-end' : '';
     return `
         <div class="math-section no-border-bottom mb-3">
             <div class="math-header opacity-70">Quick Breakdown</div>
             <div class="mq-box">
-                <div><div class="mq-label">Hit DPS</div><div class="mq-val">${fmt.num(data.hit)}</div><div class="mq-sub">(${fmt.num(avgHitPerUnit)} avg ÷ ${fmt.fix(data.spa,2)}s) × ${data.placement}</div></div>
-                <div><div class="mq-label">DoT DPS</div><div class="mq-val ${dotColorClass}">${data.dot > 0 ? fmt.num(data.dot) : '-'}</div><div class="mq-sub">${data.dot > 0 ? (data.hasStackingDoT ? `Stacking: x${data.placement} units` : `Limited: x1 unit only`) : 'No DoT'}</div></div>
-                <div><div class="mq-label">Crit Rate / Dmg</div><div class="mq-val text-custom">${fmt.fix(data.critData.rate, 0)}% <span class="color-dim">|</span> x${fmt.fix(data.critData.cdmg/100, 2)}</div><div class="mq-sub">Avg Mult: x${fmt.fix(data.critData.avgMult, 3)}</div></div>
-                ${data.summon > 0 ? `<div><div class="mq-label">Plane DPS</div><div class="mq-val text-accent-start">${fmt.num(data.summon)}</div><div class="mq-sub">Independent of Host Stats</div></div>` : `<div><div class="mq-label">Attack Rate</div><div class="mq-val text-accent-start">${fmt.fix(data.spa, 2)}s</div><div class="mq-sub">Base: ${data.baseStats.spa}s (Current Cap: ${data.spaCap}s)</div></div>`}
+                <div style="border-color: rgba(251, 191, 36, 0.3);"><div class="mq-label mt-text-gold">Hit DPS</div><div class="mq-val mt-text-gold">${fmt.num(data.hit)}</div><div class="mq-sub">(${fmt.num(avgHitPerUnit)} avg ÷ ${fmt.fix(data.spa,2)}s) × ${data.placement}</div></div>
+                <div style="border-color: ${data.dot > 0 ? 'rgba(192, 132, 252, 0.3)' : '#333'};"><div class="mq-label ${dotLabelClass}">DoT DPS</div><div class="mq-val ${dotColorClass}">${data.dot > 0 ? fmt.num(data.dot) : '-'}</div><div class="mq-sub">${data.dot > 0 ? (data.hasStackingDoT ? `Stacking: x${data.placement} units` : `Limited: x1 unit only`) : 'No DoT'}</div></div>
+                <div style="border-color: rgba(216, 180, 254, 0.3);"><div class="mq-label text-custom">Crit Rate / Dmg</div><div class="mq-val text-custom">${fmt.fix(data.critData.rate, 0)}% <span class="color-dim">|</span> x${fmt.fix(data.critData.cdmg/100, 2)}</div><div class="mq-sub">Avg Mult: x${fmt.fix(data.critData.avgMult, 3)}</div></div>
+                ${data.summon > 0 ? `<div style="border-color: rgba(96, 165, 250, 0.3);"><div class="mq-label text-accent-start">Plane DPS</div><div class="mq-val text-accent-start">${fmt.num(data.summon)}</div><div class="mq-sub">Independent of Host Stats</div></div>` : `<div style="border-color: rgba(96, 165, 250, 0.3);"><div class="mq-label text-accent-start">Attack Rate</div><div class="mq-val text-accent-start">${fmt.fix(data.spa, 2)}s</div><div class="mq-sub">Base: ${data.baseStats.spa}s (Current Cap: ${data.spaCap}s)</div></div>`}
             </div>
         </div>`;
 }
@@ -116,8 +117,20 @@ function renderDotSection(data, headDotRow) {
     const db = data.dotData;
     const getFormula = (total, time) => {
         if (time === 0) return '';
-        return `<span class="text-dim">(${fmt.num(total)} / ${fmt.fix(time, 1)}s)</span>`;
+        const label = Math.abs(time - data.spa) < 0.001 ? 'SPA' : 'Interval';
+        return `<span class="text-dim">(${fmt.num(total)} / ${fmt.fix(time, 1)}s ${label})</span>`;
     };
+
+    // Breakdown Logic
+    const baseDot = data.baseStats.dot || 0;
+    const traitDot = data.traitObj.dotBuff || 0;
+    const setDot = data.totalSetStats.dot || 0;
+    const headDot = data.headBuffs.dot || 0;
+    const relicDot = data.relicBuffs.dot || 0;
+    
+    const preRelicTotal = baseDot + traitDot + setDot + headDot;
+    const relicMult = 1 + (relicDot / 100);
+    const finalTickPct = preRelicTotal * relicMult;
 
     return `
     <div class="dd-section">
@@ -125,26 +138,38 @@ function renderDotSection(data, headDotRow) {
         <table class="calc-table">
             <tr><td class="mt-cell-label">Hit Ref (Crit Avg)</td><td class="mt-cell-val" colspan="2">${fmt.num(data.dmgVal * db.critMult)}</td></tr>
             
+            ${headDotRow}
+
             ${db.nativeDps > 0 ? `
+            <!-- Native DoT Breakdown -->
+            <tr><td class="mt-cell-label mt-pt-md mt-text-bold">Native Tick % Calculation</td><td class="mt-cell-formula mt-pt-md"></td><td class="mt-cell-val mt-pt-md mt-text-bold">${fmt.fix(finalTickPct, 1)}%</td></tr>
+            
+            ${baseDot > 0 ? `<tr><td class="mt-cell-label mt-pl-md opacity-70">↳ Unit Base</td><td class="mt-cell-formula"></td><td class="mt-cell-val text-xs">${fmt.pct(baseDot)}</td></tr>` : ''}
+            ${traitDot > 0 ? `<tr><td class="mt-cell-label mt-pl-md opacity-70">↳ Trait Buff</td><td class="mt-cell-formula"></td><td class="mt-cell-val text-xs">${fmt.pct(traitDot)}</td></tr>` : ''}
+            ${setDot > 0 ? `<tr><td class="mt-cell-label mt-pl-md opacity-70">↳ Set Bonus</td><td class="mt-cell-formula"></td><td class="mt-cell-val text-xs">${fmt.pct(setDot)}</td></tr>` : ''}
+            ${headDot > 0 ? `<tr><td class="mt-cell-label mt-pl-md opacity-70">↳ Head Passive</td><td class="mt-cell-formula"></td><td class="mt-cell-val text-xs">${fmt.pct(headDot)}</td></tr>` : ''}
+            
+            <tr><td class="mt-cell-label mt-pl-md text-accent-end">↳ Relic Multiplier</td><td class="mt-cell-formula">x${fmt.fix(relicMult, 2)}</td><td class="mt-cell-val text-accent-end">${fmt.pct(relicDot)}</td></tr>
+
             <tr>
-                <td class="mt-cell-label">Native DoT (${fmt.fix(db.base, 1)}%)</td>
-                <td class="mt-cell-formula">${getFormula(db.nativeTotalDmg, db.nativeInterval)}</td>
-                <td class="mt-cell-val">${fmt.num(db.nativeDps)} DPS</td>
+                <td class="mt-cell-label mt-pt-sm">Native DoT DPS</td>
+                <td class="mt-cell-formula mt-pt-sm">${getFormula(db.nativeTotalDmg, db.nativeInterval)}</td>
+                <td class="mt-cell-val mt-pt-sm">${fmt.num(db.nativeDps)}</td>
             </tr>
             ` : ''}
 
             ${db.radDps > 0 ? `
             <tr>
-                <td class="mt-cell-label text-accent-start">Radiation DoT (${data.traitObj.radiationPct || 20}% / 10s)</td>
-                <td class="mt-cell-formula">${getFormula(db.radTotalDmg, db.radInterval)}</td>
-                <td class="mt-cell-val text-accent-start">${fmt.num(db.radDps)} DPS</td>
+                <td class="mt-cell-label text-accent-start mt-pt-md">Radiation DoT (${data.traitObj.radiationPct || 20}% / 10s)</td>
+                <td class="mt-cell-formula mt-pt-md">${getFormula(db.radTotalDmg, db.radInterval)}</td>
+                <td class="mt-cell-val text-accent-start mt-pt-md">${fmt.num(db.radDps)} DPS</td>
             </tr>
             ` : ''}
 
             <tr class="mt-border-top">
-                <td class="mt-cell-label text-white">Total DoT (1 Unit)</td>
-                <td class="mt-cell-formula"></td>
-                <td class="mt-cell-val text-white">${fmt.num(db.nativeDps + db.radDps)}</td>
+                <td class="mt-cell-label text-white mt-pt-md">Total DoT (1 Unit)</td>
+                <td class="mt-cell-formula mt-pt-md"></td>
+                <td class="mt-cell-val text-white mt-pt-md">${fmt.num(db.nativeDps + db.radDps)}</td>
             </tr>
             ${data.placement > 1 ? `
             <tr>
