@@ -7,15 +7,18 @@ function viewSubPriority(buildId) {
     let unit = unitDatabase.find(u => buildId.startsWith(u.id));
     if (!unit) return;
 
+    // Use Context Builder to reconstruct environment
     const isAbility = buildId.includes('-ABILITY');
     const isVR = buildId.includes('-VR');
     const isCard = buildId.includes('-CARD');
 
-    let trait = traitsList.find(t => t.name === resultData.traitName) || 
-                customTraits.find(t => t.name === resultData.traitName) ||
-                (unitSpecificTraits[unit.id] || []).find(t => t.name === resultData.traitName);
-    
-    if (!trait) trait = traitsList.find(t => t.id === 'ruler');
+    const { effectiveStats: effStats, context } = buildCalculationContext(unit, resultData.traitName, {
+        isAbility,
+        headPiece: resultData.headUsed || 'none',
+        // Determine points based on prio
+        dmgPoints: resultData.prio === 'spa' ? 0 : 99,
+        spaPoints: resultData.prio === 'spa' ? 99 : 0
+    });
 
     let ms = resultData.mainStats || { body: 'dmg', legs: 'dmg' };
     const setName = resultData.setName;
@@ -42,22 +45,6 @@ function viewSubPriority(buildId) {
     let comparisonList = [];
     const candidates = ['spa', 'dmg', 'range', 'cm', 'cf', 'dot'];
     
-    const isSpaPrio = resultData.prio === 'spa';
-    const dmgPts = isSpaPrio ? 0 : 99;
-    const spaPts = isSpaPrio ? 99 : 0;
-
-    const context = {
-        dmgPoints: dmgPts,
-        spaPoints: spaPts,
-        wave: 25,
-        isBoss: false,
-        traitObj: trait,
-        placement: Math.min(unit.placement, trait.limitPlace || unit.placement),
-        isSSS: true,
-        headPiece: resultData.headUsed || 'none',
-        isVirtualRealm: unit.id === 'kirito' && isVR
-    };
-
     let baseDmg = 0, baseSpa = 0, baseCm = 0, baseCf = 0, baseRange = 0, baseDot = 0;
     const addMain = (type) => {
         if(type === 'dmg') baseDmg += 60;
@@ -69,17 +56,6 @@ function viewSubPriority(buildId) {
     }
     addMain(ms.body);
     addMain(ms.legs);
-
-    let effStats = { ...unit.stats };
-    effStats.id = unit.id;
-    if (unit.tags) effStats.tags = unit.tags;
-    
-    if (isAbility && unit.ability) Object.assign(effStats, unit.ability);
-    if (unit.id === 'kirito' && isVR && isCard) { 
-        effStats.dot = 200; 
-        effStats.dotDuration = 4; 
-        effStats.dotStacks = 1; 
-    }
 
     let baselineBuild = {
         set: setEntry.id,

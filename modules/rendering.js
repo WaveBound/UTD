@@ -40,9 +40,8 @@ function createBaseUnitCard(unit, options = {}) {
 }
 
 function calculateBuildEfficiency(build, unitCost, unitMaxPlacement, unitId) {
-    const foundTrait = traitsList.find(t => t.name === build.traitName) || 
-                       customTraits.find(t => t.name === build.traitName) ||
-                       (unitSpecificTraits[unitId] || []).find(t => t.name === build.traitName);
+    // USE UNIFIED TRAIT HELPER
+    const foundTrait = getTraitByName(build.traitName, unitId);
 
     let traitLimit = null;
     if (build.traitName && build.traitName.includes('Ruler')) {
@@ -221,13 +220,7 @@ function processUnitCache(unit) {
         const originalRelicDot = statConfig.applyRelicDot, originalRelicCrit = statConfig.applyRelicCrit;
         statConfig.applyRelicDot = (mode === 'fixed');
 
-        let currentStats = { ...unit.stats };
-        if (useAbility && unit.ability) Object.assign(currentStats, unit.ability);
-        if (unit.tags) currentStats.tags = unit.tags;
-        
-        if (unit.id === 'kirito' && kiritoState.realm && kiritoState.card) { currentStats.dot = 200; currentStats.dotDuration = 4; currentStats.dotStacks = 1; }
-        if (unit.id === 'bambietta' && BAMBIETTA_MODES[bambiettaState.element]) Object.assign(currentStats, BAMBIETTA_MODES[bambiettaState.element]);
-
+        // Note: Context building happens INSIDE calculateUnitBuilds now for efficiency/correctness
         let dbKey = unit.id + (unit.id === 'kirito' && kiritoState.card ? 'kirito_card' : '') + (useAbility && unit.ability ? '_abil' : '');
         const resultSet = [];
         const useInventory = (inventoryMode === true);
@@ -247,10 +240,12 @@ function processUnitCache(unit) {
                 }
             }
 
+            // Standard Traits + Unit Specific (Global Custom handled by helper inside calc)
             const traitsForCalc = (calculatedResults.length > 0) ? [...(typeof customTraits !== 'undefined' ? customTraits : []), ...(unitSpecificTraits[unit.id] || [])] : null;
             
             if (traitsForCalc === null || traitsForCalc.length > 0 || useInventory) {
-                const dynamicResults = calculateUnitBuilds(unit, currentStats, getFilteredBuilds(), getValidSubCandidates(), cfg.head ? ['sun_god', 'ninja', 'reaper_necklace', 'shadow_reaper_necklace'] : ['none'], cfg.subs, traitsForCalc, useAbility, mode);
+                // Pass NULL for stats, we build it inside
+                const dynamicResults = calculateUnitBuilds(unit, null, getFilteredBuilds(), getValidSubCandidates(), cfg.head ? ['sun_god', 'ninja', 'reaper_necklace', 'shadow_reaper_necklace'] : ['none'], cfg.subs, traitsForCalc, useAbility, mode);
                 calculatedResults = [...calculatedResults, ...dynamicResults];
             }
             resultSet.push(calculatedResults);
@@ -450,9 +445,10 @@ function processGuideTop3(rawBuilds, unit, traitFilterId) {
     if (!rawBuilds || rawBuilds.length === 0) return [];
     let filtered = [...rawBuilds];
     if (traitFilterId && traitFilterId !== 'auto') {
-        let targetName = "";
-        const tObj = traitsList.find(t => t.id === traitFilterId) || customTraits.find(t => t.id === traitFilterId) || (unitSpecificTraits[unit.id] || []).find(t => t.id === traitFilterId);
-        if (tObj) targetName = tObj.name;
+        // USE UNIFIED HELPER
+        const tObj = getTraitById(traitFilterId, unit.id);
+        const targetName = tObj ? tObj.name : "";
+        
         if (targetName) filtered = filtered.filter(b => b.traitName === targetName);
     }
     filtered.sort(unit.id === 'law' ? (a, b) => (b.range || 0) - (a.range || 0) : (a, b) => b.dps - a.dps);
@@ -493,7 +489,8 @@ function renderGuides() {
 
     let tName = 'Auto Trait';
     if(filterTraitId !== 'auto') { 
-        const found = traitsList.find(t => t.id === filterTraitId) || customTraits.find(t => t.id === filterTraitId); 
+        // USE UNIFIED HELPER
+        const found = getTraitById(filterTraitId);
         if(found) tName = found.name; 
     }
     document.getElementById('dispGuideUnit').innerText = uName; 

@@ -95,8 +95,9 @@ function renderCustomPairUI() {
 }
 
 function confirmAddCustomPair() {
-    const t1 = traitsList.find(t => t.id === cpT1);
-    const t2 = traitsList.find(t => t.id === cpT2); 
+    // USE UNIFIED TRAIT HELPER
+    const t1 = getTraitById(cpT1);
+    const t2 = getTraitById(cpT2);
 
     if (t1 && t2) {
         const combo = combineTraits(t1, t2);

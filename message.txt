@@ -12,7 +12,7 @@
     ];
 
     // --- 2. ENUMS ---
-    const MAP_PRIO = { 'dmg': 0, 'spa': 1, 'range': 2, 'raw_dmg': 3 }; // Added raw_dmg just in case
+    const MAP_PRIO = { 'dmg': 0, 'spa': 1, 'range': 2, 'raw_dmg': 3 };
     const MAP_BODY = { 'dmg': 0, 'dot': 1, 'cm': 2 };
     const MAP_LEGS = { 'dmg': 0, 'spa': 1, 'cf': 2, 'range': 3 };
     const MAP_HEAD = { 'none': 0, 'sun_god': 1, 'ninja': 2, 'reaper_necklace': 3, 'shadow_reaper_necklace': 4 };
@@ -115,23 +115,31 @@
                 const currentFilteredBuilds = getFilteredBuilds();
                 const currentSubCandidates = getValidSubCandidates();
 
-                let currentStats = { ...u.stats }; 
-                if (type === 'abil' && u.ability) Object.assign(currentStats, u.ability);
-                if (u.tags) currentStats.tags = u.tags;
-                if (u.id === 'bambietta') Object.assign(currentStats, BAMBIETTA_MODES["Dark"]);
+                // Setup specific states (Kirito/Bambi)
+                if (u.id === 'bambietta') bambiettaState.element = "Dark"; 
                 if (u.id === 'kirito') {
                     kiritoState.realm = true; 
                     kiritoState.card = isCard;
-                    if (isCard) { currentStats.dot = 200; currentStats.dotDuration = 4; currentStats.dotStacks = 1; }
                 }
 
                 CONFIGS.forEach(cfg => {
                     const headsToProcess = cfg.head ? ['sun_god', 'ninja', 'reaper_necklace', 'shadow_reaper_necklace'] : ['none'];
                     const includeSubs = cfg.subs;
                     const traitsForCalc = [...traitsList, ...(unitSpecificTraits[u.id] || [])];
+                    const isAbility = (type === 'abil');
 
+                    // FIX: Passed correct arguments for isAbilityContext and mode
+                    // calculateUnitBuilds(unit, _stats, filteredBuilds, subCandidates, headsToProcess, includeSubs, specificTraitsOnly, isAbilityContext, mode)
                     const results = calculateUnitBuilds(
-                        u, {...currentStats}, currentFilteredBuilds, currentSubCandidates, headsToProcess, includeSubs, traitsForCalc
+                        u, 
+                        null, // _stats is ignored by the new calculation engine, passed null
+                        currentFilteredBuilds, 
+                        currentSubCandidates, 
+                        headsToProcess, 
+                        includeSubs, 
+                        traitsForCalc,
+                        isAbility, // Correctly pass ability flag
+                        mode       // Correctly pass mode (fixed/bugged)
                     );
 
                     if (u.id === 'law') results.sort((a, b) => (b.range || 0) - (a.range || 0));
@@ -234,7 +242,6 @@
                             const headSuffix = "-" + headUsed;
 
                             // Reconstruct Safe Build Name for ID
-                            // Format: SetName (BodyDesc/LegsDesc) -> Regex stripped
                             const buildNameRaw = sName + " (" + DESC_BODY[bIdx] + "/" + DESC_LEGS[lIdx] + ")";
                             const safeBuildName = buildNameRaw.replace(/[^a-zA-Z0-9]/g, '');
 
@@ -246,7 +253,6 @@
                             }
 
                             // 2. Construct Exact Runtime ID
-                            // Structure: [Unit][Context][Trait][Build][Prio][Subs][Head][MODE]
                             const uniqueId = idContext + "-" + traitId + "-" + safeBuildName + "-" + prioStr + subsSuffix + headSuffix + modeTag;
 
                             let subs = undefined;

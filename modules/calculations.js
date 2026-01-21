@@ -5,31 +5,47 @@
 // --- HELPERS ---
 
 /**
- * Shared setup logic for both Standard and Inventory calculations.
- * Prepares unit stats, applies character-specific overrides (Kirito, etc.), and resolves traits.
+ * UNIFIED Context Builder
+ * Prepares unit stats, applies overrides (Ability, Kirito, Bambietta), resolves Traits,
+ * and sets up the math context (placement, wave, points).
+ * 
+ * @param {Object} unit - The unit object from database
+ * @param {string|Object} traitIdent - Trait ID (string) or Trait Object
+ * @param {Object} options - Config options { isAbility, mode, points... }
  */
-function initializeCalcContext(unit, specificTraitsOnly, isAbilityContext, mode) {
-    // 1. Determine Traits
-    let activeTraits = [];
-    if (specificTraitsOnly && Array.isArray(specificTraitsOnly)) {
-        activeTraits = specificTraitsOnly;
+function buildCalculationContext(unit, traitIdent, options = {}) {
+    const { 
+        isAbility = false, 
+        mode = 'fixed', 
+        dmgPoints = 99, 
+        spaPoints = 0, 
+        rangePoints = 0,
+        wave = 25,
+        isBoss = false,
+        headPiece = 'none',
+        starMult = 1,
+        rankData = null
+    } = options;
+
+    // 1. Resolve Trait
+    let traitObj = null;
+    if (typeof traitIdent === 'object') {
+        traitObj = traitIdent;
     } else {
-        const specificTraits = unitSpecificTraits[unit.id] || [];
-        activeTraits = [...traitsList, ...customTraits, ...specificTraits];
+        traitObj = getTraitById(traitIdent, unit.id) || getTraitByName(traitIdent, unit.id) || getTraitById('ruler');
     }
 
-    // 2. Prepare Effective Stats
+    // 2. Prepare Effective Stats (Base Clone)
     let effectiveStats = { ...unit.stats };
+    effectiveStats.id = unit.id;
     if (unit.tags) effectiveStats.tags = unit.tags;
-    
-    // Apply Ability Stats Overrides
-    if (isAbilityContext && unit.ability) {
+
+    // 3. Apply Ability Overrides
+    if (isAbility && unit.ability) {
         Object.assign(effectiveStats, unit.ability);
     }
-    
-    effectiveStats.id = unit.id;
 
-    // 3. Handle Unit Specific Logic (Kirito/Bambietta)
+    // 4. Handle Unit Specific Logic (Kirito/Bambietta)
     const isKiritoVR = (unit.id === 'kirito' && kiritoState.realm);
     
     if (unit.id === 'kirito' && isKiritoVR && kiritoState.card) {
@@ -39,20 +55,39 @@ function initializeCalcContext(unit, specificTraitsOnly, isAbilityContext, mode)
     }
     
     if (unit.id === 'bambietta' && typeof BAMBIETTA_MODES !== 'undefined') {
-        const modeStats = BAMBIETTA_MODES[bambiettaState.element];
+        const currentEl = bambiettaState.element || "Dark";
+        const modeStats = BAMBIETTA_MODES[currentEl];
         if (modeStats) Object.assign(effectiveStats, modeStats);
     }
 
-    // 4. Generate ID Tags
-    let suffix = isAbilityContext ? '-ABILITY' : '-BASE';
+    // 5. Determine Placement
+    let actualPlacement = unit.placement;
+    if (traitObj.limitPlace) actualPlacement = Math.min(unit.placement, traitObj.limitPlace);
+
+    // 6. Generate ID Tags (for caching)
+    let suffix = isAbility ? '-ABILITY' : '-BASE';
     if (unit.id === 'kirito') { 
         if (kiritoState.realm) suffix += '-VR'; 
         if (kiritoState.card) suffix += '-CARD'; 
     }
     const modeTag = (mode === 'bugged') ? '-b-' : '-f-';
 
-    return { activeTraits, effectiveStats, isKiritoVR, suffix, modeTag };
+    // 7. Build Context Object
+    const context = {
+        dmgPoints, spaPoints, rangePoints,
+        wave, isBoss, 
+        traitObj, 
+        placement: actualPlacement, 
+        isSSS: true, 
+        isVirtualRealm: isKiritoVR,
+        headPiece,
+        starMult,
+        rankData
+    };
+
+    return { effectiveStats, traitObj, context, isKiritoVR, suffix, modeTag };
 }
+
 
 /**
  * Shared helper to construct the result object.
@@ -97,13 +132,23 @@ function calculateUnitBuilds(unit, _stats, filteredBuilds, subCandidates, headsT
     
     cachedResults = cachedResults || {};
     
-    // Use Shared Initialization
-    const { activeTraits, effectiveStats, isKiritoVR, suffix, modeTag } = initializeCalcContext(unit, specificTraitsOnly, isAbilityContext, mode);
-    
+    // 1. Determine Traits List
+    let activeTraits = [];
+    if (specificTraitsOnly && Array.isArray(specificTraitsOnly)) {
+        activeTraits = specificTraitsOnly;
+    } else {
+        const specificTraits = unitSpecificTraits[unit.id] || [];
+        activeTraits = [...traitsList, ...customTraits, ...specificTraits];
+    }
+
     let unitResults = [];
 
+    // Use Context Builder to get base stats for DoT check
+    // We do this once just to check native capabilities
+    const { effectiveStats: baseEffective, isKiritoVR: baseVR } = buildCalculationContext(unit, 'ruler', { isAbility: isAbilityContext });
+
     // Pre-calculate DoT capability to filter builds
-    const hasNativeDoT = (effectiveStats.dot > 0) || (effectiveStats.burnMultiplier > 0) || isKiritoVR;
+    const hasNativeDoT = (baseEffective.dot > 0) || (baseEffective.burnMultiplier > 0) || baseVR;
     let unitSubCandidates = [...subCandidates];
     if (!hasNativeDoT) {
         unitSubCandidates = unitSubCandidates.filter(c => c !== 'dot');
@@ -114,8 +159,11 @@ function calculateUnitBuilds(unit, _stats, filteredBuilds, subCandidates, headsT
     activeTraits.forEach(trait => {
         if (trait.id === 'none') return; 
         
-        let actualPlacement = unit.placement;
-        if (trait.limitPlace) actualPlacement = Math.min(unit.placement, trait.limitPlace);
+        // Use Unified Context Builder per Trait
+        const { effectiveStats, context, isKiritoVR, suffix, modeTag } = buildCalculationContext(unit, trait, { 
+            isAbility: isAbilityContext, 
+            mode: mode 
+        });
 
         const traitAddsDot = trait.dotBuff > 0 || trait.hasRadiation || trait.allowDotStack;
         const isDotPossible = hasNativeDoT || traitAddsDot;
@@ -135,11 +183,15 @@ function calculateUnitBuilds(unit, _stats, filteredBuilds, subCandidates, headsT
             }
 
             relevantHeads.forEach(headMode => {
-                const baseContext = { wave: 25, isBoss: false, traitObj: trait, placement: actualPlacement, isSSS: true, isVirtualRealm: isKiritoVR };
                 
                 // Helper to run optimization
                 const runOpt = (dmgP, spaP, rangeP, optType) => {
-                    effectiveStats.context = { ...baseContext, dmgPoints: dmgP, spaPoints: spaP, rangePoints: rangeP };
+                    // Update context points and effectiveStats context reference
+                    context.dmgPoints = dmgP;
+                    context.spaPoints = spaP;
+                    context.rangePoints = rangeP;
+                    effectiveStats.context = context; // Link context to stats for deep calc functions
+                    
                     return getBestSubConfig(build, effectiveStats, includeSubs, headMode, currentCandidates, optType);
                 };
 
@@ -210,8 +262,14 @@ function calculateUnitBuilds(unit, _stats, filteredBuilds, subCandidates, headsT
 function calculateInventoryBuilds(unit, _stats, specificTraitsOnly, isAbilityContext, mode, headsToProcess, includeSubs) {
     cachedResults = cachedResults || {};
     
-    // Use Shared Initialization
-    const { activeTraits, effectiveStats, isKiritoVR, suffix, modeTag } = initializeCalcContext(unit, specificTraitsOnly, isAbilityContext, mode);
+    // 1. Determine Traits List
+    let activeTraits = [];
+    if (specificTraitsOnly && Array.isArray(specificTraitsOnly)) {
+        activeTraits = specificTraitsOnly;
+    } else {
+        const specificTraits = unitSpecificTraits[unit.id] || [];
+        activeTraits = [...traitsList, ...customTraits, ...specificTraits];
+    }
     
     let unitResults = [];
 
@@ -227,19 +285,16 @@ function calculateInventoryBuilds(unit, _stats, specificTraitsOnly, isAbilityCon
     if(bodies.length === 0) bodies.push({ id: 'none-b', slot: 'Body', setKey: 'none', stars: 1, mainStat: null, subs: {} }); 
     if(legs.length === 0) legs.push({ id: 'none-l', slot: 'Legs', setKey: 'none', stars: 1, mainStat: null, subs: {} }); 
 
-    // Config tags for IDs
     const cfgTag = `-${allowHeads ? 'H' : 'nH'}-${includeSubs ? 'S' : 'nS'}`;
 
     activeTraits.forEach(trait => {
         if (trait.id === 'none') return;
         
-        let actualPlacement = unit.placement;
-        if (trait.limitPlace) actualPlacement = Math.min(unit.placement, trait.limitPlace);
-
-        const baseContext = { 
-            wave: 25, isBoss: false, traitObj: trait, placement: actualPlacement, isSSS: true, 
-            isVirtualRealm: isKiritoVR
-        };
+        // Use Unified Context Builder
+        const { effectiveStats, context, suffix, modeTag } = buildCalculationContext(unit, trait, { 
+            isAbility: isAbilityContext, 
+            mode: mode 
+        });
 
         heads.forEach(head => {
             bodies.forEach(body => {
@@ -284,14 +339,16 @@ function calculateInventoryBuilds(unit, _stats, specificTraitsOnly, isAbilityCon
                     ];
 
                     calcVariations.forEach(prio => {
-                        effectiveStats.context = { 
-                            ...baseContext, 
-                            dmgPoints: prio.dmgPts, spaPoints: prio.spaPts, rangePoints: prio.rangePts,
-                            headPiece: head.setKey === 'none' ? 'none' : head.setKey, 
-                            starMult: starMult 
-                        };
+                        // Update context for this variation
+                        context.dmgPoints = prio.dmgPts;
+                        context.spaPoints = prio.spaPts;
+                        context.rangePoints = prio.rangePts;
+                        context.headPiece = head.setKey === 'none' ? 'none' : head.setKey;
+                        context.starMult = starMult;
+
+                        effectiveStats.context = context;
                         
-                        let res = calculateDPS(effectiveStats, totalStats, effectiveStats.context);
+                        let res = calculateDPS(effectiveStats, totalStats, context);
 
                         const uniqueCombId = `${head.id}_${body.id}_${leg.id}`; 
                         const id = `${unit.id}${suffix}-${trait.id}-INV-${uniqueCombId}${modeTag}${cfgTag}-${prio.id}`;
@@ -340,39 +397,35 @@ function reconstructMathData(liteData) {
 
     // 1. Identify Context from ID Tags
     const isAbility = liteData.id.includes('ABILITY');
-    const isVR = liteData.id.includes('VR');
-    const isCard = liteData.id.includes('CARD');
     const isBuggedMode = liteData.id.includes('-b-');
     const isFixedMode = liteData.id.includes('-f-');
     const isNoSubsMode = liteData.id.includes('-NOSUBS');
 
-    // Reuse Shared Initialization logic if possible, or manual recreation for pure math reconstruction
-    // Here we manually reconstruct because we need to inject the specific mode (bugged/fixed) extracted from ID
-    // independent of the current global toggle state.
-    
-    let effectiveStats = { ...unit.stats };
-    effectiveStats.id = unit.id;
-    if (unit.tags) effectiveStats.tags = unit.tags;
-    
-    if (isAbility && unit.ability) Object.assign(effectiveStats, unit.ability);
-    
-    if (unit.id === 'kirito' && isVR && isCard) {
-        effectiveStats.dot = 200; effectiveStats.dotDuration = 4; effectiveStats.dotStacks = 1;
-    }
-    
-    if (unit.id === 'bambietta' && typeof BAMBIETTA_MODES !== 'undefined') {
-        // Assume default or try to infer, mostly 'Dark' for static reconstruction unless encoded
-        Object.assign(effectiveStats, BAMBIETTA_MODES["Dark"]);
-    }
+    // Determine Logic State based on ID (Override global state for reconstruction)
+    const previousDotState = statConfig.applyRelicDot;
+    const previousCritState = statConfig.applyRelicCrit;
 
-    let trait = traitsList.find(t => t.name === liteData.traitName) || 
-                (typeof customTraits !== 'undefined' ? customTraits.find(t => t.name === liteData.traitName) : null) ||
-                (unitSpecificTraits[unit.id] || []).find(t => t.name === liteData.traitName);
-    
-    if (!trait) trait = traitsList.find(t => t.id === 'ruler');
+    if (isBuggedMode) { statConfig.applyRelicDot = false; statConfig.applyRelicCrit = true; } 
+    else if (isFixedMode) { statConfig.applyRelicDot = true; statConfig.applyRelicCrit = true; }
 
+    const isSpaPrio = liteData.prio === 'spa';
+    const isRangePrio = liteData.prio === 'range';
+    let dmgPts = 99, spaPts = 0, rangePts = 0;
+    if (isSpaPrio) { dmgPts = 0; spaPts = 99; }
+    else if (isRangePrio) { dmgPts = 0; spaPts = 0; rangePts = 99; }
+
+    // Use Unified Context Builder
+    // NOTE: passing traitName here, helper will resolve it
+    const { effectiveStats, context } = buildCalculationContext(unit, liteData.traitName, {
+        isAbility,
+        dmgPoints: dmgPts,
+        spaPoints: spaPts,
+        rangePoints: rangePts,
+        headPiece: liteData.headUsed || (liteData.subStats && liteData.subStats.selectedHead) || 'none'
+    });
+    
+    // Set Entry
     const setEntry = SETS.find(s => s.name === liteData.setName) || SETS[2]; 
-    
     let totalStats = { set: setEntry.id, dmg: 0, spa: 0, range: 0, cm: 0, cf: 0, dot: 0 };
 
     const mapStatKey = (k) => {
@@ -385,13 +438,6 @@ function reconstructMathData(liteData) {
         if (liteData.mainStats.body) { const k = mapStatKey(liteData.mainStats.body); if (MAIN_STAT_VALS.body[k]) totalStats[k] += MAIN_STAT_VALS.body[k]; }
         if (liteData.mainStats.legs) { const k = mapStatKey(liteData.mainStats.legs); if (MAIN_STAT_VALS.legs[k]) totalStats[k] += MAIN_STAT_VALS.legs[k]; }
     }
-
-    // Determine Logic State based on ID
-    let applyDot = statConfig.applyRelicDot;
-    let applyCrit = statConfig.applyRelicCrit;
-
-    if (isBuggedMode) { applyDot = false; applyCrit = true; } 
-    else if (isFixedMode) { applyDot = true; applyCrit = true; }
 
     // 1. Add explicitly stored sub-stats
     if (liteData.subStats) {
@@ -408,19 +454,19 @@ function reconstructMathData(liteData) {
     }
 
     // 2. FILL MISSING BASE STATS (Auto-fill for Static DB)
-    const candidates = ['dmg', 'spa', 'range', 'cm', 'cf', 'dot'];
-    const validCandidates = candidates.filter(c => {
-         if (!applyDot && c === 'dot') return false;
-         if (!applyCrit && (c === 'cm' || c === 'cf')) return false;
-         return true;
-    });
-
+    // Only needed if we didn't have explicit substats in the liteData (older db format or static fallback)
     const addBaseFills = (slot, mainStatType) => {
         const existingTypes = new Set();
         if (liteData.subStats && liteData.subStats[slot] && Array.isArray(liteData.subStats[slot])) {
              liteData.subStats[slot].forEach(s => existingTypes.add(mapStatKey(s.type)));
         }
         const mappedMain = mapStatKey(mainStatType);
+
+        const validCandidates = SUB_CANDIDATES.filter(c => {
+            if (!statConfig.applyRelicDot && c === 'dot') return false;
+            if (!statConfig.applyRelicCrit && (c === 'cm' || c === 'cf')) return false;
+            return true;
+        });
 
         validCandidates.forEach(cand => {
              if (cand === mappedMain) return;
@@ -437,31 +483,11 @@ function reconstructMathData(liteData) {
         addBaseFills('legs', liteData.mainStats.legs);
     }
 
-    const isSpaPrio = liteData.prio === 'spa';
-    const isRangePrio = liteData.prio === 'range';
-    let dmgPts = 99, spaPts = 0, rangePts = 0;
-    
-    if (isSpaPrio) { dmgPts = 0; spaPts = 99; }
-    else if (isRangePrio) { dmgPts = 0; spaPts = 0; rangePts = 99; }
-    
-    let actualPlacement = unit.placement;
-    if (trait.limitPlace) actualPlacement = Math.min(unit.placement, trait.limitPlace);
-
-    const context = {
-        dmgPoints: dmgPts, spaPoints: spaPts, rangePoints: rangePts,
-        wave: 25, isBoss: false, traitObj: trait, placement: actualPlacement, isSSS: true,
-        headPiece: liteData.headUsed || (liteData.subStats && liteData.subStats.selectedHead) || 'none',
-        isVirtualRealm: (unit.id === 'kirito' && isVR)
-    };
-
-    // Swap config temporarily
-    const previousDotState = statConfig.applyRelicDot;
-    const previousCritState = statConfig.applyRelicCrit;
-    statConfig.applyRelicDot = applyDot;
-    statConfig.applyRelicCrit = applyCrit;
-
+    // Run Calc
+    effectiveStats.context = context;
     const result = calculateDPS(effectiveStats, totalStats, context);
 
+    // Restore Config
     statConfig.applyRelicDot = previousDotState;
     statConfig.applyRelicCrit = previousCritState;
 

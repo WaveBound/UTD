@@ -156,3 +156,51 @@ function attachStatScaler(inputElement, getStarMultFn) {
 
     trackBaseStatValue(inputElement, getStarMultFn());
 }
+
+// ============================================================================
+// UNIFIED TRAIT RESOLUTION HELPERS
+// ============================================================================
+
+function getTraitById(traitId, unitId = null) {
+    if (!traitId || traitId === 'none') return traitsList.find(t => t.id === 'none');
+    
+    // 1. Global Standard
+    let t = traitsList.find(t => t.id === traitId);
+    if (t) return t;
+
+    // 2. Global Custom
+    if (typeof customTraits !== 'undefined') {
+        t = customTraits.find(t => t.id === traitId);
+        if (t) return t;
+    }
+
+    // 3. Unit Specific
+    if (unitId && typeof unitSpecificTraits !== 'undefined' && unitSpecificTraits[unitId]) {
+        t = unitSpecificTraits[unitId].find(t => t.id === traitId);
+        if (t) return t;
+    }
+    
+    return null;
+}
+
+function getTraitByName(traitName, unitId = null) {
+    if (!traitName) return null;
+    
+    // 1. Global Standard
+    let t = traitsList.find(t => t.name === traitName);
+    if (t) return t;
+
+    // 2. Global Custom
+    if (typeof customTraits !== 'undefined') {
+        t = customTraits.find(t => t.name === traitName);
+        if (t) return t;
+    }
+
+    // 3. Unit Specific
+    if (unitId && typeof unitSpecificTraits !== 'undefined' && unitSpecificTraits[unitId]) {
+        t = unitSpecificTraits[unitId].find(t => t.name === traitName);
+        if (t) return t;
+    }
+
+    return null;
+}

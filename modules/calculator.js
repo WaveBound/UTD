@@ -126,8 +126,11 @@ function openCalc(unitId) {
     
     const traitSelect = document.getElementById('calcTrait');
     traitSelect.innerHTML = '';
+    
+    // Unified Trait List construction (Global + Custom + Unit Specific)
     const allTraits = [...traitsList, ...customTraits, ...(unitSpecificTraits[unitId] || [])];
     const uniqueTraits = allTraits.filter((t, index, self) => index === self.findIndex((x) => x.id === t.id) && t.id !== 'none');
+    
     uniqueTraits.forEach(t => traitSelect.add(new Option(t.name, t.id)));
 
     const setSelect = document.getElementById('calcSet');
@@ -270,25 +273,14 @@ function runCustomCalc() {
             if (stat && value > 0) totalStats[stat] += value;
         });
 
-        let traitObj = traitsList.find(t => t.id === traitId) || customTraits.find(t => t.id === traitId) || (unitSpecificTraits[unit.id] || []).find(t => t.id === traitId);
-        if (!traitObj) traitObj = traitsList.find(t => t.id === 'ruler');
-
-        let effectiveStats = { ...unit.stats };
-        if (activeAbilityIds.has(unit.id) && unit.ability) Object.assign(effectiveStats, unit.ability);
-        if(unit.tags) effectiveStats.tags = unit.tags;
-
-        const isKiritoVR = (unit.id === 'kirito' && kiritoState.realm);
-        if (unit.id === 'kirito' && isKiritoVR && kiritoState.card) { 
-            effectiveStats.dot = 200; effectiveStats.dotDuration = 4; effectiveStats.dotStacks = 1; 
-        }
-
-        const context = {
-            dmgPoints, spaPoints, rangePoints, 
-            wave: 25, isBoss: false, traitObj,
-            placement: Math.min(unit.placement, traitObj.limitPlace || unit.placement),
-            rankData: { dmg: rankDmg, spa: rankSpa, range: rankRange },
-            isSSS: false, headPiece: headId, isVirtualRealm: isKiritoVR, starMult: bodyStarMult
-        };
+        // USE UNIFIED CONTEXT BUILDER
+        const { effectiveStats, context } = buildCalculationContext(unit, traitId, {
+            isAbility: activeAbilityIds.has(unit.id),
+            dmgPoints, spaPoints, rangePoints,
+            headPiece: headId,
+            starMult: bodyStarMult,
+            rankData: { dmg: rankDmg, spa: rankSpa, range: rankRange }
+        });
 
         const result = calculateDPS(effectiveStats, totalStats, context);
         document.getElementById('calcResultContent').innerHTML = renderMathContent(result);
