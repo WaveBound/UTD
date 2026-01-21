@@ -1,0 +1,148 @@
+const MAIN_STAT_VALS = {
+    body: { dmg: 60, dot: 75, cm: 120 },
+    legs: { dmg: 60, spa: 22.5, cf: 37.5, range: 30 },
+    // Visual values for Head (Math engine ignores these currently)
+    head: { potency: 75, elemental: 30 } 
+};
+
+// CSS Class Mapping
+const STAT_CODE_TO_CLASS = {
+    dmg:   'border-dmg',
+    spa:   'border-spa',
+    cdmg:  'border-cdmg',
+    crit:  'border-crit',
+    dot:   'border-dot',
+    range: 'border-range',
+    potency: 'border-potency',   // New
+    elemental: 'border-elemental' // New
+};
+
+const STAT_LABELS = {
+    dmg: 'Dmg', spa: 'SPA', cdmg: 'CDmg', crit: 'Crit', dot: 'DoT', range: 'Range',
+    potency: 'Potency', elemental: 'Elem Dmg' // New Labels
+};
+
+// Assuming a max of 6 rolls for each sub-stat
+const MAX_SUB_STAT_VALUES = {
+    dmg: 24,    // 4 * 6
+    spa: 9,     // 1.5 * 6
+    cm: 27,     // 4.5 * 6
+    cf: 15,     // 2.5 * 6
+    dot: 30,    // 5 * 6
+    range: 12   // 2 * 6
+};
+
+// Stat Name Mappings
+const NAME_TO_CODE = {
+    "Dmg": "dmg", "Damage": "dmg",
+    "SPA": "spa",
+    "Crit Dmg": "cm", "Crit Damage": "cm",
+    "Crit Rate": "cf", "Crit": "cf", 
+    "DoT": "dot", 
+    "Range": "range",
+    "Potency": "potency", "Buff Potency": "potency",
+    "Elemental Dmg": "elemental", "Elem Dmg": "elemental", "Elemental": "elemental"
+};
+
+// Info Definitions for Popups
+const infoDefinitions = {
+    'stat_dmg': {
+        title: "Damage (Dmg)",
+        formula: `<span class="ip-var">Damage</span>`,
+        desc: "Increases the base damage dealt per hit."
+    },
+    'stat_spa': {
+        title: "Seconds Per Attack (SPA)",
+        formula: `<span class="ip-var">Seconds Per Attack</span>`,
+        desc: "Reduces the time between attacks. Lower is better/faster."
+    },
+    'stat_cdmg': {
+        title: "Critical Damage (CDmg)",
+        formula: `<span class="ip-var">Critical Damage</span>`,
+        desc: "The multiplier applied to damage when a Critical Hit occurs."
+    },
+    'stat_crit': {
+        title: "Critical Rate (Crit)",
+        formula: `<span class="ip-var">Critical Rate</span>`,
+        desc: "The percentage chance to land a Critical Hit."
+    },
+    'stat_dot': {
+        title: "Damage Over Time (DoT)",
+        formula: `<span class="ip-var">Damage Over Time</span>`,
+        desc: "Increases damage dealt by status effects (Burn, Bleed, etc)."
+    },
+    'stat_range': {
+        title: "Range (Rng)",
+        formula: `<span class="ip-var">Range</span>`,
+        desc: "Increases the radius of the unit's attack."
+    },
+    'stat_potency': {
+        title: "Potency",
+        formula: `<span class="ip-var">Ignored</span>`,
+        desc: "intended to increase Buff Potency for supports."
+    },
+    'stat_elemental': {
+        title: "Elemental Damage",
+        formula: `<span class="ip-var">Ignored (Bugged)</span>`,
+        desc: "Intended to increase damage matching the unit's element. <br><strong class='text-red'>Currently bugged in-game and does nothing.</strong>"
+    },
+    'level_scale': {
+        title: "Level Scaling Formula",
+        formula: `
+        <span class="ip-var">Dmg</span> = <span class="ip-var">Base</span> * (1.0045125 ^ <span class="ip-var">Lv</span>)<br>
+        <span class="ip-var">SPA</span> = <span class="ip-var">Base</span> * (0.9954875 ^ <span class="ip-var">Lv</span>)<br>
+        <span class="ip-var">Range</span> = <span class="ip-var">Base</span> * (1.0045125 ^ <span class="ip-var">Lv</span>)
+        `,
+        desc: "Damage <b>and Range</b> increase exponentially by approx <span class='text-white'>0.45%</span> per level.<br>SPA decreases by approx <span class='text-white'>0.45%</span> per level.<br><br><b>SSS Rank:</b> Adds a flat multiplier (<span class='ip-num'>x1.2</span> Dmg/Rng, <span class='ip-num'>x0.92</span> SPA) applied <i>after</i> level scaling."
+    },
+    'trait_logic': {
+        title: "Trait Multipliers",
+        formula: `<span class="ip-var">Combined</span> = (1 + <span class="ip-var">T1</span>%) * (1 + <span class="ip-var">T2</span>%)`,
+        desc: "Traits are direct multipliers to your Base Stats.<br><br><b>Double Traits:</b> When using a Custom Pair, the traits are <b>Compounded</b> (multiplied together), not just added.<br><i>Example:</i> A <span class='ip-num'>+200%</span> Trait (x3.0) and a <span class='ip-num'>+15%</span> Trait (x1.15) result in a <b class='text-white'>x3.45</b> total multiplier (+245%), making double traits extremely powerful."
+    },
+    'relic_multi': {
+        title: "Relic Stat Logic",
+        formula: `<span class="ip-hl">Sum</span> (<span class="ip-var">MainStats</span> + <span class="ip-var">SubStats</span>)`,
+        desc: "Relic Stats are additive with each other, but <b>Multiplicative</b> to Base Stats and Set Bonuses.<br>They are calculated in their own separate bucket."
+    },
+    'tag_logic': {
+        title: "Additive Bucket",
+        formula: `<span class="ip-var">SetBase</span> + <span class="ip-var">TagBuffs</span> + <span class="ip-var">Passive</span>`,
+        desc: "<b>Set Bonuses</b>, <b>Unit Passives</b>, and <b>Ability Buffs</b> are all <b>Additive</b> with each other.<br>They are summed together before multiplying the base damage."
+    },
+    'spa_calc': {
+        title: "SPA (Speed) Calculation",
+        formula: `<span class="ip-var">Base</span> * <span class="ip-hl">LvScale</span> * (1 - <span class="ip-var">Trait</span>%) * (1 - <span class="ip-var">Relic</span>%)`,
+        desc: "Speed reductions are calculated in stages.<br>1. <b>Traits</b> are multiplicative reductions (stronger).<br>2. <b>Relics/Sets</b> are additive reductions (summed together first).<br>3. <b>Cap:</b> The final value cannot go lower than the unit's specific SPA Cap."
+    },
+    'sungod_passive': {
+        title: "Sun God Head Passive",
+        formula: `<span class="ip-var">Cycle</span> = <span class="ip-num">7s</span> + (6 * <span class="ip-var">SPA</span>)`,
+        desc: "The Sun God Head grants a temporary Damage % Buff equal to your total Range.<br><br><b>Trigger:</b> Every 6 Attacks.<br><b>Duration:</b> 7 Seconds.<br><br>Because the buff must expire before the counter restarts, 100% uptime is impossible."
+    },
+    'ninja_passive': {
+        title: "Ninja Head Passive",
+        formula: `<span class="ip-var">Cycle</span> = <span class="ip-num">10s</span> + (5 * <span class="ip-var">SPA</span>)`,
+        desc: "The Master Ninja Head grants <span class='ip-num'>+20%</span> Damage over Time (DoT) effectiveness.<br><br>Because the buff must expire before the counter restarts, 100% uptime is impossible."
+    },
+    'crit_avg': {
+        title: "Crit Averaging",
+        formula: `<span class="ip-var">AvgHit</span> = <span class="ip-var">Base</span> * (1 + (<span class="ip-var">Rate</span>% * <span class="ip-var">CDmg</span>%))`,
+        desc: "Since Crits are probabilistic, we calculate the <b>Average Damage</b> per hit over a long period.<br><br><b>Crit Rate:</b> Hard capped at 100%.<br><b>Crit Dmg:</b> Base 150% + Additions."
+    },
+    'dot_logic': {
+        title: "Damage Over Time (DoT)",
+        formula: `<span class="ip-var">Total</span> = (<span class="ip-var">Hit</span> * <span class="ip-var">Tick</span>%) * <span class="ip-var">Stacks</span>`,
+        desc: "<b>Tick %:</b> The percentage of the hit damage dealt per tick.<br><b>Stacks:</b> How many times the DoT applies.<br><b>Time Basis:</b> We convert total DoT damage into DPS by dividing by the time it takes to apply (SPA)."
+    },
+    'attack_rate': {
+        title: "Attack Rate & Multi-Hit",
+        formula: `<span class="ip-var">Mult</span> = 1 + (<span class="ip-var">Extra</span> / <span class="ip-var">Needed</span>)`,
+        desc: "Used for units like Kirito who trigger extra attacks upon critting.<br>If a unit hits multiple times per 'Attack Cycle' (SPA), we multiply the final DPS to account for the extra hits generated per second."
+    },
+    'efficiency': {
+        title: "Cost Efficiency (DPS per Yen)",
+        formula: `<span class="ip-var">Score</span> = <span class="ip-var">Total DPS</span> / <span class="ip-var">Total Cost</span>`,
+        desc: "This metric shows how much Damage Per Second you get for every <b>1 Yen</b> spent.<br><br><b>Total Cost</b> includes:<br>1. Deployment Cost<br>2. Max Upgrade Cost<br>3. Multiplied by Unit Placement Limit (e.g., x3 units).<br><br>A higher number means the unit is more economic."
+    }
+};
