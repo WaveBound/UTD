@@ -132,6 +132,35 @@ function renderDotSection(data, headDotRow) {
     const relicMult = 1 + (relicDot / 100);
     const finalTickPct = preRelicTotal * relicMult;
 
+    // --- RE-DEFINE HEAD ROW LOGIC HERE TO MATCH SUN GOD STYLE ---
+    if (data.headBuffs && data.headBuffs.type === 'ninja') {
+        const uptimePct = (data.headBuffs.uptime || 0);
+        
+        // This structure now matches the Sun God box layout exactly
+        headDotRow = `
+        <tr class="mt-row-ninja"><td colspan="3" class="p-2">
+            <div class="mt-flex-between mb-2">
+                <span class="text-custom mt-text-bold text-xs tracking-sm">NINJA HEAD PASSIVE</span>
+                <button class="calc-info-btn" onclick="openInfoPopup('ninja_passive')">?</button>
+            </div>
+            
+            <div class="mt-flex-between text-xs text-white mb-1">
+                <span class="opacity-70">Active Duration:</span>
+                <span class="mt-font-mono mt-text-right text-white">10.0s</span>
+            </div>
+            <div class="mt-flex-between text-xs text-white mb-3">
+                <span class="opacity-70">Uptime:</span>
+                <span class="mt-font-mono mt-text-right ${uptimePct >= 1 ? 'mt-text-green' : 'mt-text-orange'}">${fmt.fix(uptimePct*100,1)}%</span>
+            </div>
+
+            <div class="mt-flex-between mt-border-top mt-pt-sm">
+                <span class="text-white text-xs text-bold">Avg DoT Buff</span>
+                <span class="text-custom text-sm mt-text-bold"> +${fmt.fix(data.headBuffs.dot, 2)}%</span>
+            </div>
+        </td></tr>`;
+    }
+    // -----------------------------------------------------------
+
     return `
     <div class="dd-section">
         <div class="dd-title text-accent-end"><span>6. Status Effect (DoT) Breakdown</span> <button class="calc-info-btn" onclick="openInfoPopup('dot_logic')">?</button></div>
@@ -179,6 +208,119 @@ function renderDotSection(data, headDotRow) {
             </tr>` : ''}
         </table>
     </div>`;
+}
+
+// ... (renderMathContent function remains generally the same, but remove the old headDotRow logic block inside renderMathContent to avoid double definition, logic is now moved inside renderDotSection for better encapsulation)
+
+function renderMathContent(data) {
+    if (!data || !data.lvStats || !data.critData) return '<div class="msg-empty">Data incomplete.</div>';
+    
+    // ... [Previous variable definitions like levelMult, avgHitPerUnit, traitRows, etc. remain the same] ...
+    
+    const levelMult = data.lvStats.dmgMult; 
+    const avgHitPerUnit = data.dmgVal * data.critData.avgMult;
+    
+    // --- Trait Row Logic ---
+    let traitRowsDmg = '';
+    let traitRowsSpa = '';
+    let runningDmg = data.isSSS ? data.lvStats.dmg : (data.baseStats.dmg * levelMult); 
+    if (data.isSSS) runningDmg = data.lvStats.dmg; 
+    let runningSpa = data.isSSS ? data.lvStats.spa : (data.baseStats.spa * data.lvStats.spaMult);
+
+    if (data.traitObj && data.traitObj.subTraits && data.traitObj.subTraits.length > 0) {
+        data.traitObj.subTraits.forEach((t, i) => {
+            const tDmg = t.dmg || 0;
+            const nextDmg = runningDmg * (1 + tDmg/100);
+            let labelHtml = `↳ ${t.name}`;
+            if (i === 0) labelHtml += ` <button class="calc-info-btn" onclick="openInfoPopup('trait_logic')">?</button>`;
+            traitRowsDmg += `<tr><td class="mt-cell-label mt-pl-md">${labelHtml}</td><td class="mt-cell-formula">${fmt.pct(tDmg)}</td><td class="mt-cell-val">${fmt.num(nextDmg)}</td></tr>`;
+            runningDmg = nextDmg;
+
+            const tSpa = t.spa || 0;
+            const nextSpa = runningSpa * (1 - tSpa/100);
+            traitRowsSpa += `<tr><td class="mt-cell-label mt-pl-md">↳ ${t.name}</td><td class="mt-cell-formula">-${fmt.fix(tSpa,1)}%</td><td class="mt-cell-val">${fmt.fix(nextSpa,3)}s</td></tr>`;
+            runningSpa = nextSpa;
+        });
+    } else {
+        const dmgAfterTrait = runningDmg * (1 + data.traitBuffs.dmg/100);
+        traitRowsDmg = `<tr><td class="mt-cell-label">Trait Multiplier <button class="calc-info-btn" onclick="openInfoPopup('trait_logic')">?</button></td><td class="mt-cell-formula">${fmt.pct(data.traitBuffs.dmg)}</td><td class="mt-cell-val">${fmt.num(dmgAfterTrait)}</td></tr>`;
+        const spaAfterTrait = runningSpa * (1 - data.traitBuffs.spa/100);
+        traitRowsSpa = `<tr><td class="mt-cell-label">Trait Reduction</td><td class="mt-cell-formula">-${fmt.fix(data.traitBuffs.spa, 1)}%</td><td class="mt-cell-val">${fmt.fix(spaAfterTrait, 3)}s</td></tr>`;
+        runningDmg = dmgAfterTrait; runningSpa = spaAfterTrait;
+    }
+
+    const dmgAfterRelic = runningDmg * (1 + data.relicBuffs.dmg/100);
+    const baseSetDmg = (data.totalSetStats.dmg || 0) - (data.tagBuffs.dmg || 0);
+    const tagDmg = (data.tagBuffs.dmg || 0);
+    const eternalDmg = data.eternalBuff || 0;
+    const passiveDmg = (data.passiveBuff || 0) - (data.headBuffs.dmg || 0) - (data.abilityBuff || 0) - eternalDmg; 
+    const baseSetSpa = (data.totalSetStats.spa || 0) - (data.tagBuffs.spa || 0);
+    const tagSpa = (data.tagBuffs.spa || 0);
+    const passiveSpa = (data.passiveSpaBuff || 0);
+    const baseSetCf = (data.totalSetStats.cf || 0) - (data.tagBuffs.cf || 0);
+    const tagCf = (data.tagBuffs.cf || 0);
+    const setTagCfTotal = baseSetCf + tagCf;
+    const baseSetCm = (data.totalSetStats.cdmg || data.totalSetStats.cm || 0) - (data.tagBuffs.cdmg || data.tagBuffs.cm || 0);
+    const tagCm = (data.tagBuffs.cdmg || data.tagBuffs.cm || 0);
+    const setTagCmTotal = baseSetCm + tagCm;
+    const preConditionalDmg = data.dmgVal / (data.conditionalData ? data.conditionalData.mult : 1);
+
+    // --- SUN GOD HTML (Base Damage Section) ---
+    let headDmgHtml = '';
+    if (data.headBuffs && data.headBuffs.type === 'sun_god') {
+        const uptimePct = (data.headBuffs.uptime || 0);
+        headDmgHtml = `
+        <tr class="mt-row-sungod"><td colspan="3" class="p-2">
+            <div class="mt-flex-between mb-2"><span class="text-gold mt-text-bold text-xs tracking-sm">SUN GOD PASSIVE</span><button class="calc-info-btn" onclick="openInfoPopup('sungod_passive')">?</button></div>
+            
+            <div class="mt-flex-between text-xs text-white mb-1">
+                <span class="opacity-70">Range Stat:</span>
+                <span class="mt-font-mono mt-text-right mt-text-range">${fmt.fix(data.range,1)}</span>
+            </div>
+            <div class="mt-flex-between text-xs text-white mb-3">
+                <span class="opacity-70">Uptime:</span>
+                <span class="mt-font-mono mt-text-right ${uptimePct >= 1 ? 'mt-text-green' : 'mt-text-orange'}">${fmt.fix(uptimePct*100,1)}%</span>
+            </div>
+
+            <div class="mt-flex-between mt-border-top mt-pt-sm"><span class="text-white text-xs text-bold">Avg Damage Buff</span><span class="text-gold text-sm mt-text-bold"> +${fmt.num(data.headBuffs.dmg)}%</span></div>
+        </td></tr>`;
+    }
+
+    // --- NINJA HTML (DoT Section) ---
+    // Defined inside renderDotSection, passed as empty string here if needed, or handled inside
+    let headDotRow = ''; 
+    // Logic moved inside renderDotSection to keep it grouped with DoT data.
+
+    const statPointsHtml = (data.dmgPoints !== undefined) ? `
+    <tr>
+        <td class="mt-cell-label">Stat Points (Dmg) <button class="calc-info-btn" onclick="openInfoPopup('level_scale')">?</button></td>
+        <td class="mt-cell-formula">x${fmt.fix(data.lvStats.dmgMult, 2)}</td>
+        <td class="mt-cell-val">${fmt.num(data.baseStats.dmg * data.lvStats.dmgMult)}</td>
+    </tr>` 
+    : `
+    <tr>
+        <td class="mt-cell-label">Level Scaling <button class="calc-info-btn" onclick="openInfoPopup('level_scale')">?</button></td>
+        <td class="mt-cell-formula"><span class="op">×</span>${fmt.fix(levelMult, 3)}</td>
+        <td class="mt-cell-val">${fmt.num(data.baseStats.dmg * levelMult)}</td>
+    </tr>`;
+
+    const dotColorClass = data.dot > 0 ? 'text-accent-end' : 'text-dark-dim';
+
+    return `
+        ${renderOverviewSection(data)}
+        ${renderQuickBreakdownSection(data, avgHitPerUnit, dotColorClass)}
+        <div class="deep-dive-trigger" onclick="toggleDeepDive(this)"><span>Full Calculation Log</span><span class="dd-arrow text-accent-start">▼</span></div>
+        <div class="deep-dive-content hidden">
+            ${renderBaseDamageSection(data, levelMult, traitRowsDmg, dmgAfterRelic, headDmgHtml, preConditionalDmg, baseSetDmg, tagDmg, passiveDmg, eternalDmg, statPointsHtml)}
+            ${renderCritSection(data, setTagCfTotal, setTagCmTotal)}
+            ${renderSpaSection(data, traitRowsSpa, baseSetSpa, tagSpa, passiveSpa)}
+            ${renderRangeSection(data)}
+            ${data.extraAttacks ? `<div class="dd-section"><div class="dd-title mt-text-green"><span>5. Attack Rate Multiplier</span> <button class="calc-info-btn" onclick="openInfoPopup('attack_rate')">?</button></div><table class="calc-table"><tr><td class="mt-cell-label">Hits Per Attack</td><td class="mt-cell-val">${data.extraAttacks.hits}</td></tr><tr><td class="mt-cell-label">Crits Req. for Extra</td><td class="mt-cell-val">${data.extraAttacks.req}</td></tr><tr><td class="mt-cell-label">Attacks needed to Trig</td><td class="mt-cell-val">${fmt.fix(data.extraAttacks.attacksNeeded, 2)}</td></tr><tr><td class="mt-cell-label">Final Dps Mult</td><td class="mt-cell-val calc-highlight">x${fmt.fix(data.extraAttacks.mult, 3)}</td></tr></table></div>` : ''}
+            ${renderDotSection(data, headDotRow)}
+            ${renderSummonSection(data)}
+            ${renderFinalSection(data)}
+        </div>
+    `;
 }
 
 function renderSummonSection(data) {

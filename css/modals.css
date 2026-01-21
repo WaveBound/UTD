@@ -337,6 +337,15 @@
     padding: 12px !important;
 }
 
+/* NEW: Ninja Passive "Box" Styling (Matching Sun God layout, but Cyan/Custom colors) */
+.mt-row-ninja td {
+    background: linear-gradient(90deg, rgba(6, 182, 212, 0.1), rgba(0, 0, 0, 0));
+    border-top: 1px solid rgba(6, 182, 212, 0.3) !important;
+    border-bottom: 1px solid rgba(6, 182, 212, 0.3) !important;
+    border-left: 3px solid var(--custom) !important;
+    padding: 12px !important;
+}
+
 /* NEW: Grid for better spacing in Sun God Passive */
 .sungod-stats-grid {
     display: grid;
