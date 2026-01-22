@@ -376,9 +376,11 @@ function renderCredits() {
     const linkIcon = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="external-link-icon"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>`;
 
     container.innerHTML = creditsData.map(c => {
-        // If they have a User ID, render the specific "Open Link" button
+        // Updated Link Button Logic:
+        // 1. Keep the standard HTML anchor tag (Best for Mobile Universal Links).
+        // 2. Add onclick="handleDiscordLink" (Best for Desktop Protocol triggering).
         const linkButtonHtml = c.userId 
-            ? `<button class="discord-link-btn" onclick="openDiscordProfile('${c.userId}', event)" title="Open Discord Profile">${linkIcon}</button>`
+            ? `<a href="https://discord.com/users/${c.userId}" target="_blank" rel="noopener noreferrer" class="discord-link-btn" onclick="handleDiscordLink('${c.userId}', event)" title="Open Discord Profile" style="display: inline-flex; align-items: center; justify-content: center; text-decoration: none; color: inherit;">${linkIcon}</a>`
             : '';
 
         return `
@@ -400,21 +402,34 @@ window.handleCreditClick = function(username) {
     copyDiscordToClipboard(username);
 };
 
-// 2. Open Profile Function (Triggered ONLY when clicking the little icon)
-window.openDiscordProfile = function(userId, event) {
-    // Stop the click from bubbling up to the badge (prevents copying username)
-    if(event) event.stopPropagation();
+// 2. Hybrid Link Function (Triggered when clicking the Link Icon)
+window.handleDiscordLink = function(userId, event) {
+    // Stop event bubbling (prevents "Copy Username" toast)
+    event.stopPropagation();
 
-    const appLink = `discord://-/users/${userId}`;
-    const webLink = `https://discord.com/users/${userId}`;
+    // Check if the user is on Mobile
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
-    // Attempt to open Discord App (This won't close the browser, just switch focus)
-    window.location.href = appLink;
+    if (isMobile) {
+        // MOBILE STRATEGY:
+        // Do nothing in JS. Let the standard HTML <a> tag handle the navigation.
+        // Mobile OSs (iOS/Android) are smart enough to see "https://discord.com/users/..."
+        // and open the installed Discord App automatically via Universal Links.
+        return;
+    } else {
+        // DESKTOP STRATEGY:
+        // Desktop browsers usually treat "https://" as a website link and just open a tab.
+        // To launch the App, we must explicitly trigger the "discord://" protocol.
+        
+        // This line attempts to launch the Desktop App:
+        window.location.href = `discord://-/users/${userId}`;
 
-    // Fallback: Open Web Profile in a NEW TAB if app doesn't trigger
-    setTimeout(() => {
-        window.open(webLink, "_blank");
-    }, 500);
+        // NOTE: We do NOT use event.preventDefault().
+        // Why? Because if the user *doesn't* have the Desktop App installed, the protocol line above does nothing.
+        // By allowing the <a> tag's default behavior (opening the href in _blank), we ensure
+        // a New Tab opens with the web profile as a failsafe.
+        // Result: User gets "Open Discord?" prompt AND a web tab. This is standard behavior for deep links.
+    }
 };
 
 window.copyDiscordToClipboard = function(username) {
