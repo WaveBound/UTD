@@ -209,10 +209,10 @@ function calculateUnitBuilds(unit, _stats, filteredBuilds, subCandidates, headsT
                     const res = config.res;
                     if (isNaN(res.total)) return;
                     
+
                     // ID Structure: [Unit][Context][Trait][Build][Prio][Subs][Head][MODE]
                     const fullId = `${baseId}-${prioStr}${subsSuffix}${headSuffix}${modeTag}`;
-                    cachedResults[fullId] = res;
-
+                    
                     const entry = createResultEntry({
                         id: fullId,
                         buildName: build.name,
@@ -224,6 +224,9 @@ function calculateUnitBuilds(unit, _stats, filteredBuilds, subCandidates, headsT
                         headUsed: config.assignments.selectedHead,
                         isCustom: trait.isCustom
                     });
+
+                    // FIX: Store the full 'entry' with metadata in cache, not just the raw math 'res'
+                    cachedResults[fullId] = entry;
                     
                     unitResults.push(entry);
                     return entry;
@@ -353,8 +356,6 @@ function calculateInventoryBuilds(unit, _stats, specificTraitsOnly, isAbilityCon
                         const uniqueCombId = `${head.id}_${body.id}_${leg.id}`; 
                         const id = `${unit.id}${suffix}-${trait.id}-INV-${uniqueCombId}${modeTag}${cfgTag}-${prio.id}`;
 
-                        cachedResults[id] = res;
-
                         // UI Formatting
                         const formatSubs = (relic) => Object.entries(relic.subs).map(([k,v]) => ({ type: k, val: v }));
                         let subStatsUI = {
@@ -366,7 +367,7 @@ function calculateInventoryBuilds(unit, _stats, specificTraitsOnly, isAbilityCon
 
                         const setName = activeSetKey !== 'none' ? SETS.find(s=>s.id===activeSetKey)?.name : "Mixed Set";
 
-                        unitResults.push(createResultEntry({
+                        const entry = createResultEntry({
                             id: id,
                             buildName: setName,
                             traitName: trait.name,
@@ -377,7 +378,10 @@ function calculateInventoryBuilds(unit, _stats, specificTraitsOnly, isAbilityCon
                             headUsed: head.setKey,
                             isCustom: trait.isCustom,
                             relicIds: { head: head.id, body: body.id, legs: leg.id }
-                        }));
+                        });
+
+                        cachedResults[id] = entry;
+                        unitResults.push(entry);
                     }); // end variation loop
 
                 }); // end leg

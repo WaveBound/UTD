@@ -12,12 +12,15 @@ function viewSubPriority(buildId) {
     const isVR = buildId.includes('-VR');
     const isCard = buildId.includes('-CARD');
 
+    // Determine points based on prio
+    let dPts = 99, sPts = 0, rPts = 0;
+    if (resultData.prio === 'spa') { dPts = 0; sPts = 99; }
+    else if (resultData.prio === 'range') { dPts = 0; sPts = 0; rPts = 99; }
+
     const { effectiveStats: effStats, context } = buildCalculationContext(unit, resultData.traitName, {
         isAbility,
         headPiece: resultData.headUsed || 'none',
-        // Determine points based on prio
-        dmgPoints: resultData.prio === 'spa' ? 0 : 99,
-        spaPoints: resultData.prio === 'spa' ? 99 : 0
+        dmgPoints: dPts, spaPoints: sPts, rangePoints: rPts
     });
 
     let ms = resultData.mainStats || { body: 'dmg', legs: 'dmg' };
@@ -78,9 +81,10 @@ function viewSubPriority(buildId) {
         addLv1Stat(cand, 'Legs', ms.legs);
     });
 
+    const getScore = (r) => (resultData.prio === 'range') ? r.range : r.total;
+
     let baselineRes = calculateDPS(effStats, baselineBuild, context);
-    let baselineScore = baselineRes.total;
-    if (unit.id === 'law') baselineScore = baselineRes.range;
+    let baselineScore = getScore(baselineRes);
     
     comparisonList.push({ 
         type: 'baseline', 
@@ -115,8 +119,7 @@ function viewSubPriority(buildId) {
         piecesDesc.push(`Legs: ${SUB_NAMES[lRes.stat]}${lRes.fallback ? ' (Fallback)' : ''}`);
 
         let res = calculateDPS(effStats, testBuild, context);
-        let score = res.total;
-        if (unit.id === 'law') score = res.range;
+        let score = getScore(res);
         
         comparisonList.push({ 
             type: cand, 
@@ -147,8 +150,9 @@ function viewSubPriority(buildId) {
         let labelText = getLabel(item.type);
         if (isBaseline) labelText = "Lv.1 Subs";
 
-        const fmtVal = unit.id === 'law' ? item.val.toFixed(1) : format(item.val);
-        const label = unit.id === 'law' ? 'Range' : 'DPS';
+        const isRange = resultData.prio === 'range';
+        const fmtVal = isRange ? item.val.toFixed(1) : format(item.val);
+        const label = isRange ? 'Range' : 'DPS';
         
         let warningIcon = '';
         if (item.conflicts > 0) warningIcon = ` <span class="text-gold">⚠️</span>`;

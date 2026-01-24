@@ -298,7 +298,7 @@ function renderDatabase() {
             }
             
             const abilityToggleHtml = unit.ability ? `<div class="toggle-wrapper"><span>${abilityLabel}</span><label><input type="checkbox" class="ability-cb" ${activeAbilityIds.has(unit.id) ? 'checked' : ''} onchange="toggleAbility('${unit.id}', this)${toggleScript}"><div class="mini-switch"></div></label></div>` : '<div></div>';
-            const topControls = `<div class="unit-toolbar"><div class="flex gap-md"><button class="select-btn" onclick="toggleSelection('${unit.id}')">${selectedUnitIds.has(unit.id) ? 'Selected' : 'Select'}</button><button class="calc-btn" onclick="openCalc('${unit.id}')">🖩 Custom Relics</button></div>${abilityToggleHtml}</div>`;
+            const topControls = `<div class="unit-toolbar"><div class="flex" style="gap: 4px; align-items: center;"><button class="select-btn" style="padding: 2px 8px; font-size: 0.75rem; min-height: 26px;" onclick="toggleSelection('${unit.id}')">${selectedUnitIds.has(unit.id) ? 'Selected' : 'Select'}</button><button class="calc-btn" style="padding: 2px 8px; font-size: 0.75rem; min-height: 26px;" onclick="openCalc('${unit.id}')">🖩 Custom</button><button class="calc-btn" style="padding: 2px 8px; font-size: 0.75rem; min-height: 26px;" onclick="openTraitBestList('${unit.id}')" title="Best Build per Trait">📊 Traits</button></div>${abilityToggleHtml}</div>`;
             
             let defaultSort = 'dps';
             if (['sjw', 'esdeath'].includes(unit.id)) defaultSort = 'damage';
@@ -519,4 +519,91 @@ function renderGuides() {
     });
     
     if (guideGrid.children.length === 0) guideGrid.innerHTML = `<div class="msg-empty">No guides found. Database may still be calculating.</div>`;
+}
+
+function openTraitBestList(unitId) {
+    const unit = unitDatabase.find(u => u.id === unitId);
+    if (!unit) return;
+
+    // Determine Context based on global state
+    const isFixed = document.body.classList.contains('show-fixed-relics');
+    const mode = isFixed ? 'fixed' : 'bugged';
+    const type = activeAbilityIds.has(unitId) && unit.ability ? 'abil' : 'base';
+    
+    // Determine Config Index (Head/Subs)
+    const showHead = document.body.classList.contains('show-head');
+    const showSubs = document.body.classList.contains('show-subs');
+    let cfgIndex = 0;
+    if (!showHead && !showSubs) cfgIndex = 0;
+    else if (!showHead && showSubs) cfgIndex = 1;
+    else if (showHead && !showSubs) cfgIndex = 2;
+    else if (showHead && showSubs) cfgIndex = 3;
+
+    const allBuilds = unitBuildsCache[unitId]?.[type]?.[mode]?.[cfgIndex] || [];
+    
+    if (allBuilds.length === 0) {
+        showUniversalModal({
+            title: 'TRAIT LEADERBOARD',
+            content: '<div class="msg-empty">No builds calculated. Please wait for calculation to finish.</div>',
+            size: 'modal-sm'
+        });
+        return;
+    }
+
+    // Group by Trait (Take best DPS for each trait)
+    const bestByTrait = new Map();
+    allBuilds.forEach(build => {
+        if (!bestByTrait.has(build.traitName)) {
+            bestByTrait.set(build.traitName, build);
+        } else {
+            const current = bestByTrait.get(build.traitName);
+            const isRange = (unitId === 'law');
+            const valBuild = isRange ? (build.range || 0) : build.dps;
+            const valCurrent = isRange ? (current.range || 0) : current.dps;
+            
+            if (valBuild > valCurrent) {
+                bestByTrait.set(build.traitName, build);
+            }
+        }
+    });
+
+    // Convert to Array and Sort
+    const sortedTraits = Array.from(bestByTrait.values()).sort((a, b) => {
+        const isRange = (unitId === 'law');
+        const valA = isRange ? (a.range || 0) : a.dps;
+        const valB = isRange ? (b.range || 0) : b.dps;
+        return valB - valA;
+    });
+
+    // Generate HTML
+    let html = `<div style="display: flex; align-items: center; gap: 12px; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+        <div style="width: 48px; height: 48px; flex-shrink: 0; border-radius: 4px; overflow: hidden; display: flex; align-items: center; justify-content: center; background: #222;">
+            ${getUnitImgHtml(unit, 'unit-avatar', 'width: 100%; height: 100%; object-fit: cover;')}
+        </div>
+        <div>
+            <div class="text-lg font-bold text-white leading-tight">${unit.name}</div>
+            <div class="text-xs text-dim">${unit.role}</div>
+        </div>
+    </div>`;
+
+    html += `<table class="compare-table"><thead><tr><th style="width: 10%">#</th><th style="width: 30%">Trait</th><th style="width: 40%">Best Setup</th><th style="width: 20%">Result</th></tr></thead><tbody>`;
+
+    sortedTraits.forEach((b, idx) => {
+        const isRange = (unitId === 'law');
+        const val = isRange ? (b.range || 0).toFixed(1) : format(b.dps);
+        const label = isRange ? 'RNG' : 'DPS';
+        const labelClass = isRange ? 'comp-val-rng' : 'comp-val-dps';
+        let headText = (b.headUsed && b.headUsed !== 'none') ? ` + ${({'sun_god':'Sun God','ninja':'Ninja','reaper_necklace':'Reaper','shadow_reaper_necklace':'S.Reaper'})[b.headUsed] || 'Head'}` : '';
+        const setupText = `${b.setName} <span class="text-dim text-xs">(${b.mainStats.body}/${b.mainStats.legs})</span>${headText}`;
+        
+        let rankStyle = 'opacity: 0.5; font-size: 0.9em;';
+        if (idx === 0) rankStyle = 'color: #fbbf24; font-weight: bold; font-size: 1.1em; text-shadow: 0 0 10px rgba(251, 191, 36, 0.3);';
+        else if (idx === 1) rankStyle = 'color: #e2e8f0; font-weight: bold;';
+        else if (idx === 2) rankStyle = 'color: #b45309; font-weight: bold;';
+
+        html += `<tr><td style="text-align: center;"><span style="${rankStyle}">#${idx + 1}</span></td><td><span class="comp-tag">${b.traitName}</span></td><td><div class="text-sm">${setupText}</div><div class="text-xs text-dim">Prio: ${b.prio.toUpperCase()}</div></td><td><div class="comp-highlight">${val} <span class="comp-val-label ${labelClass}">${label}</span></div></td></tr>`;
+    });
+
+    html += `</tbody></table>`;
+    showUniversalModal({ title: `TRAIT LEADERBOARD`, content: html, size: 'modal-lg' });
 }
