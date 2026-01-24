@@ -349,7 +349,8 @@ function _calcDoTDPS(uStats, traitObj, totalDotBuffs, baseR_Dot, finalDmg, final
         nativeInterval: 0,
         nativeTotalDmg: 0,
         radInterval: 0,
-        radTotalDmg: 0
+        radTotalDmg: 0,
+        isMultiHit: false // Add this for the breakdown UI
     };
 
     const canStack = (traitObj.allowDotStack || traitObj.allowPlacementStack);
@@ -357,29 +358,22 @@ function _calcDoTDPS(uStats, traitObj, totalDotBuffs, baseR_Dot, finalDmg, final
     // 1. NATIVE DOT (Burn, Bleed, etc.)
     if (uStats.dot > 0) {
         const nativeTickPct = (uStats.dot + totalDotBuffs) * dotBreakdown.relicMult;
-        const totalNativeDmg = finalDmg * (nativeTickPct / 100) * dotCritMult;
         
+        // --- THE FIX IS HERE ---
+        // If the trait allows stacking (Astral) and the unit is a multi-hitter (Kirito)
+        // every hit applies the DoT.
+        const multiHitMult = (canStack && uStats.hitCount) ? uStats.hitCount : 1;
+        dotBreakdown.isMultiHit = (multiHitMult > 1);
+
+        const totalNativeDmg = finalDmg * (nativeTickPct / 100) * dotCritMult * multiHitMult;
+        // -----------------------
+
         const duration = uStats.dotDuration || 0;
-        // Interval Logic: First attack after duration expires
         const interval = canStack ? finalSpa : (duration > 0 ? Math.ceil(duration / finalSpa) * finalSpa : finalSpa);
         
         dotBreakdown.nativeTotalDmg = totalNativeDmg;
         dotBreakdown.nativeInterval = interval;
         dotBreakdown.nativeDps = totalNativeDmg / interval;
-    }
-
-    // 2. RADIATION DOT (Fission Trait)
-    if (traitObj.hasRadiation) {
-        const radPct = traitObj.radiationPct || 20;
-        const duration = traitObj.radiationDuration || 10;
-        const totalRadDmg = finalDmg * (radPct / 100) * dotCritMult;
-        
-        // Interval Logic: First attack after the 10s duration expires (e.g., 6.2 -> 12.4)
-        const interval = canStack ? finalSpa : Math.ceil(duration / finalSpa) * finalSpa;
-
-        dotBreakdown.radTotalDmg = totalRadDmg;
-        dotBreakdown.radInterval = interval;
-        dotBreakdown.radDps = totalRadDmg / interval;
     }
 
     const combinedOneUnitDps = dotBreakdown.nativeDps + dotBreakdown.radDps;

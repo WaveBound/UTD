@@ -179,7 +179,7 @@ function renderDotSection(data, headDotRow) {
             ${headDot > 0 ? `<tr><td class="mt-cell-label mt-pl-md opacity-70">↳ Head Passive</td><td class="mt-cell-formula"></td><td class="mt-cell-val text-xs">${fmt.pct(headDot)}</td></tr>` : ''}
             
             <tr><td class="mt-cell-label mt-pl-md text-accent-end">↳ Relic Multiplier</td><td class="mt-cell-formula">x${fmt.fix(relicMult, 2)}</td><td class="mt-cell-val text-accent-end">${fmt.pct(relicDot)}</td></tr>
-
+          ${db.isMultiHit ? `<tr><td class="mt-cell-label mt-pl-md text-custom">↳ Multi-Hit Proc (Astral)</td><td class="mt-cell-formula">x${data.baseStats.hitCount}</td><td class="mt-cell-val text-custom">Active</td></tr>` : ''}
             <tr>
                 <td class="mt-cell-label mt-pt-sm">Native DoT DPS</td>
                 <td class="mt-cell-formula mt-pt-sm">${getFormula(db.nativeTotalDmg, db.nativeInterval)}</td>

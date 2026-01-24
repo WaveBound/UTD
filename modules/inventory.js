@@ -21,7 +21,7 @@ function getSlotOptions(slot, starMult = 1) {
     // Helper to format option
     const makeOpt = (key, baseVal) => ({ 
         value: key, 
-        text: `${STAT_LABELS[normalizeStatKey(key)]} (${(baseVal * starMult).toFixed(1)}%)` 
+        text: `${STAT_LABELS[getStatType(key)] || key.toUpperCase()} (${(baseVal * starMult).toFixed(1)}%)` 
     });
 
     if (slot === 'Head') {
@@ -374,11 +374,14 @@ function renderInventory() {
         
         // Prepare Sub Stats for Rich Badge
         const subData = Object.entries(relic.subs).map(([k, v]) => ({ type: k, val: v }));
-        const subBadge = getRichBadgeHtml(subData); // Replaces manual HTML construction
+        const subBadges = subData.map(s => getBadgeHtml(s.type, s.val)).join('');
 
         card.innerHTML = `
             <div class="rc-header">
                 <div class="rc-set-info"><span class="rc-set-name">${setObj.name}</span><span class="rc-stars">${starCount > 0 ? "★".repeat(starCount) : ""}</span></div>
+                <button class="rc-opt-btn" title="Check Optimality" style="background: transparent; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 4px; border-radius: 4px; transition: background 0.2s;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg>
+                </button>
                 <button class="rc-delete-btn" title="Delete">×</button>
             </div>
             <div class="rc-visual-container">
@@ -395,14 +398,168 @@ function renderInventory() {
                 <div class="rc-separator"></div>
                 <div class="rc-sub-stats">
                     <div class="rc-label" style="font-size: 0.75rem;">SUB STATS</div>
-                    <div class="rc-subs-grid">${subBadge}</div>
+                    <div class="rc-subs-grid" style="display: flex; flex-wrap: wrap; gap: 4px;">${subBadges}</div>
                 </div>
             </div>
         `;
 
         card.querySelector('.rc-delete-btn').addEventListener('click', (e) => { e.stopPropagation(); deleteRelic(relic.id); });
+        card.querySelector('.rc-opt-btn').addEventListener('click', (e) => { e.stopPropagation(); checkOptimality(relic.id); });
         frag.appendChild(card);
     });
     
     inventoryGrid.appendChild(frag);
 }
+
+function checkOptimality(relicId) {
+    const relic = relicInventory.find(r => r.id === relicId);
+    if (!relic) return;
+
+    // Build Modal Content
+    const unitOptions = unitDatabase.map(u => `<option value="${u.id}">${u.name}</option>`).join('');
+    const traitOptions = traitsList.filter(t => t.id !== 'none').map(t => `<option value="${t.id}">${t.name}</option>`).join('');
+
+    const content = `
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+            <div style="background: rgba(255,255,255,0.05); padding: 10px; border-radius: 6px;">
+                <div class="text-sm text-dim mb-1">Analyzing Relic:</div>
+                <div class="text-white text-bold">${SETS.find(s=>s.id===relic.setKey)?.name || relic.setKey} (${relic.slot})</div>
+                <div class="text-xs text-gold">${relic.mainStat.toUpperCase()} ${relic.stars}★</div>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+                <div class="input-group" style="margin: 0;">
+                    <label style="font-size: 0.75rem; color: #aaa;">Compare Context (Unit)</label>
+                    <select id="optUnitSelect" class="modal-select" style="padding: 4px;">${unitOptions}</select>
+                </div>
+                <div class="input-group" style="margin: 0;">
+                    <label style="font-size: 0.75rem; color: #aaa;">Trait</label>
+                    <select id="optTraitSelect" class="modal-select" style="padding: 4px;">${traitOptions}</select>
+                </div>
+            </div>
+        </div>
+        <div id="optResultArea" class="hidden" style="background: rgba(0,0,0,0.3); border-radius: 8px; padding: 15px; display: flex; align-items: center; gap: 20px; border: 1px solid rgba(255,255,255,0.1);">
+            <div style="position: relative; width: 70px; height: 70px; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 50%; background: rgba(255,255,255,0.05); border: 2px solid #555;" id="optCircle">
+                <span id="optPercent" style="font-size: 1.2rem; font-weight: bold; color: #fff;">0%</span>
+                <small style="font-size: 0.6rem; color: #aaa; text-transform: uppercase;">Optimality</small>
+            </div>
+            <div style="flex: 1;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 4px;"><span>Current DPS:</span> <span id="optCurrent" class="text-white">-</span></div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 4px;"><span>Potential DPS:</span> <span id="optMax" class="text-gold">-</span></div>
+                <div style="display: flex; justify-content: space-between; margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.1);"><span class="text-xs text-dim">Best Stat for Slot:</span> <span id="optBestStat" class="text-xs text-accent-start">-</span></div>
+                <div id="optSuggestion" class="text-xs text-dim mt-1" style="margin-top: 6px; font-style: italic;"></div>
+            </div>
+        </div>
+    `;
+
+    showUniversalModal({
+        title: 'RELIC OPTIMALITY',
+        content: content,
+        footerButtons: `<button class="action-btn" onclick="runOptimalityCalc('${relicId}')">Calculate</button><button class="action-btn secondary" onclick="closeModal('universalModal')">Close</button>`,
+        size: 'modal-sm'
+    });
+
+    // Set default unit if selected
+    if (currentCalcUnitId) document.getElementById('optUnitSelect').value = currentCalcUnitId;
+    else if (selectedUnitIds.size > 0) document.getElementById('optUnitSelect').value = Array.from(selectedUnitIds)[0];
+}
+
+window.runOptimalityCalc = function(relicId) {
+    const relic = relicInventory.find(r => r.id === relicId);
+    if (!relic) return;
+
+    const unitId = document.getElementById('optUnitSelect').value;
+    const traitId = document.getElementById('optTraitSelect').value;
+    const unit = unitDatabase.find(u => u.id === unitId);
+    
+    if (!unit) return;
+
+    // 1. Setup Context
+    const { effectiveStats, context } = buildCalculationContext(unit, traitId, {
+        isAbility: activeAbilityIds.has(unitId),
+        headPiece: (relic.slot === 'Head') ? relic.setKey : 'none'
+    });
+
+    // 2. Define "Other Slots" (Standard Baseline)
+    let baseSetId = relic.setKey;
+    if (baseSetId === 'shadow_reaper_necklace') baseSetId = 'shadow_reaper';
+    if (baseSetId === 'reaper_necklace') baseSetId = 'reaper_set';
+
+    const starMult = relic.stars || 1;
+    
+    // Helper to build total stats
+    const buildStats = (targetRelic) => {
+        let stats = { set: baseSetId, dmg: 0, spa: 0, range: 0, cm: 0, cf: 0, dot: 0 };
+        
+        // Add Target Relic Stats
+        const addR = (r) => {
+            let base = 0;
+            if (r.slot === 'Body') base = MAIN_STAT_VALS.body[r.mainStat] || 0;
+            if (r.slot === 'Legs') base = MAIN_STAT_VALS.legs[r.mainStat] || 0;
+            if (base > 0) stats[r.mainStat] += base * (r.stars || 1);
+            Object.entries(r.subs).forEach(([k, v]) => { if (stats[k] !== undefined) stats[k] += v; });
+        };
+        addR(targetRelic);
+
+        // Add "Other" Slots (Fixed Standard: Dmg Main, No Subs)
+        if (targetRelic.slot === 'Head') {
+            stats.dmg += MAIN_STAT_VALS.body.dmg * starMult; 
+            stats.dmg += MAIN_STAT_VALS.legs.dmg * starMult; 
+        } else if (targetRelic.slot === 'Body') {
+            stats.dmg += MAIN_STAT_VALS.legs.dmg * starMult; 
+        } else if (targetRelic.slot === 'Legs') {
+            stats.dmg += MAIN_STAT_VALS.body.dmg * starMult; 
+        }
+        return stats;
+    };
+
+    // 3. Calculate Current
+    const currentStats = buildStats(relic);
+    const currentRes = calculateDPS(effectiveStats, currentStats, context);
+    const currentScore = currentRes.total;
+
+    // 4. Calculate Max Potential (Perfect Subs)
+    const candidates = ['dmg', 'spa', 'range', 'cm', 'cf', 'dot'];
+    let maxScore = 0;
+    let bestStat = '';
+
+    candidates.forEach(cand => {
+        if (cand === 'dot' && !statConfig.applyRelicDot) return;
+        if ((cand === 'cm' || cand === 'cf') && !statConfig.applyRelicCrit) return;
+
+        const cap = MAX_SUB_STAT_VALUES[cand] * starMult;
+        const perfectRelic = { ...relic, subs: { [cand]: cap } };
+        const res = calculateDPS(effectiveStats, buildStats(perfectRelic), context);
+        
+        if (res.total > maxScore) { maxScore = res.total; bestStat = cand; }
+    });
+
+    // 5. Display
+    const pct = maxScore > 0 ? (currentScore / maxScore) * 100 : 0;
+    
+    document.getElementById('optResultArea').classList.remove('hidden');
+    document.getElementById('optPercent').innerText = pct.toFixed(1) + '%';
+    document.getElementById('optCurrent').innerText = format(currentScore);
+    document.getElementById('optMax').innerText = format(maxScore);
+    document.getElementById('optBestStat').innerText = STAT_LABELS[bestStat] || bestStat.toUpperCase();
+
+    // Suggestion Logic
+    const FULL_NAMES = {
+        dmg: "Damage", spa: "SPA", cm: "Crit Damage", cf: "Crit Rate", dot: "DoT", range: "Range", potency: "Potency", elemental: "Elemental Dmg"
+    };
+    const bestLabel = FULL_NAMES[bestStat] || STAT_LABELS[bestStat] || bestStat.toUpperCase();
+    const targetVal = (MAX_SUB_STAT_VALUES[bestStat] * starMult).toFixed(1);
+
+    const currentSubKeys = Object.keys(relic.subs);
+    const hasSuboptimalType = currentSubKeys.some(k => k !== bestStat);
+    
+    let suggestionHtml = '';
+    if (pct >= 99.9) suggestionHtml = `<span style="color: #4ade80;">Perfect configuration!</span>`;
+    else if (hasSuboptimalType || currentSubKeys.length === 0) suggestionHtml = `Tip: Aim for <span class="text-gold">${targetVal}% ${bestLabel}</span>`;
+    else suggestionHtml = `Tip: Maximize values to <span class="text-gold">${targetVal}% ${bestLabel}</span>`;
+    
+    document.getElementById('optSuggestion').innerHTML = suggestionHtml;
+    
+    const circle = document.getElementById('optCircle');
+    circle.style.borderColor = pct >= 90 ? '#4ade80' : pct >= 70 ? '#fbbf24' : '#f87171';
+    document.getElementById('optPercent').style.color = pct >= 90 ? '#4ade80' : pct >= 70 ? '#fbbf24' : '#f87171';
+};
