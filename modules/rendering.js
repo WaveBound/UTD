@@ -578,7 +578,7 @@ function openTraitBestList(unitId) {
     // Generate HTML
     let html = `<div style="display: flex; align-items: center; gap: 12px; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.1);">
         <div style="width: 48px; height: 48px; flex-shrink: 0; border-radius: 4px; overflow: hidden; display: flex; align-items: center; justify-content: center; background: #222;">
-            ${getUnitImgHtml(unit, 'unit-avatar', 'width: 100%; height: 100%; object-fit: cover;')}
+            <img src="${unit.img}" style="width: 100%; height: 100%; object-fit: contain;">
         </div>
         <div>
             <div class="text-lg font-bold text-white leading-tight">${unit.name}</div>
@@ -588,13 +588,22 @@ function openTraitBestList(unitId) {
 
     html += `<table class="compare-table"><thead><tr><th style="width: 10%">#</th><th style="width: 30%">Trait</th><th style="width: 40%">Best Setup</th><th style="width: 20%">Result</th></tr></thead><tbody>`;
 
+    const mapStat = (s) => {
+        if (s === 'cf') return 'Crit Rate';
+        if (s === 'cm') return 'Crit Dmg';
+        if (s === 'spa') return 'SPA';
+        if (s === 'range') return 'Range';
+        if (s === 'dot') return 'DoT';
+        return 'Dmg';
+    };
+
     sortedTraits.forEach((b, idx) => {
         const isRange = (unitId === 'law');
         const val = isRange ? (b.range || 0).toFixed(1) : format(b.dps);
         const label = isRange ? 'RNG' : 'DPS';
         const labelClass = isRange ? 'comp-val-rng' : 'comp-val-dps';
         let headText = (b.headUsed && b.headUsed !== 'none') ? ` + ${({'sun_god':'Sun God','ninja':'Ninja','reaper_necklace':'Reaper','shadow_reaper_necklace':'S.Reaper'})[b.headUsed] || 'Head'}` : '';
-        const setupText = `${b.setName} <span class="text-dim text-xs">(${b.mainStats.body}/${b.mainStats.legs})</span>${headText}`;
+        const setupText = `${b.setName} <span class="text-dim text-xs">(${mapStat(b.mainStats.body)}/${mapStat(b.mainStats.legs)})</span>${headText}`;
         
         let rankStyle = 'opacity: 0.5; font-size: 0.9em;';
         if (idx === 0) rankStyle = 'color: #fbbf24; font-weight: bold; font-size: 1.1em; text-shadow: 0 0 10px rgba(251, 191, 36, 0.3);';

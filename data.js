@@ -26,7 +26,7 @@ const SUB_NAMES = {
 
 const patchNotesData = [
     {
-        version: "v3.10",
+        version: "v4.0",
         date: "Jan 20, 2026",
         changes: [
             { type: "QoL", text: "<b>Calculator Persistence:</b> Changing Sets, Traits, or Main Stats in the Custom Relic Modal/Add Relic Modal no longer resets your manually entered Sub-Stat values." },
@@ -257,7 +257,7 @@ const unitDatabase = [
     },
     {
         id: "ragna", name: "Ragna (Silverite)", role: "Burst / Hybrid",
-        img: "images/units/Ragna.png", 
+        img: "images/units/Ragna.png",
         totalCost: 72000,
         placement: 1, tags: [],
         meta: { short: "Ruler", long: "Ruler", note: "Ruler is strictly best due to 1 placement count." },
