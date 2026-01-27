@@ -262,7 +262,7 @@ function calculateUnitBuilds(unit, _stats, filteredBuilds, subCandidates, headsT
 }
 
 // Inventory Mode Calculation
-function calculateInventoryBuilds(unit, _stats, specificTraitsOnly, isAbilityContext, mode, headsToProcess, includeSubs) {
+function calculateInventoryBuilds(unit, _stats, specificTraitsOnly, isAbilityContext, mode, headsToProcess, includeSubs, forcedRelic = null) {
     cachedResults = cachedResults || {};
     
     // 1. Determine Traits List
@@ -283,10 +283,18 @@ function calculateInventoryBuilds(unit, _stats, specificTraitsOnly, isAbilityCon
     const bodies = relicInventory.filter(r => r.slot === 'Body');
     const legs = relicInventory.filter(r => r.slot === 'Legs');
 
+    // Apply Force Logic (Relic Optimality)
+    if (forcedRelic) {
+        if (forcedRelic.slot === 'Head') heads = [forcedRelic];
+        if (forcedRelic.slot === 'Body') bodies = [forcedRelic];
+        if (forcedRelic.slot === 'Legs') legs = [forcedRelic];
+    }
+
     // Add 'None' options
-    heads.push({ id: 'none', slot: 'Head', setKey: 'none', stars: 1, mainStat: 'none', subs: {} });
-    if(bodies.length === 0) bodies.push({ id: 'none-b', slot: 'Body', setKey: 'none', stars: 1, mainStat: null, subs: {} }); 
-    if(legs.length === 0) legs.push({ id: 'none-l', slot: 'Legs', setKey: 'none', stars: 1, mainStat: null, subs: {} }); 
+    // Only add 'None' if we aren't forcing a specific relic in that slot
+    if (!forcedRelic || forcedRelic.slot !== 'Head') heads.push({ id: 'none', slot: 'Head', setKey: 'none', stars: 1, mainStat: 'none', subs: {} });
+    if ((!forcedRelic || forcedRelic.slot !== 'Body') && (bodies.length === 0 || !forcedRelic)) bodies.push({ id: 'none-b', slot: 'Body', setKey: 'none', stars: 1, mainStat: null, subs: {} }); 
+    if ((!forcedRelic || forcedRelic.slot !== 'Legs') && (legs.length === 0 || !forcedRelic)) legs.push({ id: 'none-l', slot: 'Legs', setKey: 'none', stars: 1, mainStat: null, subs: {} }); 
 
     const cfgTag = `-${allowHeads ? 'H' : 'nH'}-${includeSubs ? 'S' : 'nS'}`;
 

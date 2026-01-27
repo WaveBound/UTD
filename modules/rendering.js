@@ -1,7 +1,3 @@
-// ============================================================================
-// RENDERING.JS - UI Generation & Cache Management
-// ============================================================================
-
 const unitControls = {
     kirito: (unit) => {
         const { realm, card } = kiritoState;
@@ -40,7 +36,6 @@ function createBaseUnitCard(unit, options = {}) {
 }
 
 function calculateBuildEfficiency(build, unitCost, unitMaxPlacement, unitId) {
-    // USE UNIFIED TRAIT HELPER
     const foundTrait = getTraitByName(build.traitName, unitId);
 
     let traitLimit = null;
@@ -69,10 +64,38 @@ function getHeadBadgeHtml(headUsed) {
 }
 
 function generateBuildRowHTML(r, i, unitConfig = {}) {
-    const { totalCost = 50000, placement = 1, sortMode = 'dps', unitId = '' } = unitConfig;
+    const { totalCost = 50000, placement = 1, sortMode = 'dps', unitId = '', benchmarkDps = 0 } = unitConfig;
     
     let rankClass = (i < 3 ? `rank-${i+1}` : 'rank-other') + (r.isCustom ? ' is-custom' : '');
     const effScore = calculateBuildEfficiency(r, totalCost, placement, unitId).toFixed(3);
+
+    // OPTIMALITY BADGE LOGIC
+let optimalityHtml = '';
+if (inventoryMode && benchmarkDps > 0) {
+    const optPct = (r.dps / benchmarkDps) * 100;
+    
+    // Updated to more "premium" color palette
+    // 95%+ = Emerald Glow, 80%+ = Amber Glow, <80% = Ruby Glow
+    let color, glow;
+    if (optPct >= 95) {
+        color = '#00ffaa'; // Vibrant Emerald
+        glow = 'rgba(0, 255, 170, 0.15)';
+    } else if (optPct >= 80) {
+        color = '#ffcc00'; // Pure Amber
+        glow = 'rgba(255, 204, 0, 0.15)';
+    } else {
+        color = '#ff4d4d'; // Soft Ruby
+        glow = 'rgba(255, 77, 77, 0.15)';
+    }
+    
+    optimalityHtml = `
+        <div class="optimality-badge" 
+             style="color: ${color}; border-color: ${color}66; --glow-color: ${glow};">
+            <span class="opt-label" style="color: ${color}">OPTIMALITY</span>
+            <span class="opt-pct">${optPct.toFixed(1)}%</span>
+        </div>
+    `;
+}
 
     // PRIORITY BADGE LOGIC
     const prioConfig = {
@@ -83,7 +106,6 @@ function generateBuildRowHTML(r, i, unitConfig = {}) {
 
     let prioHtml = '';
     if (r.relicIds) {
-        // Inventory Mode
         const hId = r.relicIds.head || 'none';
         const bId = r.relicIds.body || 'none-b';
         const lId = r.relicIds.legs || 'none-l';
@@ -98,7 +120,6 @@ function generateBuildRowHTML(r, i, unitConfig = {}) {
         prioHtml = `<span class="prio-badge ${pCfg.cls}">${pCfg.label}</span>`;
     }
 
-    // Unified Badge Generation
     const mainBodyBadge = getBadgeHtml(r.mainStats.body, MAIN_STAT_VALS.body[r.mainStats.body]);
     const mainLegsBadge = getBadgeHtml(r.mainStats.legs, MAIN_STAT_VALS.legs[r.mainStats.legs]);
     const headHtml = getHeadBadgeHtml(r.headUsed);
@@ -117,7 +138,10 @@ function generateBuildRowHTML(r, i, unitConfig = {}) {
         <div class="build-row ${rankClass} ${sortMode === 'efficiency' ? 'is-efficiency-sort' : ''}">
             <div class="br-header">
                 <div class="br-header-info"><span class="br-rank">#${i+1}</span><span class="br-set">${r.setName}</span><span class="br-sep">/</span><span class="br-trait">${r.traitName}</span></div>
-                ${prioHtml}
+                <div style="display:flex; gap:8px; align-items:center;">
+                    ${optimalityHtml}
+                    ${prioHtml}
+                </div>
             </div>
             <div class="br-grid">
                 <div class="br-col main"><div class="br-col-title">MAIN STAT</div>${headHtml}<div class="stat-line"><span class="sl-label">BODY</span> ${mainBodyBadge}</div><div class="stat-line"><span class="sl-label">LEGS</span> ${mainLegsBadge}</div></div>
@@ -141,6 +165,23 @@ function updateBuildListDisplay(unitId) {
     const unitObj = unitDatabase.find(u => u.id === unitId);
     const unitCost = unitObj ? unitObj.totalCost : 50000;
     const unitPlace = unitObj ? unitObj.placement : 1;
+
+    // --- CALCULATE BENCHMARK FOR OPTIMALITY ---
+    let benchmarkDps = 0;
+    if (inventoryMode && window.STATIC_BUILD_DB) {
+        const isAbility = activeAbilityIds.has(unitId);
+        const mode = document.body.classList.contains('show-fixed-relics') ? 'fixed' : 'bugged';
+        let dbKey = unitId + (unitId === 'kirito' && kiritoState.card ? 'kirito_card' : '') + (isAbility && unitObj.ability ? '_abil' : '');
+
+        const showHead = document.body.classList.contains('show-head');
+        const showSubs = document.body.classList.contains('show-subs');
+        let cfgIdx = (showHead ? 2 : 0) + (showSubs ? 1 : 0);
+
+        const perfectBuilds = window.STATIC_BUILD_DB[dbKey]?.[mode]?.[cfgIdx];
+        if (perfectBuilds && perfectBuilds.length > 0) {
+            benchmarkDps = perfectBuilds[0].dps;
+        }
+    }
 
     const searchInput = card.querySelector('.search-container input').value.toLowerCase();
     const prioSelect = card.querySelector('select[data-filter="prio"]').value;
@@ -191,12 +232,13 @@ function updateBuildListDisplay(unitId) {
         }
 
         let displaySlice = filtered.slice(0, 10);
-        if(unitId === 'kirito' && searchInput === '') {
-            const astralBuild = filtered.find(b => b.traitName === 'Astral');
-            if(astralBuild && !displaySlice.includes(astralBuild)) displaySlice.push(astralBuild);
-        }
-
-        return displaySlice.map((r, i) => generateBuildRowHTML(r, i, { totalCost: unitCost, placement: unitPlace, sortMode: sortSelect, unitId })).join('');
+        return displaySlice.map((r, i) => generateBuildRowHTML(r, i, { 
+            totalCost: unitCost, 
+            placement: unitPlace, 
+            sortMode: sortSelect, 
+            unitId,
+            benchmarkDps: benchmarkDps 
+        })).join('');
     };
 
     ['base', 'abil'].forEach(type => {
@@ -210,8 +252,6 @@ function updateBuildListDisplay(unitId) {
     });
 }
 
-// ... rest of rendering.js (processUnitCache, renderDatabase etc) remains unchanged ...
-// Including required functions to keep file complete
 function processUnitCache(unit) {
     unitBuildsCache[unit.id] = { base: { bugged: [], fixed: [] }, abil: { bugged: [], fixed: [] } };
     const CONFIGS = [{ head: false, subs: false }, { head: false, subs: true }, { head: true,  subs: false }, { head: true,  subs: true }];
@@ -220,7 +260,6 @@ function processUnitCache(unit) {
         const originalRelicDot = statConfig.applyRelicDot, originalRelicCrit = statConfig.applyRelicCrit;
         statConfig.applyRelicDot = (mode === 'fixed');
 
-        // Note: Context building happens INSIDE calculateUnitBuilds now for efficiency/correctness
         let dbKey = unit.id + (unit.id === 'kirito' && kiritoState.card ? 'kirito_card' : '') + (useAbility && unit.ability ? '_abil' : '');
         const resultSet = [];
         const useInventory = (inventoryMode === true);
@@ -240,11 +279,9 @@ function processUnitCache(unit) {
                 }
             }
 
-            // Standard Traits + Unit Specific (Global Custom handled by helper inside calc)
             const traitsForCalc = (calculatedResults.length > 0) ? [...(typeof customTraits !== 'undefined' ? customTraits : []), ...(unitSpecificTraits[unit.id] || [])] : null;
             
             if (traitsForCalc === null || traitsForCalc.length > 0 || useInventory) {
-                // Pass NULL for stats, we build it inside
                 const dynamicResults = calculateUnitBuilds(unit, null, getFilteredBuilds(), getValidSubCandidates(), cfg.head ? ['sun_god', 'ninja', 'reaper_necklace', 'shadow_reaper_necklace'] : ['none'], cfg.subs, traitsForCalc, useAbility, mode);
                 calculatedResults = [...calculatedResults, ...dynamicResults];
             }
@@ -445,10 +482,8 @@ function processGuideTop3(rawBuilds, unit, traitFilterId) {
     if (!rawBuilds || rawBuilds.length === 0) return [];
     let filtered = [...rawBuilds];
     if (traitFilterId && traitFilterId !== 'auto') {
-        // USE UNIFIED HELPER
         const tObj = getTraitById(traitFilterId, unit.id);
         const targetName = tObj ? tObj.name : "";
-        
         if (targetName) filtered = filtered.filter(b => b.traitName === targetName);
     }
     filtered.sort(unit.id === 'law' ? (a, b) => (b.range || 0) - (a.range || 0) : (a, b) => b.dps - a.dps);
@@ -489,7 +524,6 @@ function renderGuides() {
 
     let tName = 'Auto Trait';
     if(filterTraitId !== 'auto') { 
-        // USE UNIFIED HELPER
         const found = getTraitById(filterTraitId);
         if(found) tName = found.name; 
     }
@@ -525,12 +559,10 @@ function openTraitBestList(unitId) {
     const unit = unitDatabase.find(u => u.id === unitId);
     if (!unit) return;
 
-    // Determine Context based on global state
     const isFixed = document.body.classList.contains('show-fixed-relics');
     const mode = isFixed ? 'fixed' : 'bugged';
     const type = activeAbilityIds.has(unitId) && unit.ability ? 'abil' : 'base';
     
-    // Determine Config Index (Head/Subs)
     const showHead = document.body.classList.contains('show-head');
     const showSubs = document.body.classList.contains('show-subs');
     let cfgIndex = 0;
@@ -550,7 +582,6 @@ function openTraitBestList(unitId) {
         return;
     }
 
-    // Group by Trait (Take best DPS for each trait)
     const bestByTrait = new Map();
     allBuilds.forEach(build => {
         if (!bestByTrait.has(build.traitName)) {
@@ -567,7 +598,6 @@ function openTraitBestList(unitId) {
         }
     });
 
-    // Convert to Array and Sort
     const sortedTraits = Array.from(bestByTrait.values()).sort((a, b) => {
         const isRange = (unitId === 'law');
         const valA = isRange ? (a.range || 0) : a.dps;
@@ -575,7 +605,6 @@ function openTraitBestList(unitId) {
         return valB - valA;
     });
 
-    // Generate HTML
     let html = `<div style="display: flex; align-items: center; gap: 12px; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.1);">
         <div style="width: 48px; height: 48px; flex-shrink: 0; border-radius: 4px; overflow: hidden; display: flex; align-items: center; justify-content: center; background: #222;">
             <img src="${unit.img}" style="width: 100%; height: 100%; object-fit: contain;">

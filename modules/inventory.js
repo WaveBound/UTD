@@ -25,7 +25,7 @@ function getSlotOptions(slot, starMult = 1) {
     });
 
     if (slot === 'Head') {
-        opts.push(makeOpt('potency', 75)); // Head specific constants
+        opts.push(makeOpt('potency', 45)); // Head specific constants
         opts.push(makeOpt('elemental', 30));
     } else if (slot === 'Body') {
         Object.entries(MAIN_STAT_VALS.body).forEach(([key, val]) => opts.push(makeOpt(key, val)));
@@ -309,7 +309,7 @@ function getRelicVisuals(setKey, slot) {
 
 function calculateMainValue(relic) {
     let base = 0;
-    if (relic.mainStat === 'potency') base = 75;
+    if (relic.mainStat === 'potency') base = 45;
     else if (relic.mainStat === 'elemental') base = 30;
     else if (MAIN_STAT_VALS.body[relic.mainStat]) base = MAIN_STAT_VALS.body[relic.mainStat];
     else if (MAIN_STAT_VALS.legs[relic.mainStat]) base = MAIN_STAT_VALS.legs[relic.mainStat];
@@ -470,7 +470,6 @@ window.runOptimalityCalc = function(relicId) {
     const unitId = document.getElementById('optUnitSelect').value;
     const traitId = document.getElementById('optTraitSelect').value;
     const unit = unitDatabase.find(u => u.id === unitId);
-    
     if (!unit) return;
 
     // 1. Setup Context
@@ -479,87 +478,157 @@ window.runOptimalityCalc = function(relicId) {
         headPiece: (relic.slot === 'Head') ? relic.setKey : 'none'
     });
 
-    // 2. Define "Other Slots" (Standard Baseline)
-    let baseSetId = relic.setKey;
-    if (baseSetId === 'shadow_reaper_necklace') baseSetId = 'shadow_reaper';
-    if (baseSetId === 'reaper_necklace') baseSetId = 'reaper_set';
-
     const starMult = relic.stars || 1;
-    
-    // Helper to build total stats
-    const buildStats = (targetRelic) => {
-        let stats = { set: baseSetId, dmg: 0, spa: 0, range: 0, cm: 0, cf: 0, dot: 0 };
-        
-        // Add Target Relic Stats
-        const addR = (r) => {
-            let base = 0;
-            if (r.slot === 'Body') base = MAIN_STAT_VALS.body[r.mainStat] || 0;
-            if (r.slot === 'Legs') base = MAIN_STAT_VALS.legs[r.mainStat] || 0;
-            if (base > 0) stats[r.mainStat] += base * (r.stars || 1);
-            Object.entries(r.subs).forEach(([k, v]) => { if (stats[k] !== undefined) stats[k] += v; });
-        };
-        addR(targetRelic);
 
-        // Add "Other" Slots (Fixed Standard: Dmg Main, No Subs)
-        if (targetRelic.slot === 'Head') {
-            stats.dmg += MAIN_STAT_VALS.body.dmg * starMult; 
-            stats.dmg += MAIN_STAT_VALS.legs.dmg * starMult; 
-        } else if (targetRelic.slot === 'Body') {
-            stats.dmg += MAIN_STAT_VALS.legs.dmg * starMult; 
-        } else if (targetRelic.slot === 'Legs') {
-            stats.dmg += MAIN_STAT_VALS.body.dmg * starMult; 
-        }
+    // 2. Calculate CURRENT DPS
+    const buildCurrentStats = () => {
+        let stats = { set: relic.setKey, dmg: 0, spa: 0, range: 0, cm: 0, cf: 0, dot: 0 };
+        const mainBase = relic.slot === 'Body' ? MAIN_STAT_VALS.body[relic.mainStat] : MAIN_STAT_VALS.legs[relic.mainStat];
+        if (mainBase) stats[relic.mainStat] = mainBase * starMult;
+        Object.entries(relic.subs).forEach(([k, v]) => { if (stats[k] !== undefined) stats[k] += v; });
         return stats;
     };
+    const currentRes = calculateDPS(effectiveStats, buildCurrentStats(), context);
 
-    // 3. Calculate Current
-    const currentStats = buildStats(relic);
-    const currentRes = calculateDPS(effectiveStats, currentStats, context);
-    const currentScore = currentRes.total;
-
-    // 4. Calculate Max Potential (Perfect Subs)
-    const candidates = ['dmg', 'spa', 'range', 'cm', 'cf', 'dot'];
+    // 3. Find BENCHMARK (Absolute Best possible piece for this unit)
     let maxScore = 0;
-    let bestStat = '';
+    let bestConfig = { set: '', main: '', sub: '', filler: [] };
 
-    candidates.forEach(cand => {
-        if (cand === 'dot' && !statConfig.applyRelicDot) return;
-        if ((cand === 'cm' || cand === 'cf') && !statConfig.applyRelicCrit) return;
-
-        const cap = MAX_SUB_STAT_VALUES[cand] * starMult;
-        const perfectRelic = { ...relic, subs: { [cand]: cap } };
-        const res = calculateDPS(effectiveStats, buildStats(perfectRelic), context);
-        
-        if (res.total > maxScore) { maxScore = res.total; bestStat = cand; }
+    const candidates = ['dmg', 'spa', 'range', 'cm', 'cf', 'dot'].filter(c => {
+        if (c === 'dot' && !statConfig.applyRelicDot) return false;
+        if ((c === 'cm' || c === 'cf') && !statConfig.applyRelicCrit) return false;
+        return true;
     });
 
-    // 5. Display
-    const pct = maxScore > 0 ? (currentScore / maxScore) * 100 : 0;
-    
-    document.getElementById('optResultArea').classList.remove('hidden');
-    document.getElementById('optPercent').innerText = pct.toFixed(1) + '%';
-    document.getElementById('optCurrent').innerText = format(currentScore);
-    document.getElementById('optMax').innerText = format(maxScore);
-    document.getElementById('optBestStat').innerText = STAT_LABELS[bestStat] || bestStat.toUpperCase();
+    // Scan every set to find the absolute ceiling for this unit
+    SETS.forEach(set => {
+        candidates.forEach(masterStat => {
+            let benchStats = { set: set.id, dmg: 0, spa: 0, range: 0, cm: 0, cf: 0, dot: 0 };
+            
+            const slotMains = relic.slot === 'Body' ? MAIN_STAT_VALS.body : MAIN_STAT_VALS.legs;
+            let bestMain = 'dmg';
+            let bestMainDps = 0;
+            
+            Object.keys(slotMains).forEach(mKey => {
+                let temp = { ...benchStats, [mKey]: slotMains[mKey] * starMult };
+                let res = calculateDPS(effectiveStats, temp, context);
+                if (res.total > bestMainDps) { bestMainDps = res.total; bestMain = mKey; }
+            });
+            benchStats[bestMain] = slotMains[bestMain] * starMult;
 
-    // Suggestion Logic
-    const FULL_NAMES = {
-        dmg: "Damage", spa: "SPA", cm: "Crit Damage", cf: "Crit Rate", dot: "DoT", range: "Range", potency: "Potency", elemental: "Elemental Dmg"
-    };
-    const bestLabel = FULL_NAMES[bestStat] || STAT_LABELS[bestStat] || bestStat.toUpperCase();
-    const targetVal = (MAX_SUB_STAT_VALUES[bestStat] * starMult).toFixed(1);
+            // Apply 1 Master Stat (6 Rolls)
+            benchStats[masterStat] += MAX_SUB_STAT_VALUES[masterStat] * starMult;
 
-    const currentSubKeys = Object.keys(relic.subs);
-    const hasSuboptimalType = currentSubKeys.some(k => k !== bestStat);
-    
-    let suggestionHtml = '';
-    if (pct >= 99.9) suggestionHtml = `<span style="color: #4ade80;">Perfect configuration!</span>`;
-    else if (hasSuboptimalType || currentSubKeys.length === 0) suggestionHtml = `Tip: Aim for <span class="text-gold">${targetVal}% ${bestLabel}</span>`;
-    else suggestionHtml = `Tip: Maximize values to <span class="text-gold">${targetVal}% ${bestLabel}</span>`;
-    
-    document.getElementById('optSuggestion').innerHTML = suggestionHtml;
-    
-    const circle = document.getElementById('optCircle');
-    circle.style.borderColor = pct >= 90 ? '#4ade80' : pct >= 70 ? '#fbbf24' : '#f87171';
-    document.getElementById('optPercent').style.color = pct >= 90 ? '#4ade80' : pct >= 70 ? '#fbbf24' : '#f87171';
+            // Apply 3 Filler Stats (1 Roll Each) for a "Legal" God Roll
+            let fillers = candidates.filter(c => c !== masterStat && c !== bestMain);
+            let fillerDpsMap = fillers.map(fKey => {
+                let temp = { ...benchStats, [fKey]: PERFECT_SUBS[fKey] * starMult };
+                return { key: fKey, dps: calculateDPS(effectiveStats, temp, context).total };
+            }).sort((a,b) => b.dps - a.dps);
+
+            const top3Fillers = fillerDpsMap.slice(0, 3);
+            top3Fillers.forEach(f => benchStats[f.key] += PERFECT_SUBS[f.key] * starMult);
+
+            let finalBenchRes = calculateDPS(effectiveStats, benchStats, context);
+            if (finalBenchRes.total > maxScore) {
+                maxScore = finalBenchRes.total;
+                bestConfig = { set: set.name, main: bestMain, sub: masterStat, filler: top3Fillers };
+            }
+        });
+    });
+
+    // 4. Update UI Display
+const pct = (currentRes.total / maxScore) * 100;
+document.getElementById('optResultArea').classList.remove('hidden');
+document.getElementById('optPercent').innerText = pct.toFixed(1) + '%';
+document.getElementById('optCurrent').innerText = format(currentRes.total);
+document.getElementById('optMax').innerText = format(maxScore);
+
+// Calculate exact values for the God-Roll
+const mainVal = (relic.slot === 'Body' ? MAIN_STAT_VALS.body[bestConfig.main] : MAIN_STAT_VALS.legs[bestConfig.main]) * starMult;
+const masterVal = MAX_SUB_STAT_VALUES[bestConfig.sub] * starMult;
+
+// Create styled badges for every stat using the unified helper
+const mainBadge = getBadgeHtml(bestConfig.main, mainVal);
+const masterBadge = getBadgeHtml(bestConfig.sub, masterVal);
+const fillerHtml = bestConfig.filler.map(f => {
+    const val = PERFECT_SUBS[f.key] * starMult;
+    return getBadgeHtml(f.key, val);
+}).join('');
+
+document.getElementById('optBestStat').innerHTML = `
+    <div style="margin-top: 12px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 12px;">
+        <div class="text-xs text-dim mb-2" style="letter-spacing:1px; font-weight: 800; opacity: 0.6;">BENCHMARK GOD-ROLL (100%):</div>
+        <div style="display:flex; flex-direction:column; gap:8px; background: rgba(0,0,0,0.25); padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.03);">
+            <div class="text-white text-bold" style="font-size: 13px; margin-bottom: 2px;">${bestConfig.set} (${relic.slot})</div>
+            
+            <div class="text-xs" style="display:flex; align-items:center; gap:8px;">
+                <span style="width: 50px; opacity: 0.7;">Main:</span> ${mainBadge}
+            </div>
+            
+            <div class="text-xs" style="display:flex; align-items:center; gap:8px;">
+                <span style="width: 50px; opacity: 0.7;">Master:</span> ${masterBadge}
+            </div>
+            
+            <div class="text-xs" style="display:flex; align-items:flex-start; gap:8px;">
+                <span style="width: 50px; opacity: 0.7; margin-top: 3px;">Base:</span> 
+                <div style="display:flex; flex-wrap:wrap; gap:4px;">${fillerHtml}</div>
+            </div>
+        </div>
+    </div>
+`;
+
+const circle = document.getElementById('optCircle');
+const color = pct >= 95 ? '#4ade80' : pct >= 80 ? '#fbbf24' : '#f87171';
+circle.style.borderColor = color;
+document.getElementById('optPercent').style.color = color;
 };
+
+function renderInventory() {
+    if (!inventoryGrid) return;
+    inventoryGrid.innerHTML = '';
+    
+    if (!relicInventory || relicInventory.length === 0) {
+        inventoryGrid.innerHTML = '<div class="inventory-empty-msg">No relics in inventory. Add one to get started!</div>';
+        return;
+    }
+
+    const frag = document.createDocumentFragment();
+    relicInventory.forEach(relic => {
+        const card = document.createElement('div');
+        card.className = 'relic-card-clean' + (highlightedRelicIds.has(relic.id) ? ' relic-highlighted' : '');
+        
+        const visuals = getRelicVisuals(relic.setKey, relic.slot);
+        const setObj = SETS.find(s => s.id === (relic.setKey.includes('reaper') ? (relic.setKey.includes('shadow') ? 'shadow_reaper' : 'reaper_set') : relic.setKey)) || SETS[0];
+        
+        const starCount = relic.stars >= 1.05 ? 3 : relic.stars >= 1.025 ? 2 : 1;
+        const mainBadge = getBadgeHtml(relic.mainStat, calculateMainValue(relic));
+        const subBadges = Object.entries(relic.subs).map(([k, v]) => getBadgeHtml(k, v)).join('');
+
+        card.innerHTML = `
+            <div class="rc-header">
+                <div class="rc-set-info"><span class="rc-set-name">${setObj.name}</span><span class="rc-stars">${starCount > 0 ? "★".repeat(starCount) : ""}</span></div>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                    <button class="rc-opt-btn" onclick="event.stopPropagation(); checkOptimality('${relic.id}')">
+                        <svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg>
+                        OPTIMALITY
+                    </button>
+                    <button class="rc-delete-btn" onclick="event.stopPropagation(); deleteRelic('${relic.id}')">×</button>
+                </div>
+            </div>
+            <div class="rc-visual-container">
+                <div class="rc-image-wrapper" style="background: ${visuals.bg}">
+                    <img src="${visuals.src}" class="rc-image">
+                    <div class="rc-slot-badge">${relic.slot}</div>
+                </div>
+            </div>
+            <div class="rc-stats-container">
+                <div class="rc-main-stat"><div class="rc-label">MAIN STAT</div>${mainBadge}</div>
+                <div class="rc-separator"></div>
+                <div class="rc-sub-stats"><div class="rc-label">SUB STATs</div><div class="rc-subs-grid">${subBadges}</div></div>
+            </div>
+        `;
+        frag.appendChild(card);
+    });
+    inventoryGrid.appendChild(frag);
+}

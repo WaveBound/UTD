@@ -2,7 +2,7 @@ const MAIN_STAT_VALS = {
     body: { dmg: 60, dot: 75, cm: 120 },
     legs: { dmg: 60, spa: 22.5, cf: 37.5, range: 30 },
     // Visual values for Head (Math engine ignores these currently)
-    head: { potency: 75, elemental: 30 } 
+    head: { potency: 45, elemental: 30 } 
 };
 
 // CSS Class Mapping
@@ -79,7 +79,7 @@ const infoDefinitions = {
     'stat_potency': {
         title: "Potency",
         formula: `<span class="ip-var">Ignored</span>`,
-        desc: "intended to increase Buff Potency for supports."
+        desc: "Increases Buff Potency by up to 45%." // <--- Update text here
     },
     'stat_elemental': {
         title: "Elemental Damage",
