@@ -67,7 +67,7 @@
 .br-rank { font-weight: 900; font-size: 0.85rem; color: #666; width: 20px; }
 .rank-1 .br-rank { color: var(--gold); } .rank-2 .br-rank { color: var(--silver); } .rank-3 .br-rank { color: var(--bronze); }
 .br-set { color: #fff; font-weight: 700; font-size: 0.8rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
-.br-sep { color: #444; font-size: 0.8rem; font-weight: bold; margin: 0 5px; }
+.br-sep { color: #444; font-size: 0.8rem; font-weight: bold; margin: 0 1px; }
 
 .br-grid { display: flex; padding: 8px 10px; gap: 0px; }
 
@@ -160,7 +160,47 @@
 
 
 /* Prio Badges */
-.prio-badge { font-size: 0.6rem; font-weight: 800; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; box-shadow: 0 2px 4px rgba(0,0,0,0.5); background: linear-gradient(to bottom, #2e1065, #000); border: 1px solid; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.br-badges {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+.prio-badge { 
+    font-size: 0.6rem; 
+    font-weight: 800; 
+    padding: 2px 6px; 
+    border-radius: 4px; 
+    text-transform: uppercase; 
+    box-shadow: 0 2px 4px rgba(0,0,0,0.5); 
+    background: linear-gradient(to bottom, #2e1065, #000); 
+    border: 1px solid; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    flex-shrink: 0; 
+    height: 18px; /* Standardize height */
+}
+
+/* Fixes the giant backpack button */
+.prio-badge.prio-inv {
+    width: 20px;   /* Small square */
+    height: 20px;
+    padding: 0;    /* Important: Remove padding so icon doesn't stretch */
+    background: #2e1065;
+    border-color: rgba(255,255,255,0.2);
+    cursor: pointer;
+}
+
+/* Shrinks the actual backpack icon image */
+.prio-badge.prio-inv img {
+    width: 12px !important;
+    height: 12px !important;
+    display: block;
+    margin: 0 auto;
+}
+
 .prio-badge.prio-dmg { color: #ff5555; border-color: #ff5555; }
 .prio-badge.prio-spa { color: var(--custom); border-color: var(--custom); }
 .prio-badge.prio-range { color: #4caf50; border-color: #4caf50; }
