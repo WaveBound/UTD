@@ -17,6 +17,9 @@ window.onload = () => {
     if(typeof populateGuideDropdowns === 'function') {
         populateGuideDropdowns(); 
     }
+
+    // Inject Miku Buff Button
+    injectMikuButton();
     
     setGuideMode('current'); 
 
@@ -32,4 +35,40 @@ window.onload = () => {
     if (typeof initInventory === 'function') {
         initInventory();
     }
+};
+
+function injectMikuButton() {
+    // Inject styles for Miku button hover
+    if (!document.getElementById('miku-btn-style')) {
+        const style = document.createElement('style');
+        style.id = 'miku-btn-style';
+        style.innerHTML = `
+            .miku-btn-label:hover span {
+                color: #fff;
+                text-shadow: 0 0 8px rgba(255, 255, 255, 0.6);
+                transition: all 0.2s ease;
+            }
+        `;
+        document.head.appendChild(style);
+    }
+
+    const createBtn = (id) => {
+        const label = document.createElement('label');
+        label.className = 'nav-toggle-label miku-btn-label';
+        label.setAttribute('for', id);
+        label.title = "Apply Miku's +100% Damage Buff";
+        
+        // Removed mini-switch, using simple checkbox layout
+        label.innerHTML = `<div class="toggle-wrapper" style="gap: 6px;"><input type="checkbox" id="${id}" style="cursor: pointer;"><span>Miku Buff</span></div>`;
+        const input = label.querySelector('input');
+        input.addEventListener('change', function() { if(typeof window.toggleMikuBuff === 'function') window.toggleMikuBuff(this); });
+        
+        return label;
+    };
+
+    const dbToolbar = document.getElementById('dbInjector');
+    if (dbToolbar) dbToolbar.appendChild(createBtn('globalMikuBuff'));
+
+    const guidesToolbar = document.getElementById('guidesToolbar');
+    if (guidesToolbar) guidesToolbar.appendChild(createBtn('guideMikuBuff'));
 }

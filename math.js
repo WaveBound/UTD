@@ -473,8 +473,11 @@ function calculateDPS(uStats, relicStats, context) {
     // 7. HEAD PIECE PASSIVES
     const { headDmgBuff, headDotBuff, headCalc } = _calcHeadDynamicBuffs(headPiece, finalSpa, finalRange);
 
+    // Miku Buff
+    const mikuBuff = (typeof window !== 'undefined' && window.mikuBuffActive) ? 100 : 0;
+
     // 8. FINAL DAMAGE CALCULATION
-    const additiveTotal = sBonus.dmg + passivePcent + headDmgBuff;
+    const additiveTotal = sBonus.dmg + passivePcent + headDmgBuff + mikuBuff;
     const conditionalMult = uStats.burnMultiplier ? (1 + uStats.burnMultiplier / 100) : 1;
     const finalDmg = lvStats.dmg * (1 + traitDmgPct / 100) * (1 + baseR_Dmg / 100) * (1 + additiveTotal / 100) * conditionalMult;
 
@@ -525,6 +528,7 @@ function calculateDPS(uStats, relicStats, context) {
         setBuffs: { dmg: sBonus.dmg, spa: sBonus.spa }, 
         totalSetStats: sBonus,
         tagBuffs,
+        mikuBuff: mikuBuff,
         passiveBuff: passivePcent + headDmgBuff, 
         passiveSpaBuff: passiveSpaPcent,
         eternalBuff: eternalDmgBuff,

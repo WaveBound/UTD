@@ -114,6 +114,50 @@ const toggleInventoryMode = (checkbox) => {
     }
 };
 
+// Add a global state for Miku buff
+window.mikuBuffActive = false;
+
+// Toggle Miku Buff
+window.toggleMikuBuff = (checkbox) => {
+    const isChecked = checkbox.checked;
+    window.mikuBuffActive = isChecked;
+    
+    // Helper for visual updates
+    const updateVisuals = (lbl, checked) => {
+        if (!lbl) return;
+        lbl.classList.toggle('is-checked', checked);
+        const span = lbl.querySelector('span');
+        if (span) {
+            span.style.color = checked ? '#4ade80' : ''; // Bright Green
+            span.style.textShadow = checked ? '0 0 10px rgba(74, 222, 128, 0.5)' : '';
+            span.style.fontWeight = checked ? 'bold' : '';
+        }
+    };
+
+    // Visual toggle current
+    const label = checkbox.closest('.nav-toggle-label');
+    updateVisuals(label, isChecked);
+
+    // Sync other toggle
+    const otherId = checkbox.id === 'globalMikuBuff' ? 'guideMikuBuff' : 'globalMikuBuff';
+    const otherCheckbox = document.getElementById(otherId);
+    if(otherCheckbox) {
+        otherCheckbox.checked = isChecked;
+        const otherLabel = otherCheckbox.closest('.nav-toggle-label');
+        updateVisuals(otherLabel, isChecked);
+    }
+
+    // Trigger full calculation re-render (Deferred to allow UI update)
+    // Using setTimeout to ensure the visual switch toggle paints 
+    // before the heavy calculation thread locks the browser.
+    setTimeout(() => {
+        resetAndRender();
+        if(document.getElementById('guidesPage').classList.contains('active')) {
+            renderGuides();
+        }
+    }, 50);
+};
+
 
 // Toggle Kirito mode (Realm/Card)
 function toggleKiritoMode(mode, checkbox) {

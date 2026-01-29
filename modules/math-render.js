@@ -46,7 +46,7 @@ function renderBaseDamageSection(data, levelMult, traitRowsDmg, dmgAfterRelic, h
                     ${headDmgHtml}
 
                     <tr>
-                        <td class="mt-cell-label mt-pt-md">Set Bonus + Passive + Abilities <button class="calc-info-btn" onclick="openInfoPopup('tag_logic')">?</button></td>
+                        <td class="mt-cell-label mt-pt-md">Buff Data <button class="calc-info-btn" onclick="openInfoPopup('tag_logic')">?</button></td>
                         <td class="mt-cell-formula mt-pt-md mt-text-gold mt-text-bold">${fmt.pct(data.totalAdditivePct)}</td>
                         <td class="mt-cell-val calc-highlight mt-pt-md">${fmt.num(preConditionalDmg)}</td>
                     </tr>
@@ -55,6 +55,7 @@ function renderBaseDamageSection(data, levelMult, traitRowsDmg, dmgAfterRelic, h
                     ${passiveDmg > 0 ? `<tr><td class="mt-cell-label mt-pl-md opacity-70">↳ Unit Passive</td><td class="mt-cell-formula">${fmt.pct(passiveDmg)}</td><td class="mt-cell-val"></td></tr>` : ''}
                     ${eternalDmg > 0 ? `<tr><td class="mt-cell-label mt-pl-md text-accent-start opacity-70">↳ Eternal Stacks (Wave 12+)</td><td class="mt-cell-formula text-accent-start">${fmt.pct(eternalDmg)}</td><td class="mt-cell-val"></td></tr>` : ''}
                     ${(data.abilityBuff || 0) > 0 ? `<tr><td class="mt-cell-label mt-pl-md text-custom opacity-70">↳ Ability Buffs</td><td class="mt-cell-formula text-custom">${fmt.pct(data.abilityBuff)}</td><td class="mt-cell-val"></td></tr>` : ''}
+                    ${(data.mikuBuff || 0) > 0 ? `<tr><td class="mt-cell-label mt-pl-md text-accent-end opacity-70">↳ Miku Buff</td><td class="mt-cell-formula text-accent-end">${fmt.pct(data.mikuBuff)}</td><td class="mt-cell-val"></td></tr>` : ''}
 
                     ${data.conditionalData ? `
                     <tr><td class="mt-cell-label mt-pt-md mt-text-orange mt-text-bold">${data.conditionalData.name}</td><td class="mt-cell-formula mt-pt-md mt-text-orange mt-text-bold">x${data.conditionalData.mult.toFixed(2)}</td><td class="mt-cell-val calc-highlight mt-pt-md">${fmt.num(data.dmgVal)}</td></tr>` : ''}

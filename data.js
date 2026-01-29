@@ -26,6 +26,14 @@ const SUB_NAMES = {
 
 const patchNotesData = [
     {
+        version: "v4.1",
+        date: "Jan 29, 2026",
+        changes: [
+            { type: "Feature", text: "<b>Miku Buff:</b> Added a global toggle to apply Miku's +100% Damage Buff to all calculations." },
+            { type: "UI", text: "<b>Breakdown Label:</b> Renamed 'Set Bonus + Passive + Abilities' to 'Buff Data' in the calculation breakdown for clarity." }
+        ]
+    },
+    {
         version: "v4.0",
         date: "Jan 20, 2026",
         changes: [

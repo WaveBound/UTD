@@ -267,17 +267,52 @@ function processUnitCache(unit) {
         for (let i = 0; i < 4; i++) {
             const cfg = CONFIGS[i];
             let calculatedResults = [];
+            let loadedFromStatic = false;
             
             if (!useInventory) {
                 const canUseStatic = (unit.id !== 'bambietta') || (bambiettaState.element === 'Dark');
                 if (canUseStatic && window.STATIC_BUILD_DB && window.STATIC_BUILD_DB[dbKey]) {
                     const dbList = window.STATIC_BUILD_DB[dbKey][mode];
                     if(dbList && dbList[i]) {
-                        calculatedResults = [...dbList[i]];
-                        calculatedResults.forEach(r => cachedResults[r.id] = r);
+                        // Load static data (Deep copy to avoid mutating cache)
+                        calculatedResults = dbList[i].map(r => ({...r}));
+                        loadedFromStatic = true;
                     }
                 }
             }
+
+            // OPTIMIZATION: If Miku Buff is active, update the static results instead of full re-calc
+            if (loadedFromStatic && window.mikuBuffActive && typeof reconstructMathData === 'function') {
+                // Smart Filter: Keep Top 50 Global AND Top 10 per Trait
+                const traitCounts = {};
+                const subset = [];
+                calculatedResults.forEach((res, index) => {
+                    const tName = res.traitName || 'Unknown';
+                    if (!traitCounts[tName]) traitCounts[tName] = 0;
+                    if (index < 50 || traitCounts[tName] < 10) {
+                        subset.push(res);
+                        traitCounts[tName]++;
+                    }
+                });
+                calculatedResults = subset;
+                
+                calculatedResults.forEach(entry => {
+                    try {
+                        const newRes = reconstructMathData(entry); // Recalculates with global flags (Miku) active
+                        if (newRes) {
+                            entry.dps = newRes.total;
+                            entry.dmgVal = newRes.dmgVal * (newRes.critData ? newRes.critData.avgMult : 1);
+                            entry.spa = newRes.spa;
+                            entry.range = newRes.range;
+                        }
+                    } catch (e) { console.warn("Buff recalc error", e); }
+                });
+                // Re-sort after buff application
+                calculatedResults.sort((a, b) => b.dps - a.dps);
+            }
+            
+            // Cache the results (either raw static or buff-updated)
+            calculatedResults.forEach(r => cachedResults[r.id] = r);
 
             const traitsForCalc = (calculatedResults.length > 0) ? [...(typeof customTraits !== 'undefined' ? customTraits : []), ...(unitSpecificTraits[unit.id] || [])] : null;
             
@@ -309,10 +344,24 @@ function renderDatabase() {
     }
     if (renderQueueId) { cancelAnimationFrame(renderQueueId); renderQueueId = null; }
 
+    // Helper to get score for sorting without full calculation
+    const getQuickScore = (unit) => {
+        const isAbility = activeAbilityIds.has(unit.id) && unit.ability;
+        const dbKey = unit.id + (unit.id === 'kirito' && kiritoState.card ? 'kirito_card' : '') + (isAbility ? '_abil' : '');
+        
+        // Peek at static DB if available
+        if (window.STATIC_BUILD_DB && window.STATIC_BUILD_DB[dbKey]) {
+            const list = window.STATIC_BUILD_DB[dbKey]['fixed']?.[3];
+            if (list && list.length > 0) {
+                return unit.id === 'law' ? (list[0].range || 0) : list[0].dps;
+            }
+        }
+        return 0;
+    };
+
     const sortedUnits = unitDatabase.map(unit => {
-        processUnitCache(unit);
-        const refList = unitBuildsCache[unit.id][activeAbilityIds.has(unit.id) && unit.ability ? 'abil' : 'base'].fixed[3];
-        return { unit, maxScore: (refList && refList.length > 0) ? (unit.id === 'law' ? (refList[0].range || 0) : refList[0].dps) : 0 };
+        // OPTIMIZATION: Do NOT process cache here. Use quick lookup for sort.
+        return { unit, maxScore: getQuickScore(unit) };
     }).sort((a, b) => b.maxScore - a.maxScore);
 
     function processNextChunk() {
@@ -323,6 +372,9 @@ function renderDatabase() {
 
         while (renderQueueIndex < sortedUnits.length) {
             const unit = sortedUnits[renderQueueIndex].unit;
+            
+            // Process cache HERE, one unit at a time
+            processUnitCache(unit);
             renderQueueIndex++;
 
             let abilityLabel = 'Ability';
