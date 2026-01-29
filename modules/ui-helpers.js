@@ -317,7 +317,19 @@ function switchPage(pid) {
     const isDb = pid === 'db';
     if (pid === 'db') {
         document.getElementById('dbPage').classList.add('active');
-        if(dbToolbar) dbToolbar.classList.remove('hidden');
+        if(dbToolbar) {
+            dbToolbar.classList.remove('hidden');
+            // Inject Trait Tier List Button (Dynamic)
+            if (!document.getElementById('btnTraitTierList')) {
+                const btn = document.createElement('button');
+                btn.id = 'btnTraitTierList';
+                btn.className = 'nav-btn';
+                btn.style.cssText = 'border: 1px solid var(--accent-start); color: var(--accent-start); margin-left: 10px;';
+                btn.innerHTML = 'Trait Tier List';
+                btn.onclick = () => window.openTraitTierList && window.openTraitTierList();
+                dbToolbar.appendChild(btn);
+            }
+        }
         if(event && event.target) event.target.classList.add('active');
     } else if (pid === 'guides') {
         document.getElementById('guidesPage').classList.add('active');

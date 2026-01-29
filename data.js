@@ -26,6 +26,16 @@ const SUB_NAMES = {
 
 const patchNotesData = [
     {
+        version: "v4.2",
+        date: "Jan 29, 2026",
+        changes: [
+            { type: "Feature", text: "<b>Trait Tier List:</b> Added a global view to see all unit trait recommendations in a tier list format, sorted by DPS potential." },
+            { type: "UI", text: "<b>Trait Guide:</b> Updated the visual style of trait suggestions. Now uses high-quality images with rainbow borders." },
+            { type: "Balance", text: "<b>Ace:</b> Updated Infinite Mode recommendations to prioritize Ruler." },
+            { type: "Fix", text: "<b>Visuals:</b> Fixed image scaling for Mob and Shanks in the tier list view." }
+        ]
+    },
+    {
         version: "v4.1",
         date: "Jan 29, 2026",
         changes: [
@@ -384,7 +394,7 @@ const unitDatabase = [
         img: "images/units/Ace.png",
         totalCost: 39000,
         placement: 3, tags: [],
-        meta: { short: "Ruler", long: "Ruler/Eternal/Astral", note: "Eternal provides highest DPS Potential, Ruler provides good dps to cost." },
+        meta: { short: "Ruler", long: "Ruler", note: "Ruler provides good dps to cost." },
         stats: { dmg: 1500, spa: 9, crit: 0, cdmg: 150, dot: 100, dotStacks: 1, spaCap: 6, passiveDmg: 60, element: "Fire", dotDuration: 4, range: 30 }
     }, 
     {
@@ -409,7 +419,7 @@ const unitDatabase = [
         img: "images/units/Bambietta.png",
         totalCost: 40000,
         placement: 3, tags: [],
-        meta: { short: "Ruler", long: "Eternal/Astral", note: "Eternal provides highest DPS Potential, Ruler provides good dps to cost." },
+        meta: { short: "Ruler", long: "Eternal", note: "Eternal provides highest DPS Potential, Ruler provides good dps to cost." },
         stats: { dmg: 1250, spa: 6.5, crit: 0, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 2, passiveDmg: 0, element: "Dark", dotDuration: 0, range: 38, hasElementSelect: true }
     },
     {

@@ -21,6 +21,9 @@ window.onload = () => {
     // Inject Miku Buff Button
     injectMikuButton();
     
+    // Inject Tier List Button
+    injectTierListButton();
+
     setGuideMode('current'); 
 
     // 3. Render Content
@@ -71,4 +74,17 @@ function injectMikuButton() {
 
     const guidesToolbar = document.getElementById('guidesToolbar');
     if (guidesToolbar) guidesToolbar.appendChild(createBtn('guideMikuBuff'));
+}
+
+function injectTierListButton() {
+    const dbToolbar = document.getElementById('dbInjector');
+    if (dbToolbar && !document.getElementById('btnTraitTierList')) {
+        const btn = document.createElement('button');
+        btn.id = 'btnTraitTierList';
+        btn.className = 'nav-btn';
+        btn.style.cssText = 'border: 1px solid var(--accent-start); color: var(--accent-start); margin-left: 10px;';
+        btn.innerHTML = 'Trait Tier List';
+        btn.onclick = () => window.openTraitTierList && window.openTraitTierList();
+        dbToolbar.appendChild(btn);
+    }
 }

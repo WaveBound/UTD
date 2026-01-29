@@ -140,20 +140,35 @@ function openTraitGuide(unitId) {
 
     const getTraitName = (id) => {
         if(!id) return '-';
-        const t = traitsList.find(x => x.id === id);
+        const t = traitsList.find(x => x.id === id || x.name === id);
         return t ? t.name : id;
+    };
+
+    const generateSection = (label, traitId, icon) => {
+        const name = getTraitName(traitId);
+        
+        const parts = name.split('/').map(s => s.trim());
+        let imagesHtml = '';
+        parts.forEach(part => {
+            const t = traitsList.find(x => x.name.toLowerCase() === part.toLowerCase() || x.id === part.toLowerCase());
+            if (t) {
+                imagesHtml += `<div class="trait-img-rainbow"><img src="images/traits/${t.name}.png" onerror="this.parentElement.style.display='none'"></div>`;
+            }
+        });
+
+        return `
+            <div class="tg-section">
+                <span class="tg-label">${label}</span>
+                <span class="tg-trait-rainbow">${name}</span>
+                <div class="tg-images-row">${imagesHtml}</div>
+            </div>
+        `;
     };
 
     const html = `
         <div class="tg-grid">
-            <div class="tg-section">
-                <span class="tg-label">Wave 1-30</span>
-                <span class="tg-trait tg-short">⚡ ${getTraitName(unit.meta.short)}</span>
-            </div>
-            <div class="tg-section">
-                <span class="tg-label">Infinite Mode</span>
-                <span class="tg-trait tg-long">♾️ ${getTraitName(unit.meta.long)}</span>
-            </div>
+            ${generateSection('Wave 1-30', unit.meta.short, '⚡')}
+            ${generateSection('Infinite Mode', unit.meta.long, '♾️')}
         </div>
         <div class="tg-note">
             <strong>Strategy Note:</strong><br>
@@ -167,6 +182,97 @@ function openTraitGuide(unitId) {
         size: 'modal-sm'
     });
 }
+
+/**
+ * Shows Trait Tier List (All Units)
+ */
+function openTraitTierList() {
+    const shortMap = {};
+    const longMap = {};
+
+    const addToMap = (map, traitStr, unit) => {
+        if (!traitStr || traitStr === '-') return;
+        const parts = traitStr.split('/').map(s => s.trim());
+        parts.forEach(p => {
+            if (!map[p]) map[p] = [];
+            map[p].push(unit);
+        });
+    };
+
+    unitDatabase.forEach(u => {
+        if (u.meta) {
+            addToMap(shortMap, u.meta.short, u);
+            addToMap(longMap, u.meta.long, u);
+        }
+    });
+
+    // Helper to get DPS score for sorting
+    const getUnitScore = (u) => {
+        if (window.STATIC_BUILD_DB) {
+             const isAbility = activeAbilityIds.has(u.id) && u.ability;
+             const isKiritoCard = u.id === 'kirito' && kiritoState && kiritoState.card;
+             const dbKey = u.id + (isKiritoCard ? 'kirito_card' : '') + (isAbility ? '_abil' : '');
+             // Use fixed mode, config 3 (Head+Subs) for max potential
+             const list = window.STATIC_BUILD_DB[dbKey]?.['fixed']?.[3];
+             if (list && list.length > 0) {
+                 return u.id === 'law' ? (list[0].range || 0) : list[0].dps;
+             }
+        }
+        return u.stats.dmg || 0;
+    };
+
+    const traitOrder = ['Ruler', 'Eternal', 'Sacred', 'Astral', 'Fission', 'Duelist', 'Wizard'];
+
+    const renderSection = (title, map) => {
+        const traits = Object.keys(map).sort((a, b) => {
+            const idxA = traitOrder.indexOf(a);
+            const idxB = traitOrder.indexOf(b);
+            if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+            if (idxA !== -1) return -1;
+            if (idxB !== -1) return 1;
+            return a.localeCompare(b);
+        });
+
+        let rows = '';
+        
+        traits.forEach(t => {
+            const units = map[t];
+            // Sort units by DPS descending
+            units.sort((a,b) => getUnitScore(b) - getUnitScore(a));
+
+            const unitIcons = units.map(u => `
+                <div class="tier-unit" data-id="${u.id}" title="${u.name} (Score: ${parseInt(getUnitScore(u)).toLocaleString()})">
+                    <img src="${u.img}" class="tier-unit-img" onerror="this.style.display='none'">
+                </div>
+            `).join('');
+
+            const tObj = traitsList.find(x => x.name.toLowerCase() === t.toLowerCase() || x.id === t.toLowerCase());
+            const traitImg = tObj ? `<div class="trait-img-rainbow tier-trait-icon"><img src="images/traits/${tObj.name}.png" onerror="this.parentElement.style.display='none'"></div>` : '';
+
+            rows += `
+                <div class="tier-row">
+                    <div class="tier-head">
+                        ${traitImg}
+                        <div class="tier-trait-name">${t}</div>
+                    </div>
+                    <div class="tier-body">
+                        ${unitIcons}
+                    </div>
+                </div>
+            `;
+        });
+
+        return `<div class="tier-section"><div class="tier-section-title">${title}</div><div class="tier-grid">${rows}</div></div>`;
+    };
+
+    showUniversalModal({
+        title: 'TRAIT SUGGESTIONS TIER LIST',
+        content: `<div class="tier-list-container">${renderSection('Wave 1-30', shortMap)}${renderSection('Infinite Mode', longMap)}</div>`,
+        size: 'modal-lg',
+        footerButtons: `<button class="action-btn secondary" onclick="closeModal('universalModal')">Close</button>`
+    });
+}
+window.openTraitTierList = openTraitTierList;
 
 /**
  * Shows Comparison

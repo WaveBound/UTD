@@ -614,6 +614,20 @@
     text-shadow: 0 2px 4px rgba(0,0,0,0.5);
 }
 
+.tg-trait-rainbow {
+    font-family: 'Segoe UI', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 800;
+    background: linear-gradient(45deg, #ff0000, #ff7300, #fffb00, #48ff00, #00ffd5, #002bff, #7a00ff, #ff00c8, #ff0000);
+    background-size: 400%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: rainbow-bg 20s linear infinite;
+    display: block;
+    margin-bottom: 4px;
+}
+
 /* Specific coloring for modes */
 .tg-short {
     color: var(--gold); /* Gold/Orange for Short runs */
@@ -766,4 +780,102 @@
         white-space: normal;
         line-height: 1.4;
     }
+}
+
+/* --- TRAIT IMAGES ROW --- */
+.tg-images-row {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    margin-top: 8px;
+}
+.tg-images-row:empty { display: none; }
+
+/* --- TRAIT RAINBOW EFFECT --- */
+.trait-img-rainbow {
+    width: 70px;
+    height: 70px;
+    border-radius: 6px;
+    overflow: hidden;
+    padding: 2px;
+    background: linear-gradient(45deg, #ff0000, #ff7300, #fffb00, #48ff00, #00ffd5, #002bff, #7a00ff, #ff00c8, #ff0000);
+    background-size: 400%;
+    animation: rainbow-bg 20s linear infinite;
+    flex-shrink: 0;
+}
+.trait-img-rainbow img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    border-radius: 4px;
+    background: #000;
+}
+@keyframes rainbow-bg {
+    0% { background-position: 0 0; }
+    50% { background-position: 100% 0; }
+    100% { background-position: 0 0; }
+}
+
+/* --- TRAIT TIER LIST --- */
+.tier-list-container {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+}
+.tier-section-title {
+    font-size: 1.1rem;
+    font-weight: 900;
+    color: var(--accent-start);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    padding-bottom: 5px;
+}
+.tier-grid { display: flex; flex-direction: column; gap: 8px; }
+.tier-row {
+    display: flex;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.05);
+    border-radius: 8px;
+    overflow: hidden;
+    min-height: 60px;
+}
+.tier-head {
+    width: 100px;
+    background: rgba(0,0,0,0.3);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+    border-right: 1px solid rgba(255,255,255,0.05);
+    flex-shrink: 0;
+}
+.tier-trait-icon { width: 40px !important; height: 40px !important; margin-bottom: 5px; }
+.tier-trait-name { font-size: 0.7rem; font-weight: 800; color: #fff; text-align: center; text-transform: uppercase; }
+.tier-body {
+    flex-grow: 1;
+    padding: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+}
+.tier-unit {
+    width: 60px; height: 60px;
+    border-radius: 8px; overflow: hidden;
+    border: 1px solid #444; background: #000;
+    transition: transform 0.2s;
+}
+.tier-unit:hover { transform: scale(1.1); border-color: var(--accent-start); }
+.tier-unit-img { width: 100%; height: 100%; object-fit: cover; object-position: top; }
+
+/* Fix for Mob & Shanks (Images have padding/borders in the file) */
+.tier-unit[data-id="mob"] .tier-unit-img,
+.tier-unit[data-id="shanks"] .tier-unit-img {
+    transform: scale(1.35);
+    object-position: center 20%;
 }
