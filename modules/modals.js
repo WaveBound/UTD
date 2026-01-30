@@ -213,7 +213,7 @@ function openTraitTierList() {
     // Helper to get DPS score for sorting
     const getUnitScore = (u) => {
         if (window.STATIC_BUILD_DB) {
-             const isAbility = activeAbilityIds.has(u.id) && u.ability;
+             const isAbility = (u.id !== 'genos' && activeAbilityIds.has(u.id)) && u.ability;
              const isKiritoCard = u.id === 'kirito' && kiritoState && kiritoState.card;
              const dbKey = u.id + (isKiritoCard ? 'kirito_card' : '') + (isAbility ? '_abil' : '');
              // Use fixed mode, config 3 (Head+Subs) for max potential
