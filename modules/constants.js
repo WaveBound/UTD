@@ -18,8 +18,9 @@ const STAT_CODE_TO_CLASS = {
 };
 
 const STAT_LABELS = {
-    dmg: 'Dmg', spa: 'SPA', cdmg: 'CDmg', crit: 'Crit', dot: 'DoT', range: 'Range',
-    potency: 'Potency', elemental: 'Elem Dmg' // New Labels
+    dmg: 'Dmg', spa: 'SPA', cdmg: 'Crit Dmg', crit: 'Crit Rate', dot: 'DoT', range: 'Range',
+    potency: 'Potency', elemental: 'Elem Dmg', // New Labels
+    cm: 'Crit Dmg', cf: 'Crit Rate'
 };
 
 // Assuming a max of 6 rolls for each sub-stat

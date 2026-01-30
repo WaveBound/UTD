@@ -59,6 +59,10 @@ function initInventory() {
     loadInventory();
     renderInventory();
     updateInventoryToggleState();
+
+    // Update static labels for Crit Dmg and Crit Rate
+    document.querySelectorAll('.sub-label.sub-cm').forEach(el => el.textContent = 'Crit Dmg');
+    document.querySelectorAll('.sub-label.sub-cf').forEach(el => el.textContent = 'Crit Rate');
 }
 
 function saveInventory() {

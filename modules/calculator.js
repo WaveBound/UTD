@@ -87,7 +87,7 @@ function updateCalcUI(force = false) {
             const base = mapping[type];
             if (base) {
                 const newVal = parseFloat((base * mult).toFixed(1));
-                const label = STAT_LABELS[type] || type;
+                const label = STAT_LABELS[getStatType(type)] || STAT_LABELS[type] || type;
                 const sign = (type === 'spa') ? '-' : '+';
                 opt.text = `${label} ${sign}${newVal}%`;
             }
@@ -201,6 +201,10 @@ function openCalc(unitId) {
     updateBodyStarVisibility();
     updateLegsStarVisibility();
     updateCalcUI(true);
+
+    // Fix static labels in the modal if they exist (matches Inventory fix)
+    document.querySelectorAll('#calcModal .sub-label.sub-cm').forEach(el => el.textContent = 'Crit Dmg');
+    document.querySelectorAll('#calcModal .sub-label.sub-cf').forEach(el => el.textContent = 'Crit Rate');
 
     // Attach input listeners using SHARED Logic
     const subStatInputs = document.querySelectorAll('#calcModal .gear-subs input.sub-val-input');
