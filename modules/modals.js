@@ -150,7 +150,8 @@ function openTraitGuide(unitId) {
         const parts = name.split('/').map(s => s.trim());
         let imagesHtml = '';
         parts.forEach(part => {
-            const t = traitsList.find(x => x.name.toLowerCase() === part.toLowerCase() || x.id === part.toLowerCase());
+            const cleanPart = part.split('(')[0].trim();
+            const t = traitsList.find(x => x.name.toLowerCase() === cleanPart.toLowerCase() || x.id === cleanPart.toLowerCase());
             if (t) {
                 imagesHtml += `<div class="trait-img-rainbow"><img src="images/traits/${t.name}.png" onerror="this.parentElement.style.display='none'"></div>`;
             }
@@ -169,6 +170,7 @@ function openTraitGuide(unitId) {
         <div class="tg-grid">
             ${generateSection('Wave 1-30', unit.meta.short, '⚡')}
             ${generateSection('Infinite Mode', unit.meta.long, '♾️')}
+            ${unit.meta.virtual ? generateSection('Virtual Realm', unit.meta.virtual, '🌌') : ''}
         </div>
         <div class="tg-note">
             <strong>Strategy Note:</strong><br>
@@ -189,6 +191,7 @@ function openTraitGuide(unitId) {
 function openTraitTierList() {
     const shortMap = {};
     const longMap = {};
+    const virtualMap = {};
 
     const addToMap = (map, traitStr, unit) => {
         if (!traitStr || traitStr === '-') return;
@@ -203,6 +206,7 @@ function openTraitTierList() {
         if (u.meta) {
             addToMap(shortMap, u.meta.short, u);
             addToMap(longMap, u.meta.long, u);
+            if (u.meta.virtual) addToMap(virtualMap, u.meta.virtual, u);
         }
     });
 
@@ -225,8 +229,10 @@ function openTraitTierList() {
 
     const renderSection = (title, map) => {
         const traits = Object.keys(map).sort((a, b) => {
-            const idxA = traitOrder.indexOf(a);
-            const idxB = traitOrder.indexOf(b);
+            const cleanA = a.split('(')[0].trim();
+            const cleanB = b.split('(')[0].trim();
+            const idxA = traitOrder.indexOf(cleanA);
+            const idxB = traitOrder.indexOf(cleanB);
             if (idxA !== -1 && idxB !== -1) return idxA - idxB;
             if (idxA !== -1) return -1;
             if (idxB !== -1) return 1;
@@ -246,7 +252,8 @@ function openTraitTierList() {
                 </div>
             `).join('');
 
-            const tObj = traitsList.find(x => x.name.toLowerCase() === t.toLowerCase() || x.id === t.toLowerCase());
+            const cleanT = t.split('(')[0].trim();
+            const tObj = traitsList.find(x => x.name.toLowerCase() === cleanT.toLowerCase() || x.id === cleanT.toLowerCase());
             const traitImg = tObj ? `<div class="trait-img-rainbow tier-trait-icon"><img src="images/traits/${tObj.name}.png" onerror="this.parentElement.style.display='none'"></div>` : '';
 
             rows += `
@@ -267,7 +274,7 @@ function openTraitTierList() {
 
     showUniversalModal({
         title: 'TRAIT SUGGESTIONS TIER LIST',
-        content: `<div class="tier-list-container">${renderSection('Wave 1-30', shortMap)}${renderSection('Infinite Mode', longMap)}</div>`,
+        content: `<div class="tier-list-container">${renderSection('Wave 1-30', shortMap)}${renderSection('Infinite Mode', longMap)}${Object.keys(virtualMap).length > 0 ? renderSection('Virtual Realm', virtualMap) : ''}</div>`,
         size: 'modal-lg',
         footerButtons: `<button class="action-btn secondary" onclick="closeModal('universalModal')">Close</button>`
     });

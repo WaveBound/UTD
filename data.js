@@ -26,6 +26,14 @@ const SUB_NAMES = {
 
 const patchNotesData = [
     {
+        version: "v4.3",
+        date: "Jan 30, 2026",
+        changes: [
+            { type: "Feature", text: "<b>Trait Tier List:</b> Added 'Virtual Realm' category to the global tier list and individual unit guides." },
+            { type: "Unit", text: "<b>Kirito:</b> Added specific trait recommendation (Astral) for Virtual Realm mode." }
+        ]
+    },
+    {
         version: "v4.2",
         date: "Jan 29, 2026",
         changes: [
@@ -287,7 +295,7 @@ const unitDatabase = [
         img: "images/units/Kirito.png",
         totalCost: 30400,
         placement: 3, tags: [],
-        meta: { short: "Ruler", long: "Eternal", note: "Eternal provides highest DPS Potential, Ruler provides good dps to cost." },
+        meta: { short: "Ruler", long: "Eternal", virtual: "Astral", note: "Eternal provides highest DPS Potential, Ruler provides good dps to cost." },
         stats: { dmg: 1200, spa: 7, crit: 50, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 4, hitCount: 14, reqCrits: 50, extraAttacks: 0, element: "Ice", range: 30 }
     },
     {
