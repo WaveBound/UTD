@@ -477,6 +477,15 @@ const unitDatabase = [
             passiveSpa: 10,  // Sniper Mode: 0.9x SPA (10% reduction)
             range: 120  // Sniper Mode: 200 Range
         }
+    },
+    {
+        id: "rohan", name: "Rohan & Robot", role: "Damage",
+        img: "images/units/Rohan.png",
+        totalCost: 54000,
+        placement: 2, tags: [],
+        meta: { short: "Ruler", long: "Ruler", note: "Ability activates Unleashed mode." },
+        stats: { dmg: 1680, spa: 7.5, crit: 15, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 3, passiveDmg: 30, passiveSpa: 5, element: "Light", dotDuration: 0, range: 55 },
+        ability: { dmg: 2000, spa: 8.5, range: 58, spaCap: 2 }
     }
 ];
 
