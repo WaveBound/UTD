@@ -7,6 +7,8 @@ const GAME_STATE = {
     BUG_CRIT_RELICS: false  // Set to true if Relic Crit is currently broken (Fixed in v2.4)
 };
 
+const SUPER_ROKU_NEARBY = false; // Toggle: +20% Damage if placed within range of a "Saiyan unit"
+
 const statConfig = {
     applyRelicDmg: true,  
     applyRelicSpa: true,  
@@ -205,6 +207,8 @@ const setBonuses = {
     ex: { dmg: 0, spa: 0, cf: 10, cm: 25, range: 0 },
     shadow_reaper: { dmg: 2.5, spa: 0, cf: 5, cm: 5, range: 10 },
     reaper_set: { dmg: 0, spa: 7.5, cf: 0, cm: 0, range: 15 },
+    super_roku: { dmg: 10, spa: 0, cf: 15, cm: 0, range: 0 },
+    bio_android: { dmg: 5, spa: 5, cf: 5, cm: 5, range: 5 },
     none: { dmg: 0, spa: 0, cf: 0, cm: 0, range: 0 }
 };
 
@@ -223,7 +227,9 @@ const SETS = [
     { id: "laughing", name: "Laughing Captain", bonus: { dmg: 5, spa: 5, cm: 0 } },
     { id: "ex",       name: "Ex Captain",       bonus: { dmg: 0, spa: 0, cm: 25, cf: 10 } },
     { id: "shadow_reaper", name: "Shadow Reaper", bonus: { dmg: 2.5, range: 10, cf: 5, cm: 5 } },
-    { id: "reaper_set",    name: "Reaper Set",    bonus: { spa: 7.5, range: 15 } }
+    { id: "reaper_set",    name: "Reaper Set",    bonus: { spa: 7.5, range: 15 } },
+    { id: "super_roku",    name: "Super Roku",    bonus: { dmg: 10, cf: 15 } },
+    { id: "bio_android",   name: "Bio-Android",   bonus: { dmg: 5, spa: 5, range: 5, cf: 5, cm: 5 } }
 ];
 
 const globalBuilds = SETS.flatMap(set => 

@@ -237,6 +237,11 @@ function _calcSetAndTagBonuses(relicStats, uStats, headPiece) {
         sBonus.dmg += 10;
     }
 
+    // Super Roku Conditional Bonus
+    if (relicStats.set === 'super_roku' && typeof SUPER_ROKU_NEARBY !== 'undefined' && SUPER_ROKU_NEARBY) {
+        sBonus.dmg = (sBonus.dmg || 0) + 20;
+    }
+
     // Tag Specific Bonuses
     const applyTagBuff = (bonusName, tagName, stats) => {
          if (relicStats.set === bonusName && tags.includes(tagName)) {

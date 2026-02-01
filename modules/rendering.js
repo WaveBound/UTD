@@ -405,7 +405,7 @@ function renderDatabase() {
                         <select onchange="filterList(this)" data-filter="prio" class="search-select prio-select"><option value="all">All Prio</option><option value="dmg">Dmg</option><option value="spa">SPA</option><option value="range">Range</option></select>
                     </div>
                     <div class="search-row">
-                        <select onchange="filterList(this)" data-filter="set" class="search-select"><option value="all">All Sets</option><option value="Master Ninja">Ninja Set</option><option value="Sun God">Sun God Set</option><option value="Laughing Captain">Laughing Set</option><option value="Ex Captain">Ex Set</option><option value="Shadow Reaper">Shadow Reaper</option><option value="Reaper Set">Reaper Set</option></select>
+                        <select onchange="filterList(this)" data-filter="set" class="search-select"><option value="all">All Sets</option><option value="Master Ninja">Ninja Set</option><option value="Sun God">Sun God Set</option><option value="Laughing Captain">Laughing Set</option><option value="Ex Captain">Ex Set</option><option value="Shadow Reaper">Shadow Reaper</option><option value="Reaper Set">Reaper Set</option><option value="Super Roku">Super Roku</option><option value="Bio-Android">Bio-Android</option></select>
                         <select onchange="filterList(this)" data-filter="head" class="search-select"><option value="all">All Heads</option><option value="sun_god">Sun God</option><option value="ninja">Ninja</option><option value="reaper_necklace">Reaper</option><option value="shadow_reaper_necklace">Shadow Reaper</option><option value="none">No Head</option></select>
                     </div>
                 </div>`;
