@@ -329,16 +329,24 @@ function renderDatabase() {
             processUnitCache(unit);
             renderQueueIndex++;
 
-            let abilityLabel = 'Ability';
-            let toggleScript = '';
-            if (unit.id === 'phantom_captain') abilityLabel = 'Planes';
-            else if (unit.id === 'megumin') abilityLabel = 'Passive';
-            else if (unit.id === 'vegeta') abilityLabel = 'Boss Stacks';
-            else if (unit.id === 'super_roku') abilityLabel = 'Same Enemy';
-            else if (unit.id === 'sharpshooter') {
-                abilityLabel = activeAbilityIds.has(unit.id) ? 'Sniper' : 'Normal';
-                toggleScript = `; this.parentElement.previousElementSibling.innerText = this.checked ? 'Sniper Mode' : 'Normal Mode'`;
-            }
+let abilityLabel = 'Ability';
+let toggleScript = '';
+
+if (unit.id === 'phantom_captain') abilityLabel = 'Planes';
+else if (unit.id === 'megumin') abilityLabel = 'Passive';
+else if (unit.id === 'vegeta') abilityLabel = 'Boss Stacks';
+else if (unit.id === 'super_roku') abilityLabel = 'Same Enemy';
+// --- ADD THIS BLOCK FOR CELL ---
+else if (unit.id === 'cell') {
+    const isToggled = activeAbilityIds.has(unit.id);
+    abilityLabel = isToggled ? 'Perfect Form' : 'True Form';
+    
+    // We add a style to the previous buttons container to give this text more room
+    toggleScript = `; 
+        this.parentElement.previousElementSibling.innerText = this.checked ? 'Perfect Form' : 'True Form';
+        this.closest('.unit-toolbar').firstElementChild.style.gap = '2px';
+    `;
+}
             
             const abilityToggleHtml = unit.ability ? `<div class="toggle-wrapper"><span>${abilityLabel}</span><label><input type="checkbox" class="ability-cb" ${activeAbilityIds.has(unit.id) ? 'checked' : ''} onchange="toggleAbility('${unit.id}', this)${toggleScript}"><div class="mini-switch"></div></label></div>` : '<div></div>';
             const topControls = `<div class="unit-toolbar"><div class="flex" style="gap: 4px; align-items: center;"><button class="select-btn" style="padding: 2px 8px; font-size: 0.75rem; min-height: 26px;" onclick="toggleSelection('${unit.id}')">${selectedUnitIds.has(unit.id) ? 'Selected' : 'Select'}</button><button class="calc-btn" style="padding: 2px 8px; font-size: 0.75rem; min-height: 26px;" onclick="openCalc('${unit.id}')">🖩 Custom</button><button class="calc-btn" style="padding: 2px 8px; font-size: 0.75rem; min-height: 26px;" onclick="openTraitBestList('${unit.id}')" title="Best Build per Trait">📊 Traits</button></div>${abilityToggleHtml}</div>`;

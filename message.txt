@@ -144,7 +144,7 @@ const results = calculateUnitBuilds(
 
 if (u.id === 'law') results.sort((a, b) => (b.range || 0) - (a.range || 0));
 else results.sort((a, b) => b.dps - a.dps);
-const topResults = results.slice(0, 30); 
+const topResults = results.slice(0, 5000); 
 
 const key = mode === 'bugged' ? 'b' : 'f';
 FINAL_DB[finalKey][key].push(rowsToBuffer(topResults));

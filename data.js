@@ -502,6 +502,28 @@ const unitDatabase = [
         ability: { dmg: 2445, spa: 8.5, range: 58, spaCap: 2 }
     },
     {
+        id: "cell", name: "Cell", role: "Damage / Summon",
+        img: "images/units/Cell.png",
+        totalCost: 56000,
+        placement: 1, tags: ["Bio-Android"],
+        meta: { short: "Ruler", long: "Ruler", note: "Ruler is strictly best due to 1 placement count. Base form is True Form. Toggle for Perfect Form (Summon)." },
+        stats: { 
+            baseName: "True Form",
+            dmg: 3250, spa: 10, crit: 0, cdmg: 150, dot: 0, spaCap: 4.1, 
+            passiveDmg: 70, element: "Wind", range: 43 
+        },
+        ability: { 
+            abilityName: "Perfect Form",
+            dmg: 3025, spa: 9.5, spaCap: 2.5, range: 43,
+            passiveDmg: 50,
+            summonStats: {
+                attacksToSpawn: 3, maxCount: 3, dmgPct: 50, buffWindow: 0,
+                planeA: { spa: 7.5, duration: 30 },
+                planeB: { spa: 7.5, duration: 30 }
+            }
+        } 
+    },
+    {
         id: "vegeta", name: "Fallen Prince", role: "Damage",
         img: "images/units/Vegeta.png",
         totalCost: 35112,

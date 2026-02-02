@@ -223,6 +223,7 @@ function _calcSummonDPS(uStats, finalDmg, finalSpa, placement) {
     const s = uStats.summonStats;
     const planeBaseDmg = finalDmg * (s.dmgPct / 100);
     const calcPlaneTypeDPS = (typeStats) => {
+        if (!typeStats) return 0;
         const attacksPerLife = Math.floor(typeStats.duration / typeStats.spa) + 1;
         let totalDamageOverLife = 0;
         for (let i = 0; i < attacksPerLife; i++) {
@@ -233,10 +234,13 @@ function _calcSummonDPS(uStats, finalDmg, finalSpa, placement) {
         }
         return totalDamageOverLife / typeStats.duration; 
     };
-    const avgOnePlaneDps = (calcPlaneTypeDPS(s.planeA) + calcPlaneTypeDPS(s.planeB)) / 2;
-    const avgDuration = (s.planeA.duration + s.planeB.duration) / 2;
-    const actualCount = Math.min(avgDuration / finalSpa, s.maxCount);
-    return { summonDpsTotal: (avgOnePlaneDps * actualCount) * placement, summonData: { count: actualCount, max: s.maxCount, avgPlaneDps: avgOnePlaneDps } };
+    const dpsA = calcPlaneTypeDPS(s.planeA);
+    const dpsB = calcPlaneTypeDPS(s.planeB);
+    const avgOnePlaneDps = (dpsA + dpsB) / 2;
+    const avgDuration = ((s.planeA?.duration || 0) + (s.planeB?.duration || 0)) / 2;
+    const attacksToSpawn = s.attacksToSpawn || 1;
+    const actualCount = Math.min(avgDuration / (finalSpa * attacksToSpawn), s.maxCount);
+    return { summonDpsTotal: (avgOnePlaneDps * actualCount) * placement, summonData: { count: actualCount, max: s.maxCount, avgPlaneDps: avgOnePlaneDps, hostSpa: finalSpa, avgDuration: avgDuration, dpsA: dpsA, dpsB: dpsB } };
 }
 
 function _calcDoTDPS(uStats, traitObj, totalDotBuffs, baseR_Dot, finalDmg, finalSpa, placement, isVirtualRealm, avgCritMult) {
@@ -354,6 +358,18 @@ function calculateDPS(uStats, relicStats, context) {
             attacksNeeded: 1, 
             mult: 0.65, 
             label: "Combo Decay" 
+        };
+    } else if (uStats.id === 'cell' && !isAbility) {
+        // Every attack has a follow-up for 50% damage.
+        usedSpa = finalSpa + 1.5;
+        attackMultiplier = 1.5;
+        extraAttacksData = {
+            req: "Follow-up hit",
+            hits: "1.5x Dmg / Cycle",
+            extra: 0,
+            attacksNeeded: 1,
+            mult: 1.5,
+            label: "Follow-up (+1.5s)"
         };
     } else if (uStats.reqCrits && uStats.hitCount) {
         const critsPerAttack = uStats.hitCount * (finalCritRate / 100);
