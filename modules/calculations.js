@@ -14,254 +14,101 @@
  * @param {Object} options - Config options { isAbility, mode, points... }
  */
 function buildCalculationContext(unit, traitIdent, options = {}) {
-    const { 
-        isAbility = false, 
-        mode = 'fixed', 
-        dmgPoints = 99, 
-        spaPoints = 0, 
-        rangePoints = 0,
-        wave = 25,
-        isBoss = false,
-        headPiece = 'none',
-        starMult = 1,
-        rankData = null
-    } = options;
-
-    // 1. Resolve Trait
+    const { isAbility = false, mode = 'fixed', dmgPoints = 99, spaPoints = 0, rangePoints = 0, wave = 25, isBoss = false, headPiece = 'none', starMult = 1, rankData = null } = options;
     let traitObj = null;
-    if (typeof traitIdent === 'object') {
-        traitObj = traitIdent;
-    } else {
-        traitObj = getTraitById(traitIdent, unit.id) || getTraitByName(traitIdent, unit.id) || getTraitById('ruler');
-    }
+    if (typeof traitIdent === 'object') traitObj = traitIdent;
+    else traitObj = getTraitById(traitIdent, unit.id) || getTraitByName(traitIdent, unit.id) || getTraitById('ruler');
 
-    // 2. Prepare Effective Stats (Base Clone)
     let effectiveStats = { ...unit.stats };
     effectiveStats.id = unit.id;
     if (unit.tags) effectiveStats.tags = unit.tags;
+    if (isAbility && unit.ability) Object.assign(effectiveStats, unit.ability);
 
-    // 3. Apply Ability Overrides
-    if (isAbility && unit.ability) {
-        Object.assign(effectiveStats, unit.ability);
-    }
-
-    // 4. Handle Unit Specific Logic (Kirito/Bambietta)
     const isKiritoVR = (unit.id === 'kirito' && kiritoState.realm);
-    
-    if (unit.id === 'kirito' && isKiritoVR && kiritoState.card) {
-        effectiveStats.dot = 200; 
-        effectiveStats.dotDuration = 4; 
-        effectiveStats.dotStacks = 1; 
-    }
-    
+    if (unit.id === 'kirito' && isKiritoVR && kiritoState.card) { effectiveStats.dot = 200; effectiveStats.dotDuration = 4; effectiveStats.dotStacks = 1; }
     if (unit.id === 'bambietta' && typeof BAMBIETTA_MODES !== 'undefined') {
         const currentEl = bambiettaState.element || "Dark";
         const modeStats = BAMBIETTA_MODES[currentEl];
         if (modeStats) Object.assign(effectiveStats, modeStats);
     }
 
-    // 5. Determine Placement
     let actualPlacement = unit.placement;
     if (traitObj.limitPlace) actualPlacement = Math.min(unit.placement, traitObj.limitPlace);
 
-    // 6. Generate ID Tags (for caching)
     let suffix = isAbility ? '-ABILITY' : '-BASE';
-    if (unit.id === 'kirito') { 
-        if (kiritoState.realm) suffix += '-VR'; 
-        if (kiritoState.card) suffix += '-CARD'; 
-    }
+    if (unit.id === 'kirito') { if (kiritoState.realm) suffix += '-VR'; if (kiritoState.card) suffix += '-CARD'; }
     const modeTag = (mode === 'bugged') ? '-b-' : '-f-';
 
-    // 7. Build Context Object
-    const context = {
-        dmgPoints, spaPoints, rangePoints,
-        wave, isBoss, 
-        traitObj, 
-        placement: actualPlacement, 
-        isSSS: true, 
-        isVirtualRealm: isKiritoVR,
-        headPiece,
-        starMult,
-        rankData,
-        isAbility
-    };
-
+    const context = { dmgPoints, spaPoints, rangePoints, wave, isBoss, traitObj, placement: actualPlacement, isSSS: true, isVirtualRealm: isKiritoVR, headPiece, starMult, rankData, isAbility };
     return { effectiveStats, traitObj, context, isKiritoVR, suffix, modeTag };
 }
 
-
-/**
- * Shared helper to construct the result object.
- */
-function createResultEntry({ 
-    id, buildName, traitName, res, prio, 
-    mainStats, subStats, headUsed, isCustom, 
-    relicIds = null 
-}) {
+function createResultEntry({ id, buildName, traitName, res, prio, mainStats, subStats, headUsed, isCustom, relicIds = null }) {
     const avgMult = res.critData ? res.critData.avgMult : 1;
-    
-    const entry = {
-        id: id,
-        setName: buildName.split('(')[0].trim(),
-        traitName: traitName,
-        dps: res.total,
-        dmgVal: res.dmgVal * avgMult, // Avg hit
-        spa: res.spa,
-        range: res.range,
-        prio: prio,
-        mainStats: mainStats, // { body, legs }
-        subStats: subStats,
-        headUsed: headUsed,
-        isCustom: isCustom
-    };
-
-    if (relicIds) entry.relicIds = relicIds; // Inventory mode specific
-    
+    const entry = { id: id, setName: buildName.split('(')[0].trim(), traitName: traitName, dps: res.total, dmgVal: res.dmgVal * avgMult, spa: res.spa, range: res.range, prio: prio, mainStats: mainStats, subStats: subStats, headUsed: headUsed, isCustom: isCustom };
+    if (relicIds) entry.relicIds = relicIds;
     return entry;
 }
 
-
-// --- MAIN FUNCTIONS ---
-
-// Main calculation function for unit builds
 function calculateUnitBuilds(unit, _stats, filteredBuilds, subCandidates, headsToProcess, includeSubs, specificTraitsOnly = null, isAbilityContext = false, mode = 'fixed') {
-    
-    // Branch to Inventory Mode if enabled
-    if (inventoryMode && relicInventory && relicInventory.length > 0) {
-        return calculateInventoryBuilds(unit, null, specificTraitsOnly, isAbilityContext, mode, headsToProcess, includeSubs);
-    }
-    
+    if (inventoryMode && relicInventory && relicInventory.length > 0) return calculateInventoryBuilds(unit, null, specificTraitsOnly, isAbilityContext, mode, headsToProcess, includeSubs);
     cachedResults = cachedResults || {};
-    
-    // 1. Determine Traits List
     let activeTraits = [];
-    if (specificTraitsOnly && Array.isArray(specificTraitsOnly)) {
-        activeTraits = specificTraitsOnly;
-    } else {
-        const specificTraits = unitSpecificTraits[unit.id] || [];
-        activeTraits = [...traitsList, ...customTraits, ...specificTraits];
-    }
+    if (specificTraitsOnly && Array.isArray(specificTraitsOnly)) activeTraits = specificTraitsOnly;
+    else { const specificTraits = unitSpecificTraits[unit.id] || []; activeTraits = [...traitsList, ...customTraits, ...specificTraits]; }
 
     let unitResults = [];
-
-    // Use Context Builder to get base stats for DoT check
-    // We do this once just to check native capabilities
     const { effectiveStats: baseEffective, isKiritoVR: baseVR } = buildCalculationContext(unit, 'ruler', { isAbility: isAbilityContext });
-
-    // Pre-calculate DoT capability to filter builds
     const hasNativeDoT = (baseEffective.dot > 0) || (baseEffective.burnMultiplier > 0) || baseVR;
     let unitSubCandidates = [...subCandidates];
-    if (!hasNativeDoT) {
-        unitSubCandidates = unitSubCandidates.filter(c => c !== 'dot');
-    }
-    
+    if (!hasNativeDoT) unitSubCandidates = unitSubCandidates.filter(c => c !== 'dot');
     const subsSuffix = includeSubs ? '-SUBS' : '-NOSUBS';
 
     activeTraits.forEach(trait => {
         if (trait.id === 'none') return; 
-        
-        // Use Unified Context Builder per Trait
-        const { effectiveStats, context, isKiritoVR, suffix, modeTag } = buildCalculationContext(unit, trait, { 
-            isAbility: isAbilityContext, 
-            mode: mode 
-        });
-
+        const { effectiveStats, context, isKiritoVR, suffix, modeTag } = buildCalculationContext(unit, trait, { isAbility: isAbilityContext, mode: mode });
         const traitAddsDot = trait.dotBuff > 0 || trait.hasRadiation || trait.allowDotStack;
         const isDotPossible = hasNativeDoT || traitAddsDot;
         const currentCandidates = (traitAddsDot) ? subCandidates : unitSubCandidates;
-        
-        // Filter builds based on DoT relevance
-        const relevantBuilds = (!isDotPossible) 
-            ? filteredBuilds.filter(b => b.bodyType !== 'dot') 
-            : filteredBuilds;
+        const relevantBuilds = (!isDotPossible) ? filteredBuilds.filter(b => b.bodyType !== 'dot') : filteredBuilds;
 
         relevantBuilds.forEach(build => {
-            
-            // Filter heads if DoT not possible (Ninja head is DoT specific)
             let relevantHeads = headsToProcess;
-            if (!isDotPossible) {
-                relevantHeads = headsToProcess.filter(h => h !== 'ninja');
-            }
+            if (!isDotPossible) relevantHeads = headsToProcess.filter(h => h !== 'ninja');
 
             relevantHeads.forEach(headMode => {
-                
-                // Helper to run optimization
                 const runOpt = (dmgP, spaP, rangeP, optType) => {
-                    // Update context points and effectiveStats context reference
-                    context.dmgPoints = dmgP;
-                    context.spaPoints = spaP;
-                    context.rangePoints = rangeP;
-                    effectiveStats.context = context; // Link context to stats for deep calc functions
-                    
+                    context.dmgPoints = dmgP; context.spaPoints = spaP; context.rangePoints = rangeP;
+                    effectiveStats.context = context;
                     return getBestSubConfig(build, effectiveStats, includeSubs, headMode, currentCandidates, optType);
                 };
 
-                // Run Calculations
                 const cfgDmg = runOpt(99, 0, 0, 'dps');
                 const cfgSpa = runOpt(0, 99, 0, 'dps');
                 const cfgRaw = runOpt(99, 0, 0, 'raw_dmg');
                 const cfgRange = runOpt(0, 0, 99, 'range');
 
-                const safeBuildName = build.name.replace(/[^a-zA-Z0-9]/g, '');
-                const headSuffix = `-${headMode}`;
-                const baseId = `${unit.id}${suffix}-${trait.id}-${safeBuildName}`;
-
-                const processResult = (config, prioStr, forcePush = false) => {
+                const baseId = `${unit.id}${suffix}-${trait.id}-${build.name.replace(/[^a-zA-Z0-9]/g, '')}`;
+                const processResult = (config, prioStr) => {
                     const res = config.res;
                     if (isNaN(res.total)) return;
-                    
-
-                    // ID Structure: [Unit][Context][Trait][Build][Prio][Subs][Head][MODE]
-                    const fullId = `${baseId}-${prioStr}${subsSuffix}${headSuffix}${modeTag}`;
-                    
-                    const entry = createResultEntry({
-                        id: fullId,
-                        buildName: build.name,
-                        traitName: trait.name,
-                        res: res,
-                        prio: prioStr,
-                        mainStats: { body: build.bodyType, legs: build.legType },
-                        subStats: config.assignments,
-                        headUsed: config.assignments.selectedHead,
-                        isCustom: trait.isCustom
-                    });
-
-                    // FIX: Store the full 'entry' with metadata in cache, not just the raw math 'res'
+                    const fullId = `${baseId}-${prioStr}${subsSuffix}-${headMode}${modeTag}`;
+                    const entry = createResultEntry({ id: fullId, buildName: build.name, traitName: trait.name, res: res, prio: prioStr, mainStats: { body: build.bodyType, legs: build.legType }, subStats: config.assignments, headUsed: config.assignments.selectedHead, isCustom: trait.isCustom });
                     cachedResults[fullId] = entry;
-                    
                     unitResults.push(entry);
                     return entry;
                 };
 
-                // 1. Always push DPS (Dmg Prio)
                 const dmgEntry = processResult(cfgDmg, "dmg");
-
-                // 2. Push DPS (Spa Prio) if notably different
-                const spaEntry = cfgSpa.res;
-                if (Math.abs(spaEntry.total - dmgEntry.dps) > 1) {
-                    processResult(cfgSpa, "spa");
-                }
-
-                // 3. Push Raw Dmg if different
-                const avgHitDmg = dmgEntry.dmgVal; // Already averaged in createResultEntry
-                const avgHitRaw = cfgRaw.res.dmgVal * (cfgRaw.res.critData ? cfgRaw.res.critData.avgMult : 1);
-                if (Math.abs(avgHitRaw - avgHitDmg) > 10) {
-                    processResult(cfgRaw, "raw_dmg");
-                }
-
-                // 4. Push Range
-                if (unit.id === 'law' || Math.abs(cfgRange.res.range - dmgEntry.range) > 0.1) {
-                    processResult(cfgRange, "range");
-                }
-
-            }); // End Heads
-        }); // End Builds
-    }); // End Traits
-
+                processResult(cfgSpa, "spa");
+                processResult(cfgRaw, "raw_dmg");
+                processResult(cfgRange, "range");
+            });
+        });
+    });
     unitResults.sort((a, b) => b.dps - a.dps);
     return unitResults;
 }
-
 // Inventory Mode Calculation
 function calculateInventoryBuilds(unit, _stats, specificTraitsOnly, isAbilityContext, mode, headsToProcess, includeSubs, forcedRelic = null) {
     cachedResults = cachedResults || {};

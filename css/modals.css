@@ -346,6 +346,15 @@
     padding: 12px !important;
 }
 
+/* NEW: Super Roku Passive "Box" Styling */
+.mt-row-super_roku td {
+    background: linear-gradient(90deg, rgba(244, 63, 94, 0.1), rgba(0, 0, 0, 0));
+    border-top: 1px solid rgba(244, 63, 94, 0.3) !important;
+    border-bottom: 1px solid rgba(244, 63, 94, 0.3) !important;
+    border-left: 3px solid #f43f5e !important;
+    padding: 12px !important;
+}
+
 /* NEW: Grid for better spacing in Sun God Passive */
 .sungod-stats-grid {
     display: grid;

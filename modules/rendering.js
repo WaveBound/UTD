@@ -69,40 +69,18 @@ function generateBuildRowHTML(r, i, unitConfig = {}) {
     let rankClass = (i < 3 ? `rank-${i+1}` : 'rank-other') + (r.isCustom ? ' is-custom' : '');
     const effScore = calculateBuildEfficiency(r, totalCost, placement, unitId).toFixed(3);
 
-    // OPTIMALITY BADGE LOGIC
-let optimalityHtml = '';
-if (inventoryMode && benchmarkDps > 0) {
-    const optPct = (r.dps / benchmarkDps) * 100;
-    
-    // Updated to more "premium" color palette
-    // 95%+ = Emerald Glow, 80%+ = Amber Glow, <80% = Ruby Glow
-    let color, glow;
-    if (optPct >= 95) {
-        color = '#00ffaa'; // Vibrant Emerald
-        glow = 'rgba(0, 255, 170, 0.15)';
-    } else if (optPct >= 80) {
-        color = '#ffcc00'; // Pure Amber
-        glow = 'rgba(255, 204, 0, 0.15)';
-    } else {
-        color = '#ff4d4d'; // Soft Ruby
-        glow = 'rgba(255, 77, 77, 0.15)';
+    let optimalityHtml = '';
+    if (inventoryMode && benchmarkDps > 0) {
+        const optPct = (r.dps / benchmarkDps) * 100;
+        let color, glow;
+        if (optPct >= 95) { color = '#00ffaa'; glow = 'rgba(0, 255, 170, 0.15)'; }
+        else if (optPct >= 80) { color = '#ffcc00'; glow = 'rgba(255, 204, 0, 0.15)'; }
+        else { color = '#ff4d4d'; glow = 'rgba(255, 77, 77, 0.15)'; }
+        
+        optimalityHtml = `<div class="optimality-badge" style="color: ${color}; border-color: ${color}66; --glow-color: ${glow};"><span class="opt-label" style="color: ${color}">OPTIMALITY</span><span class="opt-pct">${optPct.toFixed(1)}%</span></div>`;
     }
-    
-    optimalityHtml = `
-        <div class="optimality-badge" 
-             style="color: ${color}; border-color: ${color}66; --glow-color: ${glow};">
-            <span class="opt-label" style="color: ${color}">OPTIMALITY</span>
-            <span class="opt-pct">${optPct.toFixed(1)}%</span>
-        </div>
-    `;
-}
 
-    // PRIORITY BADGE LOGIC
-    const prioConfig = {
-        'spa': { label: 'SPA STAT', cls: 'prio-spa' },
-        'range': { label: 'RANGE STAT', cls: 'prio-range' },
-        'default': { label: 'DMG STAT', cls: 'prio-dmg' }
-    };
+    const prioConfig = { 'spa': { label: 'SPA STAT', cls: 'prio-spa' }, 'range': { label: 'RANGE STAT', cls: 'prio-range' }, 'default': { label: 'DMG STAT', cls: 'prio-dmg' } };
 
     let prioHtml = '';
     if (r.relicIds) {
@@ -111,7 +89,6 @@ if (inventoryMode && benchmarkDps > 0) {
         const lId = r.relicIds.legs || 'none-l';
         const currentPrio = r.prio || 'default';
         const secCfg = prioConfig[currentPrio] || prioConfig['default'];
-        
         const invBadge = `<button class="prio-badge prio-inv clickable" onclick="viewInventoryItems('${hId}', '${bId}', '${lId}')" title="Locate in Inventory"><img src="https://img.icons8.com/fluency-systems-filled/48/ffffff/backpack.png" alt="Inv"></button>`;
         const statBadge = `<span class="prio-badge ${secCfg.cls}">${secCfg.label}</span>`;
         prioHtml = `<div class="br-badges">${invBadge}${statBadge}</div>`;
@@ -123,14 +100,11 @@ if (inventoryMode && benchmarkDps > 0) {
     const mainBodyBadge = getBadgeHtml(r.mainStats.body, MAIN_STAT_VALS.body[r.mainStats.body]);
     const mainLegsBadge = getBadgeHtml(r.mainStats.legs, MAIN_STAT_VALS.legs[r.mainStats.legs]);
     const headHtml = getHeadBadgeHtml(r.headUsed);
-
     const s = r.subStats || {};
-    
     const headRow = (r.headUsed && r.headUsed !== 'none') ? `<div class="stat-line"><span class="sl-label">SUB</span> ${getRichBadgeHtml(s.head || [])}</div>` : '';
     const bodyRow = `<div class="stat-line"><span class="sl-label">BODY</span> ${getRichBadgeHtml(s.body || [])}</div>`;
     const legsRow = `<div class="stat-line"><span class="sl-label">LEGS</span> ${getRichBadgeHtml(s.legs || [])}</div>`;
-    const subInnerHtml = `${headRow}${bodyRow}${legsRow}`;
-
+    
     let displayVal = format(r.dps), displayLabel = "DPS";
     if (sortMode === 'range') { displayVal = (r.range || 0).toFixed(1); displayLabel = "RNG"; }
     
@@ -138,16 +112,13 @@ if (inventoryMode && benchmarkDps > 0) {
         <div class="build-row ${rankClass} ${sortMode === 'efficiency' ? 'is-efficiency-sort' : ''}">
             <div class="br-header">
                 <div class="br-header-info"><span class="br-rank">#${i+1}</span><span class="br-set">${r.setName}</span><span class="br-sep">/</span><span class="br-trait">${r.traitName}</span></div>
-                <div style="display:flex; gap:8px; align-items:center;">
-                    ${optimalityHtml}
-                    ${prioHtml}
-                </div>
+                <div style="display:flex; gap:8px; align-items:center;">${optimalityHtml}${prioHtml}</div>
             </div>
             <div class="br-grid">
                 <div class="br-col main"><div class="br-col-title">MAIN STAT</div>${headHtml}<div class="stat-line"><span class="sl-label">BODY</span> ${mainBodyBadge}</div><div class="stat-line"><span class="sl-label">LEGS</span> ${mainLegsBadge}</div></div>
                 <div class="br-col sub">
                     <div class="br-col-header"><div class="br-col-title">SUB STAT</div><button class="sub-list-btn" title="View Sub-Stat Priority" onclick="viewSubPriority('${r.id}')">≡</button></div>
-                    ${subInnerHtml}
+                    ${headRow}${bodyRow}${legsRow}
                 </div>
                 <div class="br-res-col">
                     <button class="info-btn" onclick="showMath('${r.id}')">?</button>
@@ -161,26 +132,20 @@ if (inventoryMode && benchmarkDps > 0) {
 function updateBuildListDisplay(unitId) {
     const card = document.getElementById('card-' + unitId);
     if (!card) return;
-    
     const unitObj = unitDatabase.find(u => u.id === unitId);
     const unitCost = unitObj ? unitObj.totalCost : 50000;
     const unitPlace = unitObj ? unitObj.placement : 1;
 
-    // --- CALCULATE BENCHMARK FOR OPTIMALITY ---
     let benchmarkDps = 0;
     if (inventoryMode && window.STATIC_BUILD_DB) {
         const isAbility = activeAbilityIds.has(unitId);
         const mode = document.body.classList.contains('show-fixed-relics') ? 'fixed' : 'bugged';
         let dbKey = unitId + (unitId === 'kirito' && kiritoState.card ? 'kirito_card' : '') + (isAbility && unitObj.ability ? '_abil' : '');
-
         const showHead = document.body.classList.contains('show-head');
         const showSubs = document.body.classList.contains('show-subs');
         let cfgIdx = (showHead ? 2 : 0) + (showSubs ? 1 : 0);
-
         const perfectBuilds = window.STATIC_BUILD_DB[dbKey]?.[mode]?.[cfgIdx];
-        if (perfectBuilds && perfectBuilds.length > 0) {
-            benchmarkDps = perfectBuilds[0].dps;
-        }
+        if (perfectBuilds && perfectBuilds.length > 0) benchmarkDps = perfectBuilds[0].dps;
     }
 
     const searchInput = card.querySelector('.search-container input').value.toLowerCase();
@@ -202,13 +167,21 @@ function updateBuildListDisplay(unitId) {
         if (prioSelect === 'all') {
             const uniqueMap = new Map();
             filtered.forEach(r => {
-                const key = `${r.setName}|${r.traitName}|${r.mainStats.body}|${r.mainStats.legs}|${r.headUsed}`;
+                const key = `${r.setName}|${r.traitName}|${r.mainStats.body}|${r.mainStats.legs}`;
+                
+                // SJW Sun God Weighting (Unique Selection)
+                const getWeight = (b) => (unitId === 'sjw' && b.headUsed === 'sun_god') ? 1.05 : 1.0;
+
                 if (!uniqueMap.has(key)) {
                     uniqueMap.set(key, r);
                 } else {
                     const existing = uniqueMap.get(key);
                     const isRangeSort = (sortSelect === 'range' || unitId === 'law');
-                    const isBetter = isRangeSort ? (r.range > existing.range) : (r.dps > existing.dps);
+                    
+                    const scoreR = r.dps * getWeight(r);
+                    const scoreE = existing.dps * getWeight(existing);
+
+                    const isBetter = isRangeSort ? (r.range > existing.range) : (scoreR > scoreE);
                     if (isBetter) uniqueMap.set(key, r);
                 }
             });
@@ -217,28 +190,25 @@ function updateBuildListDisplay(unitId) {
 
         if(filtered.length === 0) return '<div class="msg-empty">No matches found.</div>';
         
+        // SJW Sun God Weighting (Final Sorting)
+        const getFinalWeight = (b) => (unitId === 'sjw' && b.headUsed === 'sun_god') ? 1.05 : 1.0;
+
         if (sortSelect === 'efficiency') {
             filtered.sort((a, b) => calculateBuildEfficiency(b, unitCost, unitPlace, unitId) - calculateBuildEfficiency(a, unitCost, unitPlace, unitId));
         } else if (sortSelect === 'range') {
             filtered.sort((a, b) => (b.range || 0) - (a.range || 0));
         } else if (sortSelect === 'damage') {
             filtered.sort((a, b) => {
-                let scoreA = a.dps * (a.mainStats.body === 'dmg' && a.mainStats.legs === 'dmg' ? 1.2 : 1);
-                let scoreB = b.dps * (b.mainStats.body === 'dmg' && b.mainStats.legs === 'dmg' ? 1.2 : 1);
+                let scoreA = a.dps * (a.mainStats.body === 'dmg' && a.mainStats.legs === 'dmg' ? 1.2 : 1) * getFinalWeight(a);
+                let scoreB = b.dps * (b.mainStats.body === 'dmg' && b.mainStats.legs === 'dmg' ? 1.2 : 1) * getFinalWeight(b);
                 return scoreB - scoreA;
             });
         } else {
-            filtered.sort((a, b) => b.dps - a.dps);
+            filtered.sort((a, b) => (b.dps * getFinalWeight(b)) - (a.dps * getFinalWeight(a)));
         }
 
         let displaySlice = filtered.slice(0, 10);
-        return displaySlice.map((r, i) => generateBuildRowHTML(r, i, { 
-            totalCost: unitCost, 
-            placement: unitPlace, 
-            sortMode: sortSelect, 
-            unitId,
-            benchmarkDps: benchmarkDps 
-        })).join('');
+        return displaySlice.map((r, i) => generateBuildRowHTML(r, i, { totalCost: unitCost, placement: unitPlace, sortMode: sortSelect, unitId, benchmarkDps: benchmarkDps })).join('');
     };
 
     ['base', 'abil'].forEach(type => {
@@ -259,7 +229,6 @@ function processUnitCache(unit) {
     const performCalcSet = (mode, useAbility) => {
         const originalRelicDot = statConfig.applyRelicDot, originalRelicCrit = statConfig.applyRelicCrit;
         statConfig.applyRelicDot = (mode === 'fixed');
-
         let dbKey = unit.id + (unit.id === 'kirito' && kiritoState.card ? 'kirito_card' : '') + (useAbility && unit.ability ? '_abil' : '');
         const resultSet = [];
         const useInventory = (inventoryMode === true);
@@ -274,55 +243,38 @@ function processUnitCache(unit) {
                 if (canUseStatic && window.STATIC_BUILD_DB && window.STATIC_BUILD_DB[dbKey]) {
                     const dbList = window.STATIC_BUILD_DB[dbKey][mode];
                     if(dbList && dbList[i]) {
-                        // Load static data (Deep copy to avoid mutating cache)
                         calculatedResults = dbList[i].map(r => ({...r}));
                         loadedFromStatic = true;
                     }
                 }
             }
 
-            // OPTIMIZATION: If Miku Buff is active, update the static results instead of full re-calc
             if (loadedFromStatic && window.mikuBuffActive && typeof reconstructMathData === 'function') {
-                // Smart Filter: Keep Top 50 Global AND Top 10 per Trait
                 const traitCounts = {};
                 const subset = [];
                 calculatedResults.forEach((res, index) => {
                     const tName = res.traitName || 'Unknown';
                     if (!traitCounts[tName]) traitCounts[tName] = 0;
-                    if (index < 50 || traitCounts[tName] < 10) {
-                        subset.push(res);
-                        traitCounts[tName]++;
-                    }
+                    if (index < 50 || traitCounts[tName] < 10) { subset.push(res); traitCounts[tName]++; }
                 });
                 calculatedResults = subset;
-                
                 calculatedResults.forEach(entry => {
                     try {
-                        const newRes = reconstructMathData(entry); // Recalculates with global flags (Miku) active
-                        if (newRes) {
-                            entry.dps = newRes.total;
-                            entry.dmgVal = newRes.dmgVal * (newRes.critData ? newRes.critData.avgMult : 1);
-                            entry.spa = newRes.spa;
-                            entry.range = newRes.range;
-                        }
+                        const newRes = reconstructMathData(entry);
+                        if (newRes) { entry.dps = newRes.total; entry.dmgVal = newRes.dmgVal * (newRes.critData ? newRes.critData.avgMult : 1); entry.spa = newRes.spa; entry.range = newRes.range; }
                     } catch (e) { console.warn("Buff recalc error", e); }
                 });
-                // Re-sort after buff application
                 calculatedResults.sort((a, b) => b.dps - a.dps);
             }
             
-            // Cache the results (either raw static or buff-updated)
             calculatedResults.forEach(r => cachedResults[r.id] = r);
-
             const traitsForCalc = (calculatedResults.length > 0) ? [...(typeof customTraits !== 'undefined' ? customTraits : []), ...(unitSpecificTraits[unit.id] || [])] : null;
-            
             if (traitsForCalc === null || traitsForCalc.length > 0 || useInventory) {
                 const dynamicResults = calculateUnitBuilds(unit, null, getFilteredBuilds(), getValidSubCandidates(), cfg.head ? ['sun_god', 'ninja', 'reaper_necklace', 'shadow_reaper_necklace'] : ['none'], cfg.subs, traitsForCalc, useAbility, mode);
                 calculatedResults = [...calculatedResults, ...dynamicResults];
             }
             resultSet.push(calculatedResults);
         }
-        
         statConfig.applyRelicDot = originalRelicDot; statConfig.applyRelicCrit = originalRelicCrit;
         return resultSet;
     };

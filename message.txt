@@ -130,23 +130,24 @@
 
                     // FIX: Passed correct arguments for isAbilityContext and mode
                     // calculateUnitBuilds(unit, _stats, filteredBuilds, subCandidates, headsToProcess, includeSubs, specificTraitsOnly, isAbilityContext, mode)
-                    const results = calculateUnitBuilds(
-                        u, 
-                        null, // _stats is ignored by the new calculation engine, passed null
-                        currentFilteredBuilds, 
-                        currentSubCandidates, 
-                        headsToProcess, 
-                        includeSubs, 
-                        traitsForCalc,
-                        isAbility, // Correctly pass ability flag
-                        mode       // Correctly pass mode (fixed/bugged)
-                    );
+const results = calculateUnitBuilds(
+    u, 
+    null, 
+    currentFilteredBuilds, 
+    currentSubCandidates, 
+    headsToProcess, 
+    includeSubs, 
+    traitsForCalc,
+    isAbility, 
+    mode      
+);
 
-                    if (u.id === 'law') results.sort((a, b) => (b.range || 0) - (a.range || 0));
-                    else results.sort((a, b) => b.dps - a.dps);
+if (u.id === 'law') results.sort((a, b) => (b.range || 0) - (a.range || 0));
+else results.sort((a, b) => b.dps - a.dps);
+const topResults = results.slice(0, 30); 
 
-                    const key = mode === 'bugged' ? 'b' : 'f';
-                    FINAL_DB[finalKey][key].push(rowsToBuffer(results));
+const key = mode === 'bugged' ? 'b' : 'f';
+FINAL_DB[finalKey][key].push(rowsToBuffer(topResults));
                 });
             });
         });
