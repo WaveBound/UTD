@@ -382,7 +382,7 @@ function renderDatabase() {
             if (unit.id === 'phantom_captain') abilityLabel = 'Planes';
             else if (unit.id === 'megumin') abilityLabel = 'Passive';
             else if (unit.id === 'sharpshooter') {
-                abilityLabel = activeAbilityIds.has(unit.id) ? 'Sniper Mode' : 'Normal Mode';
+                abilityLabel = activeAbilityIds.has(unit.id) ? 'Sniper' : 'Normal';
                 toggleScript = `; this.parentElement.previousElementSibling.innerText = this.checked ? 'Sniper Mode' : 'Normal Mode'`;
             }
             
