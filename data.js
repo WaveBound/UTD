@@ -517,6 +517,7 @@ const unitDatabase = [
         placement: 2, tags: ["Saiyan"],
         meta: { short: "Ruler", long: "Ruler", note: "Toggle Same Enemy for boss DPS calculation." },
         stats: { dmg: 1950, spa: 6.5, crit: 10, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 4, passiveDmg: 25, element: "Light", dotDuration: 0, range: 41 },
+        ability: {} 
     },
     {
         id: "trunks", name: "The Drink", role: "Damage / DoT",
