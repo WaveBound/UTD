@@ -20,7 +20,7 @@ const toggleModal = (modalId, show = true) => {
         });
 
         modal.classList.add('is-visible');
-        document.body.classList.add('scroll-locked');
+        if (typeof updateBodyScroll === 'function') updateBodyScroll();
         
         // Requirement 2: Add class to body to hide Mobile FAB via CSS
         document.body.classList.add('modal-open'); 
@@ -32,7 +32,7 @@ const toggleModal = (modalId, show = true) => {
         setTimeout(() => {
             const anyVisible = document.querySelectorAll('.modal-overlay.is-visible').length > 0;
             if (!anyVisible) {
-                document.body.classList.remove('scroll-locked');
+                if (typeof updateBodyScroll === 'function') updateBodyScroll();
                 document.body.classList.remove('modal-open'); // Re-show FAB
             }
         }, 50);

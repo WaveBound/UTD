@@ -6,7 +6,7 @@
 let customTraits = [];
 let unitSpecificTraits = {}; 
 let selectedUnitIds = new Set();
-let activeAbilityIds = new Set(['phantom_captain', 'megumin']); 
+let activeAbilityIds = new Set(['phantom_captain', 'megumin', 'super_roku']); 
 let cachedResults = {}; 
 let unitBuildsCache = {}; 
 

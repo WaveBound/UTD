@@ -145,5 +145,10 @@ const infoDefinitions = {
         title: "Cost Efficiency (DPS per Yen)",
         formula: `<span class="ip-var">Score</span> = <span class="ip-var">Total DPS</span> / <span class="ip-var">Total Cost</span>`,
         desc: "This metric shows how much Damage Per Second you get for every <b>1 Yen</b> spent.<br><br><b>Total Cost</b> includes:<br>1. Deployment Cost<br>2. Max Upgrade Cost<br>3. Multiplied by Unit Placement Limit (e.g., x3 units).<br><br>A higher number means the unit is more economic."
+    },
+    'chain_logic': {
+        title: "Chain Attack Mechanic",
+        formula: `<span class="ip-var">AvgSPA</span> = Σ (<span class="ip-var">Time</span> * <span class="ip-var">Prob</span>)`,
+        desc: "Rohan has a chance to 'Chain' (reset) his attack timer early at fixed intervals.<br><br><b>Interval:</b> Every 3s (Base) or 2s (Ability).<br><b>Probabilities:</b> 40% → 35% → 30% → 25% → 20%.<br><br>If the Chain triggers, the attack happens immediately. If it fails, it waits for the next interval or the natural SPA."
     }
 };

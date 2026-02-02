@@ -381,6 +381,8 @@ function renderDatabase() {
             let toggleScript = '';
             if (unit.id === 'phantom_captain') abilityLabel = 'Planes';
             else if (unit.id === 'megumin') abilityLabel = 'Passive';
+            else if (unit.id === 'vegeta') abilityLabel = 'Boss Stacks';
+            else if (unit.id === 'super_roku') abilityLabel = 'Same Enemy';
             else if (unit.id === 'sharpshooter') {
                 abilityLabel = activeAbilityIds.has(unit.id) ? 'Sniper' : 'Normal';
                 toggleScript = `; this.parentElement.previousElementSibling.innerText = this.checked ? 'Sniper Mode' : 'Normal Mode'`;

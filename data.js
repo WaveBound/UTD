@@ -485,7 +485,7 @@ const unitDatabase = [
             element: "Fire", dotDuration: 0, range: 50,
             passiveDmg: 125, // Normal Mode: 2.25x Dmg
             passiveSpa: 0
-        },
+        }, 
         ability: { 
             passiveDmg: 10,  // Sniper Mode: 1.1x Dmg
             passiveSpa: 10,  // Sniper Mode: 0.9x SPA (10% reduction)
@@ -498,8 +498,35 @@ const unitDatabase = [
         totalCost: 54000,
         placement: 2, tags: [],
         meta: { short: "Ruler", long: "Ruler", note: "Ability activates Unleashed mode." },
-        stats: { dmg: 1680, spa: 7.5, crit: 15, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 3, passiveDmg: 30, passiveSpa: 5, element: "Light", dotDuration: 0, range: 55 },
-        ability: { dmg: 2000, spa: 8.5, range: 58, spaCap: 2 }
+        stats: { dmg: 1820, spa: 7.5, crit: 15, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 3, passiveDmg: 30, passiveSpa: 5, element: "Light", dotDuration: 0, range: 55 },
+        ability: { dmg: 2445, spa: 8.5, range: 58, spaCap: 2 }
+    },
+    {
+        id: "vegeta", name: "Fallen Prince", role: "Damage",
+        img: "images/units/Vegeta.png",
+        totalCost: 35112,
+        placement: 3, tags: [],
+        meta: { short: "Ruler", long: "Eternal", note: "Toggle Boss Stacks for max damage." },
+        stats: { dmg: 2275, spa: 8, crit: 45, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 3, passiveDmg: 0, passiveSpa: 15, passiveRange: 15, element: "Dark", dotDuration: 0, range: 44 },
+        ability: { passiveDmg: 150 }
+    },
+    {
+        id: "super_roku", name: "Super Roku", role: "Damage",
+        img: "images/units/SuperRoku.png",
+        totalCost: 48000,
+        placement: 2, tags: ["Saiyan"],
+        meta: { short: "Ruler", long: "Ruler", note: "Toggle Same Enemy for boss DPS calculation." },
+        stats: { dmg: 1950, spa: 6.5, crit: 10, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 4, passiveDmg: 25, element: "Light", dotDuration: 0, range: 41 },
+        ability: { }
+    },
+    {
+        id: "trunks", name: "The Drink", role: "Damage / DoT",
+        img: "images/units/Trunks.png",
+        totalCost: 40000,
+        placement: 4, tags: [],
+        meta: { short: "Ruler", long: "Ruler", note: "Passive averages to +25% Damage." },
+        stats: { dmg: 1810, spa: 8.5, crit: 0, cdmg: 150, dot: 25, dotStacks: 1, spaCap: 2, passiveDmg: 45, element: "Light", dotDuration: 5, range: 45 },
+        ability: { }
     }
 ];
 
