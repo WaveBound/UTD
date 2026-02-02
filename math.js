@@ -389,7 +389,7 @@ function _calcDoTDPS(uStats, traitObj, totalDotBuffs, baseR_Dot, finalDmg, final
 
 function calculateDPS(uStats, relicStats, context) {
     // Destructure rangePoints from context
-    const { dmgPoints, spaPoints, rangePoints, wave, isBoss, traitObj, placement, isSSS, headPiece, isVirtualRealm, starMult } = context;
+    const { dmgPoints, spaPoints, rangePoints, wave, isBoss, traitObj, placement, isSSS, headPiece, isVirtualRealm, starMult, isAbility } = context;
 
     // 1. Level Scaling (Now uses rangePoints for Range scaling)
     let lvStats = getLevelStats(uStats.dmg, uStats.spa, uStats.range || 0, dmgPoints, spaPoints, rangePoints);
@@ -505,6 +505,43 @@ function calculateDPS(uStats, relicStats, context) {
             extraAttacksData = { req: uStats.reqCrits, hits: uStats.hitCount, extra: uStats.extraAttacks, attacksNeeded: attacksToTrigger, mult: attackMultiplier };
         }
     }
+
+    if (uStats.id === 'rohan' && !isAbility) {
+        const rohanMult = 1.04; // (5.0 + 0.2) / 5.0 = 1.04x Avg
+        attackMultiplier *= rohanMult;
+        extraAttacksData = { req: "5 Attacks", hits: "1 + Robot", extra: 0.2, attacksNeeded: 5, mult: attackMultiplier, label: "Trigger Condition" };
+    }
+
+    // Rohan Passive: Chain Attack Logic
+    if (uStats.id === 'rohan') {
+        const spaCap = uStats.spaCap || 3;
+        const maxSlots = Math.max(0, Math.ceil(finalSpa / spaCap) - 1);
+        
+        const probs = [0.40, 0.35, 0.30, 0.25, 0.20];
+        let expectedExtra = 0;
+        let currentProb = 1.0;
+        
+        // Calculate cumulative probability for sequential chain
+        for (let i = 0; i < Math.min(maxSlots, probs.length); i++) {
+            currentProb *= probs[i];
+            expectedExtra += currentProb;
+        }
+        
+        attackMultiplier *= (1 + expectedExtra);
+
+        const hitsLabel = (!isAbility) ? `1 + Chain + Robot` : `1 + Chain (Max ${maxSlots})`;
+        const reqLabel = (!isAbility) ? `SPA > ${spaCap}s & 5 Atk` : `SPA > ${spaCap}s`;
+        
+        extraAttacksData = { 
+            req: reqLabel, 
+            hits: hitsLabel, 
+            extra: expectedExtra, 
+            attacksNeeded: 1, 
+            mult: attackMultiplier, 
+            label: "Chain Condition" 
+        };
+    }
+
     const hitDpsTotal = (avgHit / finalSpa) * placement * attackMultiplier;
 
     // 11. SUMMON / PLANE CALCULATION

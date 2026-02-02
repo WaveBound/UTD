@@ -82,7 +82,8 @@ function buildCalculationContext(unit, traitIdent, options = {}) {
         isVirtualRealm: isKiritoVR,
         headPiece,
         starMult,
-        rankData
+        rankData,
+        isAbility
     };
 
     return { effectiveStats, traitObj, context, isKiritoVR, suffix, modeTag };
@@ -505,5 +506,3 @@ function reconstructMathData(liteData) {
 
     return result;
 }
-
-window.reconstructMathData = reconstructMathData;

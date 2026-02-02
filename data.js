@@ -28,6 +28,14 @@ const SUB_NAMES = {
 
 const patchNotesData = [
     {
+        version: "v4.4",
+        date: "Feb 02, 2026",
+        changes: [
+            { type: "Unit", text: "<b>New Unit:</b> Added <b>Rohan & Robot</b>." },
+            { type: "Item", text: "<b>New Relic Sets:</b> Added <b>Super Roku</b> and <b>Bio-Android</b> sets." }
+        ]
+    },
+    {
         version: "v4.3",
         date: "Jan 30, 2026",
         changes: [
