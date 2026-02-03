@@ -416,7 +416,7 @@ const unitDatabase = [
         img: "images/units/Ace.png",
         totalCost: 39000,
         placement: 3, tags: [],
-        meta: { short: "Ruler", long: "Ruler", note: "Ruler provides good dps to cost." },
+        meta: { short: "Ruler", long: "Ruler/Astral", note: "Ruler provides good dps to cost." },
         stats: { dmg: 1500, spa: 9, crit: 0, cdmg: 150, dot: 100, dotStacks: 1, spaCap: 6, passiveDmg: 60, element: "Fire", dotDuration: 4, range: 30 }
     }, 
     {
