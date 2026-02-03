@@ -287,7 +287,15 @@ function calculateDPS(uStats, relicStats, context) {
     let baseR_Cm  = getRelicStat('cm', statConfig.applyRelicCrit), baseR_Cf  = relicStats.cf; 
     let baseR_Dot = getRelicStat('dot', statConfig.applyRelicDot), baseR_Range = relicStats.range || 0;
 
-    if (traitObj.relicBuff) { const mult = traitObj.relicBuff; baseR_Dmg *= mult; baseR_Spa *= mult; baseR_Cm *= mult; baseR_Dot *= mult; baseR_Cf *= mult; baseR_Range *= mult; }
+    if (traitObj.relicBuff) { 
+        const mult = traitObj.relicBuff; 
+        baseR_Dmg = ((1 + baseR_Dmg / 100) * mult - 1) * 100;
+        baseR_Range = ((1 + baseR_Range / 100) * mult - 1) * 100;
+        baseR_Spa *= mult; 
+        baseR_Cm *= mult; 
+        baseR_Dot *= mult; 
+        baseR_Cf *= mult; 
+    }
 
     const spaAfterRelic = (lvStats.spa * (1 - traitSpaPct / 100)) * (1 - baseR_Spa / 100); 
     const setAndPassiveSpa = sBonus.spa + passiveSpaPcent; 

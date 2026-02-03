@@ -28,6 +28,13 @@ const SUB_NAMES = {
 
 const patchNotesData = [
     {
+        version: "v4.5",
+        date: "Feb 03, 2026",
+        changes: [
+            { type: "Math", text: "<b>Artificer:</b> Corrected the formula for how Artificer's relic stat bonus is calculated." }
+        ]
+    },
+    {
         version: "v4.4",
         date: "Feb 02, 2026",
         changes: [
