@@ -28,6 +28,14 @@ const SUB_NAMES = {
 
 const patchNotesData = [
     {
+        version: "v4.6",
+        date: "Feb 05, 2026",
+        changes: [
+            { type: "Feature", text: "<b>All Traits Guide:</b> Added a new modal to view the stats of all standard traits." },
+            { type: "Balance", text: "<b>Duelist:</b> Now provides +20% Range." }
+        ]
+    },
+    {
         version: "v4.5",
         date: "Feb 03, 2026",
         changes: [
@@ -271,8 +279,8 @@ const traitsList = [
     { id: "sacred", name: "Sacred", dmg: 25, spa: 10, range: 25, desc: "+25% Dmg, -10% SPA, -15% Cost", costReduction: 15 },
     { id: "astral", name: "Astral", dmg: 0, spa: 20, range: 15, desc: "Allows DoT to stack from multiple units.", allowDotStack: true, afflictionDuration: 20, isAfflictionBugged: true },
     { id: "wizard", name: "Wizard", dmg: 0, spa: 15, range: 20, desc: "+30% DoT, -15% SPA", dotBuff: 30, isDotBugged: true },
-    { id: "artificer", name: "Artificer", dmg: 0, spa: 0, range: 0, desc: "+15% Relic Stats", relicBuff: 1.15 },
-    { id: "duelist", name: "Duelist", dmg: 0, spa: 0, range: 0, desc: "+Crit/Boss Dmg", critRate: 25, bossDmg: 35 },
+    { id: "artificer", name: "Artificer", dmg: 0, spa: 0, range: 0, desc: "+15% Relic Stats", relicBuff: 1.15 }, 
+    { id: "duelist", name: "Duelist", dmg: 0, spa: 0, range: 20, desc: "+20% Rng, +Crit/Boss Dmg", critRate: 25, bossDmg: 35 },
     { id: "none", name: "None", dmg: 0, spa: 0, range: 0, desc: "No buffs" }
 ];
 
