@@ -69,11 +69,22 @@ function injectMikuButton() {
         return label;
     };
 
-    const dbToolbar = document.getElementById('dbInjector');
-    if (dbToolbar) dbToolbar.appendChild(createBtn('globalMikuBuff'));
+    const insertNextTo = (containerId, targetId, btn) => {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        const target = document.getElementById(targetId);
+        if (target) {
+            const label = target.closest('label') || target.parentElement;
+            if (label && container.contains(label)) {
+                label.insertAdjacentElement('afterend', btn);
+                return;
+            }
+        }
+        container.appendChild(btn);
+    };
 
-    const guidesToolbar = document.getElementById('guidesToolbar');
-    if (guidesToolbar) guidesToolbar.appendChild(createBtn('guideMikuBuff'));
+    insertNextTo('dbInjector', 'globalHypothetical', createBtn('globalMikuBuff'));
+    insertNextTo('guidesToolbar', 'guideHypoToggle', createBtn('guideMikuBuff'));
 }
 
 function injectTierListButton() {

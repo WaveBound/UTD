@@ -881,3 +881,82 @@
 }
 .tier-unit:hover { transform: scale(1.1); border-color: var(--accent-start); }
 .tier-unit-img { width: 100%; height: 100%; object-fit: cover; object-position: top; }
+
+/* --- 12. ALL TRAITS GUIDE --- */
+.all-traits-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+}
+
+.all-traits-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.atg-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 15px;
+}
+
+.atg-header .trait-img-rainbow {
+    width: 80px;
+    height: 80px;
+}
+
+.atg-name {
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: #fff;
+}
+
+.atg-desc {
+    font-size: 0.8rem;
+    color: #94a3b8;
+    margin-bottom: 20px;
+    min-height: 30px; /* Give some space for descriptions */
+    line-height: 1.5;
+}
+
+.atg-stats {
+    list-style: none;
+    padding: 15px;
+    margin: 0;
+    width: 100%;
+    background: #0a0a0c;
+    border: 1px solid #222;
+    border-radius: 8px;
+}
+
+.atg-stats li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0;
+    font-size: 0.85rem;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.atg-stats li:last-child {
+    border-bottom: none;
+}
+
+.atg-label {
+    color: #888;
+    font-weight: 700;
+}
+
+.atg-value {
+    color: #e2e8f0;
+    font-weight: 700;
+    font-family: 'Consolas', monospace;
+}

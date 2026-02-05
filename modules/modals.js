@@ -282,6 +282,81 @@ function openTraitTierList() {
 window.openTraitTierList = openTraitTierList;
 
 /**
+ * Shows a guide of all standard traits and their stats.
+ */
+function openAllTraitsGuide() {
+    if (typeof traitsList === 'undefined') return;
+
+    const traitsToShow = traitsList.filter(t => t.id !== 'none');
+
+    const formatStat = (key, trait) => {
+        const value = trait[key];
+        if (value === undefined || value === 0 || value === false) return '';
+        
+        let label = key.toUpperCase();
+        let valText = '';
+        let sign = '+';
+        let suffix = '%';
+
+        switch(key) {
+            case 'dmg': label = 'Damage'; valText = `${sign}${value}${suffix}`; break;
+            case 'spa': label = 'SPA'; valText = `-${value}${suffix}`; break;
+            case 'range': label = 'Range'; valText = `${sign}${value}${suffix}`; break;
+            case 'bossDmg': label = 'Boss Dmg'; valText = `${sign}${value}${suffix}`; break;
+            case 'critRate': label = 'Crit Rate'; valText = `${sign}${value}${suffix}`; break;
+            case 'dotBuff': 
+                label = 'DoT Buff'; 
+                valText = `${sign}${value}${suffix}`; 
+                if (trait.isDotBugged) valText += ` <span style="color: #f87171; font-size: 0.8em;">(Bugged)</span>`;
+                break;
+            case 'costReduction': label = 'Cost'; valText = `-${value}${suffix}`; break;
+            case 'limitPlace': label = 'Placement'; valText = `Limit ${value}`; break;
+            case 'afflictionDuration': 
+                label = 'Affliction Dur.'; 
+                valText = `${sign}${value}${suffix}`; 
+                if (trait.isAfflictionBugged) valText += ` <span style="color: #f87171; font-size: 0.8em;">(Bugged)</span>`;
+                break;
+            case 'relicBuff': label = 'Relic Stats'; valText = `${sign}${((value - 1) * 100).toFixed(0)}${suffix}`; break;
+            case 'isEternal': return `<li><span class="atg-label">Passive</span><span class="atg-value" style="font-size: 0.75rem; text-align: right; line-height: 1.2;">+5% Dmg & +2.5% Rng / Wave<br>Max: +60% & +30% (12 Waves)</span></li>`;
+            case 'hasRadiation': return `<li><span class="atg-label">Radiation</span><span class="atg-value" title="Deals ${trait.radiationPct}% of Unit Damage over 10 seconds">${trait.radiationPct}% Dmg / 10s</span></li>`;
+            case 'dmgDebuff': 
+                label = 'Debuff'; 
+                valText = `${sign}${value}${suffix}`; 
+                if (trait.isDebuffBugged) valText += ` <span style="color: #f87171; font-size: 0.8em;">(Bugged)</span>`;
+                break;
+            case 'allowDotStack': return `<li><span class="atg-label">Passive</span><span class="atg-value">DoT Stacks</span></li>`;
+            default: return '';
+        }
+        return `<li><span class="atg-label">${label}</span><span class="atg-value">${valText}</span></li>`;
+    };
+
+    const html = traitsToShow.map(trait => {
+        const statOrder = ['dmg', 'spa', 'range', 'critRate', 'bossDmg', 'dotBuff', 'afflictionDuration', 'relicBuff', 'costReduction', 'limitPlace', 'isEternal', 'hasRadiation', 'dmgDebuff', 'allowDotStack'];
+        const statsHtml = statOrder.map(key => formatStat(key, trait)).join('');
+
+        return `
+            <div class="all-traits-card">
+                <div class="atg-header">
+                    <div class="trait-img-rainbow"><img src="images/traits/${trait.name}.png" onerror="this.parentElement.style.display='none'"></div>
+                    <span class="atg-name">${trait.name}</span>
+                </div>
+                <div class="atg-desc">${trait.desc}</div>
+                <ul class="atg-stats">
+                    ${statsHtml}
+                </ul>
+            </div>
+        `;
+    }).join('');
+
+    showUniversalModal({
+        title: 'TRAIT STATS',
+        content: `<div class="all-traits-grid">${html}</div>`,
+        size: 'modal-lg'
+    });
+}
+window.openAllTraitsGuide = openAllTraitsGuide;
+
+/**
  * Shows Comparison
  * (Relies on rendering.js logic to build string)
  */

@@ -301,6 +301,32 @@ function toggleAbility(unitId, checkbox) {
     }
 }
 
+function injectDbToolbarButtons() {
+    const dbToolbar = document.getElementById('dbInjector');
+    if (!dbToolbar) return;
+
+    // Inject Trait Tier List Button (Dynamic)
+    if (!document.getElementById('btnTraitTierList')) {
+        const btn = document.createElement('button');
+        btn.id = 'btnTraitTierList';
+        btn.className = 'nav-btn';
+        btn.style.cssText = 'border: 1px solid var(--accent-start); color: var(--accent-start); margin-left: 10px;';
+        btn.innerHTML = 'Trait Tier List';
+        btn.onclick = () => window.openTraitTierList && window.openTraitTierList();
+        dbToolbar.appendChild(btn);
+    }
+    // Inject Trait Stats Guide Button
+    if (!document.getElementById('btnTraitStatsGuide')) {
+        const btn = document.createElement('button');
+        btn.id = 'btnTraitStatsGuide';
+        btn.className = 'nav-btn';
+        btn.style.cssText = 'border: 1px solid var(--accent-end); color: var(--accent-end); margin-left: 10px;';
+        btn.innerHTML = 'Trait Stats';
+        btn.onclick = () => window.openAllTraitsGuide && window.openAllTraitsGuide();
+        dbToolbar.appendChild(btn);
+    }
+}
+
 // Switch between pages
 function switchPage(pid) {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -319,16 +345,7 @@ function switchPage(pid) {
         document.getElementById('dbPage').classList.add('active');
         if(dbToolbar) {
             dbToolbar.classList.remove('hidden');
-            // Inject Trait Tier List Button (Dynamic)
-            if (!document.getElementById('btnTraitTierList')) {
-                const btn = document.createElement('button');
-                btn.id = 'btnTraitTierList';
-                btn.className = 'nav-btn';
-                btn.style.cssText = 'border: 1px solid var(--accent-start); color: var(--accent-start); margin-left: 10px;';
-                btn.innerHTML = 'Trait Tier List';
-                btn.onclick = () => window.openTraitTierList && window.openTraitTierList();
-                dbToolbar.appendChild(btn);
-            }
+            injectDbToolbarButtons();
         }
         if(event && event.target) event.target.classList.add('active');
     } else if (pid === 'guides') {
@@ -397,6 +414,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         observer.observe(sentinel);
     }
+
+    injectDbToolbarButtons();
 });
 
 let savedScrollPosition = 0;

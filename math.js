@@ -33,6 +33,11 @@ function combineTraits(t1, t2) {
         hasRadiation: t1.hasRadiation || t2.hasRadiation,
         radiationPct: (t1.radiationPct || 0) + (t2.radiationPct || 0),
         radiationDuration: Math.max(t1.radiationDuration || 0, t2.radiationDuration || 0),
+        afflictionDuration: (t1.afflictionDuration || 0) + (t2.afflictionDuration || 0),
+        dmgDebuff: (t1.dmgDebuff || 0) + (t2.dmgDebuff || 0),
+        isAfflictionBugged: t1.isAfflictionBugged || t2.isAfflictionBugged,
+        isDotBugged: t1.isDotBugged || t2.isDotBugged,
+        isDebuffBugged: t1.isDebuffBugged || t2.isDebuffBugged,
         
         allowDotStack: t1.allowDotStack || t2.allowDotStack,
         allowPlacementStack: t1.allowPlacementStack || t2.allowPlacementStack,
@@ -275,6 +280,16 @@ function calculateDPS(uStats, relicStats, context) {
     let passivePcent = (uStats.passiveDmg || 0) + (uStats.buffDmg || 0), passiveSpaPcent = uStats.passiveSpa || 0;
     let traitDmgPct = traitObj.dmg + (traitObj.bossDmg && isBoss ? traitObj.bossDmg : 0), traitSpaPct = traitObj.spa; 
     let traitCritRate = traitObj.critRate || 0, traitRangePct = traitObj.range || 0, traitDotBuff = traitObj.dotBuff || 0;
+
+    // FIX: Wizard DoT buff is bugged in-game, so we remove it from calculations while keeping it in data for UI.
+    if (traitObj.id === 'wizard') {
+        traitDotBuff = 0;
+    } else if (traitObj.isCustom && traitObj.subTraits.some(t => t.id === 'wizard')) {
+        const wizardTrait = traitObj.subTraits.find(t => t.id === 'wizard');
+        if (wizardTrait) {
+            traitDotBuff -= (wizardTrait.dotBuff || 0);
+        }
+    }
 
     let eternalDmgBuff = 0, eternalRangeBuff = 0;
     if (traitObj.isEternal) { const waveCap = Math.min(wave, 12); eternalDmgBuff = waveCap * 5; passivePcent += eternalDmgBuff; eternalRangeBuff = waveCap * 2.5; }
