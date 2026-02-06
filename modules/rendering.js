@@ -500,7 +500,21 @@ function processGuideTop3(rawBuilds, unit, traitFilterId) {
         const targetName = tObj ? tObj.name : "";
         if (targetName) filtered = filtered.filter(b => b.traitName === targetName);
     }
-    filtered.sort(unit.id === 'law' ? (a, b) => (b.range || 0) - (a.range || 0) : (a, b) => b.dps - a.dps);
+
+    // SJW Sun God Weighting (Match Database Logic)
+    const getWeight = (b) => (unit.id === 'sjw' && b.headUsed === 'sun_god') ? 1.05 : 1.0;
+
+    if (unit.id === 'law') {
+        filtered.sort((a, b) => (b.range || 0) - (a.range || 0));
+    } else if (['sjw', 'esdeath'].includes(unit.id)) {
+        filtered.sort((a, b) => {
+            const scoreA = a.dps * (a.mainStats.body === 'dmg' && a.mainStats.legs === 'dmg' ? 1.2 : 1) * getWeight(a);
+            const scoreB = b.dps * (b.mainStats.body === 'dmg' && b.mainStats.legs === 'dmg' ? 1.2 : 1) * getWeight(b);
+            return scoreB - scoreA;
+        });
+    } else {
+        filtered.sort((a, b) => (b.dps * getWeight(b)) - (a.dps * getWeight(a)));
+    }
     return filtered.slice(0, 3);
 }
 
