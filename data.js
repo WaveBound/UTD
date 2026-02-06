@@ -524,12 +524,12 @@ const unitDatabase = [
         meta: { short: "Ruler", long: "Ruler", note: "Ruler is strictly best due to 1 placement count. Base form is True Form. Toggle for Perfect Form (Summon)." },
         stats: { 
             baseName: "True Form",
-            dmg: 3250, spa: 10, crit: 0, cdmg: 150, dot: 0, spaCap: 4.1, 
-            passiveDmg: 70, element: "Wind", range: 43 
+            dmg: 3225, spa: 10, crit: 0, cdmg: 150, dot: 0, spaCap: 4, 
+            passiveDmg: 70, element: "Wind", range: 50 
         },
         ability: { 
             abilityName: "Perfect Form",
-            dmg: 3025, spa: 9.5, spaCap: 2.5, range: 43,
+            dmg: 3000, spa: 9.5, spaCap: 2.5, range: 48,
             passiveDmg: 50,
             summonStats: {
                 attacksToSpawn: 3, maxCount: 3, dmgPct: 50, buffWindow: 0,
@@ -544,7 +544,7 @@ const unitDatabase = [
         totalCost: 35112,
         placement: 3, tags: [],
         meta: { short: "Ruler", long: "Eternal", note: "Toggle Boss Stacks for max damage." },
-        stats: { dmg: 2275, spa: 8, crit: 45, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 3, passiveDmg: 0, passiveSpa: 15, passiveRange: 15, element: "Dark", dotDuration: 0, range: 44 },
+        stats: { dmg: 2250, spa: 8, crit: 45, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 3, passiveDmg: 0, passiveSpa: 15, passiveRange: 15, element: "Dark", dotDuration: 0, range: 45 },
         ability: { passiveDmg: 150 }
     },
     {
