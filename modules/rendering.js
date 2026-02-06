@@ -14,6 +14,14 @@ const unitControls = {
             `<option value="${k}" ${currentEl === k ? 'selected' : ''}>${k} (${BAMBIETTA_MODES[k].desc})</option>`
         ).join('');
         return `<div class="unit-toolbar custom-toolbar"><div class="bambi-wrapper"><span class="bambi-label">Element:</span><select onchange="setBambiettaElement(this.value, this)" class="bambi-select">${options}</select></div></div>`;
+    },
+    robot1718: (unit) => {
+        const currentMode = robot1718State.mode;
+        if (!unit.modes) return '';
+        const options = Object.keys(unit.modes).map(k => 
+            `<option value="${k}" ${currentMode === k ? 'selected' : ''}>${k} (${unit.modes[k].desc})</option>`
+        ).join('');
+        return `<div class="unit-toolbar custom-toolbar"><div class="bambi-wrapper" style="display: flex; align-items: center; width: 100%;"><span class="bambi-label" style="margin-right: 6px;">Form:</span><select onchange="setRobot1718Mode(this.value, this)" class="bambi-select" style="flex: 1;">${options}</select></div></div>`;
     }
 };
 
@@ -239,7 +247,11 @@ function processUnitCache(unit) {
             let loadedFromStatic = false;
             
             if (!useInventory) {
-                const canUseStatic = (unit.id !== 'bambietta') || (bambiettaState.element === 'Dark');
+                const isBambiAlt = (unit.id === 'bambietta' && bambiettaState.element !== 'Dark');
+                const isRobotAlt = (unit.id === 'robot1718' && robot1718State.mode !== 'Robot 17');
+                const canUseStatic = !isBambiAlt && !isRobotAlt;
+
+
                 if (canUseStatic && window.STATIC_BUILD_DB && window.STATIC_BUILD_DB[dbKey]) {
                     const dbList = window.STATIC_BUILD_DB[dbKey][mode];
                     if(dbList && dbList[i]) {

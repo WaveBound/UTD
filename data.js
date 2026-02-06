@@ -563,6 +563,34 @@ const unitDatabase = [
         placement: 4, tags: [],
         meta: { short: "Ruler", long: "Ruler", note: "Passive averages to +25% Damage." },
         stats: { dmg: 1810, spa: 8.5, crit: 0, cdmg: 150, dot: 25, dotStacks: 1, spaCap: 2, passiveDmg: 45, element: "Water", dotDuration: 5, range: 45 },
+    },
+    {
+        id: "robot1718", name: "Robot 17 & 18", role: "Damage",
+        img: "images/units/Robot1718.png",
+        totalCost: 60000,
+        placement: 2, tags: [],
+        meta: { short: "Ruler", long: "Ruler", note: "Passive (+125% Dmg) takes 65 waves to fully stack." },
+        stats: { 
+            dmg: 1720, spa: 9, crit: 0, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 3, 
+            passiveDmg: 125, passiveRange: 100, element: "Rose", dotDuration: 0, range: 36 
+        },
+        modes: {
+            "Robot 17": { 
+                dmg: 1720, spa: 9, range: 36, spaCap: 3, 
+                passiveDmg: 125, passiveRange: 100, passiveSpa: 0,
+                desc: "Base" 
+            },
+            "Robot 18": { 
+                dmg: 2875, spa: 15, range: 32, spaCap: 3.5, 
+                passiveDmg: 125, passiveRange: 100, passiveSpa: 0,
+                desc: "Alt" 
+            },
+            "Fused": { 
+                dmg: 3450, spa: 15, range: 34, spaCap: 8.5, 
+                passiveDmg: 125, passiveRange: 100, passiveSpa: 15, 
+                desc: "Fused" 
+            }
+        }
     }
 ];
 

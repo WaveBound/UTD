@@ -23,6 +23,10 @@ const bambiettaState = {
     element: "Dark"
 };
 
+const robot1718State = {
+    mode: "Robot 17"
+};
+
 // Caches for performance optimization
 // Temporary UI State
 // Requirement 3: Replaced tempGuideUnit string with Set for multi-selection

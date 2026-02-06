@@ -230,6 +230,26 @@ function setBambiettaElement(element, selectEl) {
     }
 }
 
+// Set Robot 17 & 18 Mode
+function setRobot1718Mode(mode, selectEl) {
+    robot1718State.mode = mode;
+    const unit = unitDatabase.find(u => u.id === 'robot1718');
+    if (!unit) return;
+
+    if (typeof processUnitCache === 'function') {
+        processUnitCache(unit);
+    } else {
+        resetAndRender();
+        return;
+    }
+
+    updateBuildListDisplay(unit.id);
+    
+    if (document.getElementById('guidesPage').classList.contains('active')) {
+        renderGuides();
+    }
+}
+
 // Toggle unit selection
 function toggleSelection(id) {
     const card = document.getElementById('card-' + id);

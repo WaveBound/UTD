@@ -5,6 +5,7 @@
     const originalStatConfig = { ...statConfig };
     const originalKirito = typeof kiritoState !== 'undefined' ? { ...kiritoState } : { realm: true, card: false };
     const originalBambietta = typeof bambiettaState !== 'undefined' ? { ...bambiettaState } : { element: "Dark" };
+    const originalRobot1718 = typeof robot1718State !== 'undefined' ? { ...robot1718State } : { mode: "Robot 17" };
 
     const CONFIGS = [
         { head: false, subs: false }, { head: false, subs: true },
@@ -117,6 +118,7 @@
 
                 // Setup specific states (Kirito/Bambi)
                 if (u.id === 'bambietta') bambiettaState.element = "Dark"; 
+                if (u.id === 'robot1718') robot1718State.mode = "Robot 17";
                 if (u.id === 'kirito') {
                     kiritoState.realm = true; 
                     kiritoState.card = isCard;
@@ -157,6 +159,7 @@ FINAL_DB[finalKey][key].push(rowsToBuffer(topResults));
     Object.assign(statConfig, originalStatConfig);
     if (typeof kiritoState !== 'undefined') Object.assign(kiritoState, originalKirito);
     if (typeof bambiettaState !== 'undefined') Object.assign(bambiettaState, originalBambietta);
+    if (typeof robot1718State !== 'undefined') Object.assign(robot1718State, originalRobot1718);
 
     // --- 6. PACKAGING ---
     const payload = { s: stringArr, p: subArr, d: FINAL_DB };

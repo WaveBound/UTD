@@ -31,6 +31,11 @@ function buildCalculationContext(unit, traitIdent, options = {}) {
         const modeStats = BAMBIETTA_MODES[currentEl];
         if (modeStats) Object.assign(effectiveStats, modeStats);
     }
+    if (unit.id === 'robot1718' && unit.modes) {
+        const currentMode = robot1718State.mode || "Robot 17";
+        const modeStats = unit.modes[currentMode];
+        if (modeStats) Object.assign(effectiveStats, modeStats);
+    }
 
     let actualPlacement = unit.placement;
     if (traitObj.limitPlace) actualPlacement = Math.min(unit.placement, traitObj.limitPlace);
