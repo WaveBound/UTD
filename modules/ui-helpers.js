@@ -47,6 +47,9 @@ const syncVisualToggle = (triggerEl, targetId, cssClass) => {
             otherCb.parentNode.classList.toggle('is-checked', el.checked);
         }
         updateBodyClass(cssClass, el.checked);
+        if (document.getElementById('guidesPage').classList.contains('active') && typeof renderGuides === 'function') {
+            renderGuides();
+        }
     });
 };
 
@@ -89,6 +92,9 @@ const toggleHypothetical = (checkbox) => {
     const lbl2 = document.getElementById('guideHypoLabel');
     if(lbl1) lbl1.innerText = labelText;
     if(lbl2) lbl2.innerText = labelText;
+    if (document.getElementById('guidesPage').classList.contains('active') && typeof renderGuides === 'function') {
+        renderGuides();
+    }
 };
 
 // Toggle Inventory Mode

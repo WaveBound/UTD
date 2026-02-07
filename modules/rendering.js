@@ -570,11 +570,18 @@ function renderGuides() {
     document.getElementById('dispGuideUnit').innerText = uName; 
     document.getElementById('dispGuideTrait').innerText = tName;
 
+    // Determine Active State
+    const isFixed = document.body.classList.contains('show-fixed-relics');
+    const showHead = document.body.classList.contains('show-head');
+    const showSubs = document.body.classList.contains('show-subs');
+    const activeMode = isFixed ? 'fixed' : 'bugged';
+    const activeCfg = (showHead ? 2 : 0) + (showSubs ? 1 : 0);
+
     const unitsToProcess = (guideUnitSelection.has('all')) ? unitDatabase : unitDatabase.filter(u => guideUnitSelection.has(u.id));
     
     const scoredUnits = unitsToProcess.map(unit => {
         if (!unitBuildsCache[unit.id]) processUnitCache(unit);
-        const refBuilds = getGuideBuildsFromCache(unit, 'fixed', 3);
+        const refBuilds = getGuideBuildsFromCache(unit, activeMode, activeCfg);
         const top = processGuideTop3(refBuilds, unit, filterTraitId);
         let score = 0;
         if (top && top.length > 0) score = (unit.id === 'law') ? (top[0].range || 0) : top[0].dps;
@@ -584,12 +591,8 @@ function renderGuides() {
     scoredUnits.sort((a, b) => b.score - a.score);
 
     scoredUnits.forEach(({ unit }) => {
-        for(let cfg = 0; cfg < 4; cfg++) {
-            const bugged = processGuideTop3(getGuideBuildsFromCache(unit, 'bugged', cfg), unit, filterTraitId);
-            if (bugged.length) guideGrid.appendChild(createGuideCard(unit, bugged, `mode-bugged cfg-${cfg}`));
-            const fixed = processGuideTop3(getGuideBuildsFromCache(unit, 'fixed', cfg), unit, filterTraitId);
-            if (fixed.length) guideGrid.appendChild(createGuideCard(unit, fixed, `mode-fixed cfg-${cfg}`));
-        }
+        const builds = processGuideTop3(getGuideBuildsFromCache(unit, activeMode, activeCfg), unit, filterTraitId);
+        if (builds.length) guideGrid.appendChild(createGuideCard(unit, builds, `mode-${activeMode} cfg-${activeCfg}`));
     });
     
     if (guideGrid.children.length === 0) guideGrid.innerHTML = `<div class="msg-empty">No guides found. Database may still be calculating.</div>`;
