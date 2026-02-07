@@ -500,7 +500,7 @@ const applyGuideConfig = () => {
 function getGuideBuildsFromCache(unit, mode, configIndex) {
     if (!unitBuildsCache || !unitBuildsCache[unit.id]) return [];
     let source = unitBuildsCache[unit.id].base;
-    if (unit.ability !== undefined && unitBuildsCache[unit.id].abil && unitBuildsCache[unit.id].abil[mode]) source = unitBuildsCache[unit.id].abil;
+    if (unit.ability !== undefined && activeAbilityIds.has(unit.id) && unitBuildsCache[unit.id].abil && unitBuildsCache[unit.id].abil[mode]) source = unitBuildsCache[unit.id].abil;
     return source?.[mode]?.[configIndex] || [];
 }
 
