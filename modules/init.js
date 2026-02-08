@@ -62,7 +62,7 @@ function injectMikuButton() {
         label.title = "Apply Miku's +100% Damage Buff";
         
         // Removed mini-switch, using simple checkbox layout
-        label.innerHTML = `<div class="toggle-wrapper" style="gap: 6px;"><input type="checkbox" id="${id}" style="cursor: pointer;"><span>Miku Buff</span></div>`;
+        label.innerHTML = `<div class="toggle-wrapper" style="gap: 6px;"><input type="checkbox" id="${id}" style="cursor: pointer;"><div class="mini-switch"></div><span>Miku Buff</span></div>`;
         const input = label.querySelector('input');
         input.addEventListener('change', function() { if(typeof window.toggleMikuBuff === 'function') window.toggleMikuBuff(this); });
         
