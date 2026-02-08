@@ -134,8 +134,8 @@ h1 { font-size: 2.5rem; margin: 0; font-weight: 900; text-transform: uppercase; 
 body.header-collapsed .header-toggle-btn { transform: rotate(180deg); }
 
 /* STICKY TOOLBAR */
-.sticky-toolbar-container { position: sticky; top: 0; z-index: 1000; width: 100%; background: rgba(5, 5, 5, 0.95); border-bottom: 1px solid var(--card-border); box-shadow: 0 4px 30px rgba(0,0,0,0.5); display: flex; flex-direction: column; align-items: center; max-height: 100vh; overflow-y: auto; }
-.sticky-toolbar-container .nav-bar, .sticky-toolbar-container .injector-panel { transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease, padding 0.3s ease, margin 0.3s ease; max-height: 200vh; overflow: hidden; opacity: 1; }
+.sticky-toolbar-container { position: sticky; top: 0; z-index: 1000; width: 100%; background: rgba(5, 5, 5, 0.95); border-bottom: 1px solid var(--card-border); box-shadow: 0 4px 30px rgba(0,0,0,0.5); display: flex; flex-direction: column; align-items: center; max-height: 100vh; overflow-y: auto; overflow-x: hidden; }
+.sticky-toolbar-container .nav-bar, .sticky-toolbar-container .injector-panel { transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease, padding 0.3s ease, margin 0.3s ease; max-height: 200vh; overflow: visible; opacity: 1; }
 body.header-collapsed .sticky-toolbar-container .nav-bar, body.header-collapsed .sticky-toolbar-container .injector-panel { display: flex !important; max-height: 0; opacity: 0; padding-top: 0; padding-bottom: 0; margin-top: 0; margin-bottom: 0; border: none; }
 
 /* NAV & INJECTOR */
@@ -143,6 +143,49 @@ body.header-collapsed .sticky-toolbar-container .nav-bar, body.header-collapsed 
 .injector-panel { width: 100%; background: rgba(255,255,255,0.03); border-top: 1px solid rgba(255,255,255,0.05); padding: 10px 15px; display: flex; gap: 10px; align-items: center; justify-content: center; flex-wrap: wrap; white-space: nowrap; transition: 0.3s; }
 
 /* PAGES & LAYOUTS */
+
+/* --- MOBILE NAV SCROLLING & TOGGLES --- */
+@media (max-width: 768px) {
+    .nav-bar {
+        flex-wrap: nowrap; /* Prevent stacking */
+        overflow-x: auto;  /* Enable horizontal scroll */
+        justify-content: flex-start; /* Align start for scrolling */
+        padding: 10px 15px;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none; /* Hide scrollbar Firefox */
+    }
+    .nav-bar::-webkit-scrollbar { display: none; /* Hide scrollbar Chrome */ }
+    
+    .nav-btn {
+        flex-shrink: 0; /* Prevent buttons from squishing */
+        white-space: nowrap;
+    }
+}
+
+/* Toggle Switch Visuals (Ensures Miku button appears) */
+.mini-switch {
+    width: 36px; height: 20px;
+    background: #333;
+    border-radius: 20px;
+    position: relative;
+    transition: 0.3s;
+    border: 1px solid #555;
+    display: inline-block;
+    vertical-align: middle;
+    flex-shrink: 0;
+}
+.mini-switch::after {
+    content: '';
+    position: absolute;
+    top: 2px; left: 2px;
+    width: 14px; height: 14px;
+    background: #fff;
+    border-radius: 50%;
+    transition: 0.3s;
+}
+input:checked + .mini-switch { background: var(--accent-start); border-color: var(--accent-start); }
+input:checked + .mini-switch::after { transform: translateX(16px); }
+
 .page { display: none; width: 100%; max-width: 1300px; padding: 20px 15px 20px 15px; animation: fadeIn 0.4s ease; }
 .page.active { display: grid; }
 .db-grid { grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 20px; width: 100%; }

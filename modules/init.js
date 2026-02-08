@@ -40,11 +40,15 @@ window.onload = () => {
     }
 
     // Update Guide Toolbar Labels to match Unit Database
+    // Runs immediately to catch elements if they exist
     const updateGuideLabel = (id, text) => {
-        const el = document.getElementById(id);
-        if (el) {
-            const span = el.closest('label')?.querySelector('span');
+        const input = document.getElementById(id);
+        if (input && input.parentElement) {
+            // Try finding a span first
+            const span = input.parentElement.querySelector('span');
             if (span) span.textContent = text;
+            // Fallback: If text is a direct child node
+            else input.parentElement.childNodes.forEach(n => { if(n.nodeType===3 && n.textContent.trim()) n.textContent = " " + text; });
         }
     };
     updateGuideLabel('guideHeadPiece', '+ Head Relic');
@@ -73,7 +77,7 @@ function injectMikuButton() {
         label.title = "Apply Miku's +100% Damage Buff";
         
         // Removed mini-switch, using simple checkbox layout
-        label.innerHTML = `<div class="toggle-wrapper" style="gap: 6px;"><input type="checkbox" id="${id}" style="cursor: pointer;"><div class="mini-switch mobile-switch-visual"></div><span>Miku Buff</span></div>`;
+        label.innerHTML = `<div class="toggle-wrapper" style="gap: 6px;"><input type="checkbox" id="${id}" style="cursor: pointer;"><div class="mini-switch"></div><span>Miku Buff</span></div>`;
         const input = label.querySelector('input');
         input.addEventListener('change', function() { if(typeof window.toggleMikuBuff === 'function') window.toggleMikuBuff(this); });
         
