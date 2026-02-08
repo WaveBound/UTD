@@ -160,6 +160,23 @@ body.header-collapsed .sticky-toolbar-container .nav-bar, body.header-collapsed 
         flex-shrink: 0; /* Prevent buttons from squishing */
         white-space: nowrap;
     }
+
+    /* Mobile Toolbar Panels: Horizontal Scroll */
+    .injector-panel {
+        flex-wrap: nowrap; /* Prevent vertical stacking */
+        overflow-x: auto;  /* Enable horizontal scroll */
+        justify-content: flex-start;
+        padding: 8px 10px; /* Reduce padding */
+        gap: 8px;          /* Reduce gap */
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none; /* Firefox */
+    }
+    .injector-panel::-webkit-scrollbar { display: none; /* Chrome, Safari */ }
+
+    /* Prevent items in the injector from shrinking */
+    .injector-panel > * {
+        flex-shrink: 0;
+    }
 }
 
 /* Toggle Switch Visuals (Ensures Miku button appears) */
