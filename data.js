@@ -28,14 +28,6 @@ const SUB_NAMES = {
 
 const patchNotesData = [
     {
-        version: "v4.6",
-        date: "Feb 05, 2026",
-        changes: [
-            { type: "Feature", text: "<b>All Traits Guide:</b> Added a new modal to view the stats of all standard traits." },
-            { type: "Balance", text: "<b>Duelist:</b> Now provides +20% Range." }
-        ]
-    },
-    {
         version: "v4.5",
         date: "Feb 03, 2026",
         changes: [
@@ -274,13 +266,13 @@ const globalBuilds = SETS.flatMap(set =>
 
 const traitsList = [
     { id: "ruler", name: "Ruler", dmg: 200, spa: 20, range: 30, desc: "+200% Dmg, Limit 1", limitPlace: 1 },
-    { id: "fission", name: "Fission", dmg: 15, spa: 15, range: 25, desc: "+15% Dmg, -15% SPA, +25% Rng.", hasRadiation: true, radiationPct: 20, dmgDebuff: 20, isDebuffBugged: true },
+    { id: "fission", name: "Fission", dmg: 15, spa: 15, range: 25, hasRadiation: true, radiationPct: 20,},
     { id: "eternal", name: "Eternal", dmg: 0, spa: 20, range: 0, desc: "-20% SPA, +Dmg/Rng/Wave", isEternal: true },
     { id: "sacred", name: "Sacred", dmg: 25, spa: 10, range: 25, desc: "+25% Dmg, -10% SPA, -15% Cost", costReduction: 15 },
-    { id: "astral", name: "Astral", dmg: 0, spa: 20, range: 15, desc: "Allows DoT to stack from multiple units.", allowDotStack: true, afflictionDuration: 20, isAfflictionBugged: true },
-    { id: "wizard", name: "Wizard", dmg: 0, spa: 15, range: 20, desc: "+30% DoT, -15% SPA", dotBuff: 30, isDotBugged: true },
-    { id: "artificer", name: "Artificer", dmg: 0, spa: 0, range: 0, desc: "+15% Relic Stats", relicBuff: 1.15 }, 
-    { id: "duelist", name: "Duelist", dmg: 0, spa: 0, range: 20, desc: "+20% Rng, +Crit/Boss Dmg", critRate: 25, bossDmg: 35 },
+    { id: "astral", name: "Astral", dmg: 0, spa: 20, range: 15, desc: "DoT Stacks (All Units)", allowDotStack: true },
+    { id: "wizard", name: "Wizard", dmg: 0, spa: 15, range: 20, desc: "+30% DoT, -15% SPA", dotBuff: 30 },
+    { id: "artificer", name: "Artificer", dmg: 0, spa: 0, range: 0, desc: "+15% Relic Stats", relicBuff: 1.15 },
+    { id: "duelist", name: "Duelist", dmg: 0, spa: 0, range: 0, desc: "+Crit/Boss Dmg", critRate: 25, bossDmg: 35 },
     { id: "none", name: "None", dmg: 0, spa: 0, range: 0, desc: "No buffs" }
 ];
 
@@ -448,8 +440,8 @@ const unitDatabase = [
         totalCost: 136000,
         placement: 1, tags: [],
         meta: { short: "Ruler", long: "Ruler", note: "Ruler is strictly best due to 1 placement count." },
-        stats: { dmg: 7530, spa: 14, crit: 0, cdmg: 150, dot: 50, dotStacks: 1, spaCap: 4, passiveDmg: 0, element: "Fire", dotDuration: 10, range: 50 },
-        ability: { passiveDmg: 50, passiveSpa: 50 } 
+        stats: { dmg: 8750, spa: 14, crit: 0, cdmg: 150, dot: 50, dotStacks: 1, spaCap: 4, passiveDmg: 0, element: "Fire", dotDuration: 10, range: 50 },
+        ability: { passiveDmg: 50, passiveSpa: -50 } 
     },
     {
         id: "bambietta", name: "Bambietta", role: "Damage / (Support/Dot)",
@@ -524,12 +516,12 @@ const unitDatabase = [
         meta: { short: "Ruler", long: "Ruler", note: "Ruler is strictly best due to 1 placement count. Base form is True Form. Toggle for Perfect Form (Summon)." },
         stats: { 
             baseName: "True Form",
-            dmg: 3225, spa: 10, crit: 0, cdmg: 150, dot: 0, spaCap: 4, 
-            passiveDmg: 70, element: "Wind", range: 50 
+            dmg: 3250, spa: 10, crit: 0, cdmg: 150, dot: 0, spaCap: 4.1, 
+            passiveDmg: 70, element: "Wind", range: 43 
         },
         ability: { 
             abilityName: "Perfect Form",
-            dmg: 3000, spa: 9.5, spaCap: 2.5, range: 48,
+            dmg: 3025, spa: 9.5, spaCap: 2.5, range: 43,
             passiveDmg: 50,
             summonStats: {
                 attacksToSpawn: 3, maxCount: 3, dmgPct: 50, buffWindow: 0,
@@ -544,7 +536,7 @@ const unitDatabase = [
         totalCost: 35112,
         placement: 3, tags: [],
         meta: { short: "Ruler", long: "Eternal", note: "Toggle Boss Stacks for max damage." },
-        stats: { dmg: 2250, spa: 8, crit: 45, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 3, passiveDmg: 0, passiveSpa: 15, passiveRange: 15, element: "Dark", dotDuration: 0, range: 45 },
+        stats: { dmg: 2275, spa: 8, crit: 45, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 3, passiveDmg: 0, passiveSpa: 15, passiveRange: 15, element: "Dark", dotDuration: 0, range: 44 },
         ability: { passiveDmg: 150 }
     },
     {
@@ -563,34 +555,6 @@ const unitDatabase = [
         placement: 4, tags: [],
         meta: { short: "Ruler", long: "Ruler", note: "Passive averages to +25% Damage." },
         stats: { dmg: 1810, spa: 8.5, crit: 0, cdmg: 150, dot: 25, dotStacks: 1, spaCap: 2, passiveDmg: 45, element: "Water", dotDuration: 5, range: 45 },
-    },
-    {
-        id: "robot1718", name: "Robot 17 & 18", role: "Damage",
-        img: "images/units/Robot1718.png",
-        totalCost: 60000,
-        placement: 2, tags: [],
-        meta: { short: "Ruler", long: "Ruler", note: "Passive (+125% Dmg) takes 65 waves to fully stack." },
-        stats: { 
-            dmg: 1720, spa: 9, crit: 0, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 3, 
-            passiveDmg: 125, passiveRange: 100, element: "Rose", dotDuration: 0, range: 36 
-        },
-        modes: {
-            "Robot 17": { 
-                dmg: 1720, spa: 9, range: 36, spaCap: 3, 
-                passiveDmg: 125, passiveRange: 100, passiveSpa: 0,
-                desc: "Base" 
-            },
-            "Robot 18": { 
-                dmg: 2875, spa: 15, range: 32, spaCap: 3.5, 
-                passiveDmg: 125, passiveRange: 100, passiveSpa: 0,
-                desc: "Alt" 
-            },
-            "Fused": { 
-                dmg: 3450, spa: 15, range: 34, spaCap: 8.5, 
-                passiveDmg: 125, passiveRange: 100, passiveSpa: 15, 
-                desc: "Fused" 
-            }
-        }
     }
 ];
 
