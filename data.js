@@ -562,7 +562,7 @@ const unitDatabase = [
         totalCost: 72600,
         placement: 3, tags: [],
         meta: { short: "Sacred", long: "Sacred/Fission", note: "+75% Damage per placement. Follow up attack sets SPA to Cap." },
-        stats: { dmg: 2500, spa: 9, crit: 50, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 4, passiveDmg: 0, element: "Water", dotDuration: 0, range: 30 },
+        stats: { dmg: 2500, spa: 9, crit: 50, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 3.5, passiveDmg: 0, element: "Water", dotDuration: 0, range: 30 },
         ability: { buffDmg: 50, abilityName: "Time Snail" }
     }
 ];
