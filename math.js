@@ -396,18 +396,29 @@ function calculateDPS(uStats, relicStats, context) {
             extra: 0,
             attacksNeeded: 1,
             mult: 1.5,
-            label: "Follow-up (+1.5s)"
         };
-    } else if (uStats.id === 'water_god') {
-        usedSpa = uStats.spaCap || 4;
-        attackMultiplier = 1.0;
+    } else if (uStats.id === 'water_god' && uStats.followUp) {
+        // Follow-up attack sequence: 2 hits that combined must respect the per-hit SPA Cap.
+        // Total cycle time (usedSpa) matches the unit's SPA, but is capped at 2x the per-hit Cap.
+        usedSpa = Math.max(finalSpa, uStats.spaCap * 2);
+        attackMultiplier = 2;
         extraAttacksData = {
-            req: "Time Snail",
-            hits: "SPA = Cap Override",
-            extra: 0,
+            req: "Follow-up",
+            hits: "2 hits / cycle",
+            extra: 1,
             attacksNeeded: 1,
-            mult: 1.0,
-            label: "Time Snail"
+            mult: 1,
+            label: "Cycle-Locked Follow-up (Cap: 2x Hit Cap)"
+        };
+    } else if (uStats.followUp) {
+        attackMultiplier = 1 + (uStats.followUp / 100);
+        extraAttacksData = {
+            req: "N/A",
+            hits: attackMultiplier,
+            extra: uStats.followUp / 100,
+            attacksNeeded: 1,
+            mult: attackMultiplier,
+            label: "Follow-up Attack"
         };
     } else if (uStats.reqCrits && uStats.hitCount) {
         const critsPerAttack = uStats.hitCount * (finalCritRate / 100);

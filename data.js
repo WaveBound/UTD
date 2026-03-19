@@ -202,7 +202,8 @@ const guideData = [
     { unit: "Ragna", img: "images/units/Ragna.png", isCalculated: true },
     { unit: "Mob", img: "images/units/Mob.png", isCalculated: true },
     { unit: "Shanks", img: "images/units/Shanks.png", isCalculated: true },
-    { unit: "Genos", img: "images/units/Genos.png", isCalculated: true }
+    { unit: "Genos", img: "images/units/Genos.png", isCalculated: true },
+    { unit: "Water God", img: "images/units/WaterGod.png", isCalculated: true }
 ];
 
 const BAMBIETTA_MODES = {
@@ -561,8 +562,8 @@ const unitDatabase = [
         img: "images/units/WaterGod.png",
         totalCost: 72600,
         placement: 3, tags: [],
-        meta: { short: "Sacred", long: "Sacred/Fission", note: "+75% Damage per placement. Follow up attack sets SPA to Cap." },
-        stats: { dmg: 2500, spa: 9, crit: 50, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 3.5, passiveDmg: 0, element: "Water", dotDuration: 0, range: 30 },
+        meta: { short: "Ruler/Sacred", long: "Ruler/Sacred/Fission", note: "+75% Damage per placement. Follow up attack sets SPA to Cap." },
+        stats: { dmg: 2500, spa: 9, crit: 50, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 3.5, passiveDmg: 0, element: "Water", dotDuration: 0, range: 30, followUp: true },
         ability: { buffDmg: 50, abilityName: "Time Snail" }
     }
 ];
