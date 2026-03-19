@@ -255,8 +255,8 @@ function _calcDoTDPS(uStats, traitObj, totalDotBuffs, baseR_Dot, finalDmg, final
     const canStack = (traitObj.allowDotStack || traitObj.allowPlacementStack);
     if (uStats.dot > 0) {
         const nativeTickPct = (uStats.dot + totalDotBuffs) * dotBreakdown.relicMult;
-        const multiHitMult = (canStack && uStats.hitCount) ? uStats.hitCount : 1;
-        dotBreakdown.isMultiHit = (multiHitMult > 1);
+        const multiHitMult = 1; 
+        dotBreakdown.isMultiHit = false;
         const totalNativeDmg = finalDmg * (nativeTickPct / 100) * dotCritMult * multiHitMult;
         const duration = uStats.dotDuration || 0;
         const interval = canStack ? finalSpa : (duration > 0 ? Math.ceil(duration / finalSpa) * finalSpa : finalSpa);
