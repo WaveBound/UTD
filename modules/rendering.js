@@ -216,6 +216,19 @@ function updateBuildListDisplay(unitId) {
         }
 
         let displaySlice = filtered.slice(0, 10);
+        
+        // Custom Rule: Ensure "Ruler" trait is always shown in Top 10 for Water God
+        if (unitId === 'water_god') {
+            const hasRuler = displaySlice.some(r => r.traitName === 'Ruler');
+            if (!hasRuler) {
+                const bestRuler = filtered.find(r => r.traitName === 'Ruler');
+                if (bestRuler) {
+                    if (displaySlice.length === 10) displaySlice[9] = bestRuler;
+                    else displaySlice.push(bestRuler);
+                }
+            }
+        }
+
         return displaySlice.map((r, i) => generateBuildRowHTML(r, i, { totalCost: unitCost, placement: unitPlace, sortMode: sortSelect, unitId, benchmarkDps: benchmarkDps })).join('');
     };
 
@@ -648,13 +661,24 @@ function openTraitBestList(unitId) {
         return valB - valA;
     });
 
+    let tagsHtml = '';
+    if (window.mikuBuffActive) {
+        tagsHtml += `<span style="background: rgba(74, 222, 128, 0.2); color: #4ade80; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; border: 1px solid rgba(74, 222, 128, 0.3);">Miku Buff ON</span>`;
+    }
+    if (activeAbilityIds.has(unitId) && unit.ability) {
+        tagsHtml += `<span style="background: rgba(168, 85, 247, 0.2); color: #c084fc; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; border: 1px solid rgba(168, 85, 247, 0.3);">Ability Active</span>`;
+    }
+
     let html = `<div style="display: flex; align-items: center; gap: 12px; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.1);">
         <div style="width: 48px; height: 48px; flex-shrink: 0; border-radius: 4px; overflow: hidden; display: flex; align-items: center; justify-content: center; background: #222;">
             <img src="${unit.img}" style="width: 100%; height: 100%; object-fit: contain;">
         </div>
         <div>
-            <div class="text-lg font-bold text-white leading-tight">${unit.name}</div>
-            <div class="text-xs text-dim">${unit.role}</div>
+            <div class="text-lg font-bold text-white leading-tight" style="display: flex; align-items: center; gap: 8px;">
+                ${unit.name}
+            </div>
+            <div class="text-xs text-dim" style="margin-top: 4px;">${unit.role}</div>
+            ${tagsHtml ? `<div style="margin-top: 6px; display: flex; gap: 6px;">${tagsHtml}</div>` : ''}
         </div>
     </div>`;
 

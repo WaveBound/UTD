@@ -278,6 +278,10 @@ function calculateDPS(uStats, relicStats, context) {
     if (rRange !== 0) lvStats.range *= (1 + rRange/100);
 
     let passivePcent = (uStats.passiveDmg || 0) + (uStats.buffDmg || 0), passiveSpaPcent = uStats.passiveSpa || 0;
+    
+    if (uStats.id === 'water_god') {
+        passivePcent += (75 * placement);
+    }
     let traitDmgPct = traitObj.dmg + (traitObj.bossDmg && isBoss ? traitObj.bossDmg : 0), traitSpaPct = traitObj.spa; 
     let traitCritRate = traitObj.critRate || 0, traitRangePct = traitObj.range || 0, traitDotBuff = traitObj.dotBuff || 0;
 
@@ -393,6 +397,17 @@ function calculateDPS(uStats, relicStats, context) {
             attacksNeeded: 1,
             mult: 1.5,
             label: "Follow-up (+1.5s)"
+        };
+    } else if (uStats.id === 'water_god') {
+        usedSpa = uStats.spaCap || 4;
+        attackMultiplier = 1.0;
+        extraAttacksData = {
+            req: "Follow-up Hit",
+            hits: "SPA = Cap Override",
+            extra: 0,
+            attacksNeeded: 1,
+            mult: 1.0,
+            label: "Follow Up"
         };
     } else if (uStats.reqCrits && uStats.hitCount) {
         const critsPerAttack = uStats.hitCount * (finalCritRate / 100);

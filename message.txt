@@ -144,9 +144,21 @@ const results = calculateUnitBuilds(
     mode      
 );
 
-if (u.id === 'law') results.sort((a, b) => (b.range || 0) - (a.range || 0));
-else results.sort((a, b) => b.dps - a.dps);
-const topResults = results.slice(0, 5000); 
+// Group by Trait
+const traitGroups = {};
+for (const res of results) {
+    if (!traitGroups[res.traitName]) traitGroups[res.traitName] = [];
+    traitGroups[res.traitName].push(res);
+}
+
+const topResults = [];
+for (const trait in traitGroups) {
+    const list = traitGroups[trait];
+    if (u.id === 'law') list.sort((a, b) => (b.range || 0) - (a.range || 0));
+    else list.sort((a, b) => b.dps - a.dps);
+    
+    topResults.push(...list.slice(0, 100)); // Top 100 per trait
+}
 
 const key = mode === 'bugged' ? 'b' : 'f';
 FINAL_DB[finalKey][key].push(rowsToBuffer(topResults));

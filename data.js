@@ -555,6 +555,15 @@ const unitDatabase = [
         placement: 4, tags: [],
         meta: { short: "Ruler", long: "Ruler", note: "Passive averages to +25% Damage." },
         stats: { dmg: 1810, spa: 8.5, crit: 0, cdmg: 150, dot: 25, dotStacks: 1, spaCap: 2, passiveDmg: 45, element: "Water", dotDuration: 5, range: 45 },
+    },
+    {
+        id: "water_god", name: "Water God (Primordial)", role: "Damage",
+        img: "images/units/WaterGod.png",
+        totalCost: 72600,
+        placement: 3, tags: [],
+        meta: { short: "Ruler", long: "Eternal", note: "+75% Damage per placement. Follow up attack sets SPA to Cap." },
+        stats: { dmg: 2500, spa: 9, crit: 50, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 4, passiveDmg: 0, element: "Water", dotDuration: 0, range: 30 },
+        ability: { buffDmg: 50, abilityName: "Time Snail" }
     }
 ];
 
