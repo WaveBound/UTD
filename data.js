@@ -10,14 +10,14 @@ const GAME_STATE = {
 const SUPER_ROKU_NEARBY = false; // Toggle: +20% Damage if placed within range of a "Saiyan unit"
 
 const statConfig = {
-    applyRelicDmg: true,  
-    applyRelicSpa: true,  
-    applyRelicCrit: !GAME_STATE.BUG_CRIT_RELICS, 
-    applyRelicDot: !GAME_STATE.BUG_DOT_RELICS   
+    applyRelicDmg: true,
+    applyRelicSpa: true,
+    applyRelicCrit: !GAME_STATE.BUG_CRIT_RELICS,
+    applyRelicDot: !GAME_STATE.BUG_DOT_RELICS
 };
 
 const PERFECT_SUBS = {
-    dmg: 4, spa: 1.5, cm: 4.5, cf: 2.5, dot: 5, range: 2 
+    dmg: 4, spa: 1.5, cm: 4.5, cf: 2.5, dot: 5, range: 2
 };
 
 const SUB_CANDIDATES = ['dmg', 'spa', 'cm', 'cf', 'dot', 'range'];
@@ -227,36 +227,36 @@ const setBonuses = {
     none: { dmg: 0, spa: 0, cf: 0, cm: 0, range: 0 }
 };
 
-const BODY_DMG  = { dmg: 60, dot: 0,  cm: 0,   desc: "Dmg",  type: "dmg" };
-const BODY_DOT  = { dmg: 0,  dot: 75, cm: 0,   desc: "DoT",  type: "dot" };
-const BODY_CDMG = { dmg: 0,  dot: 0,  cm: 120, desc: "Crit Dmg", type: "cm" };
+const BODY_DMG = { dmg: 60, dot: 0, cm: 0, desc: "Dmg", type: "dmg" };
+const BODY_DOT = { dmg: 0, dot: 75, cm: 0, desc: "DoT", type: "dot" };
+const BODY_CDMG = { dmg: 0, dot: 0, cm: 120, desc: "Crit Dmg", type: "cm" };
 
-const LEG_DMG   = { dmg: 60, spa: 0,    desc: "Dmg", type: "dmg" };
-const LEG_SPA   = { dmg: 0,  spa: 22.5, desc: "Spa", type: "spa" };
-const LEG_CRIT  = { dmg: 0,  spa: 0,    desc: "Crit Rate", type: "cf", cf: 37.5 }; 
-const LEG_RANGE = { dmg: 0,  spa: 0,    desc: "Range", type: "range", range: 30 };
+const LEG_DMG = { dmg: 60, spa: 0, desc: "Dmg", type: "dmg" };
+const LEG_SPA = { dmg: 0, spa: 22.5, desc: "Spa", type: "spa" };
+const LEG_CRIT = { dmg: 0, spa: 0, desc: "Crit Rate", type: "cf", cf: 37.5 };
+const LEG_RANGE = { dmg: 0, spa: 0, desc: "Range", type: "range", range: 30 };
 
 const SETS = [
-    { id: "ninja",    name: "Master Ninja",     bonus: { dmg: 5, spa: 0, cm: 0 } },
-    { id: "sun_god",  name: "Sun God",          bonus: { dmg: 5, spa: 0, cm: 0 } },
+    { id: "ninja", name: "Master Ninja", bonus: { dmg: 5, spa: 0, cm: 0 } },
+    { id: "sun_god", name: "Sun God", bonus: { dmg: 5, spa: 0, cm: 0 } },
     { id: "laughing", name: "Laughing Captain", bonus: { dmg: 5, spa: 5, cm: 0 } },
-    { id: "ex",       name: "Ex Captain",       bonus: { dmg: 0, spa: 0, cm: 25, cf: 10 } },
+    { id: "ex", name: "Ex Captain", bonus: { dmg: 0, spa: 0, cm: 25, cf: 10 } },
     { id: "shadow_reaper", name: "Shadow Reaper", bonus: { dmg: 2.5, range: 10, cf: 5, cm: 5 } },
-    { id: "reaper_set",    name: "Reaper Set",    bonus: { spa: 7.5, range: 15 } },
-    { id: "super_roku",    name: "Super Roku",    bonus: { dmg: 10, cf: 15 } },
-    { id: "bio_android",   name: "Bio-Android",   bonus: { dmg: 5, spa: 5, range: 5, cf: 5, cm: 5 } }
+    { id: "reaper_set", name: "Reaper Set", bonus: { spa: 7.5, range: 15 } },
+    { id: "super_roku", name: "Super Roku", bonus: { dmg: 10, cf: 15 } },
+    { id: "bio_android", name: "Bio-Android", bonus: { dmg: 5, spa: 5, range: 5, cf: 5, cm: 5 } }
 ];
 
-const globalBuilds = SETS.flatMap(set => 
-    [BODY_DMG, BODY_DOT, BODY_CDMG].flatMap(body => 
+const globalBuilds = SETS.flatMap(set =>
+    [BODY_DMG, BODY_DOT, BODY_CDMG].flatMap(body =>
         [LEG_DMG, LEG_SPA, LEG_CRIT, LEG_RANGE].map(leg => ({
             name: `${set.name} (${body.desc}/${leg.desc})`,
-            set:  set.id,
-            dmg:  body.dmg + leg.dmg,
-            spa:  leg.spa, 
-            dot:  body.dot,
-            cm:   body.cm, 
-            cf:   (body.cf || 0) + (leg.cf || 0),
+            set: set.id,
+            dmg: body.dmg + leg.dmg,
+            spa: leg.spa,
+            dot: body.dot,
+            cm: body.cm,
+            cf: (body.cf || 0) + (leg.cf || 0),
             range: (leg.range || 0),
             bodyType: body.type,
             legType: leg.type
@@ -266,7 +266,7 @@ const globalBuilds = SETS.flatMap(set =>
 
 const traitsList = [
     { id: "ruler", name: "Ruler", dmg: 200, spa: 20, range: 30, desc: "+200% Dmg, Limit 1", limitPlace: 1 },
-    { id: "fission", name: "Fission", dmg: 15, spa: 15, range: 25, hasRadiation: true, radiationPct: 20,},
+    { id: "fission", name: "Fission", dmg: 15, spa: 15, range: 25, hasRadiation: true, radiationPct: 20, },
     { id: "eternal", name: "Eternal", dmg: 0, spa: 20, range: 0, desc: "-20% SPA, +Dmg/Rng/Wave", isEternal: true },
     { id: "sacred", name: "Sacred", dmg: 25, spa: 10, range: 25, desc: "+25% Dmg, -10% SPA, -15% Cost", costReduction: 15 },
     { id: "astral", name: "Astral", dmg: 0, spa: 20, range: 15, desc: "DoT Stacks (All Units)", allowDotStack: true },
@@ -288,7 +288,7 @@ const elementIcons = {
 const unitDatabase = [
     {
         id: "Maid", name: "Scarlet Maid (World)", role: "Damage / Support",
-        img: "images/units/Maid.png", 
+        img: "images/units/Maid.png",
         totalCost: 76000,
         placement: 1, tags: [],
         meta: { short: "Ruler", long: "Ruler", note: "Ruler is strictly best due to 1 placement count." },
@@ -296,7 +296,7 @@ const unitDatabase = [
     },
     {
         id: "sjw", name: "SJW (Monarch)", role: "Damage",
-        img: "images/units/Sjw.png", 
+        img: "images/units/Sjw.png",
         totalCost: 93000,
         placement: 1, tags: [],
         meta: { short: "Ruler", long: "Ruler", note: "Ruler is strictly best due to 1 placement count." },
@@ -309,7 +309,7 @@ const unitDatabase = [
         placement: 1, tags: [],
         meta: { short: "Ruler", long: "Ruler", note: "Ruler is strictly best due to 1 placement count." },
         stats: { dmg: 1800, spa: 9, crit: 0, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 3, passiveDmg: 12, element: "Ice", range: 35 },
-        ability: { dmg: 3600, spa: 15, passiveDmg: 72, } 
+        ability: { dmg: 3600, spa: 15, passiveDmg: 72, }
     },
     {
         id: "kirito", name: "Kirito", role: "Burst / Crit",
@@ -321,7 +321,7 @@ const unitDatabase = [
     },
     {
         id: "genos", name: "Cyborg (Fearless)", role: "DoT / Damage",
-        img: "images/units/Genos.png", 
+        img: "images/units/Genos.png",
         totalCost: 26900,
         placement: 3, tags: [],
         meta: { short: "Ruler", long: "Eternal/Sacred", note: "Standard DPS Selection." },
@@ -338,7 +338,7 @@ const unitDatabase = [
     },
     {
         id: "sasuke", name: "Sasuke (Chakra)", role: "Damage",
-        img: "images/units/Sasuke.png", 
+        img: "images/units/Sasuke.png",
         totalCost: 40000,
         placement: 2, tags: [],
         meta: { short: "Ruler", long: "Eternal/Sacred", note: "Ruler for DPS, Eternal/Sacred for support." },
@@ -346,7 +346,7 @@ const unitDatabase = [
     },
     {
         id: "mob", name: "Pyscho (100%)", role: "Damage",
-        img: "images/units/Mob.png", 
+        img: "images/units/Mob.png",
         totalCost: 56000,
         placement: 2, tags: [],
         meta: { short: "Ruler", long: "Ruler", note: "Standard DPS selection." },
@@ -354,15 +354,15 @@ const unitDatabase = [
     },
     {
         id: "shanks", name: "Shanks (Conqueror)", role: "Damage",
-        img: "images/units/Shanks.png", 
+        img: "images/units/Shanks.png",
         totalCost: 64000,
         placement: 1, tags: [],
         meta: { short: "Ruler", long: "Ruler", note: "Ruler is strictly best due to 1 placement count." },
-        stats: { dmg: 2750, spa: 12, crit: 0, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 2.5, passiveDmg: 0, element: "Rose", dotDuration: 0, range: 30}
+        stats: { dmg: 2750, spa: 12, crit: 0, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 2.5, passiveDmg: 0, element: "Rose", dotDuration: 0, range: 30 }
     },
     {
         id: "law", name: "Rule (Room)", role: "Support / Damage",
-        img: "images/units/Law.png", 
+        img: "images/units/Law.png",
         totalCost: 84000,
         placement: 2, tags: [],
         meta: { short: "Ruler/Sacred", long: "Ruler/Sacred", note: "Ruler/Sacred offer the most Spa%- / Rng%+" },
@@ -370,23 +370,23 @@ const unitDatabase = [
     },
     {
         id: "akainu", name: "Admiral (Magma)", role: "Support / Damage",
-        img: "images/units/Akainu.png", 
+        img: "images/units/Akainu.png",
         totalCost: 108000,
         placement: 3, tags: [],
         meta: { short: "Eternal/Sacred", long: "Eternal/Sacred", note: "Eternal/Sacred offer the the best dps + support performance." },
-        stats: { dmg: 1100, spa: 5, crit: 0, cdmg: 150, dot: 60, dotStacks: 1, spaCap: 2, passiveDmg: 0, passiveSpa: 0, element: "Fire", dotDuration: 7, range: 37}
+        stats: { dmg: 1100, spa: 5, crit: 0, cdmg: 150, dot: 60, dotStacks: 1, spaCap: 2, passiveDmg: 0, passiveSpa: 0, element: "Fire", dotDuration: 7, range: 37 }
     },
     {
         id: "ichigo", name: "Ichiko (Rage)", role: "Damage",
-        img: "images/units/Ichigo.png", 
+        img: "images/units/Ichigo.png",
         totalCost: 108000,
         placement: 1, tags: ["Peroxide", "Reaper", "Rage", "Hollow"],
         meta: { short: "Ruler", long: "Ruler", note: "Ruler is strictly best due to 1 placement count." },
-        stats: { dmg: 3000, spa: 8, crit: 15, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 7, passiveDmg: 50, passiveSpa: 0, element: "Dark", dotDuration: 0, range: 38}
+        stats: { dmg: 3000, spa: 8, crit: 15, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 7, passiveDmg: 50, passiveSpa: 0, element: "Dark", dotDuration: 0, range: 38 }
     },
     {
         id: "grimjaw", name: "Grommjaw (Panther)", role: "Damage",
-        img: "images/units/Grimjaw.png", 
+        img: "images/units/Grimjaw.png",
         totalCost: 40000,
         placement: 3, tags: ["Peroxide", "Hollow"],
         meta: { short: "Ruler", long: "Eternal", note: "Standard DPS selection." },
@@ -394,28 +394,28 @@ const unitDatabase = [
     },
     {
         id: "stark", name: "Koyote (Number one)", role: "Damage",
-        img: "images/units/Stark.png", 
+        img: "images/units/Stark.png",
         totalCost: 44000,
         placement: 1, tags: ["Peroxide", "Hollow"],
         meta: { short: "Ruler", long: "Ruler", note: "Ruler is strictly best due to 1 placement count." },
-        stats: { dmg: 2800, spa: 6, crit: 0, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 6, passiveDmg: 0, passiveSpa: 0, element: "Ice", dotDuration: 0, range: 42}
+        stats: { dmg: 2800, spa: 6, crit: 0, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 6, passiveDmg: 0, passiveSpa: 0, element: "Ice", dotDuration: 0, range: 42 }
     },
     {
         id: "ulquiorra", name: "Ultiiorra (Oblivion)", role: "Damage",
-        img: "images/units/Ulqiorra.png", 
+        img: "images/units/Ulqiorra.png",
         totalCost: 31760,
         placement: 3, tags: ["Peroxide", "Hollow"],
         meta: { short: "Ruler", long: "Eternal", note: "Standard DPS selection." },
-        stats: { dmg: 1275, spa: 5, crit: 0, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 2, passiveDmg: 0, passiveSpa: 5, element: "Dark", dotDuration: 0, range: 37},
+        stats: { dmg: 1275, spa: 5, crit: 0, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 2, passiveDmg: 0, passiveSpa: 5, element: "Dark", dotDuration: 0, range: 37 },
         ability: { buffDmg: 65, passiveSpa: 2.5, crit: 10 }
     },
     {
         id: "harribel", name: "Tierrabel (Hydro)", role: "Damage",
-        img: "images/units/Harribel.png", 
+        img: "images/units/Harribel.png",
         totalCost: 30964,
         placement: 3, tags: ["Peroxide", "Hollow"],
         meta: { short: "Ruler", long: "Eternal", note: "Standard DPS selection." },
-        stats: { dmg: 1490, spa: 8.5, crit: 0, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 2, passiveDmg: 0, passiveSpa: 0, element: "Water", dotDuration: 0, range: 30},
+        stats: { dmg: 1490, spa: 8.5, crit: 0, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 2, passiveDmg: 0, passiveSpa: 0, element: "Water", dotDuration: 0, range: 30 },
         ability: { buffDmg: 35, buffDuration: 80, spaCap: 4, hasToggle: true }
     },
     {
@@ -425,7 +425,7 @@ const unitDatabase = [
         placement: 3, tags: [],
         meta: { short: "Ruler", long: "Ruler/Astral", note: "Ruler provides good dps to cost." },
         stats: { dmg: 1500, spa: 9, crit: 0, cdmg: 150, dot: 100, dotStacks: 1, spaCap: 6, passiveDmg: 60, element: "Fire", dotDuration: 4, range: 30 }
-    }, 
+    },
     {
         id: "Jingliu", name: "Jingliu", role: "Damage",
         img: "images/units/Jingliu.png",
@@ -441,7 +441,7 @@ const unitDatabase = [
         placement: 1, tags: [],
         meta: { short: "Ruler", long: "Ruler", note: "Ruler is strictly best due to 1 placement count." },
         stats: { dmg: 8750, spa: 14, crit: 0, cdmg: 150, dot: 50, dotStacks: 1, spaCap: 4, passiveDmg: 0, element: "Fire", dotDuration: 10, range: 50 },
-        ability: { passiveDmg: 50, passiveSpa: -50 } 
+        ability: { passiveDmg: 50, passiveSpa: -50 }
     },
     {
         id: "bambietta", name: "Bambietta", role: "Damage / (Support/Dot)",
@@ -487,13 +487,13 @@ const unitDatabase = [
         totalCost: 68000,
         placement: 2, tags: [],
         meta: { short: "Ruler", long: "Ruler", note: "Toggle Ability for Sniper Mode (Global Range)." },
-        stats: { 
-            dmg: 1450, spa: 6, crit: 0, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 3.5, 
+        stats: {
+            dmg: 1450, spa: 6, crit: 0, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 3.5,
             element: "Fire", dotDuration: 0, range: 50,
             passiveDmg: 125, // Normal Mode: 2.25x Dmg
             passiveSpa: 0
-        }, 
-        ability: { 
+        },
+        ability: {
             passiveDmg: 10,  // Sniper Mode: 1.1x Dmg
             passiveSpa: 10,  // Sniper Mode: 0.9x SPA (10% reduction)
             range: 120  // Sniper Mode: 200 Range
@@ -514,12 +514,12 @@ const unitDatabase = [
         totalCost: 56000,
         placement: 1, tags: ["Bio-Android"],
         meta: { short: "Ruler", long: "Ruler", note: "Ruler is strictly best due to 1 placement count. Base form is True Form. Toggle for Perfect Form (Summon)." },
-        stats: { 
+        stats: {
             baseName: "True Form",
-            dmg: 3250, spa: 10, crit: 0, cdmg: 150, dot: 0, spaCap: 4.1, 
-            passiveDmg: 70, element: "Wind", range: 43 
+            dmg: 3250, spa: 10, crit: 0, cdmg: 150, dot: 0, spaCap: 4.1,
+            passiveDmg: 70, element: "Wind", range: 43
         },
-        ability: { 
+        ability: {
             abilityName: "Perfect Form",
             dmg: 3025, spa: 9.5, spaCap: 2.5, range: 43,
             passiveDmg: 50,
@@ -528,7 +528,7 @@ const unitDatabase = [
                 planeA: { spa: 7.5, duration: 30 },
                 planeB: { spa: 7.5, duration: 30 }
             }
-        } 
+        }
     },
     {
         id: "vegeta", name: "Fallen Prince", role: "Damage",
@@ -546,7 +546,7 @@ const unitDatabase = [
         placement: 2, tags: ["Saiyan"],
         meta: { short: "Ruler", long: "Ruler", note: "Toggle Same Enemy for boss DPS calculation." },
         stats: { dmg: 1950, spa: 6.5, crit: 10, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 4, passiveDmg: 25, element: "Light", dotDuration: 0, range: 41 },
-        ability: {} 
+        ability: {}
     },
     {
         id: "trunks", name: "The Drink", role: "Damage / DoT",
@@ -561,7 +561,7 @@ const unitDatabase = [
         img: "images/units/WaterGod.png",
         totalCost: 72600,
         placement: 3, tags: [],
-        meta: { short: "Ruler", long: "Eternal", note: "+75% Damage per placement. Follow up attack sets SPA to Cap." },
+        meta: { short: "Sacred", long: "Sacred/Fission", note: "+75% Damage per placement. Follow up attack sets SPA to Cap." },
         stats: { dmg: 2500, spa: 9, crit: 50, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 4, passiveDmg: 0, element: "Water", dotDuration: 0, range: 30 },
         ability: { buffDmg: 50, abilityName: "Time Snail" }
     }

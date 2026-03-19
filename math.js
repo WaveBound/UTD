@@ -402,12 +402,12 @@ function calculateDPS(uStats, relicStats, context) {
         usedSpa = uStats.spaCap || 4;
         attackMultiplier = 1.0;
         extraAttacksData = {
-            req: "Follow-up Hit",
+            req: "Time Snail",
             hits: "SPA = Cap Override",
             extra: 0,
             attacksNeeded: 1,
             mult: 1.0,
-            label: "Follow Up"
+            label: "Time Snail"
         };
     } else if (uStats.reqCrits && uStats.hitCount) {
         const critsPerAttack = uStats.hitCount * (finalCritRate / 100);
