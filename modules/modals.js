@@ -170,6 +170,7 @@ function openTraitGuide(unitId) {
         <div class="tg-grid">
             ${generateSection('Wave 1-30', unit.meta.short, '⚡')}
             ${generateSection('Infinite Mode', unit.meta.long, '♾️')}
+            ${unit.meta.virtual ? generateSection('Virtual Realm', unit.meta.virtual, '🌌') : ''}
         </div>
         <div class="tg-note">
             <strong>Strategy Note:</strong><br>
@@ -224,10 +225,7 @@ function openTraitTierList() {
         return u.stats.dmg || 0;
     };
 
-    const traitOrder = ['Ruler', 'Eternal', 'Sacred', 'Fission', 'Astral', 'Duelist', 'Wizard'];
-
-    if (!shortMap['Fission']) shortMap['Fission'] = [];
-    if (!longMap['Fission']) longMap['Fission'] = [];
+    const traitOrder = ['Ruler', 'Eternal', 'Sacred', 'Astral', 'Fission', 'Duelist', 'Wizard'];
 
     const renderSection = (title, map) => {
         const traits = Object.keys(map).sort((a, b) => {
@@ -276,7 +274,7 @@ function openTraitTierList() {
 
     showUniversalModal({
         title: 'TRAIT SUGGESTIONS TIER LIST',
-        content: `<div class="tier-list-container">${renderSection('Wave 1-30', shortMap)}${renderSection('Infinite Mode', longMap)}</div>`,
+        content: `<div class="tier-list-container">${renderSection('Wave 1-30', shortMap)}${renderSection('Infinite Mode', longMap)}${Object.keys(virtualMap).length > 0 ? renderSection('Virtual Realm', virtualMap) : ''}</div>`,
         size: 'modal-lg',
         footerButtons: `<button class="action-btn secondary" onclick="closeModal('universalModal')">Close</button>`
     });

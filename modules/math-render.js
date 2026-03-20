@@ -9,7 +9,6 @@ function renderOverviewSection(data) {
     return `
         <div class="math-section" style="border-color: rgba(251, 191, 36, 0.3);">
             <div class="math-header">Snapshot Overview</div>
-            <div class="math-row"><span>Active Trait</span><b class="text-custom">${data.traitObj.name}</b></div>
             <div class="math-row"><span>Total DPS</span><b class="math-val-gold">${fmt.num(data.total)}</b></div>
             ${data.summon > 0 ? `<div class="math-row"><span>Planes Active</span><b class="text-accent-start">${fmt.fix(data.summonData.count, 1)}</b></div>` : ''}
             <div class="math-row"><span>Placement</span><b>${data.placement} Unit(s)</b></div>

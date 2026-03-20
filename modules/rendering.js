@@ -354,7 +354,7 @@ function renderDatabase() {
             processUnitCache(unit);
             renderQueueIndex++;
 
-let abilityLabel = (unit.ability && unit.ability.abilityName) ? unit.ability.abilityName : 'Ability';
+let abilityLabel = 'Ability';
 let toggleScript = '';
 
 if (unit.id === 'phantom_captain') abilityLabel = 'Planes';

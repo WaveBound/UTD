@@ -255,8 +255,8 @@ function _calcDoTDPS(uStats, traitObj, totalDotBuffs, baseR_Dot, finalDmg, final
     const canStack = (traitObj.allowDotStack || traitObj.allowPlacementStack);
     if (uStats.dot > 0) {
         const nativeTickPct = (uStats.dot + totalDotBuffs) * dotBreakdown.relicMult;
-        const multiHitMult = 1; 
-        dotBreakdown.isMultiHit = false;
+        const multiHitMult = (canStack && uStats.hitCount) ? uStats.hitCount : 1;
+        dotBreakdown.isMultiHit = (multiHitMult > 1);
         const totalNativeDmg = finalDmg * (nativeTickPct / 100) * dotCritMult * multiHitMult;
         const duration = uStats.dotDuration || 0;
         const interval = canStack ? finalSpa : (duration > 0 ? Math.ceil(duration / finalSpa) * finalSpa : finalSpa);
@@ -396,29 +396,18 @@ function calculateDPS(uStats, relicStats, context) {
             extra: 0,
             attacksNeeded: 1,
             mult: 1.5,
+            label: "Follow-up (+1.5s)"
         };
-    } else if (uStats.id === 'water_god' && uStats.followUp) {
-        // Follow-up attack sequence: 2 hits that combined must respect the per-hit SPA Cap.
-        // Total cycle time (usedSpa) matches the unit's SPA, but is capped at 2x the per-hit Cap.
-        usedSpa = Math.max(finalSpa, uStats.spaCap * 2);
-        attackMultiplier = 2;
+    } else if (uStats.id === 'water_god') {
+        usedSpa = uStats.spaCap || 4;
+        attackMultiplier = 1.0;
         extraAttacksData = {
-            req: "Follow-up",
-            hits: "2 hits / cycle",
-            extra: 1,
+            req: "Follow-up Hit",
+            hits: "SPA = Cap Override",
+            extra: 0,
             attacksNeeded: 1,
-            mult: 1,
-            label: "Cycle-Locked Follow-up (Cap: 2x Hit Cap)"
-        };
-    } else if (uStats.followUp) {
-        attackMultiplier = 1 + (uStats.followUp / 100);
-        extraAttacksData = {
-            req: "N/A",
-            hits: attackMultiplier,
-            extra: uStats.followUp / 100,
-            attacksNeeded: 1,
-            mult: attackMultiplier,
-            label: "Follow-up Attack"
+            mult: 1.0,
+            label: "Follow Up"
         };
     } else if (uStats.reqCrits && uStats.hitCount) {
         const critsPerAttack = uStats.hitCount * (finalCritRate / 100);
