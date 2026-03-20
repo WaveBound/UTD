@@ -170,7 +170,6 @@ function openTraitGuide(unitId) {
         <div class="tg-grid">
             ${generateSection('Wave 1-30', unit.meta.short, '⚡')}
             ${generateSection('Infinite Mode', unit.meta.long, '♾️')}
-            ${unit.meta.virtual ? generateSection('Virtual Realm', unit.meta.virtual, '🌌') : ''}
         </div>
         <div class="tg-note">
             <strong>Strategy Note:</strong><br>
@@ -184,6 +183,98 @@ function openTraitGuide(unitId) {
         size: 'modal-sm'
     });
 }
+
+// Pre-calculated map for O(1) lookups
+let unitMap = null;
+const refreshUnitMap = () => {
+    unitMap = new Map();
+    unitDatabase.forEach(u => unitMap.set(u.id, u));
+};
+
+const getUnitById = (id) => {
+    if (!unitMap) refreshUnitMap();
+    return unitMap.get(id);
+};
+
+window.refreshUnitMap = refreshUnitMap;
+
+function openUnitInfo(unitId) {
+    const unit = getUnitById(unitId);
+    if (!unit) return;
+
+    let passivesHtml = '';
+    if (unit.passives && Array.isArray(unit.passives)) {
+        passivesHtml = unit.passives.map(p => `<li class="info-passive-item"><strong class="text-white">${p.name}:</strong> <span class="info-passive-desc">${p.desc}</span></li>`).join('');
+    } else {
+        const s = unit.stats;
+        if (s.passiveDmg) passivesHtml += `<li><span>Damage:</span> <span>+${s.passiveDmg}%</span></li>`;
+        if (s.passiveSpa) passivesHtml += `<li><span>SPA:</span> <span>-${s.passiveSpa}%</span></li>`;
+        if (s.passiveRange) passivesHtml += `<li><span>Range:</span> <span>+${s.passiveRange}%</span></li>`;
+    }
+    
+    if (!passivesHtml) passivesHtml = '<li>None</li>';
+
+    let etherealHtml = '';
+    if (unit.etherealization) {
+        if (Array.isArray(unit.etherealization)) {
+            etherealHtml = unit.etherealization.map((text, idx) => `
+                <li class="info-ethereal-item">
+                    <span class="info-ethereal-text">${text}</span>
+                    <span class="e-badge">E${idx+1}</span>
+                </li>
+            `).join('');
+        } else {
+            const e = unit.etherealization;
+            if (e.dmg) etherealHtml += `<li><span>Damage:</span> <span>+${e.dmg}%</span></li>`;
+            if (e.spa) etherealHtml += `<li><span>SPA:</span> <span>-${e.spa}%</span></li>`;
+            if (e.range) etherealHtml += `<li><span>Range:</span> <span>+${e.range}%</span></li>`;
+            if (e.desc) etherealHtml += `<li class="text-xs text-dim" style="margin-top: 5px; display: block; text-align: center;">${e.desc}</li>`;
+        }
+    } else {
+        etherealHtml = '<li>None</li>';
+    }
+
+    const html = `
+        <div class="unit-info-modal">
+            <div class="info-section section-discovery">
+                <div class="info-sec-title">Unit Discovery</div>
+                <ul class="info-list">
+                    <li><span>Role:</span> <span>${unit.role}</span></li>
+                    <li><span>Element:</span> <span class="text-custom">${unit.stats.element}</span></li>
+                    <li><span>Cost:</span> <span class="text-gold">${unit.totalCost.toLocaleString()}</span></li>
+                    <li><span>Placement:</span> <span>${unit.placement}</span></li>
+                </ul>
+            </div>
+            <div class="info-section section-passives">
+                <div class="info-sec-title">Passives / Innates</div>
+                <ul class="info-list">${passivesHtml}</ul>
+            </div>
+            <div class="info-section section-ethereal">
+                <div class="info-sec-title">Etherealization Buffs</div>
+                <ul class="info-list">${etherealHtml}</ul>
+            </div>
+            ${unit.ability ? `
+            <div class="info-section section-ability">
+                <div class="info-sec-title">Active Ability: ${unit.ability.abilityName}</div>
+                <ul class="info-list">
+                    ${unit.ability.cooldown ? `<li><span>Cooldown:</span> <span class="text-gold">${unit.ability.cooldown}s</span></li>` : ''}
+                    <li class="info-ability-desc-item"><span class="info-ability-desc">${unit.ability.desc || 'No description available.'}</span></li>
+                </ul>
+            </div>` : ''}
+        </div>
+    `;
+
+    // PERFORMANCE: Wrapping in setTimeout(0) ensures the browser handles the click event 
+    // and clears any pending tasks before tackling the modal layout/rendering.
+    setTimeout(() => {
+        showUniversalModal({
+            title: `UNIT INFO: ${unit.name.toUpperCase()}`,
+            content: html,
+            size: 'modal-sm'
+        });
+    }, 0);
+}
+window.openUnitInfo = openUnitInfo;
 
 /**
  * Shows Trait Tier List (All Units)
@@ -225,7 +316,10 @@ function openTraitTierList() {
         return u.stats.dmg || 0;
     };
 
-    const traitOrder = ['Ruler', 'Eternal', 'Sacred', 'Astral', 'Fission', 'Duelist', 'Wizard'];
+    const traitOrder = ['Ruler', 'Eternal', 'Sacred', 'Fission', 'Astral', 'Duelist', 'Wizard'];
+
+    if (!shortMap['Fission']) shortMap['Fission'] = [];
+    if (!longMap['Fission']) longMap['Fission'] = [];
 
     const renderSection = (title, map) => {
         const traits = Object.keys(map).sort((a, b) => {
@@ -274,7 +368,7 @@ function openTraitTierList() {
 
     showUniversalModal({
         title: 'TRAIT SUGGESTIONS TIER LIST',
-        content: `<div class="tier-list-container">${renderSection('Wave 1-30', shortMap)}${renderSection('Infinite Mode', longMap)}${Object.keys(virtualMap).length > 0 ? renderSection('Virtual Realm', virtualMap) : ''}</div>`,
+        content: `<div class="tier-list-container">${renderSection('Wave 1-30', shortMap)}${renderSection('Infinite Mode', longMap)}</div>`,
         size: 'modal-lg',
         footerButtons: `<button class="action-btn secondary" onclick="closeModal('universalModal')">Close</button>`
     });

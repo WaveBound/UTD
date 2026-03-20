@@ -144,15 +144,18 @@ function updateBuildListDisplay(unitId) {
     const unitCost = unitObj ? unitObj.totalCost : 50000;
     const unitPlace = unitObj ? unitObj.placement : 1;
 
+    // Determine current global configuration
+    const isFixed = document.body.classList.contains('show-fixed-relics');
+    const activeMode = isFixed ? 'fixed' : 'bugged';
+    const showHead = document.body.classList.contains('show-head');
+    const showSubs = document.body.classList.contains('show-subs');
+    const activeCfg = (showHead ? 2 : 0) + (showSubs ? 1 : 0);
+    const activeType = activeAbilityIds.has(unitId) && unitObj && unitObj.ability ? 'abil' : 'base';
+
     let benchmarkDps = 0;
     if (inventoryMode && window.STATIC_BUILD_DB) {
-        const isAbility = activeAbilityIds.has(unitId);
-        const mode = document.body.classList.contains('show-fixed-relics') ? 'fixed' : 'bugged';
-        let dbKey = unitId + (unitId === 'kirito' && kiritoState.card ? 'kirito_card' : '') + (isAbility && unitObj.ability ? '_abil' : '');
-        const showHead = document.body.classList.contains('show-head');
-        const showSubs = document.body.classList.contains('show-subs');
-        let cfgIdx = (showHead ? 2 : 0) + (showSubs ? 1 : 0);
-        const perfectBuilds = window.STATIC_BUILD_DB[dbKey]?.[mode]?.[cfgIdx];
+        let dbKey = unitId + (unitId === 'kirito' && kiritoState.card ? 'kirito_card' : '') + (activeType === 'abil' ? '_abil' : '');
+        const perfectBuilds = window.STATIC_BUILD_DB[dbKey]?.[activeMode]?.[activeCfg];
         if (perfectBuilds && perfectBuilds.length > 0) benchmarkDps = perfectBuilds[0].dps;
     }
 
@@ -162,22 +165,33 @@ function updateBuildListDisplay(unitId) {
     const headSelect = card.querySelector('select[data-filter="head"]').value;
     const sortSelect = card.querySelector('select[data-filter="sort"]').value; 
 
+    // Trait Cache & Memoization
+    const traitCache = new Map();
+    const getCachedTrait = (name) => {
+        if (traitCache.has(name)) return traitCache.get(name);
+        const t = getTraitByName(name, unitId);
+        traitCache.set(name, t);
+        return t;
+    };
+
     const renderList = (builds) => {
         if(!builds || builds.length === 0) return '<div class="msg-empty">No valid builds found.</div>';
 
         let filtered = builds.filter(r => {
+            const prioMatch = (prioSelect === 'all' || r.prio === prioSelect);
+            if (!prioMatch) return false;
+            if (setSelect !== 'all' && r.setName !== setSelect) return false;
+            if (headSelect !== 'all' && (r.headUsed || 'none') !== headSelect) return false;
+
             let headSearchName = ({'sun_god':'Sun God Head','ninja':'Ninja Head','reaper_necklace':'Reaper Necklace','shadow_reaper_necklace':'Shadow Reaper Necklace'})[r.headUsed] || '';
             const searchText = (r.traitName + ' ' + r.setName + ' ' + r.prio + ' ' + headSearchName).toLowerCase();
-            const prioMatch = (prioSelect === 'all' || r.prio === prioSelect);
-            return searchText.includes(searchInput) && prioMatch && (setSelect === 'all' || r.setName === setSelect) && (headSelect === 'all' || (r.headUsed || 'none') === headSelect);
+            return searchText.includes(searchInput);
         });
 
         if (prioSelect === 'all') {
             const uniqueMap = new Map();
             filtered.forEach(r => {
                 const key = `${r.setName}|${r.traitName}|${r.mainStats.body}|${r.mainStats.legs}`;
-                
-                // SJW Sun God Weighting (Unique Selection)
                 const getWeight = (b) => (unitId === 'sjw' && b.headUsed === 'sun_god') ? 1.05 : 1.0;
 
                 if (!uniqueMap.has(key)) {
@@ -185,12 +199,9 @@ function updateBuildListDisplay(unitId) {
                 } else {
                     const existing = uniqueMap.get(key);
                     const isRangeSort = (sortSelect === 'range' || unitId === 'law');
-                    
                     const scoreR = r.dps * getWeight(r);
                     const scoreE = existing.dps * getWeight(existing);
-
-                    const isBetter = isRangeSort ? (r.range > existing.range) : (scoreR > scoreE);
-                    if (isBetter) uniqueMap.set(key, r);
+                    if (isRangeSort ? (r.range > existing.range) : (scoreR > scoreE)) uniqueMap.set(key, r);
                 }
             });
             filtered = Array.from(uniqueMap.values());
@@ -198,11 +209,25 @@ function updateBuildListDisplay(unitId) {
 
         if(filtered.length === 0) return '<div class="msg-empty">No matches found.</div>';
         
-        // SJW Sun God Weighting (Final Sorting)
         const getFinalWeight = (b) => (unitId === 'sjw' && b.headUsed === 'sun_god') ? 1.05 : 1.0;
 
+        // Optimized Sorting
+        const effMemo = new Map();
+        const getEff = (b) => {
+            if (effMemo.has(b.id)) return effMemo.get(b.id);
+            // Replace global calculateBuildEfficiency with local one using cache
+            const foundTrait = getCachedTrait(b.traitName);
+            let traitLimit = (b.traitName && b.traitName.includes('Ruler')) ? 1 : (foundTrait?.limitPlace || null);
+            const actualPlacement = traitLimit ? Math.min(unitPlace, traitLimit) : unitPlace;
+            const costMult = (foundTrait && foundTrait.costReduction) ? Math.max(0, 1 - (foundTrait.costReduction / 100)) : 1;
+            const actualTotalCost = unitCost * actualPlacement * costMult;
+            const score = actualTotalCost === 0 ? 0 : (b.dps / actualTotalCost);
+            effMemo.set(b.id, score);
+            return score;
+        };
+
         if (sortSelect === 'efficiency') {
-            filtered.sort((a, b) => calculateBuildEfficiency(b, unitCost, unitPlace, unitId) - calculateBuildEfficiency(a, unitCost, unitPlace, unitId));
+            filtered.sort((a, b) => getEff(b) - getEff(a));
         } else if (sortSelect === 'range') {
             filtered.sort((a, b) => (b.range || 0) - (a.range || 0));
         } else if (sortSelect === 'damage') {
@@ -216,28 +241,28 @@ function updateBuildListDisplay(unitId) {
         }
 
         let displaySlice = filtered.slice(0, 10);
-        
-        // Custom Rule: Ensure "Ruler" trait is always shown in Top 10 for Water God
         if (unitId === 'water_god') {
-            const hasRuler = displaySlice.some(r => r.traitName === 'Ruler');
-            if (!hasRuler) {
+            if (!displaySlice.some(r => r.traitName === 'Ruler')) {
                 const bestRuler = filtered.find(r => r.traitName === 'Ruler');
-                if (bestRuler) {
-                    if (displaySlice.length === 10) displaySlice[9] = bestRuler;
-                    else displaySlice.push(bestRuler);
-                }
+                if (bestRuler) { if (displaySlice.length === 10) displaySlice[9] = bestRuler; else displaySlice.push(bestRuler); }
             }
         }
 
         return displaySlice.map((r, i) => generateBuildRowHTML(r, i, { totalCost: unitCost, placement: unitPlace, sortMode: sortSelect, unitId, benchmarkDps: benchmarkDps })).join('');
     };
 
+    // PERFORMANCE: Only render the container matching current global config
     ['base', 'abil'].forEach(type => {
         ['bugged', 'fixed'].forEach(mode => {
             for(let cfg=0; cfg<4; cfg++) {
                 const container = document.getElementById(`results-${type}-${mode}-${cfg}-${unitId}`);
-                const buildData = unitBuildsCache[unitId]?.[type]?.[mode]?.[cfg] || [];
-                if(container) container.innerHTML = renderList(buildData);
+                if (!container) continue;
+                if (type === activeType && mode === activeMode && cfg === activeCfg) {
+                    const buildData = unitBuildsCache[unitId]?.[type]?.[mode]?.[cfg] || [];
+                    container.innerHTML = renderList(buildData);
+                } else {
+                    container.innerHTML = ''; // Keep it empty until toggled
+                }
             }
         });
     });
@@ -333,7 +358,9 @@ function renderDatabase() {
                 return unit.id === 'law' ? (list[0].range || 0) : list[0].dps;
             }
         }
-        return 0;
+        // Fallback for newly added units not in Static DB
+        if (unit.id === 'law') return unit.stats.range || 0;
+        return (unit.stats.dmg / unit.stats.spa) * 35; // Rough estimate of fully geared DPS scale
     };
 
     const sortedUnits = unitDatabase.map(unit => {
@@ -354,7 +381,7 @@ function renderDatabase() {
             processUnitCache(unit);
             renderQueueIndex++;
 
-let abilityLabel = 'Ability';
+let abilityLabel = (unit.ability && unit.ability.abilityName) ? unit.ability.abilityName : 'Ability';
 let toggleScript = '';
 
 if (unit.id === 'phantom_captain') abilityLabel = 'Planes';
@@ -373,8 +400,8 @@ else if (unit.id === 'cell') {
     `;
 }
             
-            const abilityToggleHtml = unit.ability ? `<div class="toggle-wrapper"><span>${abilityLabel}</span><label><input type="checkbox" class="ability-cb" ${activeAbilityIds.has(unit.id) ? 'checked' : ''} onchange="toggleAbility('${unit.id}', this)${toggleScript}"><div class="mini-switch"></div></label></div>` : '<div></div>';
-            const topControls = `<div class="unit-toolbar"><div class="flex" style="gap: 4px; align-items: center;"><button class="select-btn" style="padding: 2px 8px; font-size: 0.75rem; min-height: 26px;" onclick="toggleSelection('${unit.id}')">${selectedUnitIds.has(unit.id) ? 'Selected' : 'Select'}</button><button class="calc-btn" style="padding: 2px 8px; font-size: 0.75rem; min-height: 26px;" onclick="openCalc('${unit.id}')">🖩 Custom</button><button class="calc-btn" style="padding: 2px 8px; font-size: 0.75rem; min-height: 26px;" onclick="openTraitBestList('${unit.id}')" title="Best Build per Trait">📊 Traits</button></div>${abilityToggleHtml}</div>`;
+            const abilityToggleHtml = (unit.ability && !unit.ability.noToggle) ? `<div class="toggle-wrapper"><span class="ut-ability-text" title="${abilityLabel}">${abilityLabel}</span><label><input type="checkbox" class="ability-cb" ${activeAbilityIds.has(unit.id) ? 'checked' : ''} onchange="toggleAbility('${unit.id}', this)${toggleScript}"><div class="mini-switch"></div></label></div>` : '<div></div>';
+            const topControls = `<div class="unit-toolbar"><div class="ut-actions"><button class="calc-btn ut-btn-compact" onclick="openCalc('${unit.id}')">🖩 Custom</button><button class="calc-btn ut-btn-compact" onclick="openTraitBestList('${unit.id}')" title="Best Build per Trait">📊 Traits</button><button class="calc-btn ut-btn-compact" onclick="openUnitInfo('${unit.id}')">ⓘ Info</button></div>${abilityToggleHtml}</div>`;
             
             let defaultSort = 'dps';
             if (['sjw', 'esdeath'].includes(unit.id)) defaultSort = 'damage';
@@ -402,7 +429,7 @@ else if (unit.id === 'cell') {
 
             const card = createBaseUnitCard(unit, {
                 id: 'card-' + unit.id,
-                additionalClasses: (activeAbilityIds.has(unit.id) ? ' use-ability' : '') + (selectedUnitIds.has(unit.id) ? ' is-selected' : ''),
+                additionalClasses: (activeAbilityIds.has(unit.id) ? ' use-ability' : '') + ' lazy-build-load',
                 bannerContent: `<div class="placement-badge">Max Place: ${unit.placement}</div>${getUnitImgHtml(unit, 'unit-avatar')}<div class="unit-title"><h2>${unit.name}</h2><span>${unit.role} <span class="sss-tag">SSS</span></span></div>${unit.meta ? `<button class="trait-guide-btn" onclick="openTraitGuide('${unit.id}')">📋 Rec. Traits</button>` : ''}`,
                 topControls, bottomControls, mainContent
             });
@@ -414,12 +441,28 @@ else if (unit.id === 'cell') {
         
         if (itemsAdded > 0) {
             container.appendChild(fragment);
-            for(let i = renderQueueIndex - itemsAdded; i < renderQueueIndex; i++) updateBuildListDisplay(sortedUnits[i].unit.id);
+            
+            // PERFORMANCE: Use IntersectionObserver to lazy-load builds only when visible
+            if (!window.buildLoadObserver) {
+                window.buildLoadObserver = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            const unitId = entry.target.id.replace('card-', '');
+                            updateBuildListDisplay(unitId);
+                            window.buildLoadObserver.unobserve(entry.target);
+                            entry.target.classList.remove('lazy-build-load');
+                        }
+                    });
+                }, { rootMargin: '200px' });
+            }
+            
+            const newCards = container.querySelectorAll('.lazy-build-load');
+            newCards.forEach(c => window.buildLoadObserver.observe(c));
         }
 
         if (renderQueueIndex < sortedUnits.length) renderQueueId = requestAnimationFrame(processNextChunk);
         else {
-            renderQueueId = null; updateCompareBtn();
+            renderQueueId = null;
             if(document.getElementById('globalHeadPiece').checked) document.body.classList.add('show-head');
             if(document.getElementById('globalSubStats').checked) document.body.classList.add('show-subs');
         }
@@ -543,20 +586,54 @@ function processGuideTop3(rawBuilds, unit, traitFilterId) {
     return filtered.slice(0, 3);
 }
 
-function createGuideCard(unitObj, builds, modeClass) {
-    const bestBuild = builds[0];
-    const isRange = unitObj.id === 'law';
-    const bannerContent = `<div class="mp-container ${isRange ? 'is-range' : 'is-dps'}"><span class="mp-label">${isRange ? 'Max Range' : 'Max Potential'}</span><span class="mp-val">${isRange ? (bestBuild.range || 0).toFixed(1) : format(bestBuild.dps)}</span></div>
+function createGuideCard(unitObj, modeClass) {
+    const bannerContent = `<div class="mp-container is-dps" id="guide-mp-${unitObj.id}"><span class="mp-label">Max Potential</span><span class="mp-val">...</span></div>
         ${getUnitImgHtml(unitObj, 'unit-avatar')}<div class="unit-title"><h2>${unitObj.name}</h2><span>${unitObj.role} <span class="sss-tag">SSS</span></span></div>`;
 
-    const mainContent = `<div class="top-builds-list guide-list-wrapper">` + builds.map((build, index) => generateBuildRowHTML(build, index, { totalCost: unitObj.totalCost || 50000, placement: unitObj.placement || 1, sortMode: 'dps', unitId: unitObj.id })).join('') + `</div>`;
+    const mainContent = `<div class="top-builds-list guide-list-wrapper" id="guide-list-${unitObj.id}"><div class="msg-empty">Loading builds...</div></div>`;
 
     return createBaseUnitCard(unitObj, {
-        additionalClasses: `calc-guide-card ${modeClass}`,
+        additionalClasses: `calc-guide-card lazy-guide-load ${modeClass}`,
         bannerContent,
-        tagsContent: `<span class="guide-trait-tag text-xs-plus">Best: ${bestBuild.traitName}</span>`,
+        tagsContent: `<span class="guide-trait-tag text-xs-plus" id="guide-trait-${unitObj.id}">Best: ...</span>`,
         mainContent
     });
+}
+
+function updateGuideBuilds(unitId) {
+    const unit = unitDatabase.find(u => u.id === unitId);
+    if (!unit) return;
+
+    const isFixed = document.body.classList.contains('show-fixed-relics');
+    const showHead = document.body.classList.contains('show-head');
+    const showSubs = document.body.classList.contains('show-subs');
+    const activeMode = isFixed ? 'fixed' : 'bugged';
+    const activeCfg = (showHead ? 2 : 0) + (showSubs ? 1 : 0);
+    const filterTraitId = document.getElementById('guideTraitSelect').value;
+
+    if (!unitBuildsCache[unitId]) processUnitCache(unit);
+    const builds = processGuideTop3(getGuideBuildsFromCache(unit, activeMode, activeCfg), unit, filterTraitId);
+
+    const mpLabel = document.getElementById(`guide-mp-${unitId}`);
+    const traitLabel = document.getElementById(`guide-trait-${unitId}`);
+    const listContainer = document.getElementById(`guide-list-${unitId}`);
+
+    if (!builds || builds.length === 0) {
+        if (listContainer) listContainer.innerHTML = '<div class="msg-empty">No builds found.</div>';
+        return;
+    }
+
+    const best = builds[0];
+    const isRange = unit.id === 'law';
+    if (mpLabel) {
+        mpLabel.className = `mp-container ${isRange ? 'is-range' : 'is-dps'}`;
+        mpLabel.querySelector('.mp-label').innerText = isRange ? 'Max Range' : 'Max Potential';
+        mpLabel.querySelector('.mp-val').innerText = isRange ? (best.range || 0).toFixed(1) : format(best.dps);
+    }
+    if (traitLabel) traitLabel.innerText = `Best: ${best.traitName}`;
+    if (listContainer) {
+        listContainer.innerHTML = builds.map((b, i) => generateBuildRowHTML(b, i, { totalCost: unit.totalCost || 50000, placement: unit.placement || 1, sortMode: 'dps', unitId: unit.id })).join('');
+    }
 }
 
 function renderGuides() {
@@ -592,27 +669,35 @@ function renderGuides() {
 
     const unitsToProcess = (guideUnitSelection.has('all')) ? unitDatabase : unitDatabase.filter(u => guideUnitSelection.has(u.id));
     
-    const scoredUnits = unitsToProcess.map(unit => {
-        if (!unitBuildsCache[unit.id]) processUnitCache(unit);
-        const refBuilds = getGuideBuildsFromCache(unit, activeMode, activeCfg);
-        const top = processGuideTop3(refBuilds, unit, filterTraitId);
-        let score = 0;
-        if (top && top.length > 0) score = (unit.id === 'law') ? (top[0].range || 0) : top[0].dps;
-        return { unit, score };
+    // Create card skeletons
+    const fragment = document.createDocumentFragment();
+    unitsToProcess.forEach(unit => {
+        fragment.appendChild(createGuideCard(unit, `mode-${activeMode} cfg-${activeCfg}`));
     });
+    guideGrid.appendChild(fragment);
 
-    scoredUnits.sort((a, b) => b.score - a.score);
+    // PERFORMANCE: Reuse observer for guides
+    if (!window.guideLoadObserver) {
+        window.guideLoadObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const unitId = entry.target.id.replace('card-', '');
+                    updateGuideBuilds(unitId);
+                    window.guideLoadObserver.unobserve(entry.target);
+                    entry.target.classList.remove('lazy-guide-load');
+                }
+            });
+        }, { rootMargin: '200px' });
+    }
 
-    scoredUnits.forEach(({ unit }) => {
-        const builds = processGuideTop3(getGuideBuildsFromCache(unit, activeMode, activeCfg), unit, filterTraitId);
-        if (builds.length) guideGrid.appendChild(createGuideCard(unit, builds, `mode-${activeMode} cfg-${activeCfg}`));
-    });
+    const newGuides = guideGrid.querySelectorAll('.lazy-guide-load');
+    newGuides.forEach(g => window.guideLoadObserver.observe(g));
     
     if (guideGrid.children.length === 0) guideGrid.innerHTML = `<div class="msg-empty">No guides found. Database may still be calculating.</div>`;
 }
 
 function openTraitBestList(unitId) {
-    const unit = unitDatabase.find(u => u.id === unitId);
+    const unit = typeof getUnitById === 'function' ? getUnitById(unitId) : unitDatabase.find(u => u.id === unitId);
     if (!unit) return;
 
     const isFixed = document.body.classList.contains('show-fixed-relics');

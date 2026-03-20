@@ -1,5 +1,5 @@
 /* UNIT CARD MAIN */
-.unit-card { background: var(--card-bg); border: 2px solid var(--card-border); border-radius: 16px; overflow: hidden; position: relative; transition: all 0.2s; display: flex; flex-direction: column; box-shadow: 0 4px 6px rgba(0,0,0,0.2); height: 500px; content-visibility: auto; contain-intrinsic-size: 500px; animation: fadeIn 0.4s ease both; will-change: transform, opacity; }
+.unit-card { background: var(--card-bg); border: 2px solid var(--card-border); border-radius: 16px; overflow: hidden; position: relative; transition: all 0.2s; display: flex; flex-direction: column; box-shadow: 0 4px 6px rgba(0,0,0,0.2); height: 500px; content-visibility: auto; contain-intrinsic-size: 500px; contain: paint; will-change: transform, opacity; }
 /* Added Animation Delay Variable */
 .unit-card { animation-delay: var(--stagger-delay, 0ms); }
 
@@ -13,7 +13,11 @@
 .unit-banner { height: 90px; flex-shrink: 0; background: var(--banner-gradient); display: flex; align-items: center; padding: 0 20px; border-bottom: 1px solid var(--card-border); position: relative; gap: 15px; }
 
 /* Toolbar & Custom Toolbars */
-.unit-toolbar { background: rgba(0,0,0,0.2); border-bottom: 1px solid var(--card-border); padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+.unit-toolbar { background: rgba(0,0,0,0.2); border-bottom: 1px solid var(--card-border); padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+
+.ut-actions { display: flex; gap: 2px; align-items: center; }
+.ut-btn-compact { padding: 2px 5px; font-size: 0.65rem; min-height: 22px; cursor: pointer; }
+.ut-ability-text { max-width: 90px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: #666; }
 
 .unit-toolbar.custom-toolbar { border-bottom: none; padding-top: 5px; padding-bottom: 10px; background: rgba(255,255,255,0.02); }
 .unit-toolbar.kirito-toolbar { flex-wrap: wrap; justify-content: flex-start; gap: 15px; }

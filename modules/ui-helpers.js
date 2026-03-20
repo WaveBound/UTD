@@ -47,7 +47,11 @@ const syncVisualToggle = (triggerEl, targetId, cssClass) => {
             otherCb.parentNode.classList.toggle('is-checked', el.checked);
         }
         updateBodyClass(cssClass, el.checked);
-        if (document.getElementById('guidesPage').classList.contains('active') && typeof renderGuides === 'function') {
+        
+        // PERFORMANCE: Trigger update for visible units instead of full render
+        if (document.getElementById('dbPage').classList.contains('active')) {
+            updateAllUnitsBuilds();
+        } else if (document.getElementById('guidesPage').classList.contains('active') && typeof renderGuides === 'function') {
             renderGuides();
         }
     });
@@ -92,7 +96,10 @@ const toggleHypothetical = (checkbox) => {
     const lbl2 = document.getElementById('guideHypoLabel');
     if(lbl1) lbl1.innerText = labelText;
     if(lbl2) lbl2.innerText = labelText;
-    if (document.getElementById('guidesPage').classList.contains('active') && typeof renderGuides === 'function') {
+
+    if (document.getElementById('dbPage').classList.contains('active')) {
+        updateAllUnitsBuilds();
+    } else if (document.getElementById('guidesPage').classList.contains('active') && typeof renderGuides === 'function') {
         renderGuides();
     }
 };
@@ -256,62 +263,10 @@ function setRobot1718Mode(mode, selectEl) {
     }
 }
 
-// Toggle unit selection
-function toggleSelection(id) {
-    const card = document.getElementById('card-' + id);
-    const btn = card.querySelector('.select-btn');
-    if (selectedUnitIds.has(id)) {
-        selectedUnitIds.delete(id);
-        card.classList.remove('is-selected');
-        btn.innerText = "Select";
-    } else {
-        selectedUnitIds.add(id);
-        card.classList.add('is-selected');
-        btn.innerText = "Selected";
-    }
-    updateCompareBtn();
-}
+// Remove toggleSelection (DEPRECATED)
+function updateCompareBtn() { /* DEPRECATED */ }
 
-// Select/Deselect all units
-const selectAllUnits = () => { 
-    const shouldSelectAll = selectedUnitIds.size < unitDatabase.length;
-    if (shouldSelectAll) {
-        unitDatabase.forEach(u => selectedUnitIds.add(u.id));
-    } else {
-        selectedUnitIds.clear();
-    }
-    unitDatabase.forEach(u => {
-        const card = document.getElementById('card-' + u.id);
-        if (card) {
-            const btn = card.querySelector('.select-btn');
-            if (shouldSelectAll) {
-                card.classList.add('is-selected');
-                if (btn) btn.innerText = "Selected";
-            } else {
-                card.classList.remove('is-selected');
-                if (btn) btn.innerText = "Select";
-            }
-        }
-    });
-    document.getElementById('selectAllBtn').innerText = shouldSelectAll ? "Deselect All" : "Select All";
-    updateCompareBtn(); 
-};
-
-// Update compare button visibility
-const updateCompareBtn = () => {
-    const isDbPage = document.getElementById('dbPage').classList.contains('active');
-    const btn = document.getElementById('compareBtn');
-    const count = selectedUnitIds.size;
-    document.getElementById('compareCount').innerText = count;
-    
-    if (count > 0 && isDbPage) {
-        btn.classList.add('is-visible');
-    } else {
-        btn.classList.remove('is-visible');
-    }
-
-    document.getElementById('selectAllBtn').innerText = (count === unitDatabase.length && count > 0) ? "Deselect All" : "Select All";
-};
+// Remove selectAllUnits and updateCompareBtn (DEPRECATED)
 
 // Toggle ability for a unit
 function toggleAbility(unitId, checkbox) {
@@ -325,6 +280,27 @@ function toggleAbility(unitId, checkbox) {
         card.classList.remove('use-ability');
         activeAbilityIds.delete(unitId);
     }
+    updateBuildListDisplay(unitId);
+}
+
+/**
+ * Optimized way to refresh build lists on all currently rendered unit cards.
+ * Avoids full renderDatabase() call which is much slower.
+ */
+function updateAllUnitsBuilds() {
+    unitDatabase.forEach(unit => {
+        const card = document.getElementById('card-' + unit.id);
+        if (card && !card.classList.contains('lazy-build-load')) {
+            updateBuildListDisplay(unit.id);
+        }
+    });
+
+    // Also update Guides if they are active and not lazy
+    const guides = document.querySelectorAll('.calc-guide-card:not(.lazy-guide-load)');
+    guides.forEach(g => {
+        const unitId = g.id.replace('card-', '');
+        updateGuideBuilds(unitId);
+    });
 }
 
 function injectDbToolbarButtons() {
