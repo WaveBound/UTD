@@ -340,6 +340,24 @@ function processUnitCache(unit) {
     }
 }
 
+// Helper to get score for sorting without full calculation
+const getQuickScore = (unit) => {
+    const isAbility = activeAbilityIds.has(unit.id) && unit.ability;
+    let baseKey = (unit.id === 'kirito' && kiritoState.card) ? 'kirito_card' : unit.id;
+    const dbKey = baseKey + (isAbility ? '_abil' : '');
+    
+    // Peek at static DB if available
+    if (window.STATIC_BUILD_DB && window.STATIC_BUILD_DB[dbKey]) {
+        const list = window.STATIC_BUILD_DB[dbKey]['fixed']?.[3];
+        if (list && list.length > 0) {
+            return unit.id === 'law' ? (list[0].range || 0) : list[0].dps;
+        }
+    }
+    // Fallback for newly added units not in Static DB
+    if (unit.id === 'law') return unit.stats.range || 0;
+    return (unit.stats.dmg / unit.stats.spa) * 35; // Rough estimate of fully geared DPS scale
+};
+
 function renderDatabase() {
     const container = document.getElementById('dbPage');
     if (renderQueueIndex === 0) {
@@ -348,24 +366,6 @@ function renderDatabase() {
         unitBuildsCache = {};
     }
     if (renderQueueId) { cancelAnimationFrame(renderQueueId); renderQueueId = null; }
-
-    // Helper to get score for sorting without full calculation
-    const getQuickScore = (unit) => {
-        const isAbility = activeAbilityIds.has(unit.id) && unit.ability;
-        let baseKey = (unit.id === 'kirito' && kiritoState.card) ? 'kirito_card' : unit.id;
-        const dbKey = baseKey + (isAbility ? '_abil' : '');
-        
-        // Peek at static DB if available
-        if (window.STATIC_BUILD_DB && window.STATIC_BUILD_DB[dbKey]) {
-            const list = window.STATIC_BUILD_DB[dbKey]['fixed']?.[3];
-            if (list && list.length > 0) {
-                return unit.id === 'law' ? (list[0].range || 0) : list[0].dps;
-            }
-        }
-        // Fallback for newly added units not in Static DB
-        if (unit.id === 'law') return unit.stats.range || 0;
-        return (unit.stats.dmg / unit.stats.spa) * 35; // Rough estimate of fully geared DPS scale
-    };
 
     const sortedUnits = unitDatabase.map(unit => {
         // OPTIMIZATION: Do NOT process cache here. Use quick lookup for sort.
@@ -672,7 +672,10 @@ function renderGuides() {
     const activeMode = isFixed ? 'fixed' : 'bugged';
     const activeCfg = (showHead ? 2 : 0) + (showSubs ? 1 : 0);
 
-    const unitsToProcess = (guideUnitSelection.has('all')) ? unitDatabase : unitDatabase.filter(u => guideUnitSelection.has(u.id));
+    const unitsToProcess = (guideUnitSelection.has('all')) ? [...unitDatabase] : unitDatabase.filter(u => guideUnitSelection.has(u.id));
+    
+    // Sort Build Guides by DPS (Quick Score) to match Unit Database
+    unitsToProcess.sort((a, b) => getQuickScore(b) - getQuickScore(a));
     
     // Create card skeletons
     const fragment = document.createDocumentFragment();
