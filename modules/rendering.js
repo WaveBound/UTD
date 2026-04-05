@@ -65,7 +65,8 @@ function getHeadBadgeHtml(headUsed) {
         'sun_god': { name: 'Sun God', border: 'border-sungod', text: 'text-sungod' },
         'ninja': { name: 'Ninja', border: 'border-ninja', text: 'text-ninja' },
         'reaper_necklace': { name: 'Reaper', border: 'border-reaper', text: 'text-reaper' },
-        'shadow_reaper_necklace': { name: 'S. Reaper', border: 'border-sreaper', text: 'text-sreaper' }
+        'shadow_reaper_necklace': { name: 'S. Reaper', border: 'border-sreaper', text: 'text-sreaper' },
+        'junior': { name: 'Junior Ninja', border: 'border-ninja', text: 'text-ninja' }
     };
     const h = config[headUsed] || { name: 'Unknown', border: 'border-unknown', text: 'text-unknown' };
     return `<div class="stat-line"><span class="sl-label">HEAD</span><div class="badge-base ${h.border}"><span class="${h.text}">${h.name}</span></div></div>`;
@@ -154,7 +155,8 @@ function updateBuildListDisplay(unitId) {
 
     let benchmarkDps = 0;
     if (inventoryMode && window.STATIC_BUILD_DB) {
-        let dbKey = unitId + (unitId === 'kirito' && kiritoState.card ? 'kirito_card' : '') + (activeType === 'abil' ? '_abil' : '');
+        let dbKey = (unitId === 'kirito' && kiritoState.card) ? 'kirito_card' : unitId;
+        if (activeType === 'abil') dbKey += '_abil';
         const perfectBuilds = window.STATIC_BUILD_DB[dbKey]?.[activeMode]?.[activeCfg];
         if (perfectBuilds && perfectBuilds.length > 0) benchmarkDps = perfectBuilds[0].dps;
     }
@@ -183,7 +185,7 @@ function updateBuildListDisplay(unitId) {
             if (setSelect !== 'all' && r.setName !== setSelect) return false;
             if (headSelect !== 'all' && (r.headUsed || 'none') !== headSelect) return false;
 
-            let headSearchName = ({'sun_god':'Sun God Head','ninja':'Ninja Head','reaper_necklace':'Reaper Necklace','shadow_reaper_necklace':'Shadow Reaper Necklace'})[r.headUsed] || '';
+            let headSearchName = ({'sun_god':'Sun God Head','ninja':'Ninja Head','reaper_necklace':'Reaper Necklace','shadow_reaper_necklace':'Shadow Reaper Necklace','junior':'Junior Ninja Head'})[r.headUsed] || '';
             const searchText = (r.traitName + ' ' + r.setName + ' ' + r.prio + ' ' + headSearchName).toLowerCase();
             return searchText.includes(searchInput);
         });
@@ -275,7 +277,8 @@ function processUnitCache(unit) {
     const performCalcSet = (mode, useAbility) => {
         const originalRelicDot = statConfig.applyRelicDot, originalRelicCrit = statConfig.applyRelicCrit;
         statConfig.applyRelicDot = (mode === 'fixed');
-        let dbKey = unit.id + (unit.id === 'kirito' && kiritoState.card ? 'kirito_card' : '') + (useAbility && unit.ability ? '_abil' : '');
+        let dbKey = (unit.id === 'kirito' && kiritoState.card) ? 'kirito_card' : unit.id;
+        if (useAbility && unit.ability) dbKey += '_abil';
         const resultSet = [];
         const useInventory = (inventoryMode === true);
 
@@ -320,7 +323,7 @@ function processUnitCache(unit) {
             calculatedResults.forEach(r => cachedResults[r.id] = r);
             const traitsForCalc = (calculatedResults.length > 0) ? [...(typeof customTraits !== 'undefined' ? customTraits : []), ...(unitSpecificTraits[unit.id] || [])] : null;
             if (traitsForCalc === null || traitsForCalc.length > 0 || useInventory) {
-                const dynamicResults = calculateUnitBuilds(unit, null, getFilteredBuilds(), getValidSubCandidates(), cfg.head ? ['sun_god', 'ninja', 'reaper_necklace', 'shadow_reaper_necklace'] : ['none'], cfg.subs, traitsForCalc, useAbility, mode);
+                const dynamicResults = calculateUnitBuilds(unit, null, getFilteredBuilds(), getValidSubCandidates(), cfg.head ? ['sun_god', 'ninja', 'reaper_necklace', 'shadow_reaper_necklace', 'junior'] : ['none'], cfg.subs, traitsForCalc, useAbility, mode);
                 calculatedResults = [...calculatedResults, ...dynamicResults];
             }
             resultSet.push(calculatedResults);
@@ -349,7 +352,8 @@ function renderDatabase() {
     // Helper to get score for sorting without full calculation
     const getQuickScore = (unit) => {
         const isAbility = activeAbilityIds.has(unit.id) && unit.ability;
-        const dbKey = unit.id + (unit.id === 'kirito' && kiritoState.card ? 'kirito_card' : '') + (isAbility ? '_abil' : '');
+        let baseKey = (unit.id === 'kirito' && kiritoState.card) ? 'kirito_card' : unit.id;
+        const dbKey = baseKey + (isAbility ? '_abil' : '');
         
         // Peek at static DB if available
         if (window.STATIC_BUILD_DB && window.STATIC_BUILD_DB[dbKey]) {
@@ -420,7 +424,7 @@ else if (unit.id === 'cell') {
                     </div>
                     <div class="search-row">
                         <select onchange="filterList(this)" data-filter="set" class="search-select"><option value="all">All Sets</option><option value="Master Ninja">Ninja Set</option><option value="Sun God">Sun God Set</option><option value="Laughing Captain">Laughing Set</option><option value="Ex Captain">Ex Set</option><option value="Shadow Reaper">Shadow Reaper</option><option value="Reaper Set">Reaper Set</option><option value="Super Roku">Super Roku</option><option value="Bio-Android">Bio-Android</option></select>
-                        <select onchange="filterList(this)" data-filter="head" class="search-select"><option value="all">All Heads</option><option value="sun_god">Sun God</option><option value="ninja">Ninja</option><option value="reaper_necklace">Reaper</option><option value="shadow_reaper_necklace">Shadow Reaper</option><option value="none">No Head</option></select>
+                        <select onchange="filterList(this)" data-filter="head" class="search-select"><option value="all">All Heads</option><option value="sun_god">Sun God</option><option value="ninja">Ninja</option><option value="reaper_necklace">Reaper</option><option value="shadow_reaper_necklace">Shadow Reaper</option><option value="junior">Junior Ninja</option><option value="none">No Head</option></select>
                     </div>
                 </div>`;
 
@@ -593,6 +597,7 @@ function createGuideCard(unitObj, modeClass) {
     const mainContent = `<div class="top-builds-list guide-list-wrapper" id="guide-list-${unitObj.id}"><div class="msg-empty">Loading builds...</div></div>`;
 
     return createBaseUnitCard(unitObj, {
+        id: 'card-' + unitObj.id,
         additionalClasses: `calc-guide-card lazy-guide-load ${modeClass}`,
         bannerContent,
         tagsContent: `<span class="guide-trait-tag text-xs-plus" id="guide-trait-${unitObj.id}">Best: ...</span>`,

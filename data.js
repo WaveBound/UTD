@@ -600,11 +600,11 @@ const unitDatabase = [
             abilityName: "Demonic Art Swap",
             noToggle: true,
             desc: "When First Emperor Reaches his Final Upgrade, he unlocks the Ability to Change his Demonic Art. Starts with <b class='mt-text-gold'>Blade</b>.<br><br>" +
-"<span style='display: block; margin-top: 10px;'><b class='mt-text-gold'>Blade:</b> +60% Damage (+80% on E2) for 25s on switch.</span>" +
-"<span style='display: block; margin-top: 6px;'><b class='mt-text-orange'>Axe:</b> Attacks Slow Enemies by 40% for 5s. Confusion for 3s on first hit.</span>" +
-"<span style='display: block; margin-top: 6px;'><b class='text-accent-start'>Crossbow:</b> +1000% Range, Sets Priority to Strongest. Attacks apply Stun for 2s, but -20% Attack Speed. <span class='text-dim'>[On E6: +30% Damage]</span></span>" +
-"<span style='display: block; margin-top: 6px;'><b class='mt-text-green'>Spear:</b> Attacks get rid of old Bleed and apply new Bleed (100% Damage, 120% on E2) over 10 ticks.</span>" +
-"<span style='display: block; margin-top: 6px;'><b class='text-accent-end'>Armor:</b> Sets Priority to Last and moves to Closest Path point. Confusion for 1.5s (2.5s on E4) to Non-Boss enemies walking into him. <span class='text-dim'>[On E4: deals 50% Damage to confused enemies]</span></span>"
+                "<span style='display: block; margin-top: 10px;'><b class='mt-text-gold'>Blade:</b> +60% Damage (+80% on E2) for 25s on switch.</span>" +
+                "<span style='display: block; margin-top: 6px;'><b class='mt-text-orange'>Axe:</b> Attacks Slow Enemies by 40% for 5s. Confusion for 3s on first hit.</span>" +
+                "<span style='display: block; margin-top: 6px;'><b class='text-accent-start'>Crossbow:</b> +1000% Range, Sets Priority to Strongest. Attacks apply Stun for 2s, but -20% Attack Speed. <span class='text-dim'>[On E6: +30% Damage]</span></span>" +
+                "<span style='display: block; margin-top: 6px;'><b class='mt-text-green'>Spear:</b> Attacks get rid of old Bleed and apply new Bleed (100% Damage, 120% on E2) over 10 ticks.</span>" +
+                "<span style='display: block; margin-top: 6px;'><b class='text-accent-end'>Armor:</b> Sets Priority to Last and moves to Closest Path point. Confusion for 1.5s (2.5s on E4) to Non-Boss enemies walking into him. <span class='text-dim'>[On E4: deals 50% Damage to confused enemies]</span></span>"
         },
         etherealization: [
             "+10 Stat Points",

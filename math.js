@@ -219,8 +219,14 @@ function _calcHeadDynamicBuffs(headPiece, finalSpa, finalRange) {
         headCalc.trigger = timeToTrigger;
         headCalc.uptime = headCalc.duration / (headCalc.duration + timeToTrigger);
         headDotBuff += 20 * headCalc.uptime;
+    } else if (headPiece === 'reaper_necklace') {
+        return { headDmgBuff: 20, headDotBuff: 0, headCalc: { type: 'reaper' } };
+    } else if (headPiece === 'shadow_reaper_necklace') {
+        return { headDmgBuff: 25, headDotBuff: 0, headCalc: { type: 'shadow_reaper' } };
+    } else if (headPiece === 'junior') {
+        return { headDmgBuff: 0, headDotBuff: 0, headCalc: { type: 'junior', multiplier: 1.1 } };
     }
-    return { headDmgBuff, headDotBuff, headCalc };
+    return { headDmgBuff: 0, headDotBuff: 0, headCalc: {} };
 }
 
 function _calcSummonDPS(uStats, finalDmg, finalSpa, placement) {
@@ -316,17 +322,19 @@ function calculateDPS(uStats, relicStats, context) {
         baseR_Cf *= mult; 
     }
 
-    const spaAfterRelic = (lvStats.spa * (1 - traitSpaPct / 100)) * (1 - baseR_Spa / 100); 
-    const setAndPassiveSpa = sBonus.spa + passiveSpaPcent; 
-    const rawFinalSpa = spaAfterRelic * (1 - setAndPassiveSpa / 100); 
-    const finalSpa = Math.max(rawFinalSpa, uStats.spaCap || 0.1);
-
-    const finalRange = lvStats.range * (1 + (traitRangePct / 100)) * (1 + (baseR_Range / 100)) * (1 + ((sBonus.range || 0) + (uStats.passiveRange || 0) + eternalRangeBuff) / 100);
+    // Assuming context.wave is available if traitObj.isEternal is true, or needs to be passed.
+    // For now, let's assume it's handled upstream or passed in uStats if needed.
+    // if (traitObj.isEternal) { const waveCap = Math.min(wave, 12); eternalDmgBuff = waveCap * 5; passivePcent += eternalDmgBuff; eternalRangeBuff = waveCap * 2.5; }
 
     const { headDmgBuff, headDotBuff, headCalc } = _calcHeadDynamicBuffs(headPiece, finalSpa, finalRange);
     const mikuBuff = (typeof window !== 'undefined' && window.mikuBuffActive) ? 100 : 0;
 
-    const additiveTotal = sBonus.dmg + passivePcent + headDmgBuff + mikuBuff;
+    let additiveTotal = sBonus.dmg + passivePcent + headDmgBuff + mikuBuff;
+    // Junior Ninja: 1.1x Multiplier to Miku Buff and Passives (WATER GOD ONLY)
+    if (headPiece === 'junior' && unitId === 'water_god') {
+        additiveTotal = (sBonus.dmg + passivePcent + headDmgBuff + mikuBuff) * 1.1;
+    }
+
     const finalDmg = lvStats.dmg * (1 + traitDmgPct / 100) * (1 + baseR_Dmg / 100) * (1 + additiveTotal / 100) * (uStats.burnMultiplier ? (1 + uStats.burnMultiplier / 100) : 1);
 
     const finalCdmgStat = uStats.cdmg + (sBonus.cm || 0) + baseR_Cm; 
