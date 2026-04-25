@@ -28,6 +28,13 @@ const SUB_NAMES = {
 
 const patchNotesData = [
     {
+        version: "v5.0",
+        date: "Apr 25, 2026",
+        changes: [
+            { type: "Math", text: "<b>Builds:</b> Builds now automatically adjust when using any buff abilities." }
+        ]
+    },
+    {
         version: "v4.9",
         date: "Apr 22, 2026",
         changes: [
