@@ -1,0 +1,52 @@
+:root {
+    --bg-color: #050505;
+    --card-bg: #0f1014;
+    --card-border: #1f2937;
+    --text-primary: #ffffff;
+    --text-secondary: #94a3b8;
+    
+    /* Core Accents */
+    --accent-start: #3b82f6;
+    --accent-end: #a855f7;
+    
+    /* Ranks */
+    --gold: #ffd700;
+    --silver: #e2e8f0;
+    --bronze: #f59e0b;
+    
+    /* Custom/Cyan Theme */
+    --custom: #06b6d4; 
+    --cyan: #06b6d4;
+    --cyan-dim: rgba(6, 182, 212, 0.1);
+    --cyan-border: rgba(6, 182, 212, 0.3);
+
+    --success: #10b981;
+    --banner-gradient: linear-gradient(135deg, rgba(46, 16, 101, 0.9), rgba(0, 0, 0, 0.95));
+    --banner-border: #4c1d95;
+    
+    /* Stat Colors */
+    --stat-dmg: #ff8888;
+    --stat-dmg-bg: rgba(255, 50, 50, 0.3);
+    
+    --stat-spa: #88ccff;
+    --stat-spa-bg: rgba(50, 150, 255, 0.3);
+    
+    --stat-cdmg: #d8b4fe;
+    --stat-cdmg-border: #a855f7;
+    
+    --stat-crit: #ffd700;
+    --stat-crit-bg: rgba(255, 215, 0, 0.3);
+    
+    --stat-dot: #4ade80;
+    --stat-dot-bg: rgba(74, 222, 128, 0.3);
+    
+    --stat-range: #ffa500;
+    --stat-range-bg: rgba(255, 140, 0, 0.3);
+
+    --stat-unknown: #ffffff;
+}
+
+* { 
+    box-sizing: border-box; 
+    -webkit-tap-highlight-color: transparent;
+}

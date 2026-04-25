@@ -1,0 +1,350 @@
+/* ============================================================================
+   INVENTORY.CSS 
+   Clean, compact layout for Relic Inventory & Optimality Check
+   ============================================================================ */
+
+/* 1. Grid Container */
+#relicGrid.inventory-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); 
+    gap: 20px;
+    padding: 0 25px 50px 25px;
+    width: 100%;
+    position: relative;
+    z-index: 1;
+}
+
+.inventory-empty-msg {
+    grid-column: 1 / -1;
+    text-align: center;
+    color: #666;
+    padding: 60px;
+    border: 2px dashed #333;
+    border-radius: 12px;
+    background: rgba(0,0,0,0.2);
+    font-size: 1.1rem;
+}
+
+/* 2. Clean Relic Card Design */
+.relic-card-clean {
+    background: #0f1014;
+    border: 1px solid #2d2f36;
+    border-radius: 12px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    min-height: 290px;
+    animation: fadeIn 0.3s ease;
+}
+
+.relic-card-clean:hover {
+    border-color: var(--accent-start);
+    transform: translateY(-5px);
+    box-shadow: 0 12px 24px rgba(0,0,0,0.5);
+}
+
+/* 3. Card Header & Optimality Button */
+.rc-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 15px;
+    background: linear-gradient(to bottom, rgba(255,255,255,0.03), transparent);
+    z-index: 2;
+    height: 50px;
+}
+
+.rc-set-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.rc-set-name {
+    font-size: 0.7rem;
+    font-weight: 800;
+    color: #e0e0e0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.rc-stars {
+    font-size: 0.65rem; 
+    color: var(--gold);
+    letter-spacing: 1px;
+    line-height: 1;
+    margin-top: 2px;
+}
+
+/* Redesigned Optimality Pill Button */
+.rc-opt-btn {
+    background: rgba(251, 191, 36, 0.08);
+    border: 1px solid rgba(251, 191, 36, 0.2);
+    color: #fbbf24;
+    border-radius: 4px;
+    font-size: 0.55rem;
+    font-weight: 900;
+    padding: 2px 8px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    height: 22px;
+    white-space: nowrap;
+}
+
+.rc-opt-btn svg {
+    width: 10px;
+    height: 10px;
+    fill: currentColor;
+}
+
+.rc-opt-btn:hover {
+    background: #fbbf24;
+    color: #000;
+    border-color: #fbbf24;
+    box-shadow: 0 0 10px rgba(251, 191, 36, 0.4);
+    transform: translateY(-1px);
+}
+
+.rc-delete-btn {
+    background: transparent;
+    border: none;
+    color: #555;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.rc-delete-btn:hover { color: #ef4444; }
+
+/* 4. Visual Elements */
+.rc-visual-container {
+    display: flex;
+    justify-content: center;
+    padding: 10px 0;
+}
+
+.rc-image-wrapper {
+    width: 70px;
+    height: 70px;
+    padding: 10px; 
+    border-radius: 50%;
+    position: relative;
+    box-shadow: 0 0 15px rgba(0,0,0,0.5);
+    border: 2px solid #333;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.rc-image {
+    width: 85%;
+    height: 85%;
+    object-fit: contain;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.8));
+}
+
+.rc-slot-badge {
+    position: absolute;
+    bottom: -6px;
+    background: #000;
+    color: #aaa;
+    border: 1px solid #444;
+    font-size: 0.55rem;
+    font-weight: 800;
+    padding: 1px 6px;
+    border-radius: 10px;
+    text-transform: uppercase;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+}
+
+/* 5. Stats Container */
+.rc-stats-container {
+    padding: 10px 15px 15px 15px;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    background: #0a0a0c;
+    border-top: 1px solid #222;
+}
+
+.rc-label {
+    font-size: 0.55rem;
+    color: #444;
+    font-weight: 900;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    text-align: center;
+    letter-spacing: 1px;
+}
+
+.rc-main-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.rc-separator {
+    height: 1px;
+    background: linear-gradient(to right, transparent, #333, transparent);
+    width: 100%;
+    margin: 4px 0 10px 0;
+}
+
+.rc-sub-stats {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.rc-subs-grid {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 5px;
+    width: 100%;
+}
+
+/* 6. Optimality Modal Results Styling */
+#optResultArea {
+    background: rgba(0,0,0,0.4);
+    border-radius: 12px;
+    padding: 20px;
+    margin-top: 15px;
+    border: 1px solid rgba(255,255,255,0.05);
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+/* ADD THE NEW STYLES HERE */
+#optBestStat .badge-base {
+    height: 18px; 
+    font-size: 0.55rem;
+    margin: 0;
+}
+
+#optBestStat .text-xs {
+    display: flex;
+    align-items: center;
+    color: #ccc;
+}
+/* ------------------------ */
+
+#optCircle {
+    position: relative;
+    width: 80px;
+    height: 80px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.02);
+    border: 3px solid #333;
+    flex-shrink: 0;
+}
+
+.optimality-badge {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3px 10px;
+    border: 1px solid;
+    border-radius: 6px;
+    /* Added glassmorphism effect */
+    background: rgba(0, 0, 0, 0.4); 
+    backdrop-filter: blur(2px);
+    line-height: 1.1;
+    min-width: 75px;
+    transition: all 0.2s ease;
+    /* Subtle outer glow */
+    box-shadow: 0 0 10px var(--glow-color, rgba(0,0,0,0.2));
+}
+
+.opt-label {
+    font-size: 0.5rem; /* Slightly smaller for better hierarchy */
+    font-weight: 900;
+    letter-spacing: 0.8px;
+    margin-bottom: 2px;
+    opacity: 0.9;
+    /* Text shadow to ensure readability on glow */
+    text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+}
+
+.opt-pct {
+    font-size: 0.9rem;
+    font-weight: 800;
+    font-family: 'Consolas', monospace;
+    letter-spacing: -0.2px;
+}
+
+/* Hover effect to make it feel interactive */
+.build-row:hover .optimality-badge {
+    transform: translateY(-1px);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+    .optimality-badge {
+        min-width: 60px;
+        padding: 1px 4px;
+    }
+    .opt-pct {
+        font-size: 0.75rem;
+    }
+}
+
+/* Benchmark Breakdown Box inside Modal */
+.benchmark-box {
+    margin-top: 12px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    padding-top: 12px;
+}
+
+.benchmark-inner {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    background: rgba(0,0,0,0.25);
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.03);
+}
+
+/* 7. Highlight Animation */
+.relic-highlighted {
+    border: 2px solid #fff;
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
+    transform: scale(1.02);
+    z-index: 10;
+    animation: pulseHighlight 2s infinite;
+}
+
+@keyframes pulseHighlight {
+    0% { border-color: rgba(255,255,255,0.5); }
+    50% { border-color: rgba(255,255,255,1); }
+    100% { border-color: rgba(255,255,255,0.5); }
+}
+
+/* Mobile Adjustments */
+@media (max-width: 480px) {
+    #relicGrid.inventory-grid {
+        grid-template-columns: 1fr; 
+        padding: 0 15px 100px 15px;
+    }
+    
+    #optResultArea {
+        flex-direction: column;
+        text-align: center;
+    }
+}

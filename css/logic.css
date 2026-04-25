@@ -1,0 +1,40 @@
+/* DESKTOP INSTANT TOGGLE MODES */
+.build-list-container {
+    display: none !important;
+    width: 100%;
+}
+
+/* Only 1 config now (cfg-0) representing Max Potential */
+
+/* Logic Group 1: BASE + BUGGED */
+body:not(.show-fixed-relics) .unit-card:not(.use-ability) .mode-base.mode-bugged.cfg-0 {
+    display: block !important;
+}
+
+/* Logic Group 2: BASE + FIXED */
+body.show-fixed-relics .unit-card:not(.use-ability) .mode-base.mode-fixed.cfg-0 {
+    display: block !important;
+}
+
+/* Logic Group 3: ABIL + BUGGED */
+body:not(.show-fixed-relics) .unit-card.use-ability .mode-abil.mode-bugged.cfg-0 {
+    display: block !important;
+}
+
+/* Logic Group 4: ABIL + FIXED */
+body.show-fixed-relics .unit-card.use-ability .mode-abil.mode-fixed.cfg-0 {
+    display: block !important;
+}
+
+/* GUIDES Logic */
+body:not(.show-fixed-relics) .unit-card.mode-bugged.cfg-0 {
+    display: flex !important;
+}
+
+body.show-fixed-relics .unit-card.mode-fixed.cfg-0 {
+    display: flex !important;
+}
+
+body.show-fixed-relics .guide-warning {
+    display: none !important;
+}

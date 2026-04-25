@@ -1,0 +1,194 @@
+/* MATH BREAKDOWN STYLING */
+
+.math-section {
+    background: #08080a;
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 20px;
+    transition: var(--transition-smooth);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+.math-section:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.15);
+}
+
+.math-header {
+    font-size: 0.8rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-dim);
+    margin-bottom: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.math-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.math-row b {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+/* MQ Box (Quick Stats) */
+.mq-box {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
+    margin-top: 8px;
+}
+
+.mq-box > div {
+    background: #030305;
+    border: 1px solid rgba(255, 255, 255, 0.03);
+    padding: 14px;
+    border-radius: 12px;
+    text-align: center;
+    transition: var(--transition-smooth);
+}
+
+.mq-box > div:hover {
+    transform: translateY(-2px);
+    background: #0a0a0c;
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+.mq-label {
+    font-size: 0.65rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 4px;
+}
+
+.mq-val {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.mq-sub {
+    font-size: 0.6rem;
+    color: var(--text-dim);
+    margin-top: 4px;
+}
+
+/* Calc Table (Calculated Rows) */
+.calc-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.calc-table td {
+    padding: 10px 8px;
+    font-size: 0.85rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.calc-table tr:last-child td {
+    border-bottom: none;
+}
+
+.mt-cell-label {
+    color: var(--text-secondary);
+}
+
+.mt-cell-formula {
+    color: var(--text-dim);
+    font-family: 'Consolas', monospace;
+    font-size: 0.75rem;
+    text-align: right;
+    padding-right: 15px;
+}
+
+.mt-cell-val {
+    text-align: right;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.calc-highlight {
+    color: var(--accent-start);
+    font-weight: 700;
+}
+
+.calc-result {
+    color: var(--gold);
+    font-size: 1rem;
+    font-weight: 800;
+}
+
+/* Specific Section Themes */
+.math-section-dmg { border-left: 4px solid var(--stat-dmg); }
+.math-section-spa { border-left: 4px solid var(--stat-spa); }
+.math-section-range { border-left: 4px solid var(--stat-range); }
+.math-section-crit { border-left: 4px solid var(--stat-cdmg); }
+.math-section-dot { border-left: 4px solid var(--stat-dot); }
+
+/* Deep Dive Accordion */
+.deep-dive-trigger {
+    background: rgba(255,255,255,0.02);
+    border: 1px solid var(--glass-border);
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-top: 10px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    transition: var(--transition-smooth);
+}
+
+.deep-dive-trigger:hover {
+    background: rgba(255,255,255,0.05);
+    color: var(--text-primary);
+}
+
+.calc-info-btn {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #444;
+    font-size: 0.6rem;
+    font-weight: 900;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 6px;
+    transition: var(--transition-smooth);
+}
+
+.calc-info-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+.dd-arrow {
+    transition: transform 0.3s ease;
+    font-size: 0.7rem;
+    opacity: 0.5;
+}
+
+.deep-dive-trigger.active .dd-arrow {
+    transform: rotate(180deg);
+    opacity: 1;
+}
