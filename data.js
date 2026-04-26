@@ -31,7 +31,8 @@ const patchNotesData = [
         version: "v5.0",
         date: "Apr 25, 2026",
         changes: [
-            { type: "Math", text: "<b>Builds:</b> Builds now automatically adjust when using any buff abilities." }
+            { type: "Math", text: "<b>Builds:</b> Builds now automatically adjust when using any buff abilities." },
+            { type: "Fix", text: "<b>Buff Switch:</b> You Can No Longer Enable Mage(Hill) And Mage(Ground) At The Same Time" }
         ]
     },
     {
