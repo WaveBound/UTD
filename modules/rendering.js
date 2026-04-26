@@ -34,16 +34,13 @@ function getUnitControlsHtml(unit) {
 }
 
 function createBaseUnitCard(unit, options = {}) {
-    const { id = '', additionalClasses = '', bannerContent = '', tagsContent = '', topControls = '', bottomControls = '', mainContent = '' } = options;
+    const { id = '', additionalClasses = '', bannerContent = '', topControls = '', bottomControls = '', mainContent = '' } = options;
     const card = document.createElement('div');
     card.className = `unit-card ${additionalClasses}`;
     if (id) card.id = id;
 
     const banner = `<div class="unit-banner">${bannerContent}</div>`;
-    const tags = tagsContent ? `<div class="unit-tags custom-tags">${tagsContent}</div>` :
-        (unit.tags && unit.tags.length > 0 ? `<div class="unit-tags">${unit.tags.map(t => `<span class="unit-tag">${t}</span>`).join('')}</div>` : '');
-
-    card.innerHTML = `${banner}${tags}${topControls}${getUnitControlsHtml(unit)}${bottomControls}${mainContent}`;
+    card.innerHTML = `${banner}${topControls}${getUnitControlsHtml(unit)}${bottomControls}${mainContent}`;
     return card;
 }
 
@@ -421,18 +418,47 @@ function renderDatabase() {
 
             const bottomControls = `
                 <div class="search-container">
-                    <div class="search-row"><input type="text" placeholder="Search..." class="search-input" onkeyup="filterList(this)">
-                        <select onchange="filterList(this)" data-filter="sort" class="search-select sort-select">
-                            <option value="dps" ${defaultSort === 'dps' ? 'selected' : ''}>Sort: DPS</option>
-                            <option value="damage" ${defaultSort === 'damage' ? 'selected' : ''}>Sort: Damage</option>
-                            <option value="range" ${defaultSort === 'range' ? 'selected' : ''}>Sort: Range</option>
-                            <option value="efficiency" ${defaultSort === 'efficiency' ? 'selected' : ''}>Sort: Efficiency</option>
-                        </select>
-                        <select onchange="filterList(this)" data-filter="prio" class="search-select prio-select"><option value="all">All Prio</option><option value="dmg">Dmg</option><option value="spa">SPA</option><option value="range">Range</option></select>
-                    </div>
                     <div class="search-row">
-                        <select onchange="filterList(this)" data-filter="set" class="search-select"><option value="all">All Sets</option><option value="Junior Ninja">Junior Ninja Set</option><option value="Sun God">Sun God Set</option><option value="Laughing Captain">Laughing Set</option><option value="Ex Captain">Ex Set</option><option value="Shadow Reaper">Shadow Reaper</option><option value="Reaper Set">Reaper Set</option><option value="Super Roku">Super Roku</option><option value="Bio-Android">Bio-Android</option><option value="Biju Set">Biju Set</option><option value="Rebellious Shinobi">Rebellious</option><option value="Reanimated Ninja">Reanimated Ninja</option><option value="Great Mage">Great Mage</option></select>
-                        <select onchange="filterList(this)" data-filter="head" class="search-select"><option value="all">All Heads</option><option value="sun_god">Sun God</option><option value="ninja">Junior Ninja</option><option value="reaper_necklace">Reaper</option><option value="shadow_reaper_necklace">Shadow Reaper</option><option value="junior">Junior Ninja</option><option value="biju_head">Biju</option><option value="rebellious_head">Rebellious</option><option value="reanimated_head">Reanimated</option><option value="mage_head">Great Mage</option><option value="none">No Head</option></select>
+                        <input type="text" placeholder="Search..." class="search-input" onkeyup="filterList(this)">
+                        <button class="filter-tab-btn" onclick="toggleFilterTab(this)">Filters ▼</button>
+                    </div>
+                    <div class="filter-tab-content hidden">
+                        <div class="search-row">
+                            <select onchange="filterList(this)" data-filter="sort" class="search-select sort-select">
+                                <option value="dps" ${defaultSort === 'dps' ? 'selected' : ''}>Sort: DPS</option>
+                                <option value="damage" ${defaultSort === 'damage' ? 'selected' : ''}>Sort: Damage</option>
+                                <option value="range" ${defaultSort === 'range' ? 'selected' : ''}>Sort: Range</option>
+                                <option value="efficiency" ${defaultSort === 'efficiency' ? 'selected' : ''}>Sort: Efficiency</option>
+                            </select>
+                            <select onchange="filterList(this)" data-filter="set" class="search-select">
+                                <option value="all">Sets: All</option>
+                                <option value="Junior Ninja">Sets: Junior Ninja</option>
+                                <option value="Sun God">Sets: Sun God</option>
+                                <option value="Laughing Captain">Sets: Laughing</option>
+                                <option value="Ex Captain">Sets: Ex</option>
+                                <option value="Shadow Reaper">Sets: Shadow Reaper</option>
+                                <option value="Reaper Set">Sets: Reaper</option>
+                                <option value="Super Roku">Sets: Super Roku</option>
+                                <option value="Bio-Android">Sets: Bio-Android</option>
+                                <option value="Biju Set">Sets: Biju</option>
+                                <option value="Rebellious Shinobi">Sets: Rebellious</option>
+                                <option value="Reanimated Ninja">Sets: Reanimated</option>
+                                <option value="Great Mage">Sets: Great Mage</option>
+                            </select>
+                            <select onchange="filterList(this)" data-filter="head" class="search-select">
+                                <option value="all">Heads: All</option>
+                                <option value="sun_god">Heads: Sun God</option>
+                                <option value="ninja">Heads: Junior Ninja</option>
+                                <option value="reaper_necklace">Heads: Reaper</option>
+                                <option value="shadow_reaper_necklace">Heads: Shadow Reaper</option>
+                                <option value="junior">Heads: Junior Ninja</option>
+                                <option value="biju_head">Heads: Biju</option>
+                                <option value="rebellious_head">Heads: Rebellious</option>
+                                <option value="reanimated_head">Heads: Reanimated</option>
+                                <option value="mage_head">Heads: Great Mage</option>
+                                <option value="none">Heads: None</option>
+                            </select>
+                        </div>
                     </div>
                 </div>`;
 

@@ -687,6 +687,22 @@ function toggleHeader() {
     document.body.classList.toggle('header-collapsed');
 }
 
+window.toggleFilterTab = (btn) => {
+    const container = btn.closest('.search-container');
+    const content = container.querySelector('.filter-tab-content');
+    const isHidden = content.classList.contains('hidden');
+    
+    if (isHidden) {
+        content.classList.remove('hidden');
+        btn.innerHTML = 'Filters ▲';
+        btn.classList.add('active');
+    } else {
+        content.classList.add('hidden');
+        btn.innerHTML = 'Filters ▼';
+        btn.classList.remove('active');
+    }
+};
+
 // Toggle between Main and Sub stats on Mobile Build Cards
 window.toggleRelicStatDisplay = (btn) => {
     const row = btn.closest('.build-row');

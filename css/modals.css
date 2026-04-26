@@ -378,10 +378,9 @@
 /* --- 5. INFO POPUP OVERLAY --- */
 .info-popup-overlay {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0, 0, 0, 0.6);
-    z-index: 3000; /* Stacks ABOVE standard modal (2000) */
+    background: rgba(0, 0, 0, 0.85);
+    z-index: 3000;
     display: flex; align-items: center; justify-content: center;
-    backdrop-filter: blur(4px);
     opacity: 0; visibility: hidden;
     transition: opacity 0.2s, visibility 0.2s;
 }
@@ -391,6 +390,7 @@
 /* Specific style for Info Popup Box */
 .info-popup-box {
     box-shadow: 0 25px 60px rgba(0,0,0,0.9);
+    will-change: transform;
 }
 
 .ip-formula {
@@ -402,6 +402,31 @@
 .ip-var { color: var(--success); }
 .ip-num { color: var(--accent-end); font-weight: bold; }
 .ip-hl  { color: var(--gold); font-weight: bold; border-bottom: 1px dashed var(--gold); }
+
+/* --- NEW: UNIT INFO TAGS --- */
+.info-tags-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.info-tag-chip {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #cbd5e1;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.section-tags .info-sec-title {
+    color: var(--accent-start);
+}
 
 /* --- 6. CALCULATOR MODAL SPECIFICS --- */
 .calc-unit-header {
@@ -976,11 +1001,11 @@
 }
 
 .info-section {
-    background: rgba(0, 0, 0, 0.4);
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    background: #0a0a0c;
+    border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 12px;
     padding: 18px;
-    box-shadow: inset 0 0 30px rgba(0,0,0,0.5);
+    contain: content;
 }
 
 .info-sec-title {
@@ -1010,9 +1035,9 @@
     padding: 10px 14px;
     font-size: 0.95rem;
     color: #fff;
-    background: rgba(255,255,255,0.03);
+    background: #111114;
     border-radius: 8px;
-    border: 1px solid rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.03);
 }
 
 .info-list li span:first-child {

@@ -265,6 +265,13 @@ function openUnitInfo(unitId) {
                     <li><span>Max Placements:</span> <span>${unit.placement}</span></li>
                 </ul>
             </div>
+            ${unit.tags && unit.tags.length > 0 ? `
+            <div class="info-section section-tags">
+                <div class="info-sec-title">Unit Tags</div>
+                <div class="info-tags-container">
+                    ${unit.tags.map(t => `<span class="info-tag-chip">${t}</span>`).join('')}
+                </div>
+            </div>` : ''}
             <div class="info-section section-stats">
                 <div class="info-sec-title">Base Statistics (Lv 1)</div>
                 <ul class="info-list">
