@@ -123,9 +123,9 @@ function generateBuildRowHTML(r, i, unitConfig = {}) {
     const mainLegsBadge = getBadgeHtml(r.mainStats.legs, MAIN_STAT_VALS.legs[r.mainStats.legs]);
     const headHtml = getHeadBadgeHtml(r.headUsed);
     const s = r.subStats || {};
-    const headRow = (r.headUsed && r.headUsed !== 'none') ? `<div class="stat-line"><span class="sl-label">SUB</span> ${getRichBadgeHtml(s.head || [])}</div>` : '';
-    const bodyRow = `<div class="stat-line"><span class="sl-label">BODY</span> ${getRichBadgeHtml(s.body || [])}</div>`;
-    const legsRow = `<div class="stat-line"><span class="sl-label">LEGS</span> ${getRichBadgeHtml(s.legs || [])}</div>`;
+    const headRow = (r.headUsed && r.headUsed !== 'none') ? `<div class="stat-line">${getRichBadgeHtml(s.head || [])}</div>` : '';
+    const bodyRow = `<div class="stat-line">${getRichBadgeHtml(s.body || [])}</div>`;
+    const legsRow = `<div class="stat-line">${getRichBadgeHtml(s.legs || [])}</div>`;
 
     const mobileToggle = `<button class="mobile-stat-toggle" onclick="toggleRelicStatDisplay(this)"><span class="m-toggle-txt">Main</span><span class="m-toggle-txt">Sub</span></button>`;
 
