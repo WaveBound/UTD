@@ -1,0 +1,358 @@
+(function generateCleanStaticDB() {
+    console.log("🚀 Starting Final Clean Database Generation (Unified Tags)...");
+
+    // --- 1. SETUP & CONFIG ---
+    const originalStatConfig = { ...statConfig };
+    const originalMiku = window.mikuBuffActive;
+    const originalEnlightened = window.enlightenedGodBuffActive;
+    const originalKirito = typeof kiritoState !== 'undefined' ? { ...kiritoState } : { realm: true, card: false };
+    const originalBambietta = typeof bambiettaState !== 'undefined' ? { ...bambiettaState } : { element: "Dark" };
+    const originalRobot1718 = typeof robot1718State !== 'undefined' ? { ...robot1718State } : { mode: "Robot 17" };
+
+    const CONFIGS = [
+        { head: false, subs: false }, { head: false, subs: true },
+        { head: true,  subs: false }, { head: true,  subs: true }
+    ];
+
+    // --- 2. ENUMS ---
+    const MAP_PRIO = { 'dmg': 0, 'spa': 1, 'range': 2, 'raw_dmg': 3 };
+    const MAP_BODY = { 'dmg': 0, 'dot': 1, 'cm': 2 };
+    const MAP_LEGS = { 'dmg': 0, 'spa': 1, 'cf': 2, 'range': 3 };
+    const MAP_HEAD = { 'none': 0, 'sun_god': 1, 'ninja': 2, 'reaper_necklace': 3, 'shadow_reaper_necklace': 4, 'junior': 5, 'biju_head': 6, 'rebellious_head': 7, 'reanimated_head': 8, 'mage_head': 9 };
+
+    // --- 3. STRING COMPRESSION POOLS ---
+    const stringPool = new Map();
+    const stringArr = [""]; 
+    const subPool = new Map();
+    const subArr = [null]; 
+
+    const encodeStr = (val) => {
+        if (!val) return 0;
+        const s = String(val);
+        if (!stringPool.has(s)) {
+            stringPool.set(s, stringArr.length);
+            stringArr.push(s);
+        }
+        return stringPool.get(s);
+    };
+
+    const encodeSubs = (s) => {
+        if (!s) return 0;
+        const transform = (list) => (list||[]).map(i => [encodeStr(i.type), i.val]);
+        const compact = [transform(s.head), transform(s.body), transform(s.legs), s.selectedHead ? encodeStr(s.selectedHead) : 0];
+        const sig = JSON.stringify(compact);
+        if (!subPool.has(sig)) {
+            subPool.set(sig, subArr.length);
+            subArr.push(compact);
+        }
+        return subPool.get(sig);
+    };
+
+    // --- 4. BINARY ENCODER ---
+    const ROW_SIZE = 18;
+
+    const rowsToBuffer = (rows) => {
+        const buffer = new ArrayBuffer(rows.length * ROW_SIZE);
+        const view = new DataView(buffer);
+
+        rows.forEach((r, i) => {
+            const offset = i * ROW_SIZE;
+            
+            const p = MAP_PRIO[r.prio] || 0;
+            const ms = r.mainStats || { body: 'dmg', legs: 'dmg' };
+            const b = MAP_BODY[ms.body] || 0;
+            const l = MAP_LEGS[ms.legs] || 0;
+            const h = MAP_HEAD[r.headUsed || 'none'] || 0;
+            const c = r.isCustom ? 1 : 0;
+            
+            // meta: 2 bits Prio, 2 bits Body, 2 bits Legs, 4 bits Head, 1 bit Custom
+            const meta = p | (b << 2) | (l << 4) | (h << 6) | (c << 10);
+
+            view.setUint8(offset, encodeStr(r.traitName));
+            view.setUint8(offset + 1, encodeStr(r.setName));
+            view.setFloat32(offset + 2, r.dps || 0, true); 
+            view.setUint16(offset + 6, Math.round((r.spa || 1) * 1000), true);
+            view.setUint16(offset + 8, Math.round((r.range || 0) * 10), true);
+            view.setUint16(offset + 10, meta, true);
+            view.setUint16(offset + 12, encodeSubs(r.subStats || {}), true);
+            view.setFloat32(offset + 14, r.dmgVal || 0, true);
+        });
+
+        let binary = '';
+        const bytes = new Uint8Array(buffer);
+        const len = bytes.byteLength;
+        for (let i = 0; i < len; i++) {
+            binary += String.fromCharCode(bytes[i]);
+        }
+        return btoa(binary);
+    };
+
+    // --- 5. CALCULATION LOOP ---
+    const FINAL_DB = {};
+    const tasks = [];
+    unitDatabase.forEach(u => {
+        tasks.push({ u, isCard: false });
+        if(u.id === 'kirito') tasks.push({ u, isCard: true });
+    });
+
+    console.log("⚙️ calculating...");
+
+    tasks.forEach(task => {
+        const { u, isCard } = task;
+        let baseKey = u.id;
+        if(u.id === 'kirito' && isCard) baseKey = 'kirito_card';
+        const types = u.ability ? ['base', 'abil'] : ['base'];
+
+        types.forEach(type => {
+            const finalKey = (type === 'abil') ? `${baseKey}_abil` : baseKey;
+            FINAL_DB[finalKey] = { bugged: [], fixed: [] }; 
+
+            const mode = 'fixed';
+            { 
+                // Global Config Override
+                statConfig.applyRelicDot = true; 
+                statConfig.applyRelicCrit = true; 
+                
+                // Ensure global buffs are NOT baked into the static strings
+                window.mikuBuffActive = false;
+                window.enlightenedGodBuffActive = false;
+                window.bijuuLinkActive = false;
+                window.mageHillBuffActive = false;
+                window.mageGroundBuffActive = false;
+                const currentFilteredBuilds = getFilteredBuilds();
+                const currentSubCandidates = getValidSubCandidates();
+
+                // Setup specific states (Kirito/Bambi)
+                if (u.id === 'bambietta') bambiettaState.element = "Dark"; 
+                if (u.id === 'robot1718') robot1718State.mode = "Robot 17";
+                if (u.id === 'kirito') {
+                    kiritoState.realm = true; 
+                    kiritoState.card = isCard;
+                }
+
+                CONFIGS.forEach(cfg => {
+                    const headsToProcess = cfg.head ? ['sun_god', 'ninja', 'reaper_necklace', 'shadow_reaper_necklace', 'junior', 'biju_head', 'rebellious_head', 'reanimated_head', 'mage_head'] : ['none'];
+                    const includeSubs = cfg.subs;
+                    const traitsForCalc = [...traitsList, ...(unitSpecificTraits[u.id] || [])];
+                    const isAbility = (type === 'abil');
+
+                    // calculateUnitBuilds(unit, _stats, filteredBuilds, subCandidates, headsToProcess, includeSubs, specificTraitsOnly, isAbilityContext, mode)
+const results = calculateUnitBuilds(
+    u, 
+    null, 
+    currentFilteredBuilds, 
+    currentSubCandidates, 
+    headsToProcess, 
+    includeSubs, 
+    traitsForCalc,
+    isAbility, 
+    mode      
+);
+
+                // Group by Trait
+                const traitGroups = {};
+                for (const res of results) {
+                    if (!traitGroups[res.traitName]) traitGroups[res.traitName] = [];
+                    traitGroups[res.traitName].push(res);
+                }
+
+                const guaranteedBuilds = [];
+                const remainingPool = [];
+                
+                for (const trait in traitGroups) {
+                    const list = traitGroups[trait];
+                    
+                    const sortFn = (a, b) => {
+                        const getW = (x) => {
+                            let w = 1.0;
+                            if (u.id === 'sjw' && x.mainStats.body === 'dmg' && x.mainStats.legs === 'dmg') w *= 1.3;
+                            return w;
+                        };
+                        return (b.dps * getW(b)) - (a.dps * getW(a));
+                    };
+
+                    if (u.id === 'law') list.sort((a, b) => (b.range || 0) - (a.range || 0));
+                    else list.sort(sortFn);
+                    
+                    guaranteedBuilds.push(...list.slice(0, 8)); // Increase representation
+                    remainingPool.push(...list.slice(8, 100)); // Larger pool
+                }
+
+                if (u.id === 'law') remainingPool.sort((a, b) => (b.range || 0) - (a.range || 0));
+                else {
+                    remainingPool.sort((a, b) => {
+                        const getW = (x) => {
+                            let w = 1.0;
+                            if (u.id === 'sjw' && x.mainStats.body === 'dmg' && x.mainStats.legs === 'dmg') w *= 1.3;
+                            return w;
+                        };
+                        return (b.dps * getW(b)) - (a.dps * getW(a));
+                    });
+                }
+                
+                const finalBuilds = [...guaranteedBuilds, ...remainingPool].slice(0, 300); // More builds stored
+
+                FINAL_DB[finalKey]['fixed'].push(rowsToBuffer(finalBuilds));
+                FINAL_DB[finalKey]['bugged'].push(rowsToBuffer(finalBuilds)); 
+                });
+            }
+        });
+    });
+
+    // Restore Globals
+    Object.assign(statConfig, originalStatConfig);
+    window.mikuBuffActive = originalMiku;
+    window.enlightenedGodBuffActive = originalEnlightened;
+    if (typeof kiritoState !== 'undefined') Object.assign(kiritoState, originalKirito);
+    if (typeof bambiettaState !== 'undefined') Object.assign(bambiettaState, originalBambietta);
+    if (typeof robot1718State !== 'undefined') Object.assign(robot1718State, originalRobot1718);
+
+    // --- 6. PACKAGING ---
+    const payload = { s: stringArr, p: subArr, d: FINAL_DB };
+    const payloadStr = JSON.stringify(payload);
+
+    // --- 7. UNPACKER SCRIPT GENERATION ---
+    const fileContent = `
+(function() {
+    // BINARY STATIC DB (Unified Tags)
+    const RAW = ${payloadStr};
+    const S = RAW.s;
+    const P = RAW.p;
+    const D = RAW.d;
+
+    const PRIO = ['dmg', 'spa', 'range', 'raw_dmg'];
+    const BODY = ['dmg', 'dot', 'cm'];
+    const LEGS = ['dmg', 'spa', 'cf', 'range'];
+    const HEAD = ['none', 'sun_god', 'ninja', 'reaper_necklace', 'shadow_reaper_necklace', 'junior', 'biju_head', 'rebellious_head', 'reanimated_head', 'mage_head'];
+    
+    // Mappings for ID Reconstruction (Must match data.js descriptions)
+    const DESC_BODY = ['Dmg', 'DoT', 'Crit Dmg'];
+    const DESC_LEGS = ['Dmg', 'Spa', 'Crit Rate', 'Range'];
+
+    const ROW_SIZE = 18;
+
+    const decode = (b64) => {
+        const bin = atob(b64);
+        const len = bin.length;
+        const bytes = new Uint8Array(len);
+        for (let i = 0; i < len; i++) bytes[i] = bin.charCodeAt(i);
+        return new DataView(bytes.buffer);
+    };
+
+    window.STATIC_BUILD_DB = new Proxy({}, {
+        get: function(target, prop) {
+            if (target[prop]) return target[prop];
+            if (D[prop]) {
+                const rawData = D[prop];
+                
+                // 1. Determine Context ID Base
+                let unitId = prop.replace('_abil', '').replace('kirito_card', 'kirito');
+                let suffix = prop.endsWith('_abil') ? "-ABILITY" : "-BASE";
+                if (prop.startsWith('kirito')) {
+                    suffix += "-VR"; 
+                    if (prop.includes('card')) suffix += "-CARD";
+                }
+                const idContext = unitId + suffix;
+
+                const unpackList = (b64List, modeCode) => {
+                    const modeTag = (modeCode === 'b') ? "-b-" : "-f-";
+
+                    return b64List.map((b64, cfgIdx) => {
+                        const view = decode(b64);
+                        const count = view.byteLength / ROW_SIZE;
+                        const result = [];
+                        
+                        const subsSuffix = (cfgIdx % 2 !== 0) ? "-SUBS" : "-NOSUBS";
+
+                        for(let i=0; i<count; i++) {
+                            const off = i * ROW_SIZE;
+                            const tName = S[view.getUint8(off)];
+                            const sName = S[view.getUint8(off+1)];
+                            const dps = view.getFloat32(off+2, true);
+                            const spa = view.getUint16(off+6, true) / 1000;
+                            const range = view.getUint16(off+8, true) / 10;
+                            const meta = view.getUint16(off+10, true);
+                            const subId = view.getUint16(off+12, true);
+                            const dv = view.getFloat32(off+14, true);
+
+                            const pIdx = meta & 3;
+                            const bIdx = (meta >> 2) & 3;
+                            const lIdx = (meta >> 4) & 3;
+                            const hIdx = (meta >> 6) & 15;
+                            const isC = (meta >> 10) & 1;
+
+                            const prioStr = PRIO[pIdx];
+                            const headUsed = HEAD[hIdx];
+                            const headSuffix = "-" + headUsed;
+
+                            // Reconstruct Safe Build Name for ID
+                            const buildNameRaw = sName + " (" + DESC_BODY[bIdx] + "/" + DESC_LEGS[lIdx] + ")";
+                            const safeBuildName = buildNameRaw.replace(/[^a-zA-Z0-9]/g, '');
+
+                            // Lookup Trait ID
+                            let traitId = tName.toLowerCase();
+                            if(typeof traitsList !== 'undefined') {
+                                const found = traitsList.find(t => t.name === tName);
+                                if(found) traitId = found.id;
+                            }
+
+                            // 2. Construct Exact Runtime ID
+                            const uniqueId = idContext + "-" + traitId + "-" + safeBuildName + "-" + prioStr + subsSuffix + headSuffix + modeTag;
+
+                            let subs = undefined;
+                            if(subId !== 0) {
+                                const rS = P[subId]; 
+                                const mapS = (list) => list.map(x => ({ type: S[x[0]], val: x[1] }));
+                                subs = {
+                                    head: mapS(rS[0]),
+                                    body: mapS(rS[1]),
+                                    legs: mapS(rS[2]),
+                                    selectedHead: rS[3] ? S[rS[3]] : undefined
+                                };
+                            }
+
+                            result.push({
+                                id: uniqueId,
+                                traitName: tName,
+                                setName: sName,
+                                dps: dps,
+                                dv: dv,
+                                spa: spa,
+                                range: range,
+                                prio: prioStr,
+                                mainStats: { body: BODY[bIdx], legs: LEGS[lIdx] },
+                                headUsed: headUsed,
+                                isCustom: !!isC,
+                                subStats: subs
+                            });
+                        }
+                        return result;
+                    });
+                };
+
+                target[prop] = {
+                    bugged: unpackList(rawData.bugged, "b"), 
+                    fixed: unpackList(rawData.fixed, "f")   
+                };
+                
+                D[prop] = null;
+                return target[prop];
+            }
+            return undefined;
+        }
+    });
+    console.log(" Unified Static DB Loaded");
+})();
+`;
+
+    console.log("📦 Downloading...");
+    const blob = new Blob([fileContent], { type: 'text/javascript' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'static-database.js';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    console.log("🎉 Done!");
+})();

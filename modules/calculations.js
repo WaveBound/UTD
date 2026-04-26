@@ -38,6 +38,7 @@ function buildCalculationContext(unit, traitIdent, options = {}) {
 
     let effectiveStats = { ...unit.stats };
     effectiveStats.id = unit.id;
+    effectiveStats.placementType = unit.placementType;
     if (unit.tags) effectiveStats.tags = unit.tags;
     if (isAbility && unit.ability) Object.assign(effectiveStats, unit.ability);
     

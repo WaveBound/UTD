@@ -443,7 +443,11 @@ function renderDatabase() {
             const card = createBaseUnitCard(unit, {
                 id: 'card-' + unit.id,
                 additionalClasses: (activeAbilityIds.has(unit.id) ? ' use-ability' : '') + ' lazy-build-load',
-                bannerContent: `<div class="banner-badges"><div class="placement-badge">Max Place: ${unit.placement}</div><div class="placement-badge" style="color: #4ade80; border-color: rgba(74, 222, 128, 0.3);">DPS Rank: #${renderQueueIndex}</div></div>${getUnitImgHtml(unit, 'unit-avatar')}<div class="unit-title"><h2>${unit.name}</h2><span>${unit.role}</span></div>${unit.meta ? `<button class="trait-guide-btn" onclick="openTraitGuide('${unit.id}')">📋 Rec. Traits</button>` : ''}`,
+                bannerContent: `<div class="banner-badges">
+                    <div class="placement-badge">Max Place: ${unit.placement}</div>
+                    <div class="placement-badge is-${(unit.placementType || 'Ground').toLowerCase()}">${unit.placementType || 'Ground'}</div>
+                    <div class="placement-badge" style="color: #4ade80; border-color: rgba(74, 222, 128, 0.3);">DPS Rank: #${renderQueueIndex}</div>
+                </div>${getUnitImgHtml(unit, 'unit-avatar')}<div class="unit-title"><h2>${unit.name}</h2><span>${unit.role}</span></div>${unit.meta ? `<button class="trait-guide-btn" onclick="openTraitGuide('${unit.id}')">📋 Rec. Traits</button>` : ''}`,
                 topControls, bottomControls, mainContent
             });
 
@@ -759,10 +763,10 @@ function openTraitBestList(unitId) {
         tagsHtml += `<span style="background: rgba(251, 191, 36, 0.2); color: #fbbf24; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; border: 1px solid rgba(251, 191, 36, 0.3);">Enlightened God ON</span>`;
     }
     if (window.mageHillBuffActive) {
-        tagsHtml += `<span style="background: rgba(251, 146, 60, 0.2); color: #fb923c; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; border: 1px solid rgba(251, 146, 60, 0.3);">Mage (Hill) ON</span>`;
+        tagsHtml += `<span style="background: rgba(251, 146, 60, 0.2); color: #fb923c; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; border: 1px solid rgba(251, 146, 60, 0.3);">Fern (Hill) ON</span>`;
     }
     if (window.mageGroundBuffActive) {
-        tagsHtml += `<span style="background: rgba(244, 114, 182, 0.2); color: #f472b6; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; border: 1px solid rgba(244, 114, 182, 0.3);">Mage (Ground) ON</span>`;
+        tagsHtml += `<span style="background: rgba(244, 114, 182, 0.2); color: #f472b6; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; border: 1px solid rgba(244, 114, 182, 0.3);">Fern (Ground) ON</span>`;
     }
     if (activeAbilityIds.has(unitId) && unit.ability) {
         tagsHtml += `<span style="background: rgba(168, 85, 247, 0.2); color: #c084fc; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; border: 1px solid rgba(168, 85, 247, 0.3);">Ability Active</span>`;

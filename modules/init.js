@@ -94,8 +94,8 @@ function injectBuffButtons() {
         { id: 'BijuuBuff', text: 'Bijuu Link', title: "Apply Bijuu Link: +25% Dmg, +25% Range, -15% SPA", fn: 'toggleBijuuLink' },
         { id: 'AMSupport', text: 'Ancient Mage', title: "Apply Ancient Mage Buff: +20% Crit Rate/Dmg", fn: 'toggleAncientMageSupport' },
         { id: 'KSBuff', text: 'King Sailor', title: "Apply King Sailor Buff: +10% Crit Rate, +20% Crit Damage", fn: 'toggleKingSailorBuff' },
-        { id: 'MageHillBuff', text: 'Mage(Hill)', title: "Apply Prodigy Mage (Hill) Buff: -30% SPA", fn: 'toggleMageHillBuff' },
-        { id: 'MageGroundBuff', text: 'Mage(Ground)', title: "Apply Prodigy Mage (Ground) Buff: +45% Crit Rate", fn: 'toggleMageGroundBuff' }
+        { id: 'MageHillBuff', text: 'Fern(Hill)', title: "Apply Fern (Hill) Buff: -30% SPA (Hill Only)", fn: 'toggleMageHillBuff' },
+        { id: 'MageGroundBuff', text: 'Fern(Ground)', title: "Apply Fern (Ground) Buff: +45% Crit Rate (Ground Only)", fn: 'toggleMageGroundBuff' }
     ];
 
     const createBtn = (buff, isGlobal) => {

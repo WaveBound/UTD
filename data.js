@@ -31,6 +31,8 @@ const patchNotesData = [
         version: "v5.0",
         date: "Apr 25, 2026",
         changes: [
+            { type: "System", text: "<b>Unit Types:</b> Added 'Ground' and 'Hill' types to all units." },
+            { type: "Buff", text: "<b>Fern Buffs:</b> Fern(Hill) and Fern(Ground) now only apply to their respective unit types." },
             { type: "Math", text: "<b>Builds:</b> Builds now automatically adjust when using any buff abilities." },
             { type: "Fix", text: "<b>Buff Switch:</b> You Can No Longer Enable Mage(Hill) And Mage(Ground) At The Same Time" }
         ]
@@ -350,52 +352,52 @@ const elementIcons = {
 
 const unitDatabase = [
     {
-        id: "Maid", name: "Scarlet Maid (World)", role: "Damage / Support",
+        id: "Maid", name: "Scarlet Maid", role: "Damage / Support",
         img: "images/units/Maid.png",
         totalCost: 76000,
-        placement: 1, tags: [],
+        placement: 1, tags: [], placementType: "Ground",
         meta: { short: "Ruler", long: "Ruler", note: "Ruler is strictly best due to 1 placement count." },
         stats: { dmg: 2950, spa: 5, crit: 0, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 3.5, passiveDmg: 0, element: "Light", dotDuration: 0, range: 28 }
     },
     {
-        id: "sjw", name: "SJW (Monarch)", role: "Damage",
+        id: "sjw", name: "Jinoo (Monarch)", role: "Damage",
         img: "images/units/Sjw.png",
         totalCost: 93000,
-        placement: 1, tags: [],
+        placement: 1, tags: [], placementType: "Ground",
         meta: { short: "Ruler", long: "Ruler", note: "Ruler is strictly best due to 1 placement count." },
         stats: { dmg: 3350, spa: 5, crit: 0, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 5, passiveDmg: 25, element: "Dark", range: 35 }
     },
     {
-        id: "ragna", name: "Ragna (Silverite)", role: "Burst / Hybrid",
+        id: "ragna", name: "Dragon Guy", role: "Burst / Hybrid",
         img: "images/units/Ragna.png",
         totalCost: 72000,
-        placement: 1, tags: [],
+        placement: 1, tags: [], placementType: "Ground",
         meta: { short: "Ruler", long: "Ruler", note: "Ruler is strictly best due to 1 placement count." },
         stats: { dmg: 1800, spa: 9, crit: 0, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 3, passiveDmg: 12, element: "Ice", range: 35 },
         ability: { dmg: 3600, spa: 15, passiveDmg: 72, }
     },
     {
-        id: "kirito", name: "Kirito", role: "Burst / Crit",
+        id: "kirito", name: "Kriatu", role: "Burst / Crit",
         img: "images/units/Kirito.png",
-        totalCost: 30400,
-        placement: 3, tags: [],
+        totalCost: 31000,
+        placement: 3, tags: [], placementType: "Ground",
         meta: { short: "Ruler", long: "Eternal", virtual: "Astral", note: "Eternal provides highest DPS Potential, Ruler provides good dps to cost." },
         stats: { dmg: 1200, spa: 7, crit: 50, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 4, hitCount: 14, reqCrits: 50, extraAttacks: 0, element: "Ice", range: 30 }
     },
     {
-        id: "genos", name: "Cyborg (Fearless)", role: "DoT / Damage",
+        id: "genos", name: "Cyborg", role: "DoT / Damage",
         img: "images/units/Genos.png",
-        totalCost: 26900,
-        placement: 3, tags: [],
+        totalCost: 31760,
+        placement: 3, tags: [], placementType: "Hill",
         meta: { short: "Ruler", long: "Eternal/Sacred", note: "Standard DPS Selection." },
         stats: { dmg: 1440, spa: 5.5, crit: 0, cdmg: 150, dot: 14, dotStacks: 1, spaCap: 4, passiveDmg: 0, element: "Fire", range: 32, burnMultiplier: 45 },
         ability: { passiveDmg: 75 }
     },
     {
-        id: "kenpachi", name: "Kenpachi", role: "Damage / Slow",
+        id: "kenpachi", name: "Berserker", role: "Damage / Slow",
         img: "images/units/Kenpachi.png",
-        totalCost: 60000,
-        placement: 1, tags: ["Peroxide", "Reaper", "Rage"],
+        totalCost: 31760,
+        placement: 3, tags: ["Peroxide", "Reaper", "Rage"], placementType: "Ground",
         meta: { short: "Ruler", long: "Ruler", note: "Ruler is strictly best due to 1 placement count." },
         stats: { dmg: 2875, spa: 10, crit: 0, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 2.0, element: "Light", range: 27 }
     },
@@ -403,39 +405,39 @@ const unitDatabase = [
         id: "sasuke", name: "Sasuke (Chakra)", role: "Damage",
         img: "images/units/Sasuke.png",
         totalCost: 40000,
-        placement: 2, tags: ["Team 7", "Ninjaverse", "Hero", "Bloodline"],
+        placement: 2, tags: ["Team 7", "Ninjaverse", "Hero", "Bloodline"], placementType: "Ground",
         meta: { short: "Ruler", long: "Eternal/Sacred", note: "Ruler for DPS, Eternal/Sacred for support." },
         stats: { dmg: 2450, spa: 6.75, crit: 0, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 4, passiveDmg: 25, element: "Dark", range: 28 }
     },
     {
         id: "mob", name: "Psycho (100%)", role: "Damage",
         img: "images/units/Mob.png",
-        totalCost: 56000,
-        placement: 2, tags: [],
+        totalCost: 31000,
+        placement: 3, tags: [], placementType: "Ground",
         meta: { short: "Ruler", long: "Ruler", note: "Standard DPS selection." },
         stats: { dmg: 2600, spa: 6.5, crit: 0, cdmg: 150, dot: 20, dotStacks: 1, spaCap: 5.5, passiveDmg: 0, element: "Rose", dotDuration: 4, range: 35 }
     },
     {
-        id: "shanks", name: "Shanks (Conqueror)", role: "Damage",
+        id: "shanks", name: "Shunks", role: "Damage",
         img: "images/units/Shanks.png",
-        totalCost: 64000,
-        placement: 1, tags: [],
+        totalCost: 40000,
+        placement: 3, tags: [], placementType: "Ground",
         meta: { short: "Ruler", long: "Ruler", note: "Ruler is strictly best due to 1 placement count." },
         stats: { dmg: 2750, spa: 12, crit: 0, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 2.5, passiveDmg: 0, element: "Rose", dotDuration: 0, range: 30 }
     },
     {
-        id: "law", name: "Rule (Room)", role: "Support / Damage",
+        id: "law", name: "Rule (Room)", role: "Support",
         img: "images/units/Law.png",
-        totalCost: 84000,
-        placement: 2, tags: [],
+        totalCost: 33725,
+        placement: 3, tags: [], placementType: "Ground",
         meta: { short: "Ruler/Sacred", long: "Ruler/Sacred", note: "Ruler/Sacred offer the most Spa%- / Rng%+" },
         stats: { dmg: 1300, spa: 5, crit: 0, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 2, passiveDmg: 20, passiveSpa: 10, element: "Water", dotDuration: 0, range: 31.5 }
     },
     {
-        id: "akainu", name: "Admiral (Magma)", role: "Support / Damage",
+        id: "akainu", name: "Akainu", role: "Support / Damage",
         img: "images/units/Akainu.png",
-        totalCost: 108000,
-        placement: 3, tags: [],
+        totalCost: 31760,
+        placement: 3, tags: [], placementType: "Ground",
         meta: { short: "Eternal/Sacred", long: "Eternal/Sacred", note: "Eternal/Sacred offer the the best dps + support performance." },
         stats: { dmg: 1100, spa: 5, crit: 0, cdmg: 150, dot: 60, dotStacks: 1, spaCap: 2, passiveDmg: 0, passiveSpa: 0, element: "Fire", dotDuration: 7, range: 37 }
     },
@@ -443,82 +445,82 @@ const unitDatabase = [
         id: "ichigo", name: "Ichiko (Rage)", role: "Damage",
         img: "images/units/Ichigo.png",
         totalCost: 108000,
-        placement: 1, tags: ["Peroxide", "Reaper", "Rage", "Hollow"],
+        placement: 1, tags: ["Peroxide", "Reaper", "Rage", "Hollow"], placementType: "Ground",
         meta: { short: "Ruler", long: "Ruler", note: "Ruler is strictly best due to 1 placement count." },
         stats: { dmg: 3000, spa: 8, crit: 15, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 7, passiveDmg: 50, passiveSpa: 0, element: "Dark", dotDuration: 0, range: 38 }
     },
     {
-        id: "grimjaw", name: "Grommjaw (Panther)", role: "Damage",
+        id: "grimjaw", name: "Grommjaw", role: "Damage",
         img: "images/units/Grimjaw.png",
-        totalCost: 40000,
-        placement: 3, tags: ["Peroxide", "Hollow"],
+        totalCost: 31760,
+        placement: 3, tags: ["Peroxide", "Hollow"], placementType: "Ground",
         meta: { short: "Ruler", long: "Eternal", note: "Standard DPS selection." },
         stats: { dmg: 1590, spa: 9, crit: 0, cdmg: 150, dot: 50, dotStacks: 1, spaCap: 3, passiveDmg: 6.67, passiveSpa: 4.17, element: "Water", dotDuration: 10, range: 35 }
     },
     {
-        id: "stark", name: "Koyote (Number one)", role: "Damage",
+        id: "stark", name: "Koyote", role: "Damage",
         img: "images/units/Stark.png",
-        totalCost: 44000,
-        placement: 1, tags: ["Peroxide", "Hollow"],
+        totalCost: 42000,
+        placement: 3, tags: ["Peroxide", "Hollow"], placementType: "Ground",
         meta: { short: "Ruler", long: "Ruler", note: "Ruler is strictly best due to 1 placement count." },
         stats: { dmg: 2800, spa: 6, crit: 0, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 6, passiveDmg: 0, passiveSpa: 0, element: "Ice", dotDuration: 0, range: 42 }
     },
     {
-        id: "ulquiorra", name: "Ultiiorra (Oblivion)", role: "Damage",
+        id: "ulquiorra", name: "Ultiorra", role: "Damage",
         img: "images/units/Ulqiorra.png",
-        totalCost: 31760,
-        placement: 3, tags: ["Peroxide", "Hollow"],
+        totalCost: 40000,
+        placement: 3, tags: ["Peroxide", "Hollow"], placementType: "Hill",
         meta: { short: "Ruler", long: "Eternal", note: "Standard DPS selection." },
         stats: { dmg: 1275, spa: 5, crit: 0, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 2, passiveDmg: 0, passiveSpa: 5, element: "Dark", dotDuration: 0, range: 37 },
         ability: { buffDmg: 65, passiveSpa: 2.5, crit: 10 }
     },
     {
-        id: "harribel", name: "Tierrabel (Hydro)", role: "Damage",
+        id: "harribel", name: "Tierabel", role: "Damage",
         img: "images/units/Harribel.png",
-        totalCost: 30964,
-        placement: 3, tags: ["Peroxide", "Hollow"],
+        totalCost: 31760,
+        placement: 3, tags: ["Peroxide", "Hollow"], placementType: "Hill",
         meta: { short: "Ruler", long: "Eternal", note: "Standard DPS selection." },
         stats: { dmg: 1490, spa: 8.5, crit: 0, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 2, passiveDmg: 0, passiveSpa: 0, element: "Water", dotDuration: 0, range: 30 },
         ability: { buffDmg: 35, buffDuration: 80, spaCap: 4, hasToggle: true }
     },
     {
-        id: "ace", name: "Ace", role: "Damage / Burn(DoT)",
+        id: "ace", name: "Spade", role: "Damage / Burn(DoT)",
         img: "images/units/Ace.png",
         totalCost: 39000,
-        placement: 3, tags: [],
+        placement: 3, tags: [], placementType: "Hill",
         meta: { short: "Ruler", long: "Ruler/Astral", note: "Ruler provides good dps to cost." },
         stats: { dmg: 1500, spa: 9, crit: 0, cdmg: 150, dot: 100, dotStacks: 1, spaCap: 6, passiveDmg: 60, element: "Fire", dotDuration: 4, range: 30 }
     },
     {
-        id: "Jingliu", name: "Jingliu", role: "Damage",
+        id: "Jingliu", name: "Jangluu", role: "Damage",
         img: "images/units/Jingliu.png",
         totalCost: 33725,
-        placement: 3, tags: [],
+        placement: 3, tags: [], placementType: "Hill",
         meta: { short: "Ruler", long: "Eternal/Sacred", note: "Eternal provides highest DPS Potential, Ruler provides good dps to cost." },
         stats: { dmg: 1700, spa: 6, crit: 50, cdmg: 200, dot: 0, dotStacks: 1, spaCap: 3, passiveDmg: 35, element: "Ice", dotDuration: 0, range: 40 }
     },
     {
-        id: "megumin", name: "Megumin", role: "Damage / Burn(Dot)",
+        id: "megumin", name: "Migumen", role: "Damage / Burn(Dot)",
         img: "images/units/Megumin.png",
         totalCost: 136000,
-        placement: 1, tags: [],
+        placement: 1, tags: [], placementType: "Hybrid",
         meta: { short: "Ruler", long: "Ruler", note: "Ruler is strictly best due to 1 placement count." },
         stats: { dmg: 8750, spa: 14, crit: 0, cdmg: 150, dot: 50, dotStacks: 1, spaCap: 4, passiveDmg: 0, element: "Fire", dotDuration: 10, range: 50 },
         ability: { passiveDmg: 50, passiveSpa: -50 }
     },
     {
-        id: "bambietta", name: "Bambietta", role: "Damage / (Support/Dot)",
+        id: "bambietta", name: "Bambee", role: "Damage / (Support/Dot)",
         img: "images/units/Bambietta.png",
         totalCost: 40000,
-        placement: 3, tags: [],
+        placement: 3, tags: [], placementType: "Ground",
         meta: { short: "Ruler", long: "Eternal", note: "Eternal provides highest DPS Potential, Ruler provides good dps to cost." },
         stats: { dmg: 1250, spa: 6.5, crit: 0, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 2, passiveDmg: 0, element: "Dark", dotDuration: 0, range: 38, hasElementSelect: true }
     },
     {
-        id: "esdeath", name: "Esdeath", role: "Damage / Support",
+        id: "esdeath", name: "Ice Empress", role: "Damage / Support",
         img: "images/units/Esdeath.png",
         totalCost: 92000,
-        placement: 1, tags: [],
+        placement: 1, tags: [], placementType: "Ground",
         meta: { short: "Ruler", long: "Ruler", note: "Passive avg 37.5% Dmg (Cycles 0-75%). Ruler is strictly best due to 1 placement count." },
         stats: { dmg: 1975, spa: 7.5, crit: 0, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 3, passiveDmg: 37.5, element: "Ice", dotDuration: 0, range: 50 }
     },
@@ -526,7 +528,7 @@ const unitDatabase = [
         id: "phantom_captain", name: "Phantom Captain", role: "Summon / Dmg",
         img: "images/units/Phantom.png",
         totalCost: 68000,
-        placement: 1, tags: [],
+        placement: 1, tags: [], placementType: "Ground",
         meta: { short: "Ruler", long: "Ruler", note: "Needs low SPA (High Speed) to maintain max 9 planes." },
         stats: { dmg: 3600, spa: 10, crit: 0, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 3, passiveDmg: 0, element: "Light", dotDuration: 0, range: 55 },
         ability: {
@@ -548,7 +550,7 @@ const unitDatabase = [
         id: "sharpshooter", name: "Sharpshooter", role: "Damage / Support",
         img: "images/units/Sharpshooter.png",
         totalCost: 68000,
-        placement: 2, tags: [],
+        placement: 2, tags: [], placementType: "Hill",
         meta: { short: "Ruler", long: "Ruler", note: "Toggle Ability for Sniper Mode (Global Range)." },
         stats: {
             dmg: 1450, spa: 6, crit: 0, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 3.5,
@@ -563,19 +565,19 @@ const unitDatabase = [
         }
     },
     {
-        id: "rohan", name: "Rohan & Robot", role: "Damage",
+        id: "rohan", name: "Rohan & Robot 16", role: "Damage",
         img: "images/units/Rohan.png",
         totalCost: 54000,
-        placement: 2, tags: [],
+        placement: 1, tags: [], placementType: "Ground",
         meta: { short: "Ruler", long: "Ruler", note: "Ability activates Unleashed mode." },
         stats: { dmg: 1820, spa: 7.5, crit: 15, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 3, passiveDmg: 30, passiveSpa: 5, element: "Light", dotDuration: 0, range: 55 },
         ability: { dmg: 2445, spa: 8.5, range: 58, spaCap: 2 }
     },
     {
-        id: "cell", name: "Cell", role: "Damage / Summon",
+        id: "cell", name: "Bio-Android (Imperfect)", role: "Damage / Summon",
         img: "images/units/Cell.png",
         totalCost: 56000,
-        placement: 1, tags: ["Bio-Android"],
+        placement: 1, tags: ["Bio-Android"], placementType: "Ground",
         meta: { short: "Ruler", long: "Ruler", note: "Ruler is strictly best due to 1 placement count. Base form is True Form. Toggle for Perfect Form (Summon)." },
         stats: {
             baseName: "True Form",
@@ -597,7 +599,7 @@ const unitDatabase = [
         id: "vegeta", name: "Fallen Prince", role: "Damage",
         img: "images/units/Vegeta.png",
         totalCost: 35112,
-        placement: 3, tags: [],
+        placement: 3, tags: [], placementType: "Ground",
         meta: { short: "Ruler", long: "Eternal", note: "Toggle Boss Stacks for max damage." },
         stats: { dmg: 2275, spa: 8, crit: 45, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 3, passiveDmg: 0, passiveSpa: 15, passiveRange: 15, element: "Dark", dotDuration: 0, range: 44 },
         ability: { passiveDmg: 150 }
@@ -606,7 +608,7 @@ const unitDatabase = [
         id: "super_roku", name: "Super Roku", role: "Damage",
         img: "images/units/SuperRoku.png",
         totalCost: 48000,
-        placement: 2, tags: ["Saiyan"],
+        placement: 2, tags: ["Saiyan"], placementType: "Hill",
         meta: { short: "Ruler", long: "Ruler", note: "Toggle Same Enemy for boss DPS calculation." },
         stats: { dmg: 1950, spa: 6.5, crit: 10, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 4, passiveDmg: 25, element: "Light", dotDuration: 0, range: 41 },
         ability: {}
@@ -615,15 +617,15 @@ const unitDatabase = [
         id: "trunks", name: "The Drink", role: "Damage / DoT",
         img: "images/units/Trunks.png",
         totalCost: 40000,
-        placement: 4, tags: [],
+        placement: 4, tags: [], placementType: "Ground",
         meta: { short: "Ruler", long: "Ruler", note: "Passive averages to +25% Damage." },
         stats: { dmg: 1810, spa: 8.5, crit: 0, cdmg: 150, dot: 25, dotStacks: 1, spaCap: 2, passiveDmg: 45, element: "Water", dotDuration: 5, range: 45 },
     },
     {
-        id: "water_god", name: "Water God (Primordial)", role: "Damage",
+        id: "water_god", name: "Enlightened God", role: "Utility Ground",
         img: "images/units/WaterGod.png",
         totalCost: 72600,
-        placement: 3, tags: [],
+        placement: 3, tags: [], placementType: "Ground",
         meta: {
             short: "Ruler/Sacred",
             long: "Sacred/Fission",
@@ -645,10 +647,10 @@ const unitDatabase = [
         ]
     },
     {
-        id: "first_emperor", name: "First Emperor", role: "Damage",
+        id: "first_emperor", name: "First Emperor (Greatest)", role: "Specialist / Ground",
         img: "images/units/FirstEmperor.png",
         totalCost: 89500,
-        placement: 1, tags: [],
+        placement: 1, tags: [], placementType: "Ground",
         meta: { short: "Ruler", long: "Ruler", noz: "Attack Form: Demon art : Axe. Ruler is strictly best due to 1 placement count." },
         stats: { dmg: 3200, spa: 7, crit: 0, cdmg: 150, dot: 120, dotStacks: 1, spaCap: 3, passiveDmg: 0, element: "Rose", dotDuration: 10, range: 32 },
         passives: [
@@ -678,12 +680,12 @@ const unitDatabase = [
     },
     {
         id: "underworld_god",
-        name: "Underworld God (Syncro)",
-        role: "Damage / Support",
+        name: "Underworld God",
+        role: "(Specialist)/Ground",
         img: "images/units/UnderworldGod.png",
         totalCost: 89400,
         placement: 2,
-        tags: ["Divinity"],
+        tags: ["Divinity"], placementType: "Ground",
         meta: { short: "Ruler", long: "Ruler", note: "Divine Blood converts debuffs to buffs. Eldest Brother provides up to +90% Damage via Divinity tags." },
         stats: { dmg: 7500, spa: 10, crit: 0, cdmg: 150, dot: 0, dotStacks: 1, spaCap: 4, passiveDmg: 90, passiveSpa: 15, element: "Wind", range: 40 },
         passives: [
@@ -703,12 +705,12 @@ const unitDatabase = [
     },
     {
         id: "ancient_shinob",
-        name: "Ancient Shinob",
-        role: "Damage / Debuff",
+        name: "Ancient Shinobi",
+        role: "DPS / Ground",
         img: "images/units/AncientShinob.png",
         totalCost: 96450,
         placement: 3,
-        tags: ["Sage", "Bloodline", "Villain", "Ninjaverse"],
+        tags: ["Sage", "Bloodline", "Villain", "Ninjaverse"], placementType: "Ground",
         meta: { short: "Ruler", long: "Ruler", note: "Reanimation triples damage but forces 1 placement. Samurai Technique (E2) adds burst damage." },
         stats: {
             dmg: 11750,
@@ -751,7 +753,7 @@ const unitDatabase = [
         img: "images/units/MajesticArmor.png",
         totalCost: 140910,
         placement: 2,
-        tags: ["Team 7", "Ninjaverse", "Hero", "Bloodline"],
+        tags: ["Team 7", "Ninjaverse", "Hero", "Bloodline"], placementType: "Ground",
         meta: {
             short: "Ruler",
             long: "Ruler",
@@ -779,7 +781,7 @@ const unitDatabase = [
         img: "images/units/UnparalleledArmor.png",
         totalCost: 168360,
         placement: 1,
-        tags: ["Sage", "Bloodline", "Villain", "Ninjaverse"],
+        tags: ["Sage", "Bloodline", "Villain", "Ninjaverse"], placementType: "Ground",
         meta: {
             short: "Ruler",
             long: "Ruler",
@@ -803,7 +805,7 @@ const unitDatabase = [
         img: "images/units/SasukeGreatWar.png",
         totalCost: 69000,
         placement: 3,
-        tags: ["Sage", "Bloodline", "Villain", "Ninjaverse"],
+        tags: ["Sage", "Bloodline", "Villain", "Ninjaverse"], placementType: "Ground",
         meta: {
             short: "Ruler",
             long: "Ruler",
@@ -835,11 +837,11 @@ const unitDatabase = [
     {
         id: "king_sailor",
         name: "King Sailor",
-        role: "Damage / Global Buffer",
+        role: "Utility / Ground",
         img: "images/units/KingSailor.png",
         totalCost: 91800,
         placement: 2,
-        tags: ["Magi", "King", "Hero", "Uncontrollable Power"],
+        tags: ["Magi", "King", "Hero", "Uncontrollable Power"], placementType: "Ground",
         meta: { short: "Ruler", long: "Ruler", note: "Manipulator of Fate: +50% Dmg / -25% SPA. Baal's Lightning provides +20% Follow-up damage." },
         stats: {
             dmg: 6325, spa: 15, range: 45, spaCap: 4,
@@ -864,11 +866,11 @@ const unitDatabase = [
     {
         id: "nutaru_beast",
         name: "Nutaru (Beast)",
-        role: "Damage / Summon",
+        role: "DPS / Ground",
         img: "images/units/NutaruBeast.png",
         totalCost: 71910,
         placement: 2,
-        tags: ["Team 7", "Ninjaverse", "Main character", "Sage", "Hero", "Bloodline"],
+        tags: ["Team 7", "Ninjaverse", "Main character", "Sage", "Hero", "Bloodline"], placementType: "Ground",
         meta: {
             short: "Ruler",
             long: "Ruler",
@@ -910,11 +912,11 @@ const unitDatabase = [
     {
         id: "crow_shinobi",
         name: "Crow Shinobi",
-        role: "Damage / Debuff",
+        role: "DPS / Hill",
         img: "images/units/CrowShinobi.png",
         totalCost: 68450,
         placement: 3,
-        tags: ["Ninjaverse", "Bloodline", "Hero"],
+        tags: ["Ninjaverse", "Bloodline", "Hero"], placementType: "Hill",
         meta: {
             short: "Ruler",
             long: "Eternal",
@@ -947,12 +949,12 @@ const unitDatabase = [
     },
     {
         id: "ancient_mage",
-        name: "Ancient Mage",
-        role: "Damage / Utility / Support",
+        name: "Ancient Mage (Slayer)",
+        role: "Utility / Ground",
         img: "images/units/AncientMage.png",
         totalCost: 66700,
         placement: 1,
-        tags: ["Sage", "Bloodline", "Hero", "Main character"],
+        tags: ["Sage", "Bloodline", "Hero", "Main character"], placementType: "Ground",
         meta: {
             short: "Ruler",
             long: "Ruler",
@@ -962,10 +964,11 @@ const unitDatabase = [
             dmg: 5500, spa: 8, range: 45, spaCap: 4,
             crit: 0, cdmg: 150, dot: 60, dotDuration: 10,
             element: "Light",
-            passiveDmg: 40,  // Base Experience (20) + DPS (20)
-            passiveSpa: -40, // DPS Speed Penalty
-            bossDmg: 50,     // DPS Boss Killer
-            dotBuff: 20      // Lower DoT effectiveness in DPS mode
+            passiveDmg: 20,  // Base Experience (20)
+            passiveSpa: 0,
+            bossDmg: 0,
+            dotBuff: 40,     // Specialist focus (+40% DoT)
+            hyper: 50        // Specialist focus (+50% True Dmg)
         },
         modes: {
             "DPS": { desc: "Combat focus: +20% Dmg, -40% Atk Speed, +50% Boss Dmg. Applies Wind Shear (60% DoT over 10s)." },
@@ -978,13 +981,13 @@ const unitDatabase = [
             { name: "The Last Great Mage", desc: "Gains Stun Immunity while not attacking (Always active at E4)." }
         ],
         ability: {
-            abilityName: "Specialist",
-            desc: "Magic focus: +40% DoT, +50% True Damage. Swaps Wind Shear for Burn (60% DoT over 10s).",
-            passiveDmg: 20,  // Base Experience
-            passiveSpa: 0,
-            bossDmg: 0,
-            dotBuff: 60,     // Specialist focus
-            hyper: 50,       // Specialist focus
+            abilityName: "DPS",
+            desc: "Combat focus: +20% Dmg, -40% Atk Speed, +50% Boss Dmg. Applies Wind Shear (60% DoT over 10s).",
+            passiveDmg: 40,  // Base Experience (20) + DPS (20)
+            passiveSpa: -40, // Atk Speed Penalty
+            bossDmg: 50,     // Boss Killer
+            dotBuff: 0,      // Reset Specialist buff
+            hyper: 0,        // Reset Specialist buff
             cooldown: 60
         },
         etherealization: [
@@ -999,11 +1002,11 @@ const unitDatabase = [
     {
         id: "prodigy_mage",
         name: "Prodigy Mage",
-        role: "Damage / Support",
+        role: "Support / Hill",
         img: "images/units/ProdigyMage.png",
         totalCost: 46200,
         placement: 3,
-        tags: ["Hero"],
+        tags: ["Hero"], placementType: "Hill",
         meta: {
             short: "Sacred/Eternal",
             long: "Sacred/Eternal",
@@ -1037,11 +1040,11 @@ const unitDatabase = [
     {
         id: "ant_king_savage",
         name: "Ant King (Savage)",
-        role: "Damage / Debuff",
+        role: "DPS / Ground",
         img: "images/units/AntKing.png",
         totalCost: 63000,
         placement: 2,
-        tags: ["Leveling", "King"],
+        tags: ["Leveling", "King"], placementType: "Ground",
         meta: {
             short: "Ruler",
             long: "Ruler",

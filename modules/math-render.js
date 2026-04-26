@@ -14,6 +14,7 @@ function renderOverviewSection(data) {
             <div class="math-row"><span>Total DPS</span><b class="math-val-gold">${fmt.num(data.total)}</b></div>
             ${data.summon > 0 ? `<div class="math-row"><span>${isNutaru ? 'Clones' : 'Planes'} Active</span><b class="text-accent-start">${fmt.fix(data.summonData.count, 1)}</b></div>` : ''}
             <div class="math-row"><span>Placement</span><b>${data.placement} Unit(s)</b></div>
+            <div class="math-row"><span>Unit Type</span><b class="text-custom">${data.baseStats.placementType || 'Ground'}</b></div>
             <div class="math-row"><span>Final Range</span><b class="math-val-range">${fmt.fix(data.range, 1)}</b></div>
         </div>`;
 }
@@ -122,8 +123,8 @@ function renderSourceTotalsSection(data) {
                     ${bijuuDmg > 0 ? `<div style="display:flex; justify-content:space-between; font-size: 0.65rem; color: #fbbf24;"><span>↳ Bijuu Link</span><span>${fmt.pct(bijuuDmg)}</span></div>` : ''}
                     ${kingMarkDmg > 0 ? `<div style="display:flex; justify-content:space-between; font-size: 0.65rem; color: #fbbf24;"><span>↳ Unrivaled Mark</span><span>${fmt.pct(kingMarkDmg)}</span></div>` : ''}
                     ${data.amSupportActive ? `<div style="display:flex; justify-content:space-between; font-size: 0.65rem; color: #60a5fa;"><span>↳ Ancient Mage</span><span>Active</span></div>` : ''}
-                    ${(data.mageHillSpa || 0) > 0 ? `<div style="display:flex; justify-content:space-between; font-size: 0.65rem; color: #fb923c;"><span>↳ Mage (Hill)</span><span>Active</span></div>` : ''}
-                    ${(data.mageGroundCrit || 0) > 0 ? `<div style="display:flex; justify-content:space-between; font-size: 0.65rem; color: #f472b6;"><span>↳ Mage (Ground)</span><span>Active</span></div>` : ''}
+                    ${(data.mageHillSpa || 0) > 0 ? `<div style="display:flex; justify-content:space-between; font-size: 0.65rem; color: #fb923c;"><span>↳ Fern (Hill)</span><span>Active</span></div>` : ''}
+                    ${(data.mageGroundCrit || 0) > 0 ? `<div style="display:flex; justify-content:space-between; font-size: 0.65rem; color: #f472b6;"><span>↳ Fern (Ground)</span><span>Active</span></div>` : ''}
                 </div>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px 12px; font-size: 0.65rem; color: #777;">
                     <div style="display:flex; justify-content:space-between;"><span>SPA Red.</span><b class="text-white">-${passiveTotalSpa.toFixed(1)}%</b></div>
@@ -144,8 +145,8 @@ function renderActiveBuffsSection(data) {
     if (data.bijuuBuff > 0) buffs.push({ name: "Bijuu Link", desc: "Active: +25% Dmg, +25% Range, -15% SPA", color: "#f87171" });
     if (data.amSupportActive) buffs.push({ name: "Ancient Mage", desc: "Active: +20% Crit Rate/Dmg", color: "#60a5fa" });
     if (data.ksCrit > 0) buffs.push({ name: "King Sailor", desc: "Active: +10% Crit Rate, +20% Crit Dmg", color: "#60a5fa" });
-    if (data.mageHillSpa > 0) buffs.push({ name: "Mage (Hill)", desc: "Active: -30% SPA", color: "#fb923c" });
-    if (data.mageGroundCrit > 0) buffs.push({ name: "Mage (Ground)", desc: "Active: +45% Crit Rate", color: "#f472b6" });
+    if (data.mageHillSpa > 0) buffs.push({ name: "Fern (Hill)", desc: "Active: -30% SPA", color: "#fb923c" });
+    if (data.mageGroundCrit > 0) buffs.push({ name: "Fern (Ground)", desc: "Active: +45% Crit Rate", color: "#f472b6" });
     
     // 2. Trait "Passives"
     if (data.traitObj.isEternal) buffs.push({ name: "Eternal Stacks", desc: "Applied: +5% Dmg & +2.5% Rng / Wave (Max 12)", color: "#c084fc" });
@@ -249,7 +250,7 @@ function renderCritSection(data, setTagCfTotal, setTagCmTotal) {
                     ${(data.traitObj.critRate || 0) > 0 ? `<tr><td class="mt-cell-label mt-pl-lg text-dim text-xs">• Trait (${data.traitObj.name})</td><td class="mt-cell-formula"></td><td class="mt-cell-val text-dim text-xs">${fmt.fix(data.traitObj.critRate, 1)}%</td></tr>` : ''}
                     ${data.relicBuffs.cf > 0 ? `<tr><td class="mt-cell-label mt-pl-lg text-dim text-xs">• Relics (Main+Sub)</td><td class="mt-cell-formula"></td><td class="mt-cell-val text-dim text-xs">${fmt.fix(data.relicBuffs.cf, 1)}%</td></tr>` : ''}
                     ${setTagCfTotal > 0 ? `<tr><td class="mt-cell-label mt-pl-lg text-dim text-xs">• Set Bonus & Tags</td><td class="mt-cell-formula"></td><td class="mt-cell-val text-dim text-xs">${fmt.fix(setTagCfTotal, 1)}%</td></tr>` : ''}
-                    ${(data.mageGroundCrit || 0) > 0 ? `<tr><td class="mt-cell-label mt-pl-lg text-dim text-xs" style="color:#f472b6">• Mage (Ground)</td><td class="mt-cell-formula"></td><td class="mt-cell-val text-dim text-xs" style="color:#f472b6">+${fmt.fix(data.mageGroundCrit, 1)}%</td></tr>` : ''}
+                    ${(data.mageGroundCrit || 0) > 0 ? `<tr><td class="mt-cell-label mt-pl-lg text-dim text-xs" style="color:#f472b6">• Fern (Ground)</td><td class="mt-cell-formula"></td><td class="mt-cell-val text-dim text-xs" style="color:#f472b6">+${fmt.fix(data.mageGroundCrit, 1)}%</td></tr>` : ''}
                     
                     <tr><td class="mt-cell-label mt-pl-sm text-gray">↳ CDmg Base</td><td class="mt-cell-formula"></td><td class="mt-cell-val text-gray font-normal">${fmt.fix(data.critData.baseCdmg,0)}</td></tr>
                     ${data.relicBuffs.cm > 0 ? `<tr><td class="mt-cell-label mt-pl-lg text-dim text-xs">• Relics</td><td class="mt-cell-formula"></td><td class="mt-cell-val text-dim text-xs">+${fmt.fix(data.relicBuffs.cm, 1)}%</td></tr>` : ''}
@@ -284,7 +285,7 @@ function renderSpaSection(data, traitRowsSpa, baseSetSpa, tagSpa, passiveSpa) {
                     ${passiveSpa > 0 ? `<tr><td class="mt-cell-label mt-pl-md opacity-70">↳ Unit Passive</td><td class="mt-cell-formula">-${fmt.fix(passiveSpa, 1)}%</td><td class="mt-cell-val"></td></tr>` : ''}
                     ${(data.enlightSpa || 0) > 0 ? `<tr><td class="mt-cell-label mt-pl-md text-gold opacity-70">↳ Enlightened God</td><td class="mt-cell-formula text-gold">-${fmt.fix(data.enlightSpa, 1)}%</td><td class="mt-cell-val"></td></tr>` : ''}
                     ${(data.bijuuSpa || 0) > 0 ? `<tr><td class="mt-cell-label mt-pl-md text-error opacity-70">↳ Bijuu Link</td><td class="mt-cell-formula text-error">-${fmt.fix(data.bijuuSpa, 1)}%</td><td class="mt-cell-val"></td></tr>` : ''}
-                    ${(data.mageHillSpa || 0) > 0 ? `<tr><td class="mt-cell-label mt-pl-md opacity-70" style="color:#fb923c">↳ Mage (Hill)</td><td class="mt-cell-formula" style="color:#fb923c">-${fmt.fix(data.mageHillSpa, 1)}%</td><td class="mt-cell-val"></td></tr>` : ''}
+                    ${(data.mageHillSpa || 0) > 0 ? `<tr><td class="mt-cell-label mt-pl-md opacity-70" style="color:#fb923c">↳ Fern (Hill)</td><td class="mt-cell-formula" style="color:#fb923c">-${fmt.fix(data.mageHillSpa, 1)}%</td><td class="mt-cell-val"></td></tr>` : ''}
 
                     <tr><td class="mt-cell-label">Cap Check (${data.spaCap}s)</td><td class="mt-cell-formula">MAX</td><td class="mt-cell-val calc-result">${fmt.fix(data.spa, 3)}s</td></tr>
                 </table>

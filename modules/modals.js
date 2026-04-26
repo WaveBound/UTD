@@ -259,9 +259,10 @@ function openUnitInfo(unitId) {
                 <div class="info-sec-title">Unit Discovery</div>
                 <ul class="info-list">
                     <li><span>Role:</span> <span>${unit.role}</span></li>
+                    <li><span>Placement Type:</span> <span class="${unit.placementType === 'Hill' ? 'text-gold' : (unit.placementType === 'Hybrid' ? 'text-white' : 'text-custom')}">${unit.placementType || 'Ground'}</span></li>
                     <li><span>Element:</span> <span class="text-custom">${unit.stats.element}</span></li>
                     <li><span>Cost:</span> <span class="text-gold">${unit.totalCost.toLocaleString()}</span></li>
-                    <li><span>Placement:</span> <span>${unit.placement}</span></li>
+                    <li><span>Max Placements:</span> <span>${unit.placement}</span></li>
                 </ul>
             </div>
             <div class="info-section section-stats">

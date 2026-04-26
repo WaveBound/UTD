@@ -411,10 +411,11 @@ function calculateDPS(uStats, relicStats, context) {
     const amCritDmg = amSupportActive ? 20 : 0;
 
     const mageHillBuffActive = (typeof window !== 'undefined' && window.mageHillBuffActive);
-    const mageHillSpa = mageHillBuffActive ? 30 : 0;
+    const uType = (uStats.placementType || 'Ground').toLowerCase();
+    const mageHillSpa = (mageHillBuffActive && (uType === 'hill' || uType === 'hybrid')) ? 30 : 0;
 
     const mageGroundBuffActive = (typeof window !== 'undefined' && window.mageGroundBuffActive);
-    const mageGroundCrit = mageGroundBuffActive ? 45 : 0;
+    const mageGroundCrit = (mageGroundBuffActive && (uType === 'ground' || uType === 'hybrid')) ? 45 : 0;
 
     const totalAdditiveRange = (sBonus.range || 0) + (uStats.passiveRange || 0) + eternalRangeBuff + enlightBuff + (bijuuBuff > 0 ? 25 : 0) + (uStats.id === 'king_sailor' ? 10 : 0);
     const finalRange = lvStats.range * (1 + traitRangePct / 100) * (1 + baseR_Range / 100) * (1 + totalAdditiveRange / 100);
