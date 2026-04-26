@@ -298,7 +298,7 @@ const LEG_CRIT = { dmg: 0, spa: 0, desc: "Crit Rate", type: "cf", cf: 37.5 };
 const LEG_RANGE = { dmg: 0, spa: 0, desc: "Range", type: "range", range: 30 };
 
 const SETS = [
-    { id: "ninja", name: "Master Ninja", bonus: { dmg: 5, spa: 0, cm: 0 } },
+    { id: "ninja", name: "Junior Ninja", bonus: { dmg: 5, spa: 0, cm: 0 } },
     { id: "sun_god", name: "Sun God", bonus: { dmg: 5, spa: 0, cm: 0 } },
     { id: "laughing", name: "Laughing Captain", bonus: { dmg: 5, spa: 5, cm: 0 } },
     { id: "ex", name: "Ex Captain", bonus: { dmg: 0, spa: 0, cm: 25, cf: 10 } },

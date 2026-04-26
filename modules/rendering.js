@@ -72,7 +72,7 @@ function getHeadBadgeHtml(headUsed) {
     if (!headUsed || headUsed === 'none') return '';
     const config = {
         'sun_god': { name: 'Sun God', border: 'border-sungod', text: 'text-sungod' },
-        'ninja': { name: 'Ninja', border: 'border-ninja', text: 'text-ninja' },
+        'ninja': { name: 'Junior Ninja', border: 'border-ninja', text: 'text-ninja' },
         'reaper_necklace': { name: 'Reaper', border: 'border-reaper', text: 'text-reaper' },
         'shadow_reaper_necklace': { name: 'S. Reaper', border: 'border-sreaper', text: 'text-sreaper' },
         'junior': { name: 'Junior Ninja', border: 'border-ninja', text: 'text-ninja' },
@@ -123,9 +123,9 @@ function generateBuildRowHTML(r, i, unitConfig = {}) {
     const mainLegsBadge = getBadgeHtml(r.mainStats.legs, MAIN_STAT_VALS.legs[r.mainStats.legs]);
     const headHtml = getHeadBadgeHtml(r.headUsed);
     const s = r.subStats || {};
-    const headRow = (r.headUsed && r.headUsed !== 'none') ? `<div class="stat-line">${getRichBadgeHtml(s.head || [])}</div>` : '';
-    const bodyRow = `<div class="stat-line">${getRichBadgeHtml(s.body || [])}</div>`;
-    const legsRow = `<div class="stat-line">${getRichBadgeHtml(s.legs || [])}</div>`;
+    const headRow = (r.headUsed && r.headUsed !== 'none') ? `<div class="stat-line"><span class="sl-label">SUB</span> ${getRichBadgeHtml(s.head || [])}</div>` : '';
+    const bodyRow = `<div class="stat-line"><span class="sl-label">BODY</span> ${getRichBadgeHtml(s.body || [])}</div>`;
+    const legsRow = `<div class="stat-line"><span class="sl-label">LEGS</span> ${getRichBadgeHtml(s.legs || [])}</div>`;
 
     const mobileToggle = `<button class="mobile-stat-toggle" onclick="toggleRelicStatDisplay(this)"><span class="m-toggle-txt">Main</span><span class="m-toggle-txt">Sub</span></button>`;
 
@@ -216,7 +216,7 @@ function updateBuildListDisplay(unitId, forceSync = false, renderLimit = 150) {
             if (setSelect !== 'all' && r.setName !== setSelect) return false;
             if (headSelect !== 'all' && (r.headUsed || 'none') !== headSelect) return false;
 
-            let hSearch = ({ 'sun_god': 'Sun God', 'ninja': 'Ninja', 'reaper_necklace': 'Reaper', 'shadow_reaper_necklace': 'Shadow Reaper', 'junior': 'Junior', 'biju_head': 'Biju', 'rebellious_head': 'Rebellious', 'reanimated_head': 'Reanimated', 'mage_head': 'Great Mage' })[r.headUsed] || '';
+            let hSearch = ({ 'sun_god': 'Sun God', 'ninja': 'Junior Ninja', 'reaper_necklace': 'Reaper', 'shadow_reaper_necklace': 'Shadow Reaper', 'junior': 'Junior', 'biju_head': 'Biju', 'rebellious_head': 'Rebellious', 'reanimated_head': 'Reanimated', 'mage_head': 'Great Mage' })[r.headUsed] || '';
             const searchText = `${r.traitName} ${r.setName} ${r.prio} ${hSearch}`.toLowerCase();
             return searchText.includes(searchInput);
         });
@@ -431,8 +431,8 @@ function renderDatabase() {
                         <select onchange="filterList(this)" data-filter="prio" class="search-select prio-select"><option value="all">All Prio</option><option value="dmg">Dmg</option><option value="spa">SPA</option><option value="range">Range</option></select>
                     </div>
                     <div class="search-row">
-                        <select onchange="filterList(this)" data-filter="set" class="search-select"><option value="all">All Sets</option><option value="Master Ninja">Ninja Set</option><option value="Sun God">Sun God Set</option><option value="Laughing Captain">Laughing Set</option><option value="Ex Captain">Ex Set</option><option value="Shadow Reaper">Shadow Reaper</option><option value="Reaper Set">Reaper Set</option><option value="Super Roku">Super Roku</option><option value="Bio-Android">Bio-Android</option><option value="Biju Set">Biju Set</option><option value="Rebellious Shinobi">Rebellious</option><option value="Reanimated Ninja">Reanimated Ninja</option><option value="Great Mage">Great Mage</option></select>
-                        <select onchange="filterList(this)" data-filter="head" class="search-select"><option value="all">All Heads</option><option value="sun_god">Sun God</option><option value="ninja">Ninja</option><option value="reaper_necklace">Reaper</option><option value="shadow_reaper_necklace">Shadow Reaper</option><option value="junior">Junior Ninja</option><option value="biju_head">Biju</option><option value="rebellious_head">Rebellious</option><option value="reanimated_head">Reanimated</option><option value="mage_head">Great Mage</option><option value="none">No Head</option></select>
+                        <select onchange="filterList(this)" data-filter="set" class="search-select"><option value="all">All Sets</option><option value="Junior Ninja">Junior Ninja Set</option><option value="Sun God">Sun God Set</option><option value="Laughing Captain">Laughing Set</option><option value="Ex Captain">Ex Set</option><option value="Shadow Reaper">Shadow Reaper</option><option value="Reaper Set">Reaper Set</option><option value="Super Roku">Super Roku</option><option value="Bio-Android">Bio-Android</option><option value="Biju Set">Biju Set</option><option value="Rebellious Shinobi">Rebellious</option><option value="Reanimated Ninja">Reanimated Ninja</option><option value="Great Mage">Great Mage</option></select>
+                        <select onchange="filterList(this)" data-filter="head" class="search-select"><option value="all">All Heads</option><option value="sun_god">Sun God</option><option value="ninja">Junior Ninja</option><option value="reaper_necklace">Reaper</option><option value="shadow_reaper_necklace">Shadow Reaper</option><option value="junior">Junior Ninja</option><option value="biju_head">Biju</option><option value="rebellious_head">Rebellious</option><option value="reanimated_head">Reanimated</option><option value="mage_head">Great Mage</option><option value="none">No Head</option></select>
                     </div>
                 </div>`;
 

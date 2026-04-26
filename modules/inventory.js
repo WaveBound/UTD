@@ -288,12 +288,18 @@ function getRelicVisuals(setKey, slot) {
     if (visualKey === 'reaper_necklace') visualKey = 'reaper_set';
 
     const customImages = {
-        'ninja': { 'Head': 'MasterNinjaMask.png', 'Body': 'MasterNinjaTop.png', 'Legs': 'MasterNinjaBottom.png' },
+        'ninja': { 'Head': 'JuniorMask.png', 'Body': 'JuniorTop.png', 'Legs': 'JuniorBottom.png' },
         'sun_god': { 'Head': 'SunGodMask.png', 'Body': 'SunGodTop.png', 'Legs': 'SunGodBottom.png' },
         'laughing': { 'Head': 'LaughingMask.png', 'Body': 'LaughingTop.png', 'Legs': 'LaughingBottom.png' },
         'ex': { 'Head': 'ExMask.png', 'Body': 'ExTop.png', 'Legs': 'ExBottom.png' },
-        'shadow_reaper': { 'Head': 'ShadowReaperMask.png', 'Body': 'ShadowReaperTop.png', 'Legs': 'ShadowReaperBottom.png' },
-        'reaper_set': { 'Head': 'ReaperMask.png', 'Body': 'ReaperTop.png', 'Legs': 'ReaperBottom.png' }
+        'shadow_reaper': { 'Head': 'ShadowMask.png', 'Body': 'ShadowTop.png', 'Legs': 'ShadowBottom.png' },
+        'reaper_set': { 'Head': 'ReaperMask.png', 'Body': 'ReaperTop.png', 'Legs': 'ReaperBottom.png' },
+        'super_roku': { 'Head': 'RokuMask.png', 'Body': 'RokuTop.png', 'Legs': 'RokuBottom.png' },
+        'bio_android': { 'Head': 'AndroidMask.png', 'Body': 'AndroidTop.png', 'Legs': 'AndroidBottom.png' },
+        'biju_set': { 'Head': 'BijuMask.png', 'Body': 'BijuTop.png', 'Legs': 'BijuBottom.png' },
+        'rebellious_set': { 'Head': 'ReblliousMask.png', 'Body': 'ReblliousTop.png', 'Legs': 'ReblliousBottom.png' },
+        'reanimated_ninja': { 'Head': 'ReanimatedMask.png', 'Body': 'ReanimatedTop.png', 'Legs': 'ReanimatedBottom.png' },
+        'great_mage': { 'Head': 'MageMask.png', 'Body': 'MageTop.png', 'Legs': 'MageBottom.png' }
     };
 
     if (customImages[visualKey] && customImages[visualKey][slot]) {

@@ -125,9 +125,9 @@ const infoDefinitions = {
         desc: "The Sun God Head grants a temporary Damage % Buff equal to your total Range.<br><br><b>Trigger:</b> Every 6 Attacks.<br><b>Duration:</b> 7 Seconds.<br><br>Because the buff must expire before the counter restarts, 100% uptime is impossible."
     },
     'ninja_passive': {
-        title: "Ninja Head Passive",
+        title: "Junior Ninja Head Passive",
         formula: `<span class="ip-var">Cycle</span> = <span class="ip-num">10s</span> + (5 * <span class="ip-var">SPA</span>)`,
-        desc: "The Master Ninja Head grants <span class='ip-num'>+20%</span> Damage over Time (DoT) effectiveness.<br><br>Because the buff must expire before the counter restarts, 100% uptime is impossible."
+        desc: "The Junior Ninja Head grants <span class='ip-num'>+20%</span> Damage over Time (DoT) effectiveness.<br><br>Because the buff must expire before the counter restarts, 100% uptime is impossible."
     },
     'crit_avg': {
         title: "Crit Averaging",
