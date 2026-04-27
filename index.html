@@ -1,476 +1,85 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Universal TD Optimizer</title>
-
-    <!-- CSS IMPORTS -->
-    <link rel="stylesheet" href="css/variables.css">
-    <link rel="stylesheet" href="css/base.css">
-    <link rel="stylesheet" href="css/buttons.css">
-    <link rel="stylesheet" href="css/cards.css">
-    <link rel="stylesheet" href="css/forms.css">
-    <link rel="stylesheet" href="css/modals.css">
-    <link rel="stylesheet" href="css/utilities.css">
-    <link rel="stylesheet" href="css/logic.css">
-    <link rel="stylesheet" href="css/mobile.css">
-    <link rel="stylesheet" href="css/inventory.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Site Moved - Universal TD Optimizer</title>
+    
+    <style>
+        body {
+            background-color: #050505;
+            color: #ffffff;
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            text-align: center;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .container {
+            background: #0f1014;
+            border: 1px solid #1f2937;
+            padding: 40px 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+            max-width: 450px;
+            width: 100%;
+        }
+        h1 {
+            margin-top: 0;
+            color: #e2e8f0;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 1.5rem;
+        }
+        p {
+            color: #94a3b8;
+            line-height: 1.6;
+            margin: 15px 0;
+            font-size: 1.05rem;
+        }
+        .redirect-btn {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 14px 28px;
+            background: linear-gradient(135deg, #3b82f6, #a855f7);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: filter 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+        }
+        .redirect-btn:hover {
+            filter: brightness(1.1);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5);
+        }
+        .bookmark-notice {
+            margin-top: 25px;
+            font-size: 0.85rem;
+            color: #64748b;
+        }
+    </style>
 </head>
+<body>
 
-<body class="show-fixed-relics dashboard-layout">
+    <div class="container">
+        <h1>Site Has Moved</h1>
+        <p>The Universal TD Optimizer has moved to a new domain!</p>
+        
+        <a href="https://noxith.com/utdx/" class="redirect-btn">Go To New Site</a>
 
-    <!-- SIDEBAR NAVIGATION -->
-    <aside class="dashboard-sidebar">
-        <div id="headerTitleSection" class="header-wrapper">
-            <div class="header-inner">
-                <header id="mainHeader">
-                    <div id="headerContent">
-                        <h1>Meta Optimizer</h1>
-                        <div id="creditsContainer" class="credits-badges"></div>
-                    </div>
-                </header>
-            </div>
-        </div>
-
-        <!-- Primary nav -->
-        <div class="nav-bar">
-            <button class="nav-btn active"
-                onclick="switchPage('db'); window.toggleMobileMenu && window.toggleMobileMenu(false)">Unit
-                Database</button>
-            <button class="nav-btn"
-                onclick="resetAndOpenInventory(); window.toggleMobileMenu && window.toggleMobileMenu(false)">Relic
-                Inventory</button>
-            <button class="nav-btn mobile-only-btn"
-                onclick="openTraitTierList(); window.toggleMobileMenu && window.toggleMobileMenu(false)">Trait Tier
-                List</button>
-            <button class="nav-btn mobile-only-btn"
-                onclick="openAllTraitsGuide(); window.toggleMobileMenu && window.toggleMobileMenu(false)">Trait
-                Stats</button>
-        </div>
-
-        <!-- Mobile-Only Controls (Moved from Topbar) -->
-        <div class="sidebar-mobile-controls mobile-only-block">
-            <div class="sidebar-divider">Controls</div>
-            <button class="nav-btn sidebar-footer-btn"
-                onclick="openCustomPairModal(); window.toggleMobileMenu && window.toggleMobileMenu(false)">+ Add Custom
-                Pair</button>
-
-            <label class="nav-toggle-label sidebar-toggle">
-                <input type="checkbox" id="sidebarInventoryMode" onchange="toggleInventoryMode(this)">
-                <span>Inventory Mode</span>
-                <div class="mini-switch"></div>
-            </label>
-
-            <div class="sidebar-divider">Utility</div>
-        </div>
-
-        <!-- Bottom nav pinned to sidebar footer -->
-        <div class="sidebar-footer">
-            <button class="nav-btn sidebar-footer-btn"
-                onclick="openPatchNotes(); window.toggleMobileMenu && window.toggleMobileMenu(false)">Patch
-                Notes</button>
-            <button class="nav-btn sidebar-footer-btn"
-                onclick="openFeedbackModal(); window.toggleMobileMenu && window.toggleMobileMenu(false)">Report /
-                Suggest</button>
-        </div>
-    </aside>
-
-    <!-- MAIN CONTENT AREA -->
-    <main class="dashboard-main">
-        <!-- TOOLBAR SECTION -->
-        <div id="sticky-sentinel"></div>
-        <div id="headerToolbarSection" class="sticky-toolbar-container dashboard-topbar">
-            <div class="mobile-menu-handle" onclick="toggleMobileMenu()"></div>
-
-            <div id="dbInjector" class="injector-panel">
-                <!-- Left side controls -->
-                <div class="injector-left">
-                    <button class="nav-btn add-btn" onclick="openCustomPairModal(); toggleMobileMenu(false)">+ Add
-                        Custom Pair</button>
-                    <label id="invModeToggle" class="nav-toggle-label" title="Calculate using Inventory">
-                        <input type="checkbox" id="globalInventoryMode" onchange="toggleInventoryMode(this)">
-                        <span id="invLabel" class="text-accent-start">Inventory Mode</span>
-                        <div class="mobile-switch-visual"></div>
-                    </label>
-                </div>
-                <!-- Center controls -->
-                <div class="injector-center">
-                </div>
-            </div>
-
-            <!-- Guides Toolbar -->
-            <div id="guidesToolbar" class="injector-panel hidden">
-                <div class="injector-left">
-                    <select id="guideUnitSelect" class="hidden">
-                        <option value="all">All Units</option>
-                    </select>
-                    <select id="guideTraitSelect" class="hidden">
-                        <option value="auto">Auto</option>
-                    </select>
-                    <button class="nav-btn config-view-btn"
-                        onclick="openGuideConfig(); toggleMobileMenu(false)">Configure View</button>
-                    <label class="nav-toggle-label">
-                        <input type="checkbox" id="guideInventoryMode" onchange="toggleInventoryMode(this)">
-                        <span class="text-accent-start">Inventory Mode</span>
-                        <div class="mobile-switch-visual"></div>
-                    </label>
-                </div>
-            </div>
-
-            <div id="inventoryToolbar" class="injector-panel hidden">
-                <div class="injector-left">
-                    <button id="openAddRelicBtn" class="nav-btn add-btn" onclick="toggleMobileMenu(false)">+ Add
-                        Relic</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- PAGES -->
-        <div class="pages-container">
-            <div id="dbPage" class="page active db-grid"></div>
-            <div id="inventoryPage" class="page">
-                <div id="relicGrid" class="inventory-grid"></div>
-            </div>
-            <div id="guidesPage" class="page">
-                <div class="guide-container">
-                    <div id="activeGuideSelection" class="text-center mb-2 text-sm-dim">Showing: <b class="color-white"
-                            id="dispGuideUnit">All</b> with <b class="color-accent" id="dispGuideTrait">Auto</b></div>
-                    <div id="guideList" class="guide-grid"></div>
-                </div>
-            </div>
-        </div>
-    </main>
-
-    <!-- ================= MODALS ================= -->
-
-    <!-- 1. THE UNIVERSAL MODAL (Replaces Math, Patch, Compare, SubPrio, Guide) -->
-    <div id="universalModal" class="modal-overlay" onclick="closeModal('universalModal')">
-        <div class="modal-box" onclick="event.stopPropagation()">
-            <div class="modal-header">
-                <h2 class="modal-title">TITLE</h2>
-            </div>
-            <div class="modal-body">
-                <!-- Content Injected via JS -->
-            </div>
-            <div class="modal-footer">
-                <button class="action-btn" onclick="closeModal('universalModal')">Close</button>
-            </div>
+        <div class="bookmark-notice">
+            Please remember to update your bookmarks to <b>noxith.com/utdx/</b>
         </div>
     </div>
-
-    <!-- 2. CALCULATOR MODAL (Kept separate for complex form handling) -->
-    <div id="calcModal" class="modal-overlay" onclick="closeModal('calcModal')">
-        <div class="modal-box modal-xl" onclick="event.stopPropagation()">
-            <div class="calc-unit-header">
-                <!-- Simplified Header: Just Image and Name -->
-                <div style="display: flex; align-items: center; gap: 15px;">
-                    <img id="calcUnitImg" src="" class="calc-avatar">
-                    <div class="calc-unit-details">
-                        <h2 id="calcUnitName" class="modal-title">Unit</h2>
-                        <span id="calcUnitRole" class="calc-unit-role">Role</span>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-body calc-scroll-bg">
-                <!-- Controls Moved Here -->
-                <div class="calc-global-controls">
-                    <div class="calc-stat-group group-wide">
-                        <label>Relic Set</label><select id="calcSet" class="c-input w-full"></select>
-                        <label class="mt-2">Trait</label><select id="calcTrait" class="c-input w-full"></select>
-                    </div>
-                    <div class="calc-stat-group">
-                        <label>Dmg Pts</label><input type="number" id="calcDmgPoints" class="c-input text-center"
-                            value="0" min="0" max="100">
-                        <label class="mt-2">Rank Dmg%</label><input type="number" id="calcRankDmg"
-                            class="c-input opt-gold text-center" value="20" min="0" max="20">
-                    </div>
-                    <div class="calc-stat-group">
-                        <label>Spa Pts</label><input type="number" id="calcSpaPoints" class="c-input text-center"
-                            value="0" min="0" max="100">
-                        <label class="mt-2">Rank Spa%</label><input type="number" id="calcRankSpa"
-                            class="c-input opt-gold text-center" value="8" min="0" max="8">
-                    </div>
-                    <div class="calc-stat-group">
-                        <label>Rng Pts</label><input type="number" id="calcRangePoints" class="c-input text-center"
-                            value="0" min="0" max="100">
-                        <label class="mt-2">Rank Rng%</label><input type="number" id="calcRankRange"
-                            class="c-input opt-gold text-center" value="20" min="0" max="20">
-                    </div>
-                </div>
-
-                <div class="gear-grid-container">
-                    <!-- Gear Cards (Head/Body/Legs) - Contents managed by JS -->
-                    <div class="gear-card">
-                        <div class="gear-header"><span class="gear-title">Head Piece</span>
-                            <div class="flex-1 flex-between gap-md items-end">
-                                <select id="calcHead" class="gear-main-select">
-                                    <option value="none">None</option>
-                                    <option value="sun_god">Sun God</option>
-                                    <option value="ninja">Ninja</option>
-                                    <option value="reaper_necklace">Reaper</option>
-                                    <option value="shadow_reaper_necklace">S. Reaper</option>
-                                    <option value="junior">Junior Ninja</option>
-                                </select>
-                                <select id="calcHeadStars" class="gear-main-select opt-gold w-65px hidden">
-                                    <option value="1">1★</option>
-                                    <option value="1.025">2★</option>
-                                    <option value="1.05">3★</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="gear-subs">
-                            <div class="sub-input-group"><span class="sub-label sub-dmg">Dmg</span><input type="number"
-                                    data-stat="dmg" class="sub-val-input" placeholder="0"></div>
-                            <div class="sub-input-group"><span class="sub-label sub-spa">Spa</span><input type="number"
-                                    data-stat="spa" class="sub-val-input" placeholder="0"></div>
-                            <div class="sub-input-group"><span class="sub-label sub-range">Rng</span><input
-                                    type="number" data-stat="range" class="sub-val-input" placeholder="0"></div>
-                            <div class="sub-input-group"><span class="sub-label sub-cm">CDmg</span><input type="number"
-                                    data-stat="cm" class="sub-val-input" placeholder="0"></div>
-                            <div class="sub-input-group"><span class="sub-label sub-cf">Crit</span><input type="number"
-                                    data-stat="cf" class="sub-val-input" placeholder="0"></div>
-                            <div class="sub-input-group"><span class="sub-label sub-dot">DoT</span><input type="number"
-                                    data-stat="dot" class="sub-val-input" placeholder="0"></div>
-                        </div>
-                    </div>
-                    <!-- Body & Legs Cards identical structure... -->
-                    <div class="gear-card">
-                        <div class="gear-header"><span class="gear-title">Body Main</span>
-                            <div class="flex-1 flex-between gap-md items-end"><select id="calcBodyMain"
-                                    class="gear-main-select">
-                                    <option value="dmg">Damage</option>
-                                    <option value="dot">DoT</option>
-                                    <option value="cm">Crit Dmg</option>
-                                </select><select id="calcBodyStars" class="gear-main-select opt-gold w-65px hidden">
-                                    <option value="1">1★</option>
-                                    <option value="1.025">2★</option>
-                                    <option value="1.05">3★</option>
-                                </select></div>
-                        </div>
-                        <div class="gear-subs">
-                            <div class="sub-input-group"><span class="sub-label sub-dmg">Dmg</span><input type="number"
-                                    data-stat="dmg" class="sub-val-input"></div>
-                            <div class="sub-input-group"><span class="sub-label sub-spa">Spa</span><input type="number"
-                                    data-stat="spa" class="sub-val-input"></div>
-                            <div class="sub-input-group"><span class="sub-label sub-range">Rng</span><input
-                                    type="number" data-stat="range" class="sub-val-input"></div>
-                            <div class="sub-input-group"><span class="sub-label sub-cm">CDmg</span><input type="number"
-                                    data-stat="cm" class="sub-val-input"></div>
-                            <div class="sub-input-group"><span class="sub-label sub-cf">Crit</span><input type="number"
-                                    data-stat="cf" class="sub-val-input"></div>
-                            <div class="sub-input-group"><span class="sub-label sub-dot">DoT</span><input type="number"
-                                    data-stat="dot" class="sub-val-input"></div>
-                        </div>
-                    </div>
-                    <div class="gear-card">
-                        <div class="gear-header"><span class="gear-title">Legs Main</span>
-                            <div class="flex-1 flex-between gap-md items-end"><select id="calcLegsMain"
-                                    class="gear-main-select">
-                                    <option value="dmg">Damage</option>
-                                    <option value="spa">SPA</option>
-                                    <option value="cf">Crit Rate</option>
-                                    <option value="range">Range</option>
-                                </select><select id="calcLegsStars" class="gear-main-select opt-gold w-65px hidden">
-                                    <option value="1">1★</option>
-                                    <option value="1.025">2★</option>
-                                    <option value="1.05">3★</option>
-                                </select></div>
-                        </div>
-                        <div class="gear-subs">
-                            <div class="sub-input-group"><span class="sub-label sub-dmg">Dmg</span><input type="number"
-                                    data-stat="dmg" class="sub-val-input"></div>
-                            <div class="sub-input-group"><span class="sub-label sub-spa">Spa</span><input type="number"
-                                    data-stat="spa" class="sub-val-input"></div>
-                            <div class="sub-input-group"><span class="sub-label sub-range">Rng</span><input
-                                    type="number" data-stat="range" class="sub-val-input"></div>
-                            <div class="sub-input-group"><span class="sub-label sub-cm">CDmg</span><input type="number"
-                                    data-stat="cm" class="sub-val-input"></div>
-                            <div class="sub-input-group"><span class="sub-label sub-cf">Crit</span><input type="number"
-                                    data-stat="cf" class="sub-val-input"></div>
-                            <div class="sub-input-group"><span class="sub-label sub-dot">DoT</span><input type="number"
-                                    data-stat="dot" class="sub-val-input"></div>
-                        </div>
-                    </div>
-                </div>
-                <div id="calcResultArea" class="calc-result-area hidden">
-                    <div id="calcResultContent"></div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="action-btn secondary btn-close-secondary"
-                    onclick="closeModal('calcModal')">Close</button>
-                <button class="action-btn btn-calc-execute" onclick="runCustomCalc()">Calculate DPS</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 3. ADD RELIC MODAL -->
-    <div id="addRelicModal" class="modal-overlay" onclick="closeModal('addRelicModal')">
-        <div class="modal-box modal-sm" onclick="event.stopPropagation()">
-            <div class="modal-header">
-                <h2 class="modal-title">Add Relic</h2>
-            </div>
-            <div class="modal-body">
-                <!-- Inputs for Add Relic -->
-                <div class="gear-grid-container" style="grid-template-columns: 1fr; padding: 0;">
-                    <div class="gear-card">
-                        <div class="gear-header">
-                            <span class="gear-title">Relic Details</span>
-                            <div class="flex-1 flex-between gap-md items-end">
-                                <div style="display:flex; flex-direction:column; gap:5px; flex: 1;">
-                                    <label class="mq-label">Slot</label>
-                                    <select id="newRelicSlot" class="gear-main-select">
-                                        <option value="Head">Head</option>
-                                        <option value="Body">Body</option>
-                                        <option value="Legs">Legs</option>
-                                    </select>
-                                </div>
-                                <div style="display:flex; flex-direction:column; gap:5px; flex: 1;">
-                                    <label class="mq-label">Set</label>
-                                    <select id="newRelicSet" class="gear-main-select"></select>
-                                </div>
-                                <div style="display:flex; flex-direction:column; width:80px; gap:5px;">
-                                    <label class="mq-label">Stars</label>
-                                    <select id="newRelicStars" class="gear-main-select opt-gold"></select>
-                                </div>
-                            </div>
-                            <div style="display:flex; flex-direction:column; width:100%; gap:5px; margin-top:10px;">
-                                <label class="mq-label">Main Stat</label>
-                                <select id="newRelicMainStat" class="gear-main-select"></select>
-                            </div>
-                        </div>
-                        <div class="gear-subs" style="margin-top:0; border-radius:0;">
-                            <div class="sub-input-group"><span class="sub-label sub-dmg">Dmg</span><input type="number"
-                                    id="subDmg" class="sub-val-input" placeholder="0"></div>
-                            <div class="sub-input-group"><span class="sub-label sub-spa">Spa</span><input type="number"
-                                    id="subSpa" class="sub-val-input" placeholder="0"></div>
-                            <div class="sub-input-group"><span class="sub-label sub-range">Rng</span><input
-                                    type="number" id="subRange" class="sub-val-input" placeholder="0"></div>
-                            <div class="sub-input-group"><span class="sub-label sub-cm">CDmg</span><input type="number"
-                                    id="subCdmg" class="sub-val-input" placeholder="0"></div>
-                            <div class="sub-input-group"><span class="sub-label sub-cf">Crit</span><input type="number"
-                                    id="subCrit" class="sub-val-input" placeholder="0"></div>
-                            <div class="sub-input-group"><span class="sub-label sub-dot">DoT</span><input type="number"
-                                    id="subDot" class="sub-val-input" placeholder="0"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button id="addRelicCancelBtn" class="action-btn secondary"
-                    onclick="closeModal('addRelicModal')">Cancel</button>
-                <button id="addRelicConfirmBtn" class="action-btn">Add to Inventory</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 4. GUIDE CONFIG MODAL -->
-    <div id="guideConfigModal" class="modal-overlay" onclick="closeModal('guideConfigModal')">
-        <div class="modal-box modal-lg" onclick="event.stopPropagation()">
-            <div class="modal-header">
-                <h2 class="modal-title">Guide Configuration</h2>
-            </div>
-            <div class="modal-body">
-                <div class="config-section">
-                    <div class="config-header">1. Select Unit</div>
-                    <div class="config-grid" id="guideConfigUnitGrid"></div>
-                </div>
-                <div class="config-section mt-4">
-                    <div class="config-header">2. Select Trait</div>
-                    <div class="config-chips" id="guideConfigTraitList"></div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="action-btn secondary" onclick="closeModal('guideConfigModal')">Cancel</button>
-                <button class="action-btn" onclick="applyGuideConfig()">Apply Settings</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 5. CUSTOM PAIR MODAL -->
-    <div id="customPairModal" class="modal-overlay" onclick="closeModal('customPairModal')">
-        <div class="modal-box modal-lg" onclick="event.stopPropagation()">
-            <div class="modal-header cp-header">
-                <h2 class="modal-title">Create Custom Pair</h2>
-            </div>
-            <div class="modal-body">
-                <div class="config-section">
-                    <div class="config-header cp-section-header">1. Assign To Unit</div>
-                    <div class="config-grid" id="cpUnitGrid"></div>
-                </div>
-                <div class="config-section mt-4">
-                    <div class="config-header cp-section-header">2. Select First Trait</div>
-                    <div class="config-chips" id="cpTrait1List"></div>
-                </div>
-                <div class="config-section mt-4">
-                    <div class="config-header cp-section-header">3. Select Second Trait</div>
-                    <div class="config-chips" id="cpTrait2List"></div>
-                </div>
-                <div class="cp-preview-box"><span class="cp-preview-label">Creating Combination:</span><br><b
-                        class="cp-preview-val" id="cpPreviewText">Loading...</b></div>
-            </div>
-            <div class="modal-footer">
-                <button class="action-btn secondary" onclick="closeModal('customPairModal')">Cancel</button>
-                <button class="action-btn btn-cp-action" onclick="confirmAddCustomPair()">Create Pair</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 6. FEEDBACK MODAL -->
-    <div id="feedbackModal" class="modal-overlay" onclick="closeModal('feedbackModal')">
-        <div class="modal-box modal-sm" onclick="event.stopPropagation()">
-            <div class="modal-header">
-                <h2 class="modal-title">Feedback</h2>
-            </div>
-            <div class="modal-body">
-                <div class="feedback-form">
-                    <label><span class="mq-label">Type</span>
-                        <select id="feedbackType" class="gear-main-select mt-2">
-                            <option value="suggestion" selected>Suggestion</option>
-                            <option value="bug">Bug Report</option>
-                        </select>
-                    </label>
-
-                    <!-- UPDATED DISCORD INPUT -->
-                    <label>
-                        <div class="mq-label">Discord</div>
-                        <input type="text" id="feedbackContact" class="c-input mt-2 w-full"
-                            placeholder="Username or ID">
-                    </label>
-                    <label><span class="mq-label">Message</span>
-                        <textarea id="feedbackText" class="feedback-textarea"
-                            placeholder="Describe your suggestion or bug..."></textarea>
-                    </label>
-                    <div id="feedbackStatus"></div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="action-btn secondary" onclick="closeModal('feedbackModal')">Cancel</button>
-                <button id="feedbackSendBtn" class="action-btn" onclick="sendFeedback()">Send</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- SCRIPTS -->
-    <script src="data.js"></script>
-    <script src="math.js"></script>
-    <script id="dynamic-db-script" src="databases/db_base.js"></script>
-    <script src="modules/state.js"></script>
-    <script src="modules/constants.js"></script>
-    <script src="modules/utils.js"></script>
-    <script src="modules/ui-helpers.js"></script>
-    <script src="modules/calculations.js"></script>
-    <script src="modules/rendering.js"></script>
-    <script src="modules/modals.js"></script>
-    <script src="modules/custom-pair.js"></script>
-    <script src="modules/calculator.js"></script>
-    <script src="modules/math-render.js"></script>
-    <script src="modules/inventory.js"></script>
-    <script src="modules/feedback.js"></script>
-    <script src="modules/init.js"></script>
 
 </body>
-
 </html>
